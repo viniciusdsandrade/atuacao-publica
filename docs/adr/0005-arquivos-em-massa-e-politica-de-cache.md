@@ -20,7 +20,7 @@ Endpoints por deputado às vezes falham: em 2026-10-30, `/deputados/{id}/frentes
    - `SEMPRE`: período aberto (ano corrente e anterior) e arquivos cujo conteúdo muda com o tempo (situação de proposições). Baixa de novo a cada execução.
    - `SE_AUSENTE`: período fechado. Reaproveita o cache.
 4. Se a atualização falhar e houver cópia anterior, usar a cópia com a data de captura original e marcar a fonte como `parcial`.
-5. Depois de 3 falhas seguidas no mesmo tipo de arquivo, não tentar de novo na mesma execução.
+5. Depois de 3 falhas no mesmo tipo de arquivo, não tentar de novo na mesma execução. Fonte que alterna sucesso e erro não pode prender a coleta por horas.
 6. ZIP grande do qual só interessa a lista de arquivos (propostas de governo do TSE): baixar para um temporário, ler o diretório central e guardar só a lista com o sha256 do ZIP.
 
 ## Consequências

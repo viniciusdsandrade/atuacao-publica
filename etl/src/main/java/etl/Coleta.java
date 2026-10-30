@@ -34,7 +34,7 @@ public final class Coleta {
     private final Map<String, Integer> contagens = Collections.synchronizedMap(new TreeMap<>());
     private volatile Meta.Periodo periodo;
     static final int LIMITE_DE_FALHAS = 3;
-    private final Map<String, Integer> falhasSeguidas = new ConcurrentHashMap<>();
+    private final Map<String, Integer> falhas = new ConcurrentHashMap<>();
     private final Map<String, Integer> reservas = new ConcurrentSkipListMap<>();
     private final Map<String, String> primeiroErro = new ConcurrentHashMap<>();
 
@@ -50,7 +50,7 @@ public final class Coleta {
 
     /**
      * Para dado complementar: se a fonte falhar e não houver cópia anterior, devolve null e a coleta fica parcial.
-     * Depois de LIMITE_DE_FALHAS falhas seguidas no tipo de arquivo, nem tenta.
+     * Depois de LIMITE_DE_FALHAS falhas no tipo de arquivo, nem tenta.
      */
     public Arquivo obterOpcional(String url, String caminho, String accept, Politica politica)
             throws IOException, InterruptedException {
@@ -67,7 +67,7 @@ public final class Coleta {
             return emCache;
         }
         String grupo = grupo(caminho);
-        if ((emCache != null || opcional) && falhasSeguidas.getOrDefault(grupo, 0) >= LIMITE_DE_FALHAS) {
+        if ((emCache != null || opcional) && falhas.getOrDefault(grupo, 0) >= LIMITE_DE_FALHAS) {
             return reserva(grupo, emCache, null);
         }
         try {
@@ -75,10 +75,9 @@ public final class Coleta {
             Arquivo arquivo = new Arquivo(url, ctx.relativo(baixado.arquivo()), baixado.sha256(), baixado.bytes(), ctx.agora());
             Json.gravar(meta, arquivo, true);
             arquivos.add(arquivo);
-            falhasSeguidas.put(grupo, 0);
             return arquivo;
         } catch (IOException e) {
-            falhasSeguidas.merge(grupo, 1, Integer::sum);
+            falhas.merge(grupo, 1, Integer::sum);
             if (emCache == null && !opcional) {
                 throw e;
             }
@@ -88,7 +87,8 @@ public final class Coleta {
 
     /**
      * A atualização falhou e há cópia anterior: publica a cópia, com a data de captura original.
-     * Depois de LIMITE_DE_FALHAS falhas seguidas no mesmo tipo de arquivo, nem tenta de novo nesta execução.
+     * Depois de LIMITE_DE_FALHAS falhas no mesmo tipo de arquivo, nem tenta de novo nesta execução:
+     * fonte instável que alterna sucesso e erro não pode prender a coleta por horas.
      */
     private Arquivo reserva(String grupo, Arquivo emCache, String erro) {
         reservas.merge(grupo, 1, Integer::sum);

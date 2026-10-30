@@ -10,7 +10,7 @@ As fontes estão descritas em `docs/FONTES.md`.
 - **Ausência.** Campo sem valor na fonte é `null` no JSON e "sem registro na fonte" na tela.
 - **Datas.** ISO 8601. Instantes de captura em UTC.
 - **Atualização.** Cada bloco do perfil mostra a data de captura. Quando a última coleta de uma fonte falha, o bloco mostra o aviso "fonte desatualizada" e mantém o último dado válido.
-- **Coleta parcial.** Se um arquivo não puder ser atualizado e existir cópia de coleta anterior, o ETL usa a cópia, com a data de captura original. A fonte fica com status `parcial`, e o bloco mostra o aviso. Depois de 3 falhas seguidas no mesmo tipo de arquivo, o ETL não tenta de novo naquela execução.
+- **Coleta parcial.** Se um arquivo não puder ser atualizado e existir cópia de coleta anterior, o ETL usa a cópia, com a data de captura original. A fonte fica com status `parcial`, e o bloco mostra o aviso. Depois de 3 falhas no mesmo tipo de arquivo, o ETL não tenta de novo naquela execução.
 - **URL de origem.** Cada registro aponta para o recurso na fonte oficial (por exemplo, a votação na API da Câmara). Quando o dado saiu de um arquivo anual em massa, o arquivo aparece na lista de fontes do bloco, com hash e data de captura em `_meta/{fonte}.json`.
 - **Fotos.** O site não embute a foto oficial: carregar a imagem faria o navegador do visitante chamar o servidor da fonte. O perfil traz o link para a foto.
 
