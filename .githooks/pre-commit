@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+# Ative uma vez por clone: git config core.hooksPath .githooks
+set -euo pipefail
+
+raiz=$(git rev-parse --show-toplevel)
+"$raiz/scripts/privacy-check.sh" --staged
+
+if command -v gitleaks >/dev/null 2>&1; then
+  gitleaks git --staged --redact --no-banner "$raiz"
+else
+  echo "pre-commit: gitleaks não instalado; o CI roda a verificação" >&2
+fi
