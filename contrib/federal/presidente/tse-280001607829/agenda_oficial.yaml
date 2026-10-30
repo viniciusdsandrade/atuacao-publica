@@ -1,0 +1,12 @@
+# Agenda oficial do Presidente da República. Fonte: iCalendar do compromisso publicado no Planalto.
+# A hora fica nula: o iCalendar traz o instante em UTC e o fim registrado é anterior ao início.
+- tipo: agenda_oficial
+  data: 2023-01-18
+  hora: null
+  texto_oficial: "Ministro das Relações Exteriores, Mauro Vieira"
+  local: "Palácio do Planalto"
+  fonte_id: planalto-agenda
+  url_origem: https://www.gov.br/planalto/pt-br/acompanhe-o-planalto/agenda-do-presidente-da-republica-lula/agenda-do-presidente-da-republica/2023-01-18/ministro-das-relacoes-exteriores-mauro-vieira/vcal_view
+  snapshot_url: https://web.archive.org/web/20260404134504/https://www.gov.br/planalto/pt-br/acompanhe-o-planalto/agenda-do-presidente-da-republica-lula/agenda-do-presidente-da-republica/2023-01-18/ministro-das-relacoes-exteriores-mauro-vieira/vcal_view
+  capturado_em: 2026-10-30T12:26:48Z
+  contribuidor: viniciusdsandrade

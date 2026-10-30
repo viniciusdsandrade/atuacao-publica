@@ -86,22 +86,29 @@ Campos extras por tipo:
 
 ### Exemplo completo
 
-Arquivo `contrib/federal/presidente/tse-280001607829/agenda_oficial.yaml`:
+Registro real em `contrib/federal/presidente/tse-280001607829/agenda_oficial.yaml`.
+A fonte é o arquivo iCalendar (`vcal_view`) que o Planalto publica para cada compromisso da agenda.
+Só o login de quem contribuiu muda no seu caso:
 
 ```yaml
 - tipo: agenda_oficial
-  data: 2026-10-27
-  hora: "10:00"
-  texto_oficial: "Reunião com o ministro da Fazenda"
+  data: 2023-01-18
+  hora: null
+  texto_oficial: "Ministro das Relações Exteriores, Mauro Vieira"
   local: "Palácio do Planalto"
   fonte_id: planalto-agenda
-  url_origem: https://www.gov.br/planalto/pt-br/acompanhe-o-planalto/agenda-do-presidente-da-republica-lula/agenda-do-presidente-da-republica/2026-10-27
-  snapshot_url: https://web.archive.org/web/20261027120000/https://www.gov.br/planalto/pt-br/acompanhe-o-planalto/agenda-do-presidente-da-republica-lula/agenda-do-presidente-da-republica/2026-10-27
-  capturado_em: 2026-10-27T15:00:00Z
+  url_origem: https://www.gov.br/planalto/pt-br/acompanhe-o-planalto/agenda-do-presidente-da-republica-lula/agenda-do-presidente-da-republica/2023-01-18/ministro-das-relacoes-exteriores-mauro-vieira/vcal_view
+  snapshot_url: https://web.archive.org/web/20260404134504/https://www.gov.br/planalto/pt-br/acompanhe-o-planalto/agenda-do-presidente-da-republica-lula/agenda-do-presidente-da-republica/2023-01-18/ministro-das-relacoes-exteriores-mauro-vieira/vcal_view
+  capturado_em: 2026-10-30T12:26:48Z
   contribuidor: seu-login
 ```
 
-Os valores acima mostram o formato. O registro real fica em `contrib/` e passa pelo CI.
+Por que cada campo tem esse valor:
+
+- `texto_oficial`: campo `SUMMARY` do iCalendar, literal.
+- `local`: campo `LOCATION`.
+- `hora: null`: o iCalendar traz o instante em UTC, e o fim registrado é anterior ao início. Converter o horário seria inferência.
+- `snapshot_url`: captura já existente no Wayback Machine. Para achar uma, consulte `https://archive.org/wayback/available?url=<url_origem>`.
 
 ## (c) Adicionar ou revalidar uma fonte
 
