@@ -7,8 +7,8 @@ Estado real de cada fase. Atualizado ao fechar cada fase.
 | Fase | Entrega | Estado |
 |---|---|---|
 | 0 | Reconhecimento das fontes, `docs/FONTES.md`, ADR-0001 e ADR-0002 | concluída |
-| 1 | Esqueleto do monorepo, documentos, templates, CI | em andamento |
-| 2 | JSON Schemas do modelo e de `contrib/`, exemplos, validação | pendente |
+| 1 | Esqueleto do monorepo, documentos, templates, CI | concluída: CI verde no GitHub Actions |
+| 2 | JSON Schemas do modelo e de `contrib/`, exemplos, validação | concluída: 10 schemas, 41 exemplos, `normalize contrib` no CI |
 | 3 | ETL da Câmara | pendente |
 | 4 | ETL do Senado | pendente |
 | 5 | Executivo e TSE | pendente |
