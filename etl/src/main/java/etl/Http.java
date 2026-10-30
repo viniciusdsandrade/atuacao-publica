@@ -116,9 +116,11 @@ public final class Http {
     private <T> HttpResponse<T> enviar(HttpRequest requisicao, HttpResponse.BodyHandler<T> leitor)
             throws IOException, InterruptedException {
         IOException ultimaFalha = null;
+        String retryAfter = null;
         for (int tentativa = 0; tentativa < TENTATIVAS; tentativa++) {
             if (tentativa > 0) {
-                Thread.sleep(espera(tentativa, null));
+                // A espera fica fora da vaga: uma URL instável não trava as outras requisições.
+                Thread.sleep(espera(tentativa, retryAfter));
             }
             esperarVez(requisicao.uri().getHost());
             vagas.acquire();
@@ -127,13 +129,14 @@ public final class Http {
                 int status = resposta.statusCode();
                 if (status == 429 || status >= 500) {
                     ultimaFalha = new IOException("HTTP " + status + " em " + requisicao.uri());
+                    retryAfter = resposta.headers().firstValue("Retry-After").orElse(null);
                     fechar(resposta);
-                    Thread.sleep(espera(tentativa + 1, resposta.headers().firstValue("Retry-After").orElse(null)));
                     continue;
                 }
                 return resposta;
             } catch (IOException e) {
                 ultimaFalha = e;
+                retryAfter = null;
             } finally {
                 vagas.release();
             }
