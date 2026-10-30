@@ -100,7 +100,7 @@ public final class Camara implements Fonte {
     private static void coletarDeputado(Contexto ctx, Coleta coleta, String id, Legislatura leg) throws Exception {
         coleta.obter(API + "/deputados/" + id, "deputados/" + id + ".json", JSON, Politica.SEMPRE);
         coleta.obter(API + "/deputados/" + id + "/historico", "historico/" + id + ".json", JSON, Politica.SEMPRE);
-        coleta.obter(API + "/deputados/" + id + "/frentes", "frentes/" + id + ".json", JSON, Politica.SEMPRE);
+        coleta.obterOpcional(API + "/deputados/" + id + "/frentes", "frentes/" + id + ".json", JSON, Politica.SEMPRE);
         int anoAtual = ctx.hoje().getYear();
         for (int ano = leg.inicio().getYear(); ano <= anoAtual; ano++) {
             LocalDate de = ano == leg.inicio().getYear() ? leg.inicio() : LocalDate.of(ano, 1, 1);
@@ -238,8 +238,9 @@ public final class Camara implements Fonte {
                         Prov.de("camara-arquivos", arq.url(), arq)));
             }
             Map<String, List<FonteUsada>> fontesDoDeputado = new LinkedHashMap<>(fontes);
-            fontesDoDeputado.put("orgaos_e_frentes", List.of(fontes.get("orgaos_e_frentes").getFirst(),
-                    FonteUsada.de("camara-api", arquivo(ctx, "frentes/" + id + ".json"))));
+            Coleta.Arquivo arqFrentes = Coleta.metadados(ctx, "camara", "frentes/" + id + ".json");
+            fontesDoDeputado.put("orgaos_e_frentes", arqFrentes == null ? fontes.get("orgaos_e_frentes")
+                    : List.of(fontes.get("orgaos_e_frentes").getFirst(), FonteUsada.de("camara-api", arqFrentes)));
             List<Discurso> discursos = discursos(ctx, id, leg, fontesDoDeputado);
             Json.gravar(saida.resolve("blocos").resolve(id + ".json"), new Blocos(List.of(mandatos.get(id)), participacao,
                     a.votos, a.despesas, a.proposicoes, discursos, a.eventos, a.orgaos, fontesDoDeputado));
@@ -513,9 +514,13 @@ public final class Camara implements Fonte {
         fontes.put("orgaos_e_frentes", List.of(FonteUsada.de("camara-arquivos", arq)));
     }
 
+    /** Frentes são dado complementar: sem coleta do deputado, a lista fica vazia (coleta parcial). */
     private static List<OrgaoOuFrente> frentes(Contexto ctx, String id, Legislatura leg) {
         List<OrgaoOuFrente> frentes = new ArrayList<>();
-        Coleta.Arquivo arq = arquivo(ctx, "frentes/" + id + ".json");
+        Coleta.Arquivo arq = Coleta.metadados(ctx, "camara", "frentes/" + id + ".json");
+        if (arq == null) {
+            return frentes;
+        }
         for (JsonNode f : Json.ler(Coleta.caminho(ctx, arq)).path("dados")) {
             if (leg.id() == Json.inteiro(f, "idLegislatura")) {
                 frentes.add(new OrgaoOuFrente("frente", Json.texto(f, "titulo"), null, null, null, null,

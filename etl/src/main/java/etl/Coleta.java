@@ -45,6 +45,20 @@ public final class Coleta {
 
     public Arquivo obter(String url, String caminho, String accept, Politica politica)
             throws IOException, InterruptedException {
+        return obter(url, caminho, accept, politica, false);
+    }
+
+    /**
+     * Para dado complementar: se a fonte falhar e não houver cópia anterior, devolve null e a coleta fica parcial.
+     * Depois de LIMITE_DE_FALHAS falhas seguidas no tipo de arquivo, nem tenta.
+     */
+    public Arquivo obterOpcional(String url, String caminho, String accept, Politica politica)
+            throws IOException, InterruptedException {
+        return obter(url, caminho, accept, politica, true);
+    }
+
+    private Arquivo obter(String url, String caminho, String accept, Politica politica, boolean opcional)
+            throws IOException, InterruptedException {
         Path destino = ctx.raw().resolve(fonte).resolve(caminho);
         Path meta = lateral(destino);
         Arquivo emCache = emCache(meta);
@@ -53,7 +67,7 @@ public final class Coleta {
             return emCache;
         }
         String grupo = grupo(caminho);
-        if (emCache != null && falhasSeguidas.getOrDefault(grupo, 0) >= LIMITE_DE_FALHAS) {
+        if ((emCache != null || opcional) && falhasSeguidas.getOrDefault(grupo, 0) >= LIMITE_DE_FALHAS) {
             return reserva(grupo, emCache, null);
         }
         try {
@@ -65,7 +79,7 @@ public final class Coleta {
             return arquivo;
         } catch (IOException e) {
             falhasSeguidas.merge(grupo, 1, Integer::sum);
-            if (emCache == null) {
+            if (emCache == null && !opcional) {
                 throw e;
             }
             return reserva(grupo, emCache, e.getMessage());
@@ -81,14 +95,16 @@ public final class Coleta {
         if (erro != null) {
             primeiroErro.putIfAbsent(grupo, erro);
         }
-        arquivos.add(emCache);
+        if (emCache != null) {
+            arquivos.add(emCache);
+        }
         return emCache;
     }
 
     /** Falhas de atualização cobertas por cópia anterior, por tipo de arquivo. Vazio quando tudo foi atualizado. */
     public List<String> reservasUsadas() {
         List<String> descricoes = new ArrayList<>();
-        reservas.forEach((grupo, n) -> descricoes.add(grupo + ": " + n + " arquivo(s) mantidos da coleta anterior ("
+        reservas.forEach((grupo, n) -> descricoes.add(grupo + ": " + n + " arquivo(s) sem atualização, com cópia anterior quando existe ("
                 + primeiroErro.getOrDefault(grupo, "falhas seguidas") + ")"));
         return descricoes;
     }
