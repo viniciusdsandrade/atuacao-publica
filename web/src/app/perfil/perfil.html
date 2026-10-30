@@ -1,0 +1,95 @@
+@if (perfil(); as p) {
+  <article class="perfil">
+    <header class="cabecalho">
+      <p class="voltar"><a routerLink="/">Voltar à lista</a></p>
+      <h1>{{ p.nome }}</h1>
+      <p class="cargo">
+        {{ rotuloCargo(p.cargo_atual) }}{{ p.uf ? ' · ' + p.uf : '' }} · Partido: {{ p.partido_atual ?? semRegistro }}
+      </p>
+      <p>Situação na fonte: {{ p.situacao ?? semRegistro }}</p>
+      @if (p.links_oficiais.length || p.foto_url) {
+        <ul class="links">
+          @for (l of p.links_oficiais; track l.url) {
+            <li><a [href]="l.url" rel="noopener noreferrer" target="_blank">{{ l.rotulo }}</a></li>
+          }
+          @if (p.foto_url) {
+            <li><a [href]="p.foto_url" rel="noopener noreferrer" target="_blank">Foto oficial (abre o site da fonte)</a></li>
+          }
+        </ul>
+      }
+      <p class="atualizacao">Perfil gerado em {{ data(p.atualizado_em) }}.</p>
+    </header>
+
+    <nav class="sumario" aria-label="Blocos do perfil">
+      <ul>
+        @for (b of blocos(); track b) {
+          <li><button type="button" class="link" (click)="ir(b)">{{ rotuloBloco(b) }}</button></li>
+        }
+      </ul>
+    </nav>
+
+    @for (b of blocos(); track b) {
+      @let bloco = p.blocos[b];
+      <section class="bloco" [id]="b" tabindex="-1" [attr.aria-labelledby]="'titulo-' + b">
+        <h2 [id]="'titulo-' + b">{{ rotuloBloco(b) }}</h2>
+        @if (nota(b); as n) {
+          <p class="nota">{{ n }}</p>
+        }
+        <app-proveniencia [bloco]="bloco" />
+        @if (bloco.total === 0) {
+          <p class="vazio">{{ semRegistro }}</p>
+        } @else {
+          @switch (b) {
+            @case ('despesas') {
+              <p class="destaque">Total no período: {{ moeda(bloco.valor_total) }} em {{ bloco.total }} lançamentos.</p>
+              @for (a of despesasPorAno(bloco); track a.ano) {
+                <details>
+                  <summary>{{ a.ano }}: {{ moeda(a.valor) }} ({{ a.quantidade }} lançamentos)</summary>
+                  <div class="tabela-rolagem">
+                    <table>
+                      <caption>Por categoria em {{ a.ano }}</caption>
+                      <thead><tr><th scope="col">Categoria</th><th scope="col">Valor</th><th scope="col">Lançamentos</th></tr></thead>
+                      <tbody>
+                        @for (c of categorias(bloco, a.ano); track c.categoria) {
+                          <tr><td>{{ c.categoria }}</td><td class="numero">{{ moeda(c.valor) }}</td><td class="numero">{{ c.quantidade }}</td></tr>
+                        }
+                      </tbody>
+                    </table>
+                  </div>
+                </details>
+              }
+            }
+            @default {
+              @if (porTipo(bloco).length) {
+                <p class="tipos">
+                  Por tipo:
+                  @for (t of porTipo(bloco); track t[0]) {
+                    <span>{{ t[0] }}: {{ t[1] }}</span>
+                  }
+                </p>
+              }
+              @if (bloco.recentes) {
+                <app-tabela [bloco]="b" [registros]="bloco.recentes"
+                  [legenda]="'Mais recentes (' + bloco.recentes.length + ' de ' + bloco.total + ')'" />
+              } @else if (bloco.registros) {
+                <app-tabela [bloco]="b" [registros]="bloco.registros" />
+              }
+            }
+          }
+          @if (bloco.arquivos?.length) {
+            <p class="arquivos">
+              Todos os registros por ano:
+              @for (a of bloco.arquivos; track a.ano) {
+                <a [routerLink]="['/politico', p.id, b, a.ano]">{{ a.ano }} ({{ a.total }})</a>
+              }
+            </p>
+          }
+        }
+      </section>
+    }
+  </article>
+} @else if (erro()) {
+  <p>Perfil não encontrado. <a routerLink="/">Voltar à lista</a>.</p>
+} @else {
+  <p aria-live="polite">Carregando o perfil...</p>
+}
