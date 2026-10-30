@@ -11,8 +11,10 @@ A Câmara publica arquivos anuais com votações, votos, orientações, proposi�
 O servidor aceita compressão gzip: o arquivo de orientações de 2026 cai de 749 KB para 19 KB.
 O endpoint de despesas por deputado responde vazio; a cota parlamentar existe em arquivo anual.
 Endpoints por deputado às vezes falham: em 2026-10-30, `/deputados/{id}/frentes` respondeu 504 seguidamente.
-Na primeira carga no GitHub Actions, o passo de coleta, que começa pela Câmara, passou de duas horas sem terminar.
-Na máquina de desenvolvimento, a coleta completa leva cerca de 25 minutos.
+No mesmo dia, entre 12:40 e 15:10 UTC, a API da Câmara respondeu 504, depois de cerca de 15 segundos, a boa parte das requisições, dentro e fora do CI.
+Nesse intervalo, a primeira carga no GitHub Actions passou de duas horas no passo de coleta sem terminar.
+A partir de 15:57 UTC, com a API respondendo, a coleta da Câmara com cache vazio levou 35 minutos no GitHub Actions: 3.812 arquivos, com 80 respostas 504 recuperadas por nova tentativa.
+A coleta do Senado levou 3 minutos, a do TSE 1 minuto e a do Executivo 11 segundos.
 
 ## Decisão
 
@@ -29,7 +31,7 @@ Na máquina de desenvolvimento, a coleta completa leva cerca de 25 minutos.
 
 ## Consequências
 
-- A primeira coleta da Câmara faz cerca de 3.000 requisições; as seguintes reaproveitam os anos fechados.
+- A primeira coleta da Câmara faz cerca de 3.800 requisições; as seguintes reaproveitam os anos fechados.
 - Uma falha pontual da fonte não apaga dados do site: o bloco mostra o aviso de fonte desatualizada.
 - O cache do GitHub Actions guarda `data/raw` entre execuções. Se o cache sumir, a próxima execução baixa tudo de novo e publica o mesmo resultado.
 - Uma carga que estoura o limite de tempo não se perde: a execução seguinte reaproveita os arquivos de período fechado já baixados.
