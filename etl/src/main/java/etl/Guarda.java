@@ -22,7 +22,7 @@ public final class Guarda {
 
     /** Campos de identificador oficial: sequências numéricas que não são CPF nem telefone. */
     private static final List<String> CAMPOS_IGNORADOS = List.of(
-            "id", "id_fonte", "votacao_id", "politico_id", "fornecedor_cnpj", "documento_numero", "numero", "caminho");
+            "id", "id_fonte", "votacao_id", "politico_id", "fornecedor_cnpj", "documento_numero", "numero", "caminho", "plano_de_governo_arquivo");
 
     private Guarda() {
     }
