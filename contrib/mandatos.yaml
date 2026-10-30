@@ -1,0 +1,46 @@
+# Regras de mandato do Executivo que o TSE não publica: datas de posse e de fim.
+# Fonte: Emenda Constitucional 111/2021 (art. 4º e nova redação dos arts. 28 e 82 da Constituição).
+
+- cargo: presidente
+  eleicao: 2022
+  inicio: 2023-01-01
+  fim: 2027-01-05
+  texto_oficial: "Art. 4º O Presidente da República e os Governadores de Estado e do Distrito Federal eleitos em 2022 tomarão posse em 1º de janeiro de 2023, e seus mandatos durarão até a posse de seus sucessores, em 5 e 6 de janeiro de 2027, respectivamente."
+  fonte_id: planalto-legislacao
+  url_origem: https://www.planalto.gov.br/ccivil_03/constituicao/emendas/emc/emc111.htm
+  snapshot_url: https://web.archive.org/web/20261023091924/https://www.planalto.gov.br/ccivil_03/constituicao/emendas/emc/emc111.htm
+  capturado_em: 2026-10-30T02:55:00Z
+  contribuidor: viniciusdsandrade
+
+- cargo: governador
+  eleicao: 2022
+  inicio: 2023-01-01
+  fim: 2027-01-06
+  texto_oficial: "Art. 4º O Presidente da República e os Governadores de Estado e do Distrito Federal eleitos em 2022 tomarão posse em 1º de janeiro de 2023, e seus mandatos durarão até a posse de seus sucessores, em 5 e 6 de janeiro de 2027, respectivamente."
+  fonte_id: planalto-legislacao
+  url_origem: https://www.planalto.gov.br/ccivil_03/constituicao/emendas/emc/emc111.htm
+  snapshot_url: https://web.archive.org/web/20261023091924/https://www.planalto.gov.br/ccivil_03/constituicao/emendas/emc/emc111.htm
+  capturado_em: 2026-10-30T02:55:00Z
+  contribuidor: viniciusdsandrade
+
+- cargo: presidente
+  eleicao: 2026
+  inicio: 2027-01-05
+  fim: 2031-01-05
+  texto_oficial: "Art. 82. O mandato do Presidente da República é de 4 (quatro) anos e terá início em 5 de janeiro do ano seguinte ao de sua eleição."
+  fonte_id: planalto-legislacao
+  url_origem: https://www.planalto.gov.br/ccivil_03/constituicao/emendas/emc/emc111.htm
+  snapshot_url: https://web.archive.org/web/20261023091924/https://www.planalto.gov.br/ccivil_03/constituicao/emendas/emc/emc111.htm
+  capturado_em: 2026-10-30T02:55:00Z
+  contribuidor: viniciusdsandrade
+
+- cargo: governador
+  eleicao: 2026
+  inicio: 2027-01-06
+  fim: 2031-01-06
+  texto_oficial: "Art. 28. A eleição do Governador e do Vice-Governador de Estado, para mandato de 4 (quatro) anos, realizar-se-á no primeiro domingo de outubro, em primeiro turno, e no último domingo de outubro, em segundo turno, se houver, do ano anterior ao do término do mandato de seus antecessores, e a posse ocorrerá em 6 de janeiro do ano subsequente, observado, quanto ao mais, o disposto no art. 77 desta Constituição."
+  fonte_id: planalto-legislacao
+  url_origem: https://www.planalto.gov.br/ccivil_03/constituicao/emendas/emc/emc111.htm
+  snapshot_url: https://web.archive.org/web/20261023091924/https://www.planalto.gov.br/ccivil_03/constituicao/emendas/emc/emc111.htm
+  capturado_em: 2026-10-30T02:55:00Z
+  contribuidor: viniciusdsandrade
