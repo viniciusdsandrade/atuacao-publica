@@ -14,7 +14,7 @@ import { data } from '../rotulos';
           (captura em {{ data(bloco().atualizado_em) }})
         }
         @if (bloco().desatualizado) {
-          <span class="aviso">fonte desatualizada: a última coleta falhou</span>
+          <span class="aviso">fonte desatualizada: a última coleta falhou ou ficou incompleta; parte dos dados pode vir de coleta anterior</span>
         }
       </summary>
       @if (bloco().fontes.length) {

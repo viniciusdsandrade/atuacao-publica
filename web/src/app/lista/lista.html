@@ -69,6 +69,8 @@
             última coleta em {{ data(f.ultima_coleta_ok) }}
           } @else if (f.status === 'falha') {
             <span class="aviso">fonte desatualizada</span> (última coleta válida: {{ data(f.ultima_coleta_ok) }})
+          } @else if (f.status === 'parcial') {
+            <span class="aviso">coleta incompleta</span> em {{ data(f.ultima_coleta_ok) }}: parte dos dados vem de coleta anterior
           } @else {
             {{ f.status === 'nao_executada' ? 'sem coleta' : f.status }}
           }
