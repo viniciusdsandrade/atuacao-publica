@@ -1,0 +1,107 @@
+name: dados
+
+# Coleta, normaliza e publica os dados; monta o site com os JSON publicados.
+# O agendamento só roda com a variável ETL_AGENDADO = true, e o deploy só com PUBLICAR_PAGES = true
+# (docs/MAINTAINER_CHECKLIST.md). Sem as variáveis, só o disparo manual roda, e sem deploy.
+on:
+  schedule:
+    - cron: '17 6 * * *'
+  workflow_dispatch:
+    inputs:
+      fonte:
+        description: Fonte a coletar. As demais seguem do cache de dados brutos.
+        type: choice
+        options: [todas, camara, senado, tse, executivo]
+        default: todas
+
+permissions:
+  contents: read
+
+concurrency:
+  group: dados
+  cancel-in-progress: false
+
+jobs:
+  etl:
+    name: coleta, publicação e site
+    if: github.event_name == 'workflow_dispatch' || vars.ETL_AGENDADO == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
+        with:
+          distribution: temurin
+          java-version: '25'
+          cache: maven
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - name: cache de dados brutos e cursores
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            data/raw
+            data/publicado/_meta
+            data/publicado/index.json
+          key: dados-${{ github.run_id }}
+          restore-keys: dados-
+      - name: build do ETL
+        working-directory: etl
+        run: ./mvnw -B -ntp -q package -DskipTests
+      - name: fetch
+        # Falha de uma fonte não derruba as demais: o cursor registra a falha e o publish marca o bloco.
+        continue-on-error: true
+        env:
+          FONTE: ${{ inputs.fonte || 'todas' }}
+        run: |
+          if [ "$FONTE" = "todas" ]; then
+            java -Xmx4g -jar etl/target/etl.jar fetch
+          else
+            java -Xmx4g -jar etl/target/etl.jar fetch "$FONTE"
+          fi
+      - name: normalize
+        continue-on-error: true
+        run: java -Xmx4g -jar etl/target/etl.jar normalize
+      - name: publish
+        run: java -Xmx4g -jar etl/target/etl.jar publish
+      - name: relatório da execução
+        run: |
+          {
+            echo "## Execução do ETL"
+            jq -r '"Perfis publicados: \(.publicados). Rejeições: \(.rejeitados | length)."' data/publicado/_meta/execucao.json
+            echo
+            echo "| Fonte | Status | Última coleta válida |"
+            echo "|---|---|---|"
+            jq -r '.fontes[] | "| \(.fonte) | \(.status) | \(.ultima_coleta_ok // "-") |"' data/publicado/_meta/execucao.json
+          } >> "$GITHUB_STEP_SUMMARY"
+      - name: site com os dados publicados
+        working-directory: web
+        env:
+          REPOSITORIO: ${{ github.event.repository.name }}
+        run: |
+          npm ci --no-audit --no-fund
+          npm run build -- --base-href "/${REPOSITORIO}/"
+          cp -R ../data/publicado dist/web/browser/dados
+      - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
+        with:
+          path: web/dist/web/browser
+
+  deploy:
+    name: deploy no GitHub Pages
+    needs: etl
+    if: vars.PUBLICAR_PAGES == 'true'
+    runs-on: ubuntu-24.04
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - id: deploy
+        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1
