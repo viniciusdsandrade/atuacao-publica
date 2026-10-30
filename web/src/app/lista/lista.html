@@ -1,0 +1,79 @@
+<h1>Políticos</h1>
+<p class="intro">
+  Atividade de parlamentares federais, da Presidência da República e de governadores, a partir de fontes oficiais.
+  Cada registro traz a fonte e a data de captura.
+</p>
+
+<form class="filtros" role="search" (submit)="$event.preventDefault()">
+  <div class="campo">
+    <label for="busca">Nome</label>
+    <input id="busca" type="search" autocomplete="off" [value]="busca()" (input)="busca.set(valor($event))" />
+  </div>
+  <div class="campo">
+    <label for="cargo">Cargo</label>
+    <select id="cargo" [value]="cargo()" (change)="cargo.set(valor($event))">
+      <option value="">Todos</option>
+      @for (c of cargos(); track c) {
+        <option [value]="c">{{ rotuloCargo(c) }}</option>
+      }
+    </select>
+  </div>
+  <div class="campo">
+    <label for="uf">UF</label>
+    <select id="uf" [value]="uf()" (change)="uf.set(valor($event))">
+      <option value="">Todas</option>
+      @for (u of ufs(); track u) {
+        <option [value]="u">{{ u }}</option>
+      }
+    </select>
+  </div>
+  <div class="campo">
+    <label for="partido">Partido</label>
+    <select id="partido" [value]="partido()" (change)="partido.set(valor($event))">
+      <option value="">Todos</option>
+      @for (p of partidos(); track p) {
+        <option [value]="p">{{ p }}</option>
+      }
+    </select>
+  </div>
+  <button type="button" class="secundario" (click)="limpar()">Limpar filtros</button>
+</form>
+
+@if (indice(); as i) {
+  <p class="contagem" aria-live="polite">{{ resultado().length }} de {{ i.total }} políticos.</p>
+  <ul class="lista">
+    @for (p of resultado(); track p.id) {
+      <li>
+        <a [routerLink]="['/politico', p.id]">
+          <span class="nome">{{ p.nome }}</span>
+          <span class="detalhe">{{ rotuloCargo(p.cargo) }}{{ p.uf ? ' · ' + p.uf : '' }}{{ p.partido ? ' · ' + p.partido : '' }}</span>
+        </a>
+      </li>
+    } @empty {
+      <li class="vazio">Nenhum político com esses filtros.</li>
+    }
+  </ul>
+  <p class="atualizacao">Índice gerado em {{ data(i.gerado_em) }}.</p>
+} @else {
+  <p aria-live="polite">Carregando o índice...</p>
+}
+
+@if (execucao(); as e) {
+  <section class="estado-fontes" aria-labelledby="titulo-fontes">
+    <h2 id="titulo-fontes">Estado das coletas</h2>
+    <ul>
+      @for (f of e.fontes; track f.fonte) {
+        <li>
+          <strong>{{ f.fonte }}</strong>:
+          @if (f.status === 'ok') {
+            última coleta em {{ data(f.ultima_coleta_ok) }}
+          } @else if (f.status === 'falha') {
+            <span class="aviso">fonte desatualizada</span> (última coleta válida: {{ data(f.ultima_coleta_ok) }})
+          } @else {
+            {{ f.status === 'nao_executada' ? 'sem coleta' : f.status }}
+          }
+        </li>
+      }
+    </ul>
+  </section>
+}
