@@ -81,6 +81,8 @@ Falha de uma fonte não derruba as demais: o cursor `data/publicado/_meta/{fonte
 2. Escolha a fonte (`todas` ou uma) e confirme.
 3. O resumo da execução mostra os perfis publicados e o status de cada fonte.
 
+Cada fonte tem um limite de tempo. Se uma fonte estourar o limite, o cursor registra a falha e o cache guarda o que já foi baixado. A próxima execução reaproveita os arquivos de período fechado.
+
 A execução diária (06:17 UTC) e o deploy no GitHub Pages ficam desligados até o mantenedor ativar. Passos em `docs/MAINTAINER_CHECKLIST.md`.
 
 ## Rodar o site na sua máquina

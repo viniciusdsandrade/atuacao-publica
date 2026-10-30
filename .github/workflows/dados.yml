@@ -27,6 +27,8 @@ jobs:
     if: github.event_name == 'workflow_dispatch' || vars.ETL_AGENDADO == 'true'
     runs-on: ubuntu-24.04
     timeout-minutes: 180
+    env:
+      FONTE: ${{ inputs.fonte || 'todas' }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -41,29 +43,40 @@ jobs:
           node-version: '24'
           cache: npm
           cache-dependency-path: web/package-lock.json
-      - name: cache de dados brutos e cursores
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      - name: restaura dados brutos e cursores
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: |
             data/raw
             data/publicado/_meta
             data/publicado/index.json
-          key: dados-${{ github.run_id }}
+          key: dados-${{ github.run_id }}-${{ github.run_attempt }}
           restore-keys: dados-
       - name: build do ETL
         working-directory: etl
         run: ./mvnw -B -ntp -q package -DskipTests
-      - name: fetch
-        # Falha de uma fonte não derruba as demais: o cursor registra a falha e o publish marca o bloco.
+      # Um passo por fonte, cada um com limite de tempo: fonte lenta não consome o tempo das outras.
+      # Falha ou limite estourado não derruba o job: o cursor registra a falha e o publish marca o bloco.
+      - name: fetch tse
+        if: env.FONTE == 'todas' || env.FONTE == 'tse'
         continue-on-error: true
-        env:
-          FONTE: ${{ inputs.fonte || 'todas' }}
-        run: |
-          if [ "$FONTE" = "todas" ]; then
-            java -Xmx4g -jar etl/target/etl.jar fetch
-          else
-            java -Xmx4g -jar etl/target/etl.jar fetch "$FONTE"
-          fi
+        timeout-minutes: 20
+        run: java -Xmx4g -jar etl/target/etl.jar fetch tse
+      - name: fetch executivo
+        if: env.FONTE == 'todas' || env.FONTE == 'executivo'
+        continue-on-error: true
+        timeout-minutes: 10
+        run: java -Xmx4g -jar etl/target/etl.jar fetch executivo
+      - name: fetch senado
+        if: env.FONTE == 'todas' || env.FONTE == 'senado'
+        continue-on-error: true
+        timeout-minutes: 30
+        run: java -Xmx4g -jar etl/target/etl.jar fetch senado
+      - name: fetch camara
+        if: env.FONTE == 'todas' || env.FONTE == 'camara'
+        continue-on-error: true
+        timeout-minutes: 90
+        run: java -Xmx4g -jar etl/target/etl.jar fetch camara
       - name: normalize
         continue-on-error: true
         run: java -Xmx4g -jar etl/target/etl.jar normalize
@@ -90,6 +103,16 @@ jobs:
       - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
         with:
           path: web/dist/web/browser
+      - name: guarda dados brutos e cursores
+        # Roda mesmo se um passo falhar ou estourar o limite: a próxima execução reaproveita o que já foi baixado.
+        if: always()
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            data/raw
+            data/publicado/_meta
+            data/publicado/index.json
+          key: dados-${{ github.run_id }}-${{ github.run_attempt }}
 
   deploy:
     name: deploy no GitHub Pages
