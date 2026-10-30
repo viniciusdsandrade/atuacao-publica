@@ -1,0 +1,52 @@
+name: Nova fonte
+description: Propor ou revalidar uma fonte de dados.
+title: "Fonte: <nome da fonte>"
+labels: ["fonte"]
+body:
+  - type: input
+    id: nome
+    attributes:
+      label: Nome da fonte
+    validations:
+      required: true
+  - type: input
+    id: orgao
+    attributes:
+      label: Órgão responsável
+    validations:
+      required: true
+  - type: dropdown
+    id: nivel
+    attributes:
+      label: Nível de confiança
+      options:
+        - T0 (primária oficial do Estado)
+        - T1 (primeira parte, como site do mandato ou do partido)
+        - T2 (facilitador com metodologia aberta, rastreável a T0)
+    validations:
+      required: true
+  - type: input
+    id: url
+    attributes:
+      label: URL base
+    validations:
+      required: true
+  - type: input
+    id: formato
+    attributes:
+      label: Formato e autenticação
+      description: Por exemplo, JSON sem autenticação, CSV latin-1, HTML.
+    validations:
+      required: true
+  - type: textarea
+    id: validacao
+    attributes:
+      label: Chamada real de validação
+      description: Endpoint testado, status HTTP e data (UTC). Cole o comando, sem chaves ou tokens.
+    validations:
+      required: true
+  - type: textarea
+    id: limitacoes
+    attributes:
+      label: Licença e limitações
+      description: Licença declarada, limites de taxa, bloqueios, campos com dado pessoal.
