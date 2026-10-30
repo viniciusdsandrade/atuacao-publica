@@ -1,0 +1,30 @@
+# Configuração local e segredos
+.env
+.env.*
+!.env.example
+*.local
+.privacy-patterns
+
+# Dados (nunca versionados em main)
+data/raw/
+data/normalizado/
+data/publicado/
+
+# Build
+node_modules/
+target/
+build/
+dist/
+out-tsc/
+.angular/
+
+# IDE e sistema
+.idea/
+.vscode/
+*.iml
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
