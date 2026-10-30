@@ -11,6 +11,8 @@ import java.util.Map;
 import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentSkipListMap;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Cache de dados brutos em data/raw/{fonte}. Cada arquivo tem ao lado um .meta.json
@@ -37,6 +39,11 @@ public final class Coleta {
     private final Map<String, Integer> falhas = new ConcurrentHashMap<>();
     private final Map<String, Integer> reservas = new ConcurrentSkipListMap<>();
     private final Map<String, String> primeiroErro = new ConcurrentHashMap<>();
+    /** Linha de progresso a cada tantos downloads: o log mostra o ritmo da coleta mesmo se o passo estourar o limite de tempo. */
+    private static final int PROGRESSO_A_CADA = 250;
+    private final long inicio = System.nanoTime();
+    private final AtomicInteger baixados = new AtomicInteger();
+    private final AtomicInteger doCache = new AtomicInteger();
 
     public Coleta(Contexto ctx, String fonte) {
         this.ctx = ctx;
@@ -63,6 +70,7 @@ public final class Coleta {
         Path meta = lateral(destino);
         Arquivo emCache = emCache(meta);
         if (politica == Politica.SE_AUSENTE && emCache != null) {
+            doCache.incrementAndGet();
             arquivos.add(emCache);
             return emCache;
         }
@@ -75,9 +83,12 @@ public final class Coleta {
             Arquivo arquivo = new Arquivo(url, ctx.relativo(baixado.arquivo()), baixado.sha256(), baixado.bytes(), ctx.agora());
             Json.gravar(meta, arquivo, true);
             arquivos.add(arquivo);
+            baixou();
             return arquivo;
         } catch (IOException e) {
-            falhas.merge(grupo, 1, Integer::sum);
+            if (falhas.merge(grupo, 1, Integer::sum) <= LIMITE_DE_FALHAS) {
+                System.err.println(fonte + ": falha em " + caminho + ": " + e.getMessage());
+            }
             if (emCache == null && !opcional) {
                 throw e;
             }
@@ -132,6 +143,7 @@ public final class Coleta {
         Path meta = lateral(destino);
         if (politica == Politica.SE_AUSENTE && Files.exists(meta) && Files.exists(destino)) {
             Arquivo emCache = Json.ler(meta, Arquivo.class);
+            doCache.incrementAndGet();
             arquivos.add(emCache);
             return emCache;
         }
@@ -146,10 +158,24 @@ public final class Coleta {
             Arquivo arquivo = new Arquivo(url, ctx.relativo(destino), baixado.sha256(), baixado.bytes(), ctx.agora());
             Json.gravar(meta, arquivo, true);
             arquivos.add(arquivo);
+            baixou();
             return arquivo;
         } finally {
             Files.deleteIfExists(temporario);
         }
+    }
+
+    private void baixou() {
+        if (baixados.incrementAndGet() % PROGRESSO_A_CADA == 0) {
+            System.out.println(resumo());
+        }
+    }
+
+    /** Downloads, cópias do cache, tempo decorrido e tentativas HTTP que falharam até aqui. */
+    public String resumo() {
+        long minutos = TimeUnit.NANOSECONDS.toMinutes(System.nanoTime() - inicio);
+        return fonte + ": " + baixados.get() + " arquivo(s) baixado(s) e " + doCache.get() + " do cache em " + minutos
+                + " min; tentativas com falha até aqui: " + ctx.http().tentativasFalhas();
     }
 
     public void contar(String chave, int quantidade) {

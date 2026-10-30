@@ -17,8 +17,12 @@ import java.time.Duration;
 import java.util.HashMap;
 import java.util.HexFormat;
 import java.util.Map;
+import java.util.StringJoiner;
+import java.util.TreeMap;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.atomic.LongAdder;
 import java.util.zip.GZIPInputStream;
 
 /**
@@ -38,6 +42,7 @@ public final class Http {
     private final String userAgent;
     private final Semaphore vagas;
     private final Map<String, Long> proximaPorHost = new HashMap<>();
+    private final Map<String, LongAdder> tentativasFalhas = new ConcurrentHashMap<>();
 
     public record Resposta(int status, byte[] corpo) {
         public boolean ok() {
@@ -130,6 +135,7 @@ public final class Http {
                 if (status == 429 || status >= 500) {
                     ultimaFalha = new IOException("HTTP " + status + " em " + requisicao.uri());
                     retryAfter = resposta.headers().firstValue("Retry-After").orElse(null);
+                    anotar("HTTP " + status);
                     fechar(resposta);
                     continue;
                 }
@@ -137,11 +143,26 @@ public final class Http {
             } catch (IOException e) {
                 ultimaFalha = e;
                 retryAfter = null;
+                anotar(e.getClass().getSimpleName());
             } finally {
                 vagas.release();
             }
         }
         throw ultimaFalha;
+    }
+
+    private void anotar(String causa) {
+        tentativasFalhas.computeIfAbsent(causa, c -> new LongAdder()).increment();
+    }
+
+    /** Tentativas que falharam neste processo, por causa (status HTTP ou exceção). */
+    public String tentativasFalhas() {
+        if (tentativasFalhas.isEmpty()) {
+            return "nenhuma";
+        }
+        StringJoiner causas = new StringJoiner(", ");
+        new TreeMap<>(tentativasFalhas).forEach((causa, n) -> causas.add(causa + " ×" + n.sum()));
+        return causas.toString();
     }
 
     private static void fechar(HttpResponse<?> resposta) {

@@ -68,6 +68,7 @@ public final class Main {
             Coleta coleta = new Coleta(ctx, fonte.nome());
             String status = "ok";
             List<String> erros = List.of();
+            System.out.println(fonte.nome() + ": coleta iniciada");
             try {
                 fonte.fetch(ctx, coleta);
                 if (!coleta.reservasUsadas().isEmpty()) {
@@ -81,6 +82,7 @@ public final class Main {
                 falhas++;
                 System.err.println(fonte.nome() + ": falha na coleta: " + mensagem(e));
             }
+            System.out.println(coleta.resumo());
             boolean coletou = !"falha".equals(status);
             Meta.gravar(ctx, new Meta.Cursor(fonte.nome(), status, ctx.agora(),
                     coletou ? ctx.agora() : anterior.ultimaColetaOk(),
