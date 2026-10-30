@@ -38,6 +38,12 @@ class GuardaTest {
     }
 
     @Test
+    void identificadorDeVotacaoDoSenadoNaoEhTelefone() {
+        var registro = Json.arvore(Map.of("votacao_id", "586477-7104", "descricao", "Votação nominal"));
+        assertTrue(Guarda.violacoes(registro).isEmpty());
+    }
+
+    @Test
     void removeCpfDoNomeDeMei() {
         assertEquals("FULANO DE TAL", Guarda.semCpf("FULANO DE TAL 12345678909"));
         assertEquals("POSTO EXEMPLO LTDA", Guarda.semCpf("POSTO EXEMPLO LTDA"));
