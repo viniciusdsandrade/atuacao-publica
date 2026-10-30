@@ -69,6 +69,12 @@ public final class Main {
             String status = "ok";
             List<String> erros = List.of();
             System.out.println(fonte.nome() + ": coleta iniciada");
+            // Processo encerrado no meio da coleta (limite de tempo do CI): o cursor registra a falha.
+            Thread interrompida = new Thread(() -> {
+                System.err.println(coleta.resumo() + "; coleta interrompida antes do fim");
+                Meta.gravar(ctx, cursor(ctx, fonte, coleta, anterior, "falha", List.of("coleta interrompida antes do fim")));
+            });
+            Runtime.getRuntime().addShutdownHook(interrompida);
             try {
                 fonte.fetch(ctx, coleta);
                 if (!coleta.reservasUsadas().isEmpty()) {
@@ -81,16 +87,24 @@ public final class Main {
                 erros = List.of(mensagem(e));
                 falhas++;
                 System.err.println(fonte.nome() + ": falha na coleta: " + mensagem(e));
+            } finally {
+                Runtime.getRuntime().removeShutdownHook(interrompida);
             }
             System.out.println(coleta.resumo());
-            boolean coletou = !"falha".equals(status);
-            Meta.gravar(ctx, new Meta.Cursor(fonte.nome(), status, ctx.agora(),
-                    coletou ? ctx.agora() : anterior.ultimaColetaOk(),
-                    coletou ? periodo(coleta, anterior) : anterior.periodo(),
-                    coletou ? coleta.contagens() : anterior.contagens(),
-                    coletou ? coleta.arquivos() : anterior.arquivos(), erros));
+            Meta.gravar(ctx, cursor(ctx, fonte, coleta, anterior, status, erros));
         }
         return falhas == 0 ? 0 : 1;
+    }
+
+    /** Em falha, o cursor mantém a última coleta válida e o que ela trouxe. */
+    private static Meta.Cursor cursor(Contexto ctx, Fonte fonte, Coleta coleta, Meta.Cursor anterior, String status,
+                                      List<String> erros) {
+        boolean coletou = !"falha".equals(status);
+        return new Meta.Cursor(fonte.nome(), status, ctx.agora(),
+                coletou ? ctx.agora() : anterior.ultimaColetaOk(),
+                coletou ? periodo(coleta, anterior) : anterior.periodo(),
+                coletou ? coleta.contagens() : anterior.contagens(),
+                coletou ? coleta.arquivos() : anterior.arquivos(), erros);
     }
 
     static int normalize(Contexto ctx, List<Fonte> fontes) {
