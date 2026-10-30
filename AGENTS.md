@@ -17,7 +17,7 @@ Leia também `docs/POLITICA_EDITORIAL.md` e `docs/METODOLOGIA.md`.
   - `.githooks/pre-commit` roda o `privacy-check` e o gitleaks. Ative com `git config core.hooksPath .githooks`;
   - o CI roda o gitleaks e o `privacy-check`;
   - `scripts/audit-history.sh` varre todo o histórico antes de o repositório ficar público.
-- Não configure `user.name` nem `user.email`. A identidade de autor é decisão de quem mantém o repositório.
+- Não altere `user.name` nem `user.email`. A autoria dos commits é do mantenedor, com o e-mail `noreply` do GitHub, configurado no clone (veja `docs/MAINTAINER_CHECKLIST.md`).
 - Não adicione `Co-Authored-By`, rodapé "Generated with", nome de ferramenta ou link de sessão em commit, PR ou documento.
 - `pom.xml` e `package.json` não têm campo de autor.
 - O nome do projeto fica em `etl/src/main/java/etl/Projeto.java` e no README.

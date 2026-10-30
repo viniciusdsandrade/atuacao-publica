@@ -29,6 +29,14 @@
 git config core.hooksPath .githooks
 ```
 
+### Autoria dos commits
+
+Decisão do mantenedor: a autoria dos commits é dele.
+O e-mail de autor é o `noreply` do GitHub (`<id>+<login>@users.noreply.github.com`).
+Esse e-mail vincula o commit à conta sem expor e-mail pessoal.
+A identidade fica na configuração local do clone (`git config user.name` e `git config user.email`).
+A auditoria não confere autoria por padrão. Use `scripts/audit-history.sh --autoria` para conferir.
+
 ### Commits sem fuso local
 
 Faça commit com `TZ=UTC git commit ...`. A auditoria acusa commit com fuso diferente de `+0000`.
@@ -47,12 +55,12 @@ O pipeline de dados não roda e não publica nada até o mantenedor ativar:
 1. Rode `scripts/audit-history.sh` com o `.privacy-patterns` completo.
 2. Resolva cada achado:
    - conteúdo: remova o dado e reescreva o histórico, ou publique uma cópia limpa como repositório novo;
-   - autor e committer: reescreva com `git filter-repo --mailmap`, usando uma identidade pública escolhida por você, ou publique uma cópia limpa;
    - fuso: reescreva as datas para UTC ou publique uma cópia limpa.
-3. Rotacione toda chave que já passou pelo ambiente de desenvolvimento (por exemplo, a chave do Portal da Transparência).
-4. Revise `LICENSE` e `LICENSE-DADOS.md`. Troque "os contribuidores do projeto" pelo titular definitivo, se houver.
-5. Revise nomes e metadados: `etl/pom.xml`, `web/package.json`, descrição do repositório, tópicos.
-6. Confirme que `main` não contém dados publicados (`data/` está no `.gitignore`).
-7. Ative a proteção de branch em `main` (revisão obrigatória, CI obrigatório).
-8. Ative **Private vulnerability reporting** em **Settings > Code security**.
-9. Torne o repositório público.
+3. Confira que todo commit usa o e-mail `noreply` do GitHub (`git log --format=%ae | sort -u`).
+4. Rotacione toda chave que já passou pelo ambiente de desenvolvimento (por exemplo, a chave do Portal da Transparência).
+5. Revise `LICENSE` e `LICENSE-DADOS.md`. Troque "os contribuidores do projeto" pelo titular definitivo, se houver.
+6. Revise nomes e metadados: `etl/pom.xml`, `web/package.json`, descrição do repositório, tópicos.
+7. Confirme que `main` não contém dados publicados (`data/` está no `.gitignore`).
+8. Ative a proteção de branch em `main` (revisão obrigatória, CI obrigatório).
+9. Ative **Private vulnerability reporting** em **Settings > Code security**.
+10. Torne o repositório público.

@@ -1,10 +1,15 @@
 #!/usr/bin/env bash
 # Varre todo o histórico do git antes de tornar o repositório público.
 # Usa os mesmos padrões de scripts/privacy-check.sh.
-# Verifica: conteúdo de todas as versões, nomes de arquivo, autor, committer,
-# mensagens de commit e fuso horário das datas.
+# Verifica: conteúdo de todas as versões, nomes de arquivo, mensagens de commit
+# e fuso horário das datas.
+# A autoria dos commits é do mantenedor, por decisão registrada em docs/MAINTAINER_CHECKLIST.md.
+# Com --autoria, o script também confere autor e committer contra os padrões.
 # Nunca imprime o trecho encontrado: só commit, arquivo ou campo.
 set -euo pipefail
+
+conferir_autoria=0
+[[ "${1:-}" == "--autoria" ]] && conferir_autoria=1
 
 raiz=$(git rev-parse --show-toplevel)
 cd "$raiz"
@@ -42,14 +47,16 @@ fi
 echo "2/4 nomes de arquivo"
 relatar "arquivo" < <(git log --all --name-only --format= | sort -u | grep -E -i -f "$lista_padroes" || true)
 
-echo "3/4 autor, committer e mensagem"
+echo "3/4 mensagens de commit (autoria só com --autoria)"
 while IFS=$'\t' read -r hash autor email_autor committer email_committer; do
-  for campo in autor email_autor committer email_committer; do
-    if printf '%s\n' "${!campo}" | grep -E -i -q -f "$lista_padroes"; then
-      echo "  commit ${hash:0:12}: campo $campo"
-      achados=1
-    fi
-  done
+  if [[ $conferir_autoria -eq 1 ]]; then
+    for campo in autor email_autor committer email_committer; do
+      if printf '%s\n' "${!campo}" | grep -E -i -q -f "$lista_padroes"; then
+        echo "  commit ${hash:0:12}: campo $campo"
+        achados=1
+      fi
+    done
+  fi
   if git log -1 --format='%B' "$hash" | grep -E -i -q -f "$lista_padroes"; then
     echo "  commit ${hash:0:12}: mensagem"
     achados=1
