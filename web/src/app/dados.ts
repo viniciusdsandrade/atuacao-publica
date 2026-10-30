@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { Observable, shareReplay } from 'rxjs';
+import { Observable, from, shareReplay, switchMap } from 'rxjs';
 
 import { Detalhe, Execucao, Fonte, Indice, Perfil } from './modelo';
 
@@ -18,11 +18,22 @@ export class Dados {
     return this.http.get<Perfil>(this.base + 'politicos/' + encodeURIComponent(id) + '.json');
   }
 
+  /** Detalhe anual vem compactado com gzip (politicos/{id}/{bloco}-{ano}.json.gz). */
   detalhe(caminho: string): Observable<Detalhe> {
-    return this.http.get<Detalhe>(this.base + caminho);
+    return this.http
+      .get(this.base + caminho, { responseType: 'arraybuffer' })
+      .pipe(switchMap((bytes) => from(lerJson<Detalhe>(bytes))));
   }
 
   documento(arquivo: string): Observable<string> {
     return this.http.get('docs/' + arquivo, { responseType: 'text' });
   }
+}
+
+/** Descompacta com a API nativa do navegador. Se o servidor já entregou descompactado, lê direto. */
+async function lerJson<T>(bytes: ArrayBuffer): Promise<T> {
+  const cabecalho = new Uint8Array(bytes, 0, Math.min(2, bytes.byteLength));
+  const gzip = cabecalho[0] === 0x1f && cabecalho[1] === 0x8b;
+  const fluxo = gzip ? new Blob([bytes]).stream().pipeThrough(new DecompressionStream('gzip')) : new Blob([bytes]).stream();
+  return JSON.parse(await new Response(fluxo).text()) as T;
 }

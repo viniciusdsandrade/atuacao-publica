@@ -7,7 +7,7 @@
         <tbody>
           @for (r of registros(); track $index) {
             <tr>
-              <td>{{ texto(r['cargo']) }}{{ r['uf'] ? ' (' + r['uf'] + ')' : '' }}</td>
+              <td>{{ rotuloCargo(texto(r['cargo'])) }}{{ r['uf'] ? ' (' + r['uf'] + ')' : '' }}</td>
               <td>{{ data(r['inicio']) }}</td>
               <td>{{ data(r['fim']) }}</td>
               <td>{{ texto(r['situacao']) }}</td>
@@ -149,7 +149,7 @@
     @case ('candidaturas') {
       <table>
         <caption>{{ legenda() || 'Candidaturas' }}</caption>
-        <thead><tr><th scope="col">Eleição</th><th scope="col">Cargo</th><th scope="col">UF</th><th scope="col">Partido</th><th scope="col">Resultado</th><th scope="col">Bens declarados (total)</th><th scope="col">Plano de governo</th></tr></thead>
+        <thead><tr><th scope="col">Eleição</th><th scope="col">Cargo</th><th scope="col">UF</th><th scope="col">Partido</th><th scope="col">Situação da candidatura</th><th scope="col">Resultado</th><th scope="col">Bens declarados (total)</th><th scope="col">Plano de governo</th></tr></thead>
         <tbody>
           @for (r of registros(); track $index) {
             <tr>
@@ -157,6 +157,7 @@
               <td>{{ r['cargo'] }}</td>
               <td>{{ texto(r['ente']) }}</td>
               <td>{{ texto(r['partido']) }}</td>
+              <td>{{ texto(r['situacao_candidatura']) }}</td>
               <td>{{ texto(r['resultado']) }}</td>
               <td class="numero">{{ moeda(numero(r['bens_total_declarado'])) }}</td>
               <td>

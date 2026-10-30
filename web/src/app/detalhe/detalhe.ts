@@ -41,7 +41,7 @@ export class Detalhe {
   private readonly carga = toSignal(
     this.rota.paramMap.pipe(
       switchMap((p) => {
-        const caminho = `politicos/${p.get('id')}/${p.get('bloco')}-${p.get('ano')}.json`;
+        const caminho = `politicos/${p.get('id')}/${p.get('bloco')}-${p.get('ano')}.json.gz`;
         return this.dados.detalhe(caminho).pipe(catchError(() => of('erro' as const)));
       }),
     ),

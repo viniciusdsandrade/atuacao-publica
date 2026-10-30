@@ -1,7 +1,7 @@
 import { Component, input } from '@angular/core';
 
 import { Registro } from '../modelo';
-import { data, moeda, SEM_REGISTRO } from '../rotulos';
+import { data, moeda, rotuloCargo, SEM_REGISTRO } from '../rotulos';
 
 /** Tabela de registros de um bloco. Usada no perfil (mais recentes) e no detalhe anual (todos). */
 @Component({
@@ -15,6 +15,7 @@ export class Tabela {
 
   protected readonly data = data;
   protected readonly moeda = moeda;
+  protected readonly rotuloCargo = rotuloCargo;
   protected readonly semRegistro = SEM_REGISTRO;
 
   protected texto(valor: unknown): string {
