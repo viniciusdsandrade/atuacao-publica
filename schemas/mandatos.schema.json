@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Regras de mandato por cargo e eleição (contrib/mandatos.yaml)",
+  "description": "Datas de início e fim de mandato que as fontes eleitorais não publicam. Cada regra cita o texto legal com snapshot.",
+  "type": "array",
+  "minItems": 1,
+  "items": {
+    "type": "object",
+    "allOf": [{ "$ref": "comum.schema.json#/$defs/proveniencia_manual" }],
+    "required": ["cargo", "eleicao", "inicio", "fim", "texto_oficial"],
+    "properties": {
+      "cargo": { "enum": ["presidente", "governador"] },
+      "eleicao": { "type": "integer", "minimum": 1990 },
+      "inicio": { "$ref": "comum.schema.json#/$defs/data" },
+      "fim": { "$ref": "comum.schema.json#/$defs/data" },
+      "texto_oficial": { "type": "string", "minLength": 1, "maxLength": 2000 }
+    },
+    "unevaluatedProperties": false
+  }
+}

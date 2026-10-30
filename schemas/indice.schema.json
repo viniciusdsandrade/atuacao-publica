@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Índice de busca (index.json)",
+  "type": "object",
+  "required": ["gerado_em", "total", "politicos", "aliases"],
+  "properties": {
+    "gerado_em": { "$ref": "comum.schema.json#/$defs/instante" },
+    "total": { "$ref": "comum.schema.json#/$defs/contagem" },
+    "politicos": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "nome", "cargo", "esfera", "ente", "uf", "partido", "foto_url", "ids_externos"],
+        "properties": {
+          "id": { "$ref": "comum.schema.json#/$defs/politico_id" },
+          "nome": { "$ref": "comum.schema.json#/$defs/texto" },
+          "cargo": { "$ref": "comum.schema.json#/$defs/cargo" },
+          "esfera": { "$ref": "comum.schema.json#/$defs/esfera" },
+          "ente": { "$ref": "comum.schema.json#/$defs/ente" },
+          "uf": { "anyOf": [{ "$ref": "comum.schema.json#/$defs/uf" }, { "type": "null" }] },
+          "partido": { "$ref": "comum.schema.json#/$defs/texto_ou_nulo" },
+          "foto_url": { "$ref": "comum.schema.json#/$defs/url_ou_nulo" },
+          "ids_externos": { "$ref": "politico.schema.json#/$defs/ids_externos" }
+        },
+        "additionalProperties": false
+      }
+    },
+    "aliases": {
+      "description": "Identificador antigo para identificador vigente, após fusão de perfis.",
+      "type": "object",
+      "additionalProperties": { "$ref": "comum.schema.json#/$defs/politico_id" }
+    }
+  },
+  "additionalProperties": false
+}

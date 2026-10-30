@@ -1,0 +1,168 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Perfil publicado (politicos/{id}.json)",
+  "type": "object",
+  "required": ["id", "nome", "cargo_atual", "esfera", "ente", "uf", "partido_atual", "foto_url", "ids_externos", "links_oficiais", "atualizado_em", "blocos"],
+  "properties": {
+    "id": { "$ref": "comum.schema.json#/$defs/politico_id" },
+    "nome": { "description": "Nome parlamentar ou nome de urna.", "$ref": "comum.schema.json#/$defs/texto" },
+    "cargo_atual": { "$ref": "comum.schema.json#/$defs/cargo" },
+    "esfera": { "$ref": "comum.schema.json#/$defs/esfera" },
+    "ente": { "$ref": "comum.schema.json#/$defs/ente" },
+    "uf": { "anyOf": [{ "$ref": "comum.schema.json#/$defs/uf" }, { "type": "null" }] },
+    "partido_atual": { "$ref": "comum.schema.json#/$defs/texto_ou_nulo" },
+    "situacao": { "$ref": "comum.schema.json#/$defs/texto_ou_nulo" },
+    "foto_url": { "$ref": "comum.schema.json#/$defs/url_ou_nulo" },
+    "ids_externos": { "$ref": "#/$defs/ids_externos" },
+    "links_oficiais": {
+      "type": "array",
+      "items": { "$ref": "registros.schema.json#/$defs/link_oficial" }
+    },
+    "atualizado_em": { "$ref": "comum.schema.json#/$defs/instante" },
+    "blocos": {
+      "type": "object",
+      "properties": {
+        "mandatos": { "$ref": "#/$defs/bloco_mandatos" },
+        "participacao_votacoes": { "$ref": "#/$defs/bloco_participacao" },
+        "votos": { "$ref": "#/$defs/bloco_votos" },
+        "despesas": { "$ref": "#/$defs/bloco_despesas" },
+        "proposicoes": { "$ref": "#/$defs/bloco_proposicoes" },
+        "discursos": { "$ref": "#/$defs/bloco_discursos" },
+        "eventos": { "$ref": "#/$defs/bloco_eventos" },
+        "orgaos_e_frentes": { "$ref": "#/$defs/bloco_orgaos" },
+        "candidaturas": { "$ref": "#/$defs/bloco_candidaturas" },
+        "posicionamentos_declarados": { "$ref": "#/$defs/bloco_posicionamentos" },
+        "agenda_oficial": { "$ref": "#/$defs/bloco_agenda" },
+        "atos_normativos": { "$ref": "#/$defs/bloco_atos" }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "ids_externos": {
+      "type": "object",
+      "properties": {
+        "camara": { "type": "string", "pattern": "^[0-9]+$" },
+        "senado": { "type": "string", "pattern": "^[0-9]+$" },
+        "tse": {
+          "description": "SQ_CANDIDATO por ano de eleição.",
+          "type": "object",
+          "patternProperties": { "^[0-9]{4}$": { "type": "string", "pattern": "^[0-9]+$" } },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "bloco_base": {
+      "type": "object",
+      "required": ["fontes", "atualizado_em", "desatualizado", "total"],
+      "properties": {
+        "fontes": {
+          "type": "array",
+          "items": { "$ref": "comum.schema.json#/$defs/fonte_usada" }
+        },
+        "atualizado_em": {
+          "description": "Data de captura mais recente entre as fontes do bloco.",
+          "anyOf": [{ "$ref": "comum.schema.json#/$defs/instante" }, { "type": "null" }]
+        },
+        "desatualizado": { "description": "true quando a última coleta de uma fonte do bloco falhou.", "type": "boolean" },
+        "total": { "$ref": "comum.schema.json#/$defs/contagem" },
+        "por_tipo": {
+          "type": "object",
+          "additionalProperties": { "$ref": "comum.schema.json#/$defs/contagem" }
+        },
+        "arquivos": {
+          "description": "Detalhe anual em arquivo separado.",
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["ano", "caminho", "total"],
+            "properties": {
+              "ano": { "type": "integer" },
+              "caminho": { "type": "string", "pattern": "^politicos/[a-z]{2,10}-[0-9A-Za-z]+/[a-z_]+-[0-9]{4}\\.json$" },
+              "total": { "$ref": "comum.schema.json#/$defs/contagem" }
+            },
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "bloco_mandatos": {
+      "allOf": [{ "$ref": "#/$defs/bloco_base" }],
+      "required": ["registros"],
+      "properties": { "registros": { "type": "array", "items": { "$ref": "registros.schema.json#/$defs/mandato" } } },
+      "unevaluatedProperties": false
+    },
+    "bloco_participacao": {
+      "allOf": [{ "$ref": "#/$defs/bloco_base" }],
+      "required": ["registros"],
+      "properties": { "registros": { "type": "array", "items": { "$ref": "registros.schema.json#/$defs/participacao_votacao" } } },
+      "unevaluatedProperties": false
+    },
+    "bloco_votos": {
+      "allOf": [{ "$ref": "#/$defs/bloco_base" }],
+      "required": ["recentes"],
+      "properties": { "recentes": { "type": "array", "items": { "$ref": "registros.schema.json#/$defs/voto" } } },
+      "unevaluatedProperties": false
+    },
+    "bloco_despesas": {
+      "allOf": [{ "$ref": "#/$defs/bloco_base" }],
+      "required": ["valor_total", "por_mes", "por_categoria"],
+      "properties": {
+        "valor_total": { "$ref": "comum.schema.json#/$defs/valor" },
+        "por_mes": { "type": "array", "items": { "$ref": "registros.schema.json#/$defs/despesa_agregada" } },
+        "por_categoria": { "type": "array", "items": { "$ref": "registros.schema.json#/$defs/despesa_agregada" } }
+      },
+      "unevaluatedProperties": false
+    },
+    "bloco_proposicoes": {
+      "allOf": [{ "$ref": "#/$defs/bloco_base" }],
+      "required": ["recentes"],
+      "properties": { "recentes": { "type": "array", "items": { "$ref": "registros.schema.json#/$defs/proposicao" } } },
+      "unevaluatedProperties": false
+    },
+    "bloco_discursos": {
+      "allOf": [{ "$ref": "#/$defs/bloco_base" }],
+      "required": ["recentes"],
+      "properties": { "recentes": { "type": "array", "items": { "$ref": "registros.schema.json#/$defs/discurso" } } },
+      "unevaluatedProperties": false
+    },
+    "bloco_eventos": {
+      "allOf": [{ "$ref": "#/$defs/bloco_base" }],
+      "required": ["recentes"],
+      "properties": { "recentes": { "type": "array", "items": { "$ref": "registros.schema.json#/$defs/evento" } } },
+      "unevaluatedProperties": false
+    },
+    "bloco_orgaos": {
+      "allOf": [{ "$ref": "#/$defs/bloco_base" }],
+      "required": ["registros"],
+      "properties": { "registros": { "type": "array", "items": { "$ref": "registros.schema.json#/$defs/orgao_ou_frente" } } },
+      "unevaluatedProperties": false
+    },
+    "bloco_candidaturas": {
+      "allOf": [{ "$ref": "#/$defs/bloco_base" }],
+      "required": ["registros"],
+      "properties": { "registros": { "type": "array", "items": { "$ref": "registros.schema.json#/$defs/candidatura" } } },
+      "unevaluatedProperties": false
+    },
+    "bloco_posicionamentos": {
+      "allOf": [{ "$ref": "#/$defs/bloco_base" }],
+      "required": ["registros"],
+      "properties": { "registros": { "type": "array", "items": { "$ref": "registros.schema.json#/$defs/posicionamento_declarado" } } },
+      "unevaluatedProperties": false
+    },
+    "bloco_agenda": {
+      "allOf": [{ "$ref": "#/$defs/bloco_base" }],
+      "required": ["recentes"],
+      "properties": { "recentes": { "type": "array", "items": { "$ref": "registros.schema.json#/$defs/agenda_oficial" } } },
+      "unevaluatedProperties": false
+    },
+    "bloco_atos": {
+      "allOf": [{ "$ref": "#/$defs/bloco_base" }],
+      "required": ["recentes"],
+      "properties": { "recentes": { "type": "array", "items": { "$ref": "registros.schema.json#/$defs/ato_normativo" } } },
+      "unevaluatedProperties": false
+    }
+  }
+}

@@ -1,0 +1,241 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Registros tipados",
+  "description": "Todo registro tem fonte_id, url_origem e capturado_em (ADR-0002).",
+  "$defs": {
+    "mandato": {
+      "type": "object",
+      "allOf": [{ "$ref": "comum.schema.json#/$defs/proveniencia" }],
+      "required": ["cargo", "esfera", "ente", "inicio", "fim", "situacao"],
+      "properties": {
+        "cargo": { "$ref": "comum.schema.json#/$defs/cargo" },
+        "esfera": { "$ref": "comum.schema.json#/$defs/esfera" },
+        "ente": { "$ref": "comum.schema.json#/$defs/ente" },
+        "uf": { "anyOf": [{ "$ref": "comum.schema.json#/$defs/uf" }, { "type": "null" }] },
+        "inicio": { "$ref": "comum.schema.json#/$defs/data_ou_nulo" },
+        "fim": { "$ref": "comum.schema.json#/$defs/data_ou_nulo" },
+        "situacao": { "$ref": "comum.schema.json#/$defs/texto_ou_nulo" },
+        "condicao": { "$ref": "comum.schema.json#/$defs/texto_ou_nulo" },
+        "legislatura": { "type": ["integer", "null"] },
+        "eleicao": { "type": ["integer", "null"] },
+        "texto_oficial": { "$ref": "comum.schema.json#/$defs/texto_ou_nulo" }
+      },
+      "unevaluatedProperties": false
+    },
+    "voto": {
+      "type": "object",
+      "allOf": [{ "$ref": "comum.schema.json#/$defs/proveniencia" }],
+      "required": ["votacao_id", "data", "voto", "orientacao_partido", "orientacao_governo"],
+      "properties": {
+        "votacao_id": { "type": "string", "minLength": 1 },
+        "data": { "$ref": "comum.schema.json#/$defs/data_ou_instante" },
+        "orgao": { "$ref": "comum.schema.json#/$defs/texto_ou_nulo" },
+        "proposicao": { "$ref": "comum.schema.json#/$defs/texto_ou_nulo" },
+        "descricao": { "$ref": "comum.schema.json#/$defs/texto_ou_nulo" },
+        "voto": { "description": "Valor da fonte. null quando a fonte traz o campo vazio.", "type": ["string", "null"] },
+        "partido_na_data": { "$ref": "comum.schema.json#/$defs/texto_ou_nulo" },
+        "orientacao_partido": { "$ref": "comum.schema.json#/$defs/texto_ou_nulo" },
+        "orientacao_partido_bancada": { "$ref": "comum.schema.json#/$defs/texto_ou_nulo" },
+        "orientacao_governo": { "$ref": "comum.schema.json#/$defs/texto_ou_nulo" }
+      },
+      "unevaluatedProperties": false
+    },
+    "participacao_votacao": {
+      "type": "object",
+      "allOf": [{ "$ref": "comum.schema.json#/$defs/proveniencia" }],
+      "required": ["periodo", "votacoes_nominais", "votos_registrados", "por_tipo"],
+      "properties": {
+        "periodo": { "type": "string", "pattern": "^([0-9]{4}|legislatura-[0-9]+)$" },
+        "votacoes_nominais": { "$ref": "comum.schema.json#/$defs/contagem" },
+        "votos_registrados": { "$ref": "comum.schema.json#/$defs/contagem" },
+        "sem_registro": { "type": ["integer", "null"], "minimum": 0 },
+        "por_tipo": {
+          "type": "object",
+          "additionalProperties": { "$ref": "comum.schema.json#/$defs/contagem" }
+        }
+      },
+      "unevaluatedProperties": false
+    },
+    "despesa": {
+      "type": "object",
+      "allOf": [{ "$ref": "comum.schema.json#/$defs/proveniencia" }],
+      "required": ["ano", "mes", "categoria", "fornecedor_nome", "fornecedor_cnpj", "valor"],
+      "properties": {
+        "data": { "$ref": "comum.schema.json#/$defs/data_ou_nulo" },
+        "ano": { "type": "integer", "minimum": 2000 },
+        "mes": { "type": "integer", "minimum": 1, "maximum": 12 },
+        "categoria": { "$ref": "comum.schema.json#/$defs/texto" },
+        "fornecedor_nome": { "$ref": "comum.schema.json#/$defs/texto_ou_nulo" },
+        "fornecedor_cnpj": { "anyOf": [{ "type": "string", "pattern": "^[0-9]{14}$" }, { "type": "null" }] },
+        "valor": { "$ref": "comum.schema.json#/$defs/valor" },
+        "documento_numero": { "$ref": "comum.schema.json#/$defs/texto_ou_nulo" },
+        "documento_url": { "$ref": "comum.schema.json#/$defs/url_ou_nulo" }
+      },
+      "unevaluatedProperties": false
+    },
+    "despesa_agregada": {
+      "type": "object",
+      "allOf": [{ "$ref": "comum.schema.json#/$defs/proveniencia" }],
+      "required": ["ano", "valor", "quantidade"],
+      "properties": {
+        "ano": { "type": "integer", "minimum": 2000 },
+        "mes": { "type": ["integer", "null"], "minimum": 1, "maximum": 12 },
+        "categoria": { "$ref": "comum.schema.json#/$defs/texto_ou_nulo" },
+        "valor": { "$ref": "comum.schema.json#/$defs/valor" },
+        "quantidade": { "$ref": "comum.schema.json#/$defs/contagem" }
+      },
+      "unevaluatedProperties": false
+    },
+    "proposicao": {
+      "type": "object",
+      "allOf": [{ "$ref": "comum.schema.json#/$defs/proveniencia" }],
+      "required": ["id_fonte", "identificacao", "ementa", "situacao", "temas"],
+      "properties": {
+        "id_fonte": { "type": "string", "minLength": 1 },
+        "tipo": { "$ref": "comum.schema.json#/$defs/texto_ou_nulo" },
+        "numero": { "type": ["integer", "null"] },
+        "ano": { "type": ["integer", "null"] },
+        "identificacao": { "$ref": "comum.schema.json#/$defs/texto" },
+        "ementa": { "$ref": "comum.schema.json#/$defs/texto_ou_nulo" },
+        "situacao": { "$ref": "comum.schema.json#/$defs/texto_ou_nulo" },
+        "temas": {
+          "description": "Temas oficiais. null quando a fonte não informa temas.",
+          "anyOf": [{ "type": "array", "items": { "type": "string" } }, { "type": "null" }]
+        },
+        "data_apresentacao": {
+          "anyOf": [{ "$ref": "comum.schema.json#/$defs/data_ou_instante" }, { "type": "null" }]
+        },
+        "ordem_assinatura": { "type": ["integer", "null"] },
+        "proponente": { "type": ["boolean", "null"] },
+        "url_texto": { "$ref": "comum.schema.json#/$defs/url_ou_nulo" }
+      },
+      "unevaluatedProperties": false
+    },
+    "discurso": {
+      "type": "object",
+      "allOf": [{ "$ref": "comum.schema.json#/$defs/proveniencia" }],
+      "required": ["data", "tipo", "resumo", "transcricao_url"],
+      "properties": {
+        "data": { "$ref": "comum.schema.json#/$defs/data_ou_instante" },
+        "tipo": { "$ref": "comum.schema.json#/$defs/texto_ou_nulo" },
+        "fase": { "$ref": "comum.schema.json#/$defs/texto_ou_nulo" },
+        "resumo": { "$ref": "comum.schema.json#/$defs/texto_ou_nulo" },
+        "transcricao_url": { "$ref": "comum.schema.json#/$defs/url_ou_nulo" }
+      },
+      "unevaluatedProperties": false
+    },
+    "evento": {
+      "type": "object",
+      "allOf": [{ "$ref": "comum.schema.json#/$defs/proveniencia" }],
+      "required": ["id_fonte", "data", "tipo", "titulo", "orgao", "presenca"],
+      "properties": {
+        "id_fonte": { "type": "string", "minLength": 1 },
+        "data": { "$ref": "comum.schema.json#/$defs/data_ou_instante" },
+        "tipo": { "$ref": "comum.schema.json#/$defs/texto_ou_nulo" },
+        "titulo": { "$ref": "comum.schema.json#/$defs/texto_ou_nulo" },
+        "orgao": { "$ref": "comum.schema.json#/$defs/texto_ou_nulo" },
+        "situacao": { "$ref": "comum.schema.json#/$defs/texto_ou_nulo" },
+        "presenca": { "description": "registrada quando a fonte lista o parlamentar como presente.", "enum": ["registrada", null] }
+      },
+      "unevaluatedProperties": false
+    },
+    "orgao_ou_frente": {
+      "type": "object",
+      "allOf": [{ "$ref": "comum.schema.json#/$defs/proveniencia" }],
+      "required": ["tipo", "nome", "papel", "inicio", "fim"],
+      "properties": {
+        "tipo": { "enum": ["orgao", "comissao", "frente"] },
+        "nome": { "$ref": "comum.schema.json#/$defs/texto" },
+        "sigla": { "$ref": "comum.schema.json#/$defs/texto_ou_nulo" },
+        "papel": { "$ref": "comum.schema.json#/$defs/texto_ou_nulo" },
+        "inicio": { "$ref": "comum.schema.json#/$defs/data_ou_nulo" },
+        "fim": { "$ref": "comum.schema.json#/$defs/data_ou_nulo" }
+      },
+      "unevaluatedProperties": false
+    },
+    "candidatura": {
+      "type": "object",
+      "allOf": [{ "$ref": "comum.schema.json#/$defs/proveniencia" }],
+      "required": ["eleicao", "turno", "cargo", "resultado", "bens_total_declarado"],
+      "properties": {
+        "eleicao": { "type": "integer", "minimum": 1990 },
+        "turno": { "type": "integer", "minimum": 1, "maximum": 2 },
+        "cargo": { "$ref": "comum.schema.json#/$defs/texto" },
+        "ente": { "anyOf": [{ "$ref": "comum.schema.json#/$defs/ente" }, { "type": "null" }] },
+        "nome_urna": { "$ref": "comum.schema.json#/$defs/texto_ou_nulo" },
+        "partido": { "$ref": "comum.schema.json#/$defs/texto_ou_nulo" },
+        "numero": { "$ref": "comum.schema.json#/$defs/texto_ou_nulo" },
+        "situacao_candidatura": { "$ref": "comum.schema.json#/$defs/texto_ou_nulo" },
+        "resultado": { "$ref": "comum.schema.json#/$defs/texto_ou_nulo" },
+        "bens_total_declarado": { "type": ["number", "null"] },
+        "plano_de_governo_url": { "$ref": "comum.schema.json#/$defs/url_ou_nulo" },
+        "plano_de_governo_arquivo": { "$ref": "comum.schema.json#/$defs/texto_ou_nulo" }
+      },
+      "unevaluatedProperties": false
+    },
+    "posicionamento_declarado": {
+      "type": "object",
+      "allOf": [
+        { "$ref": "comum.schema.json#/$defs/proveniencia_manual" },
+        { "$ref": "#/$defs/texto_ou_resumo" }
+      ],
+      "required": ["categoria", "data", "nivel_fonte", "rotulo"],
+      "properties": {
+        "categoria": { "enum": ["posicionamento", "proposta", "fala_oficial"] },
+        "data": { "$ref": "comum.schema.json#/$defs/data" },
+        "nivel_fonte": { "enum": ["T0", "T1", "T2"] },
+        "rotulo": { "description": "Em fonte T1: declaração do próprio político.", "$ref": "comum.schema.json#/$defs/texto_ou_nulo" }
+      },
+      "unevaluatedProperties": false
+    },
+    "agenda_oficial": {
+      "type": "object",
+      "allOf": [
+        { "$ref": "comum.schema.json#/$defs/proveniencia_manual" },
+        { "$ref": "#/$defs/texto_ou_resumo" }
+      ],
+      "required": ["data"],
+      "properties": {
+        "data": { "$ref": "comum.schema.json#/$defs/data" },
+        "hora": { "anyOf": [{ "type": "string", "pattern": "^[0-2][0-9]:[0-5][0-9]$" }, { "type": "null" }] },
+        "local": { "$ref": "comum.schema.json#/$defs/texto_ou_nulo" }
+      },
+      "unevaluatedProperties": false
+    },
+    "ato_normativo": {
+      "type": "object",
+      "allOf": [{ "$ref": "comum.schema.json#/$defs/proveniencia" }],
+      "required": ["id_fonte", "tipo", "numero", "data", "ementa"],
+      "properties": {
+        "id_fonte": { "type": "string", "minLength": 1 },
+        "tipo": { "enum": ["LEI", "LCP", "MPV", "DEC", "VET"] },
+        "numero": { "$ref": "comum.schema.json#/$defs/texto_ou_nulo" },
+        "data": { "$ref": "comum.schema.json#/$defs/data_ou_nulo" },
+        "nome": { "$ref": "comum.schema.json#/$defs/texto_ou_nulo" },
+        "ementa": { "$ref": "comum.schema.json#/$defs/texto_ou_nulo" }
+      },
+      "unevaluatedProperties": false
+    },
+    "link_oficial": {
+      "type": "object",
+      "allOf": [{ "$ref": "comum.schema.json#/$defs/proveniencia" }],
+      "required": ["rotulo", "url"],
+      "properties": {
+        "rotulo": { "type": "string", "minLength": 1, "maxLength": 120 },
+        "url": { "$ref": "comum.schema.json#/$defs/url" }
+      },
+      "unevaluatedProperties": false
+    },
+    "texto_ou_resumo": {
+      "description": "Texto literal da fonte ou resumo factual de até 300 caracteres. Pelo menos um dos dois.",
+      "properties": {
+        "texto_oficial": { "$ref": "comum.schema.json#/$defs/texto_ou_nulo" },
+        "resumo_factual": { "anyOf": [{ "type": "string", "minLength": 1, "maxLength": 300 }, { "type": "null" }] }
+      },
+      "anyOf": [
+        { "required": ["texto_oficial"], "properties": { "texto_oficial": { "type": "string" } } },
+        { "required": ["resumo_factual"], "properties": { "resumo_factual": { "type": "string" } } }
+      ]
+    }
+  }
+}

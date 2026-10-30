@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Relatório de execução (_meta/execucao.json)",
+  "type": "object",
+  "required": ["projeto", "iniciado_em", "terminado_em", "fontes", "publicados", "rejeitados"],
+  "properties": {
+    "projeto": {
+      "type": "object",
+      "required": ["nome", "versao", "repositorio_url"],
+      "properties": {
+        "nome": { "type": "string" },
+        "versao": { "type": "string" },
+        "repositorio_url": { "$ref": "comum.schema.json#/$defs/url_ou_nulo" }
+      },
+      "additionalProperties": false
+    },
+    "iniciado_em": { "$ref": "comum.schema.json#/$defs/instante" },
+    "terminado_em": { "$ref": "comum.schema.json#/$defs/instante" },
+    "fontes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["fonte", "status", "ultima_coleta_ok", "mensagem"],
+        "properties": {
+          "fonte": { "type": "string", "pattern": "^[a-z]+$" },
+          "status": { "enum": ["ok", "parcial", "falha", "nao_executada"] },
+          "ultima_coleta_ok": { "anyOf": [{ "$ref": "comum.schema.json#/$defs/instante" }, { "type": "null" }] },
+          "mensagem": { "type": ["string", "null"] }
+        },
+        "additionalProperties": false
+      }
+    },
+    "publicados": { "$ref": "comum.schema.json#/$defs/contagem" },
+    "rejeitados": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["arquivo", "motivo"],
+        "properties": {
+          "arquivo": { "type": "string" },
+          "motivo": { "type": "string" }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

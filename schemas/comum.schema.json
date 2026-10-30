@@ -1,0 +1,98 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Definições comuns",
+  "$defs": {
+    "data": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+    },
+    "data_ou_nulo": {
+      "anyOf": [{ "$ref": "#/$defs/data" }, { "type": "null" }]
+    },
+    "instante": {
+      "description": "Instante em UTC, ISO 8601.",
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$"
+    },
+    "data_ou_instante": {
+      "description": "Data, ou data e hora como a fonte informa (sem fuso quando a fonte não informa).",
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}(T[0-9]{2}:[0-9]{2}(:[0-9]{2})?Z?)?$"
+    },
+    "url": {
+      "type": "string",
+      "pattern": "^https?://[^\\s]+$",
+      "maxLength": 2048
+    },
+    "url_ou_nulo": {
+      "anyOf": [{ "$ref": "#/$defs/url" }, { "type": "null" }]
+    },
+    "snapshot_url": {
+      "description": "Snapshot arquivado no Wayback Machine ou no archive.today.",
+      "type": "string",
+      "pattern": "^https://(web\\.archive\\.org/web/[0-9]{4,14}[a-z_]*/|archive\\.(today|ph|is|li|vn|fo|md)/)[^\\s]+$"
+    },
+    "fonte_id": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+      "maxLength": 64
+    },
+    "politico_id": {
+      "description": "Prefixo da fonte do primeiro identificador oficial e o identificador (ADR-0002).",
+      "type": "string",
+      "pattern": "^[a-z]{2,10}-[0-9A-Za-z]{1,32}$"
+    },
+    "esfera": { "enum": ["federal", "estadual", "municipal"] },
+    "cargo": { "enum": ["presidente", "governador", "deputado_federal", "senador"] },
+    "uf": {
+      "enum": ["AC", "AL", "AM", "AP", "BA", "CE", "DF", "ES", "GO", "MA", "MG", "MS", "MT", "PA", "PB", "PE", "PI", "PR", "RJ", "RN", "RO", "RR", "RS", "SC", "SE", "SP", "TO"]
+    },
+    "ente": {
+      "description": "BR, sigla da UF ou código IBGE do município.",
+      "type": "string",
+      "pattern": "^(BR|[A-Z]{2}|[0-9]{7})$"
+    },
+    "texto": { "type": "string", "minLength": 1, "maxLength": 20000 },
+    "texto_ou_nulo": {
+      "anyOf": [{ "$ref": "#/$defs/texto" }, { "type": "null" }]
+    },
+    "valor": {
+      "description": "Valor em reais.",
+      "type": "number"
+    },
+    "contagem": { "type": "integer", "minimum": 0 },
+    "contribuidor": {
+      "description": "Login do GitHub.",
+      "type": "string",
+      "pattern": "^[A-Za-z0-9](-?[A-Za-z0-9]){0,38}$"
+    },
+    "proveniencia": {
+      "description": "Campos obrigatórios de todo registro publicado. Registro manual traz também snapshot e contribuidor.",
+      "type": "object",
+      "required": ["fonte_id", "url_origem", "capturado_em"],
+      "properties": {
+        "fonte_id": { "$ref": "#/$defs/fonte_id" },
+        "url_origem": { "$ref": "#/$defs/url" },
+        "capturado_em": { "$ref": "#/$defs/instante" },
+        "snapshot_url": { "$ref": "#/$defs/snapshot_url" },
+        "contribuidor": { "$ref": "#/$defs/contribuidor" }
+      }
+    },
+    "proveniencia_manual": {
+      "description": "Proveniência de registro manual (contribuição).",
+      "allOf": [{ "$ref": "#/$defs/proveniencia" }],
+      "required": ["snapshot_url", "contribuidor"]
+    },
+    "fonte_usada": {
+      "description": "Arquivo ou endpoint de onde saíram os registros de um bloco.",
+      "type": "object",
+      "required": ["fonte_id", "url_origem", "capturado_em"],
+      "properties": {
+        "fonte_id": { "$ref": "#/$defs/fonte_id" },
+        "url_origem": { "$ref": "#/$defs/url" },
+        "capturado_em": { "$ref": "#/$defs/instante" }
+      },
+      "additionalProperties": false
+    }
+  }
+}

@@ -1,0 +1,37 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Catálogo de fontes (contrib/fontes.yaml e fontes.json)",
+  "type": "array",
+  "minItems": 1,
+  "items": { "$ref": "#/$defs/fonte" },
+  "$defs": {
+    "fonte": {
+      "type": "object",
+      "required": ["id", "nome", "orgao", "esfera", "nivel_confianca", "url_base", "formato", "autenticacao", "licenca", "limitacoes", "status", "validado_em"],
+      "properties": {
+        "id": { "$ref": "comum.schema.json#/$defs/fonte_id" },
+        "nome": { "$ref": "comum.schema.json#/$defs/texto" },
+        "orgao": { "$ref": "comum.schema.json#/$defs/texto" },
+        "esfera": { "$ref": "comum.schema.json#/$defs/esfera" },
+        "ente": { "anyOf": [{ "$ref": "comum.schema.json#/$defs/ente" }, { "type": "null" }] },
+        "categoria": {
+          "description": "Uso da fonte em perfis: transparencia e diario_oficial viram links oficiais de governador.",
+          "enum": ["dados", "transparencia", "diario_oficial", "primeira_parte", "facilitador"]
+        },
+        "nivel_confianca": { "enum": ["T0", "T1", "T2"] },
+        "url_base": { "$ref": "comum.schema.json#/$defs/url" },
+        "dominio_livre": {
+          "description": "true em fonte T1 genérica (site do mandato, do partido): a url_origem não precisa estar no domínio de url_base.",
+          "type": "boolean"
+        },
+        "formato": { "$ref": "comum.schema.json#/$defs/texto" },
+        "autenticacao": { "$ref": "comum.schema.json#/$defs/texto" },
+        "licenca": { "$ref": "comum.schema.json#/$defs/texto_ou_nulo" },
+        "limitacoes": { "$ref": "comum.schema.json#/$defs/texto_ou_nulo" },
+        "status": { "enum": ["validado", "validado com limitação", "bloqueado", "não validado"] },
+        "validado_em": { "$ref": "comum.schema.json#/$defs/data_ou_nulo" }
+      },
+      "additionalProperties": false
+    }
+  }
+}
