@@ -9,20 +9,31 @@ Estado real de cada fase. Atualizado ao fechar cada fase.
 | 0 | Reconhecimento das fontes, `docs/FONTES.md`, ADR-0001 e ADR-0002 | concluída |
 | 1 | Esqueleto do monorepo, documentos, templates, CI | concluída: CI verde no GitHub Actions |
 | 2 | JSON Schemas do modelo e de `contrib/`, exemplos, validação | concluída: 10 schemas, 32 exemplos, `normalize contrib` no CI |
-| 3 | ETL da Câmara | pendente |
-| 4 | ETL do Senado | pendente |
-| 5 | Executivo e TSE | pendente |
-| 6 | Site | pendente |
-| 7 | Pipeline agendado, deploy, relatório de execução | pendente |
-| 8 | Contribuição de ponta a ponta | pendente |
+| 3 | ETL da Câmara | concluída: 513 deputados; votos, participação, despesas, proposições, discursos, eventos, órgãos e frentes |
+| 4 | ETL do Senado | concluída: 81 senadores; votos, participação, CEAPS, autorias, discursos, comissões |
+| 5 | Executivo e TSE | concluída: candidaturas de 2018, 2022 e 2026; Presidente e 27 governadores; 3.317 atos normativos |
+| 6 | Site | concluída: lista com busca e filtros, perfil com proveniência por bloco, detalhe anual, Metodologia, Fontes e Contribuir |
+| 7 | Pipeline agendado, deploy, relatório de execução | concluída: workflow `dados` verificado no GitHub Actions, com as quatro fontes coletadas e 622 perfis publicados; agendamento e deploy dependem de ativação pelo mantenedor |
+| 8 | Contribuição de ponta a ponta | concluída: registro real de agenda oficial validado no CI do pull request #1 e integrado após revisão humana |
 
 ## Limitações conhecidas
 
 - `/deputados/{id}/despesas` da Câmara responde vazio. O ETL usa o arquivo anual de cotas.
+- `/deputados/{id}/frentes` respondeu 504 seguidamente em 2026-10-30. O ETL manteve a cópia da coleta anterior e marcou a fonte como parcial (ADR-0005).
+- Em 2026-10-30, entre 12:40 e 15:10 UTC, a API da Câmara respondeu 504 a boa parte das requisições. Com o cache vazio, a coleta da Câmara falha nesses períodos. Com o cache preenchido, os blocos usam a cópia anterior e ficam marcados como desatualizados. A execução diária, quando ativada, roda às 06:17 UTC.
 - DivulgaCandContas bloqueia o User-Agent do projeto. O ETL usa os arquivos do TSE.
-- A agenda presidencial existe só em HTML. Ela entra por contribuição manual.
+- A agenda presidencial existe só em HTML e iCalendar por compromisso. Ela entra por contribuição manual.
 - O e-Agendas não traz a Presidência da República.
 - O Planalto recusou conexão a partir do ambiente de validação. Os atos normativos vêm da API do Senado.
+- A listagem de autorias do Senado (`/processo`) não traz temas.
+- O Senado não publica presença em evento equivalente à da Câmara.
+- O TSE registra a eleição, não o exercício do cargo. Renúncia ou sucessão de governador entra por contribuição com fonte T0.
+- Planos de governo: só das eleições de 2022 e 2026.
+- O site não embute fotos oficiais, para não gerar requisição do navegador do visitante a terceiros.
+
+## Ativação pendente (decisão do mantenedor)
+
+- Pages e execução diária: passos em `docs/MAINTAINER_CHECKLIST.md`. Nada é publicado até essa ativação.
 
 ## Fase 2 (depois da POC)
 
