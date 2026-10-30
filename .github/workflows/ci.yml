@@ -52,9 +52,14 @@ jobs:
           distribution: temurin
           java-version: '25'
           cache: maven
-      - name: build e testes
+      - name: build e testes (inclui exemplos dos schemas)
         working-directory: etl
         run: ./mvnw -B -ntp verify
+      - name: valida contrib (schema, allowlist, domínio, dado pessoal)
+        run: java -jar etl/target/etl.jar normalize contrib
+      - name: confere URLs de contrib
+        if: github.event_name == 'pull_request'
+        run: java -jar etl/target/etl.jar fetch contrib
 
   web:
     name: web (build)
