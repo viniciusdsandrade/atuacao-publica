@@ -10,6 +10,9 @@ As fontes estão descritas em `docs/FONTES.md`.
 - **Ausência.** Campo sem valor na fonte é `null` no JSON e "sem registro na fonte" na tela.
 - **Datas.** ISO 8601. Instantes de captura em UTC.
 - **Atualização.** Cada bloco do perfil mostra a data de captura. Quando a última coleta de uma fonte falha, o bloco mostra o aviso "fonte desatualizada" e mantém o último dado válido.
+- **Coleta parcial.** Se um arquivo não puder ser atualizado e existir cópia de coleta anterior, o ETL usa a cópia, com a data de captura original. A fonte fica com status `parcial`, e o bloco mostra o aviso. Depois de 3 falhas seguidas no mesmo tipo de arquivo, o ETL não tenta de novo naquela execução.
+- **URL de origem.** Cada registro aponta para o recurso na fonte oficial (por exemplo, a votação na API da Câmara). Quando o dado saiu de um arquivo anual em massa, o arquivo aparece na lista de fontes do bloco, com hash e data de captura em `_meta/{fonte}.json`.
+- **Fotos.** O site não embute a foto oficial: carregar a imagem faria o navegador do visitante chamar o servidor da fonte. O perfil traz o link para a foto.
 
 ## Participação em votações nominais
 
@@ -26,7 +29,7 @@ Não é presença. É a contagem de votos registrados em votações nominais.
 
 ### Senado
 
-1. Universo: votações de `/votacao` em que o senador aparece em `votos[]`. O Senado lista todos os senadores, inclusive ausentes.
+1. Universo: votações de `/votacao` em que o senador aparece em `votos[]`, nas sessões do Senado (`casaSessao = SF`) e do Congresso (`CN`). O Senado lista todos os senadores, inclusive ausentes. A coluna "órgão" dos votos mostra `SF` ou `CN`.
 2. `votos_registrados`: votos `Sim`, `Não`, `Abstenção`, `Obstrução` ou `Votou` (votação secreta).
 3. `por_tipo`: contagem de cada sigla da fonte, como `AP` (atividade parlamentar), `LS` (licença saúde), `NCom` (não compareceu), `P-NRV` (presente sem registrar voto) e `Presidente (art. 51 RISF)`.
 
@@ -94,10 +97,13 @@ Não é presença. É a contagem de votos registrados em votações nominais.
 
 ## Candidaturas
 
-- Fonte: arquivos `consulta_cand` e `bem_candidato` do TSE de 2018, 2022 e 2026.
+- Fonte: arquivos `consulta_cand` e `bem_candidato` do TSE das eleições gerais que alimentam mandatos vigentes: as dos últimos 8 anos (mandato de senador). Em 2026: 2018, 2022 e 2026. A lista de anos sai do calendário eleitoral (anos com resto 2 na divisão por 4), sem ano fixo no código.
+- Cargos lidos: Presidente, vice, governador, vice, senador, suplentes de senador e deputado federal.
 - Resultado: `DS_SIT_TOT_TURNO` do último turno disputado.
 - Bens: soma de `VR_BEM_CANDIDATO` do candidato. A descrição de cada bem não é publicada.
-- Plano de governo (Presidência e governos estaduais): arquivo PDF dentro do ZIP `proposta_governo_{ano}_{UF}.zip` do TSE. O perfil publica a URL do ZIP e o caminho do arquivo. O ETL confere o nome do arquivo no índice do ZIP.
+- Plano de governo (Presidência e governos estaduais): arquivo PDF dentro do ZIP `proposta_governo_{ano}_{UF}.zip` do TSE. O perfil publica a URL do ZIP e o caminho do arquivo. O ETL confere o nome no índice do ZIP: `{UF}/{ANO}{UF}{SQ}.pdf` em 2022 e `{UF}/{ANO}{UF}{SQ}_01.pdf` em 2026. Vale o primeiro arquivo do candidato.
+- Planos de governo: só das duas eleições mais recentes (2022 e 2026). Planos de 2018 ficam fora da POC.
+- Quando o ZIP da fonte não traz o arquivo do candidato, o campo fica "sem registro na fonte". Em 2022, 1 dos 28 eleitos para cargo executivo está nessa situação.
 - Vínculo com o perfil: CPF, em memória, para deputados. Nome civil, UF e data de nascimento, em memória, para senadores. O vínculo entre eleições usa CPF. O CPF nunca é gravado.
 
 ## Executivo

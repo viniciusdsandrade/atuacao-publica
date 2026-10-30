@@ -16,6 +16,9 @@ Tarefas pequenas, com escopo fechado. Abra uma issue antes de começar, para evi
 2. **Apelidos de partido na orientação do Senado.** Confira a tabela de apelidos (`Progressistas` = `PP`) contra os rótulos de 2023 a 2026.
 3. **Acessibilidade do site.** Rode uma auditoria de acessibilidade no navegador e corrija um problema por pull request.
 4. **Tamanho dos perfis.** Meça o maior `politicos/{id}.json` publicado e proponha um corte, se passar de 200 KB.
+5. **Fotos sem chamada a terceiros.** Espelhe as fotos oficiais no próprio site durante o `publish`, com a URL oficial como proveniência.
+6. **Temas das autorias do Senado.** Avalie buscar `/processo/{id}` só para os processos de cada senador e preencher `temas`.
+7. **Planos de governo de 2018.** Estenda a listagem dos ZIPs de propostas à eleição de 2018.
 
 ## Documentação
 

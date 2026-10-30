@@ -60,6 +60,7 @@ Os dois arquivos mudam juntos.
   - Não há endpoint de presença em sessão de plenário. Publicamos "participação em votações nominais". Nunca chamamos isso de presença.
   - Presença em evento (reunião de comissão, sessão) vem de `/eventos/{id}/deputados` e do arquivo `eventosPresencaDeputados`. A lista traz só quem esteve presente. Não traz motivo de ausência.
   - `/frentes` devolve todas as legislaturas. Filtramos `idLegislatura = 57`.
+  - Em 2026-10-30, `/deputados/{id}/frentes` respondeu 504 depois de 15 segundos, de forma repetida. O ETL usou a cópia da coleta anterior (ADR-0005).
   - O `sumario` de discurso traz entidades HTML (`&nbsp;`).
   - Dados descartados na ingestão: `cpf`, `dataNascimento`, e-mail, telefone e gabinete.
   - Redes sociais ficam para a fase 2.
