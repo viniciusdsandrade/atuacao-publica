@@ -28,3 +28,7 @@ Thumbs.db
 # Logs
 *.log
 logs/
+
+# Gerados no build do site
+web/public/docs/
+web/public/dados
