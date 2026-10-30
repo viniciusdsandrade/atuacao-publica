@@ -1,0 +1,11 @@
+{
+  "projeto": { "nome": "atuacao-publica", "versao": "0.1.0", "repositorio_url": null },
+  "iniciado_em": "2026-10-30T03:00:00Z",
+  "terminado_em": "2026-10-30T03:10:00Z",
+  "fontes": [
+    { "fonte": "camara", "status": "ok", "ultima_coleta_ok": "2026-10-30T03:00:00Z", "mensagem": null },
+    { "fonte": "senado", "status": "falha", "ultima_coleta_ok": "2026-10-29T03:00:00Z", "mensagem": "HTTP 503 em https://legis.senado.leg.br/dadosabertos/votacao" }
+  ],
+  "publicados": 622,
+  "rejeitados": [ { "arquivo": "politicos/cam-900001.json", "motivo": "registro com padrão de CPF em /blocos/despesas" } ]
+}

@@ -1,0 +1,188 @@
+{
+  "id": "cam-900001",
+  "nome": "Pessoa Exemplo Um",
+  "cargo_atual": "deputado_federal",
+  "esfera": "federal",
+  "ente": "BR",
+  "uf": "SP",
+  "partido_atual": "PARTIDO",
+  "situacao": "Exercício",
+  "foto_url": "https://www.camara.leg.br/internet/deputado/bandep/900001.jpg",
+  "ids_externos": {
+    "camara": "900001",
+    "tse": {
+      "2022": "990000000001"
+    }
+  },
+  "links_oficiais": [
+    {
+      "rotulo": "Página na Câmara dos Deputados",
+      "url": "https://www.camara.leg.br/deputados/900001",
+      "fonte_id": "camara-api",
+      "url_origem": "https://dadosabertos.camara.leg.br/api/v2/deputados/900001",
+      "capturado_em": "2026-10-30T03:00:00Z"
+    }
+  ],
+  "atualizado_em": "2026-10-30T03:10:00Z",
+  "blocos": {
+    "mandatos": {
+      "fontes": [
+        {
+          "fonte_id": "camara-arquivos",
+          "url_origem": "https://dadosabertos.camara.leg.br/arquivos/votacoesVotos/json/votacoesVotos-2026.json",
+          "capturado_em": "2026-10-30T03:00:00Z"
+        }
+      ],
+      "atualizado_em": "2026-10-30T03:00:00Z",
+      "desatualizado": false,
+      "total": 1,
+      "registros": [
+        {
+          "cargo": "deputado_federal",
+          "esfera": "federal",
+          "ente": "BR",
+          "uf": "SP",
+          "inicio": "2023-02-01",
+          "fim": "2027-01-31",
+          "situacao": "Exercício",
+          "condicao": "Titular",
+          "legislatura": 57,
+          "fonte_id": "camara-arquivos",
+          "url_origem": "https://dadosabertos.camara.leg.br/arquivos/votacoesVotos/json/votacoesVotos-2026.json",
+          "capturado_em": "2026-10-30T03:00:00Z"
+        }
+      ]
+    },
+    "participacao_votacoes": {
+      "fontes": [
+        {
+          "fonte_id": "camara-arquivos",
+          "url_origem": "https://dadosabertos.camara.leg.br/arquivos/votacoesVotos/json/votacoesVotos-2026.json",
+          "capturado_em": "2026-10-30T03:00:00Z"
+        }
+      ],
+      "atualizado_em": "2026-10-30T03:00:00Z",
+      "desatualizado": false,
+      "total": 1,
+      "registros": [
+        {
+          "periodo": "2026",
+          "votacoes_nominais": 126,
+          "votos_registrados": 120,
+          "sem_registro": 4,
+          "por_tipo": {
+            "Sim": 80,
+            "Não": 38,
+            "Obstrução": 2,
+            "Artigo 17": 2
+          },
+          "fonte_id": "camara-arquivos",
+          "url_origem": "https://dadosabertos.camara.leg.br/arquivos/votacoesVotos/json/votacoesVotos-2026.json",
+          "capturado_em": "2026-10-30T03:00:00Z"
+        }
+      ]
+    },
+    "votos": {
+      "fontes": [
+        {
+          "fonte_id": "camara-arquivos",
+          "url_origem": "https://dadosabertos.camara.leg.br/arquivos/votacoesVotos/json/votacoesVotos-2026.json",
+          "capturado_em": "2026-10-30T03:00:00Z"
+        }
+      ],
+      "atualizado_em": "2026-10-30T03:00:00Z",
+      "desatualizado": false,
+      "total": 1,
+      "arquivos": [
+        {
+          "ano": 2026,
+          "caminho": "politicos/cam-900001/votos-2026.json",
+          "total": 1
+        }
+      ],
+      "recentes": [
+        {
+          "votacao_id": "9000001-10",
+          "data": "2026-06-10T14:46:15",
+          "orgao": "PLEN",
+          "proposicao": "PL 1/2026",
+          "descricao": "Aprovado o projeto.",
+          "voto": "Sim",
+          "partido_na_data": "PARTIDO",
+          "orientacao_partido": "Sim",
+          "orientacao_partido_bancada": "PARTIDO",
+          "orientacao_governo": null,
+          "fonte_id": "camara-arquivos",
+          "url_origem": "https://dadosabertos.camara.leg.br/arquivos/votacoesVotos/json/votacoesVotos-2026.json",
+          "capturado_em": "2026-10-30T03:00:00Z"
+        }
+      ]
+    },
+    "despesas": {
+      "fontes": [
+        {
+          "fonte_id": "camara-arquivos",
+          "url_origem": "https://dadosabertos.camara.leg.br/arquivos/votacoesVotos/json/votacoesVotos-2026.json",
+          "capturado_em": "2026-10-30T03:00:00Z"
+        }
+      ],
+      "atualizado_em": "2026-10-30T03:00:00Z",
+      "desatualizado": false,
+      "total": 2,
+      "valor_total": 1500.5,
+      "arquivos": [
+        {
+          "ano": 2026,
+          "caminho": "politicos/cam-900001/despesas-2026.json",
+          "total": 2
+        }
+      ],
+      "por_mes": [
+        {
+          "ano": 2026,
+          "mes": 3,
+          "categoria": null,
+          "valor": 1500.5,
+          "quantidade": 2,
+          "fonte_id": "camara-arquivos",
+          "url_origem": "https://dadosabertos.camara.leg.br/arquivos/votacoesVotos/json/votacoesVotos-2026.json",
+          "capturado_em": "2026-10-30T03:00:00Z"
+        }
+      ],
+      "por_categoria": [
+        {
+          "ano": 2026,
+          "mes": null,
+          "categoria": "COMBUSTÍVEIS E LUBRIFICANTES.",
+          "valor": 1500.5,
+          "quantidade": 2,
+          "fonte_id": "camara-arquivos",
+          "url_origem": "https://dadosabertos.camara.leg.br/arquivos/votacoesVotos/json/votacoesVotos-2026.json",
+          "capturado_em": "2026-10-30T03:00:00Z"
+        }
+      ]
+    },
+    "posicionamentos_declarados": {
+      "fontes": [],
+      "atualizado_em": null,
+      "desatualizado": false,
+      "total": 1,
+      "registros": [
+        {
+          "categoria": "proposta",
+          "data": "2026-08-16",
+          "texto_oficial": null,
+          "resumo_factual": "Publica no site do mandato a proposta de criar um programa de bolsas para estudantes de escolas públicas.",
+          "nivel_fonte": "T1",
+          "rotulo": "declaração do próprio político",
+          "fonte_id": "t1-site-mandato",
+          "url_origem": "https://exemplo.invalid/propostas",
+          "snapshot_url": "https://web.archive.org/web/20261001000000/https://exemplo.invalid/propostas",
+          "capturado_em": "2026-10-01T12:00:00Z",
+          "contribuidor": "login-exemplo"
+        }
+      ]
+    }
+  },
+  "nota": 10
+}

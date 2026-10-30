@@ -1,0 +1,12 @@
+- tipo: mandato
+  data: 2026-04-02
+  cargo: governador
+  inicio: 2023-01-01
+  fim: 2026-04-02
+  situacao: "Renúncia"
+  texto_oficial: "Texto do ato publicado no diário oficial do estado."
+  fonte_id: ac-diario-oficial
+  url_origem: https://diario.ac.gov.br/exemplo
+  snapshot_url: https://web.archive.org/web/20260402120000/https://diario.ac.gov.br/exemplo
+  capturado_em: 2026-04-02T15:00:00Z
+  contribuidor: login-exemplo

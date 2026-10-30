@@ -1,0 +1,14 @@
+- id: exemplo-t0
+  nome: Fonte oficial de exemplo
+  orgao: Órgão de exemplo
+  esfera: federal
+  ente: BR
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://exemplo.invalid/dados
+  formato: JSON
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: null
+  status: validado
+  validado_em: 2026-10-30

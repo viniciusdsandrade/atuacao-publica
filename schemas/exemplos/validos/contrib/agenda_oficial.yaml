@@ -1,0 +1,10 @@
+- tipo: agenda_oficial
+  data: 2026-10-27
+  hora: "10:00"
+  texto_oficial: "Reunião de trabalho"
+  local: "Palácio do Planalto"
+  fonte_id: planalto-agenda
+  url_origem: https://www.gov.br/planalto/pt-br/acompanhe-o-planalto/agenda-do-presidente-da-republica/2026-10-27
+  snapshot_url: https://archive.ph/exemplo
+  capturado_em: 2026-10-27T15:00:00Z
+  contribuidor: login-exemplo

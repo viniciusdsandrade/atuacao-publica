@@ -1,0 +1,9 @@
+{
+  "politico_id": "cam-900001",
+  "tipo": "despesas",
+  "ano": 2026,
+  "gerado_em": "2026-10-30T03:10:00Z",
+  "registros": [
+    { "data": "2026-03-26", "ano": 2026, "mes": 3, "categoria": "COMBUSTÍVEIS E LUBRIFICANTES.", "fornecedor_nome": "POSTO EXEMPLO LTDA", "fornecedor_cnpj": "00000000000191", "valor": 250.75, "documento_numero": "288", "documento_url": "https://www.camara.leg.br/cota-parlamentar/nota-fiscal-eletronica?ideDocumentoFiscal=9000001", "fonte_id": "camara-cotas", "url_origem": "https://www.camara.leg.br/cotas/Ano-2026.json.zip", "capturado_em": "2026-10-30T03:00:00Z" }
+  ]
+}
