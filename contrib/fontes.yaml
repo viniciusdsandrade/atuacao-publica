@@ -1,0 +1,1114 @@
+# Catálogo de fontes: allowlist de fonte_id. Detalhes de validação em docs/FONTES.md.
+# Os dois arquivos mudam juntos. Validação: java -jar etl/target/etl.jar normalize contrib
+
+- id: camara-api
+  nome: Câmara dos Deputados, API de dados abertos v2
+  orgao: Câmara dos Deputados
+  esfera: federal
+  ente: BR
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://dadosabertos.camara.leg.br/api/v2
+  formato: JSON
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "/deputados/{id}/despesas responde lista vazia; não há endpoint de presença em sessão de plenário."
+  status: validado com limitação
+  validado_em: 2026-10-30
+
+- id: camara-arquivos
+  nome: Câmara dos Deputados, arquivos anuais de dados abertos
+  orgao: Câmara dos Deputados
+  esfera: federal
+  ente: BR
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://dadosabertos.camara.leg.br/arquivos
+  formato: JSON (aceita gzip)
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Arquivos regerados diariamente. Alguns identificam deputado e proposição só pela URI."
+  status: validado
+  validado_em: 2026-10-30
+
+- id: camara-cotas
+  nome: Câmara dos Deputados, cota para o exercício da atividade parlamentar (CEAP)
+  orgao: Câmara dos Deputados
+  esfera: federal
+  ente: BR
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://www.camara.leg.br/cotas
+  formato: JSON em ZIP, um arquivo por ano
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Traz CPF do deputado, nome de passageiro e CPF de fornecedor pessoa física: descartados na ingestão."
+  status: validado
+  validado_em: 2026-10-30
+
+- id: senado-api
+  nome: Senado Federal, dados abertos legislativos
+  orgao: Senado Federal
+  esfera: federal
+  ente: BR
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://legis.senado.leg.br/dadosabertos
+  formato: XML ou JSON (cabeçalho Accept)
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Elemento único vem como objeto e não como array. Endpoints de votação e autoria legados estão obsoletos."
+  status: validado
+  validado_em: 2026-10-30
+
+- id: senado-ceaps
+  nome: Senado Federal, cota para o exercício da atividade parlamentar dos senadores (CEAPS)
+  orgao: Senado Federal
+  esfera: federal
+  ente: BR
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://www.senado.leg.br/transparencia/LAI/verba
+  formato: CSV ISO-8859-1, separador ponto e vírgula, um arquivo por ano
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Senador identificado só pelo nome. Sem URL de documento fiscal."
+  status: validado
+  validado_em: 2026-10-30
+
+- id: tse-dados-abertos
+  nome: Tribunal Superior Eleitoral, portal de dados abertos
+  orgao: Tribunal Superior Eleitoral
+  esfera: federal
+  ente: BR
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://dadosabertos.tse.jus.br
+  formato: CSV ISO-8859-1 em ZIP (arquivos em cdn.tse.jus.br)
+  autenticacao: nenhuma
+  licenca: Creative Commons Attribution (cc-by)
+  limitacoes: "Arquivos trazem CPF, título de eleitor e e-mail: descartados na ingestão."
+  status: validado
+  validado_em: 2026-10-30
+
+- id: tse-cdn
+  nome: Tribunal Superior Eleitoral, arquivos de dados abertos
+  orgao: Tribunal Superior Eleitoral
+  esfera: federal
+  ente: BR
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://cdn.tse.jus.br/estatistica/sead/odsele
+  formato: CSV ISO-8859-1 e PDF em ZIP
+  autenticacao: nenhuma
+  licenca: Creative Commons Attribution (cc-by)
+  limitacoes: "Endereço dos arquivos listados no portal tse-dados-abertos."
+  status: validado
+  validado_em: 2026-10-30
+
+- id: tse-divulgacand
+  nome: Tribunal Superior Eleitoral, DivulgaCandContas
+  orgao: Tribunal Superior Eleitoral
+  esfera: federal
+  ente: BR
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://divulgacandcontas.tse.jus.br
+  formato: JSON (API da aplicação)
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Responde 403 ao User-Agent do projeto. Não contornamos. Substituído por tse-dados-abertos."
+  status: bloqueado
+  validado_em: 2026-10-30
+
+- id: cgu-portal-api
+  nome: Controladoria-Geral da União, API do Portal da Transparência
+  orgao: Controladoria-Geral da União
+  esfera: federal
+  ente: BR
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://api.portaldatransparencia.gov.br/api-de-dados
+  formato: JSON
+  autenticacao: chave gratuita no cabeçalho chave-api-dados
+  licenca: null
+  limitacoes: "400 requisições por minuto (700 entre 0h e 6h). Sem chave responde 401. Uso previsto na fase 2."
+  status: validado com limitação
+  validado_em: 2026-10-30
+
+- id: cgu-portal-arquivos
+  nome: Controladoria-Geral da União, downloads do Portal da Transparência
+  orgao: Controladoria-Geral da União
+  esfera: federal
+  ente: BR
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://portaldatransparencia.gov.br/download-de-dados
+  formato: CSV em ZIP
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Uso previsto na fase 2 (cartão de pagamento e viagens a serviço)."
+  status: validado
+  validado_em: 2026-10-30
+
+- id: cgu-eagendas
+  nome: Controladoria-Geral da União, e-Agendas
+  orgao: Controladoria-Geral da União
+  esfera: federal
+  ente: BR
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://dadosabertos-download.cgu.gov.br/dados_e-agendas
+  formato: CSV UTF-8 em ZIP, atualização mensal
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Não traz a Presidência da República."
+  status: validado com limitação
+  validado_em: 2026-10-30
+
+- id: planalto-agenda
+  nome: Presidência da República, agenda do Presidente
+  orgao: Presidência da República
+  esfera: federal
+  ente: BR
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://www.gov.br/planalto/pt-br/acompanhe-o-planalto/agenda-do-presidente-da-republica
+  formato: HTML, uma página por dia
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Só HTML. Entra por contribuição manual com snapshot."
+  status: validado com limitação
+  validado_em: 2026-10-30
+
+- id: planalto-legislacao
+  nome: Presidência da República, portal da legislação
+  orgao: Presidência da República
+  esfera: federal
+  ente: BR
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://www.planalto.gov.br/ccivil_03
+  formato: HTML
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Conexão encerrada pelo servidor a partir do ambiente de validação. O snapshot arquivado continua legível."
+  status: não validado
+  validado_em: 2026-10-30
+
+- id: dou
+  nome: Imprensa Nacional, Diário Oficial da União
+  orgao: Imprensa Nacional
+  esfera: federal
+  ente: BR
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://www.in.gov.br
+  formato: HTML
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Fora da POC."
+  status: validado com limitação
+  validado_em: 2026-10-30
+
+- id: normas-leg
+  nome: Portal Normas (LexML)
+  orgao: Congresso Nacional
+  esfera: federal
+  ente: BR
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://normas.leg.br
+  formato: HTML
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Link humano para o texto das normas."
+  status: validado
+  validado_em: 2026-10-30
+
+- id: t1-site-mandato
+  nome: Site oficial do mandato ou do gabinete
+  orgao: Próprio político
+  esfera: federal
+  ente: null
+  categoria: primeira_parte
+  nivel_confianca: T1
+  url_base: https://www.camara.leg.br/deputados/quem-sao
+  dominio_livre: true
+  formato: HTML
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Fonte genérica. Rótulo obrigatório: declaração do próprio político. A revisão confere o domínio contra o site oficial informado pela casa legislativa."
+  status: validado com limitação
+  validado_em: 2026-10-30
+
+- id: t1-site-partido
+  nome: Site oficial do partido
+  orgao: Partido político
+  esfera: federal
+  ente: null
+  categoria: primeira_parte
+  nivel_confianca: T1
+  url_base: https://www.tse.jus.br/partidos/partidos-registrados-no-tse
+  dominio_livre: true
+  formato: HTML
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Fonte genérica. Rótulo obrigatório: declaração do próprio político. A página de referência do TSE responde 403 ao User-Agent do projeto; a revisão confere no navegador."
+  status: validado com limitação
+  validado_em: 2026-10-30
+
+- id: base-dos-dados
+  nome: Base dos Dados
+  orgao: Base dos Dados (organização sem fins lucrativos)
+  esfera: federal
+  ente: null
+  categoria: facilitador
+  nivel_confianca: T2
+  url_base: https://basedosdados.org
+  formato: SQL e CSV
+  autenticacao: conta para consultas
+  licenca: null
+  limitacoes: "Não usada na POC. Registro publicado aponta para a URL T0."
+  status: validado com limitação
+  validado_em: 2026-10-30
+
+- id: querido-diario
+  nome: Querido Diário
+  orgao: Open Knowledge Brasil
+  esfera: municipal
+  ente: null
+  categoria: facilitador
+  nivel_confianca: T2
+  url_base: https://api.queridodiario.ok.org.br
+  formato: JSON
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Falha de handshake TLS com o cliente local de validação. Revalidar."
+  status: não validado
+  validado_em: 2026-10-30
+
+- id: serenata
+  nome: Operação Serenata de Amor
+  orgao: Open Knowledge Brasil
+  esfera: federal
+  ente: null
+  categoria: facilitador
+  nivel_confianca: T2
+  url_base: https://github.com/okfn-brasil/serenata-de-amor
+  formato: código e CSV
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Sem atualização frequente desde 2024. Referência de método."
+  status: validado com limitação
+  validado_em: 2026-10-30
+
+- id: ac-diario-oficial
+  nome: Diário Oficial do Estado do Acre
+  orgao: Imprensa oficial do estado (AC)
+  esfera: estadual
+  ente: AC
+  categoria: diario_oficial
+  nivel_confianca: T0
+  url_base: https://diario.ac.gov.br/
+  formato: HTML
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: null
+  status: validado
+  validado_em: 2026-10-30
+
+- id: ac-transparencia
+  nome: Portal de Transparência do Estado do Acre
+  orgao: Poder Executivo do estado (AC)
+  esfera: estadual
+  ente: AC
+  categoria: transparencia
+  nivel_confianca: T0
+  url_base: https://transparencia.ac.gov.br/
+  formato: HTML
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: null
+  status: validado
+  validado_em: 2026-10-30
+
+- id: al-diario-oficial
+  nome: Diário Oficial do Estado de Alagoas
+  orgao: Imprensa oficial do estado (AL)
+  esfera: estadual
+  ente: AL
+  categoria: diario_oficial
+  nivel_confianca: T0
+  url_base: https://diario.imprensaoficial.al.gov.br/
+  formato: HTML
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Ver docs/FONTES.md (observação da UF)."
+  status: validado com limitação
+  validado_em: 2026-10-30
+
+- id: al-transparencia
+  nome: Portal da Transparência de Alagoas
+  orgao: Poder Executivo do estado (AL)
+  esfera: estadual
+  ente: AL
+  categoria: transparencia
+  nivel_confianca: T0
+  url_base: https://transparencia.al.gov.br/
+  formato: HTML
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: null
+  status: validado
+  validado_em: 2026-10-30
+
+- id: am-diario-oficial
+  nome: Diário Oficial do Estado do Amazonas
+  orgao: Imprensa oficial do estado (AM)
+  esfera: estadual
+  ente: AM
+  categoria: diario_oficial
+  nivel_confianca: T0
+  url_base: https://diario.imprensaoficial.am.gov.br/
+  formato: HTML
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: null
+  status: validado
+  validado_em: 2026-10-30
+
+- id: am-transparencia
+  nome: Portal da Transparência do Governo do Estado do Amazonas
+  orgao: Poder Executivo do estado (AM)
+  esfera: estadual
+  ente: AM
+  categoria: transparencia
+  nivel_confianca: T0
+  url_base: https://www.transparencia.am.gov.br/
+  formato: HTML
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: null
+  status: validado
+  validado_em: 2026-10-30
+
+- id: ap-diario-oficial
+  nome: Diário Oficial do Estado do Amapá
+  orgao: Imprensa oficial do estado (AP)
+  esfera: estadual
+  ente: AP
+  categoria: diario_oficial
+  nivel_confianca: T0
+  url_base: https://diofe.portal.ap.gov.br/
+  formato: HTML
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: null
+  status: validado
+  validado_em: 2026-10-30
+
+- id: ap-transparencia
+  nome: Portal da Transparência do Governo do Estado do Amapá
+  orgao: Poder Executivo do estado (AP)
+  esfera: estadual
+  ente: AP
+  categoria: transparencia
+  nivel_confianca: T0
+  url_base: https://www.transparencia.ap.gov.br/
+  formato: HTML
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: null
+  status: validado
+  validado_em: 2026-10-30
+
+- id: ba-diario-oficial
+  nome: Diário Oficial do Estado da Bahia
+  orgao: Imprensa oficial do estado (BA)
+  esfera: estadual
+  ente: BA
+  categoria: diario_oficial
+  nivel_confianca: T0
+  url_base: https://dool.egba.ba.gov.br/
+  formato: HTML
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: null
+  status: validado
+  validado_em: 2026-10-30
+
+- id: ba-transparencia
+  nome: Transparência Bahia
+  orgao: Poder Executivo do estado (BA)
+  esfera: estadual
+  ente: BA
+  categoria: transparencia
+  nivel_confianca: T0
+  url_base: https://www.transparencia.ba.gov.br/
+  formato: HTML
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: null
+  status: validado
+  validado_em: 2026-10-30
+
+- id: ce-diario-oficial
+  nome: Diário Oficial do Estado do Ceará
+  orgao: Imprensa oficial do estado (CE)
+  esfera: estadual
+  ente: CE
+  categoria: diario_oficial
+  nivel_confianca: T0
+  url_base: https://www.ce.gov.br/diario-oficial/
+  formato: HTML
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Ver docs/FONTES.md (observação da UF)."
+  status: validado com limitação
+  validado_em: 2026-10-30
+
+- id: ce-transparencia
+  nome: Ceará Transparente
+  orgao: Poder Executivo do estado (CE)
+  esfera: estadual
+  ente: CE
+  categoria: transparencia
+  nivel_confianca: T0
+  url_base: https://cearatransparente.ce.gov.br/
+  formato: HTML
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Ver docs/FONTES.md (observação da UF)."
+  status: validado com limitação
+  validado_em: 2026-10-30
+
+- id: df-diario-oficial
+  nome: Diário Oficial do Distrito Federal (DODF)
+  orgao: Imprensa oficial do estado (DF)
+  esfera: estadual
+  ente: DF
+  categoria: diario_oficial
+  nivel_confianca: T0
+  url_base: https://www.dodf.df.gov.br/
+  formato: HTML
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Ver docs/FONTES.md (observação da UF)."
+  status: validado com limitação
+  validado_em: 2026-10-30
+
+- id: df-transparencia
+  nome: Portal da Transparência do Distrito Federal
+  orgao: Poder Executivo do estado (DF)
+  esfera: estadual
+  ente: DF
+  categoria: transparencia
+  nivel_confianca: T0
+  url_base: https://www.transparencia.df.gov.br/
+  formato: HTML
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: null
+  status: validado
+  validado_em: 2026-10-30
+
+- id: es-diario-oficial
+  nome: Diário Oficial do Estado do Espírito Santo
+  orgao: Imprensa oficial do estado (ES)
+  esfera: estadual
+  ente: ES
+  categoria: diario_oficial
+  nivel_confianca: T0
+  url_base: https://ioes.dio.es.gov.br/
+  formato: HTML
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: null
+  status: validado
+  validado_em: 2026-10-30
+
+- id: es-transparencia
+  nome: Portal da Transparência do Espírito Santo
+  orgao: Poder Executivo do estado (ES)
+  esfera: estadual
+  ente: ES
+  categoria: transparencia
+  nivel_confianca: T0
+  url_base: https://transparencia.es.gov.br/
+  formato: HTML
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: null
+  status: validado
+  validado_em: 2026-10-30
+
+- id: go-diario-oficial
+  nome: Diário Oficial do Estado de Goiás
+  orgao: Imprensa oficial do estado (GO)
+  esfera: estadual
+  ente: GO
+  categoria: diario_oficial
+  nivel_confianca: T0
+  url_base: https://diariooficial.abc.go.gov.br/
+  formato: HTML
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: null
+  status: validado
+  validado_em: 2026-10-30
+
+- id: go-transparencia
+  nome: Transparência Goiás
+  orgao: Poder Executivo do estado (GO)
+  esfera: estadual
+  ente: GO
+  categoria: transparencia
+  nivel_confianca: T0
+  url_base: https://transparencia.go.gov.br/
+  formato: HTML
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: null
+  status: validado
+  validado_em: 2026-10-30
+
+- id: ma-diario-oficial
+  nome: Diário Oficial do Estado do Maranhão (DOEMA)
+  orgao: Imprensa oficial do estado (MA)
+  esfera: estadual
+  ente: MA
+  categoria: diario_oficial
+  nivel_confianca: T0
+  url_base: https://diariooficial.ma.gov.br/
+  formato: HTML
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: null
+  status: validado
+  validado_em: 2026-10-30
+
+- id: ma-transparencia
+  nome: Portal da Transparência do Maranhão
+  orgao: Poder Executivo do estado (MA)
+  esfera: estadual
+  ente: MA
+  categoria: transparencia
+  nivel_confianca: T0
+  url_base: https://www.transparencia.ma.gov.br/
+  formato: HTML
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: null
+  status: validado
+  validado_em: 2026-10-30
+
+- id: mg-diario-oficial
+  nome: Diário Oficial de Minas Gerais (Jornal Minas Gerais)
+  orgao: Imprensa oficial do estado (MG)
+  esfera: estadual
+  ente: MG
+  categoria: diario_oficial
+  nivel_confianca: T0
+  url_base: https://www.jornalminasgerais.mg.gov.br/
+  formato: HTML
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: null
+  status: validado
+  validado_em: 2026-10-30
+
+- id: mg-transparencia
+  nome: Portal da Transparência de Minas Gerais
+  orgao: Poder Executivo do estado (MG)
+  esfera: estadual
+  ente: MG
+  categoria: transparencia
+  nivel_confianca: T0
+  url_base: https://www.transparencia.mg.gov.br/
+  formato: HTML
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: null
+  status: validado
+  validado_em: 2026-10-30
+
+- id: ms-diario-oficial
+  nome: Diário Oficial do Estado de Mato Grosso do Sul
+  orgao: Imprensa oficial do estado (MS)
+  esfera: estadual
+  ente: MS
+  categoria: diario_oficial
+  nivel_confianca: T0
+  url_base: https://www.diariooficial.ms.gov.br/
+  formato: HTML
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: null
+  status: validado
+  validado_em: 2026-10-30
+
+- id: ms-transparencia
+  nome: Portal da Transparência de Mato Grosso do Sul
+  orgao: Poder Executivo do estado (MS)
+  esfera: estadual
+  ente: MS
+  categoria: transparencia
+  nivel_confianca: T0
+  url_base: https://www.transparencia.ms.gov.br/
+  formato: HTML
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: null
+  status: validado
+  validado_em: 2026-10-30
+
+- id: mt-diario-oficial
+  nome: Diário Oficial do Estado de Mato Grosso (IOMAT)
+  orgao: Imprensa oficial do estado (MT)
+  esfera: estadual
+  ente: MT
+  categoria: diario_oficial
+  nivel_confianca: T0
+  url_base: https://www.iomat.mt.gov.br/
+  formato: HTML
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: null
+  status: validado
+  validado_em: 2026-10-30
+
+- id: mt-transparencia
+  nome: Portal da Transparência de Mato Grosso
+  orgao: Poder Executivo do estado (MT)
+  esfera: estadual
+  ente: MT
+  categoria: transparencia
+  nivel_confianca: T0
+  url_base: https://www.transparencia.mt.gov.br/
+  formato: HTML
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: null
+  status: validado
+  validado_em: 2026-10-30
+
+- id: pa-diario-oficial
+  nome: Diário Oficial do Estado do Pará (IOEPA)
+  orgao: Imprensa oficial do estado (PA)
+  esfera: estadual
+  ente: PA
+  categoria: diario_oficial
+  nivel_confianca: T0
+  url_base: https://www.ioepa.com.br/portal/
+  formato: HTML
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Ver docs/FONTES.md (observação da UF)."
+  status: validado com limitação
+  validado_em: 2026-10-30
+
+- id: pa-transparencia
+  nome: Portal da Transparência do Pará
+  orgao: Poder Executivo do estado (PA)
+  esfera: estadual
+  ente: PA
+  categoria: transparencia
+  nivel_confianca: T0
+  url_base: https://www.sistemas.pa.gov.br/portaltransparencia/
+  formato: HTML
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Ver docs/FONTES.md (observação da UF)."
+  status: validado com limitação
+  validado_em: 2026-10-30
+
+- id: pb-diario-oficial
+  nome: Diário Oficial do Estado da Paraíba
+  orgao: Imprensa oficial do estado (PB)
+  esfera: estadual
+  ente: PB
+  categoria: diario_oficial
+  nivel_confianca: T0
+  url_base: https://auniao.pb.gov.br/servicos/doe
+  formato: HTML
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: null
+  status: validado
+  validado_em: 2026-10-30
+
+- id: pb-transparencia
+  nome: Portal da Transparência da Paraíba
+  orgao: Poder Executivo do estado (PB)
+  esfera: estadual
+  ente: PB
+  categoria: transparencia
+  nivel_confianca: T0
+  url_base: https://transparencia.pb.gov.br/
+  formato: HTML
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: null
+  status: validado
+  validado_em: 2026-10-30
+
+- id: pe-diario-oficial
+  nome: Diário Oficial do Estado de Pernambuco
+  orgao: Imprensa oficial do estado (PE)
+  esfera: estadual
+  ente: PE
+  categoria: diario_oficial
+  nivel_confianca: T0
+  url_base: https://diariooficial.cepe.com.br/
+  formato: HTML
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: null
+  status: validado
+  validado_em: 2026-10-30
+
+- id: pe-transparencia
+  nome: Portal da Transparência de Pernambuco
+  orgao: Poder Executivo do estado (PE)
+  esfera: estadual
+  ente: PE
+  categoria: transparencia
+  nivel_confianca: T0
+  url_base: https://transparencia.pe.gov.br/
+  formato: HTML
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: null
+  status: validado
+  validado_em: 2026-10-30
+
+- id: pi-diario-oficial
+  nome: Diário Oficial do Estado do Piauí
+  orgao: Imprensa oficial do estado (PI)
+  esfera: estadual
+  ente: PI
+  categoria: diario_oficial
+  nivel_confianca: T0
+  url_base: https://www.diario.pi.gov.br/
+  formato: HTML
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: null
+  status: validado
+  validado_em: 2026-10-30
+
+- id: pi-transparencia
+  nome: Portal da Transparência do Piauí
+  orgao: Poder Executivo do estado (PI)
+  esfera: estadual
+  ente: PI
+  categoria: transparencia
+  nivel_confianca: T0
+  url_base: https://transparencia.pi.gov.br/
+  formato: HTML
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: null
+  status: validado
+  validado_em: 2026-10-30
+
+- id: pr-diario-oficial
+  nome: Diário Oficial do Estado do Paraná
+  orgao: Imprensa oficial do estado (PR)
+  esfera: estadual
+  ente: PR
+  categoria: diario_oficial
+  nivel_confianca: T0
+  url_base: https://dioe.pr.gov.br/
+  formato: HTML
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: null
+  status: validado
+  validado_em: 2026-10-30
+
+- id: pr-transparencia
+  nome: Portal da Transparência do Paraná
+  orgao: Poder Executivo do estado (PR)
+  esfera: estadual
+  ente: PR
+  categoria: transparencia
+  nivel_confianca: T0
+  url_base: https://www.transparencia.pr.gov.br/
+  formato: HTML
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: null
+  status: validado
+  validado_em: 2026-10-30
+
+- id: rj-diario-oficial
+  nome: Diário Oficial do Estado do Rio de Janeiro (IOERJ)
+  orgao: Imprensa oficial do estado (RJ)
+  esfera: estadual
+  ente: RJ
+  categoria: diario_oficial
+  nivel_confianca: T0
+  url_base: https://www.ioerj.com.br/
+  formato: HTML
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: null
+  status: validado
+  validado_em: 2026-10-30
+
+- id: rj-transparencia
+  nome: Portal da Transparência do Estado do Rio de Janeiro
+  orgao: Poder Executivo do estado (RJ)
+  esfera: estadual
+  ente: RJ
+  categoria: transparencia
+  nivel_confianca: T0
+  url_base: https://www.transparencia.rj.gov.br/
+  formato: HTML
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: null
+  status: validado
+  validado_em: 2026-10-30
+
+- id: rn-diario-oficial
+  nome: Diário Oficial do Estado do Rio Grande do Norte
+  orgao: Imprensa oficial do estado (RN)
+  esfera: estadual
+  ente: RN
+  categoria: diario_oficial
+  nivel_confianca: T0
+  url_base: https://www.diariooficial.rn.gov.br/dei/dorn3/
+  formato: HTML
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Ver docs/FONTES.md (observação da UF)."
+  status: validado com limitação
+  validado_em: 2026-10-30
+
+- id: rn-transparencia
+  nome: Portal da Transparência do Rio Grande do Norte
+  orgao: Poder Executivo do estado (RN)
+  esfera: estadual
+  ente: RN
+  categoria: transparencia
+  nivel_confianca: T0
+  url_base: https://www.transparencia.rn.gov.br/
+  formato: HTML
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: null
+  status: validado
+  validado_em: 2026-10-30
+
+- id: ro-diario-oficial
+  nome: Diário Oficial do Estado de Rondônia (DIOF)
+  orgao: Imprensa oficial do estado (RO)
+  esfera: estadual
+  ente: RO
+  categoria: diario_oficial
+  nivel_confianca: T0
+  url_base: https://diof.ro.gov.br/
+  formato: HTML
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: null
+  status: validado
+  validado_em: 2026-10-30
+
+- id: ro-transparencia
+  nome: Portal da Transparência de Rondônia
+  orgao: Poder Executivo do estado (RO)
+  esfera: estadual
+  ente: RO
+  categoria: transparencia
+  nivel_confianca: T0
+  url_base: https://transparencia.ro.gov.br/
+  formato: HTML
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: null
+  status: validado
+  validado_em: 2026-10-30
+
+- id: rr-diario-oficial
+  nome: Diário Oficial do Estado de Roraima
+  orgao: Imprensa oficial do estado (RR)
+  esfera: estadual
+  ente: RR
+  categoria: diario_oficial
+  nivel_confianca: T0
+  url_base: https://www.imprensaoficial.rr.gov.br/
+  formato: HTML
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: null
+  status: validado
+  validado_em: 2026-10-30
+
+- id: rr-transparencia
+  nome: Portal de Transparência do Estado de Roraima
+  orgao: Poder Executivo do estado (RR)
+  esfera: estadual
+  ente: RR
+  categoria: transparencia
+  nivel_confianca: T0
+  url_base: https://transparencia.rr.gov.br/
+  formato: HTML
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: null
+  status: validado
+  validado_em: 2026-10-30
+
+- id: rs-diario-oficial
+  nome: Diário Oficial do Estado do Rio Grande do Sul
+  orgao: Imprensa oficial do estado (RS)
+  esfera: estadual
+  ente: RS
+  categoria: diario_oficial
+  nivel_confianca: T0
+  url_base: https://www.diariooficial.rs.gov.br/
+  formato: HTML
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: null
+  status: validado
+  validado_em: 2026-10-30
+
+- id: rs-transparencia
+  nome: Portal da Transparência do Rio Grande do Sul
+  orgao: Poder Executivo do estado (RS)
+  esfera: estadual
+  ente: RS
+  categoria: transparencia
+  nivel_confianca: T0
+  url_base: https://www.transparencia.rs.gov.br/
+  formato: HTML
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: null
+  status: validado
+  validado_em: 2026-10-30
+
+- id: sc-diario-oficial
+  nome: Diário Oficial do Estado de Santa Catarina
+  orgao: Imprensa oficial do estado (SC)
+  esfera: estadual
+  ente: SC
+  categoria: diario_oficial
+  nivel_confianca: T0
+  url_base: https://portal.doe.sea.sc.gov.br/
+  formato: HTML
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Ver docs/FONTES.md (observação da UF)."
+  status: validado com limitação
+  validado_em: 2026-10-30
+
+- id: sc-transparencia
+  nome: Portal da Transparência do Poder Executivo de Santa Catarina
+  orgao: Poder Executivo do estado (SC)
+  esfera: estadual
+  ente: SC
+  categoria: transparencia
+  nivel_confianca: T0
+  url_base: https://www.transparencia.sc.gov.br/
+  formato: HTML
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: null
+  status: validado
+  validado_em: 2026-10-30
+
+- id: se-diario-oficial
+  nome: Diário Oficial do Estado de Sergipe
+  orgao: Imprensa oficial do estado (SE)
+  esfera: estadual
+  ente: SE
+  categoria: diario_oficial
+  nivel_confianca: T0
+  url_base: https://iose.se.gov.br/diario-oficial
+  formato: HTML
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: null
+  status: validado
+  validado_em: 2026-10-30
+
+- id: se-transparencia
+  nome: Portal da Transparência de Sergipe
+  orgao: Poder Executivo do estado (SE)
+  esfera: estadual
+  ente: SE
+  categoria: transparencia
+  nivel_confianca: T0
+  url_base: https://www.transparencia.se.gov.br/
+  formato: HTML
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: null
+  status: validado
+  validado_em: 2026-10-30
+
+- id: sp-diario-oficial
+  nome: Diário Oficial do Estado de São Paulo
+  orgao: Imprensa oficial do estado (SP)
+  esfera: estadual
+  ente: SP
+  categoria: diario_oficial
+  nivel_confianca: T0
+  url_base: https://doe.sp.gov.br/
+  formato: HTML
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: null
+  status: validado
+  validado_em: 2026-10-30
+
+- id: sp-transparencia
+  nome: Portal da Transparência do Estado de São Paulo
+  orgao: Poder Executivo do estado (SP)
+  esfera: estadual
+  ente: SP
+  categoria: transparencia
+  nivel_confianca: T0
+  url_base: https://www.transparencia.sp.gov.br/
+  formato: HTML
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: null
+  status: validado
+  validado_em: 2026-10-30
+
+- id: to-diario-oficial
+  nome: Diário Oficial do Estado do Tocantins
+  orgao: Imprensa oficial do estado (TO)
+  esfera: estadual
+  ente: TO
+  categoria: diario_oficial
+  nivel_confianca: T0
+  url_base: https://diariooficial.to.gov.br/
+  formato: HTML
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Ver docs/FONTES.md (observação da UF)."
+  status: validado com limitação
+  validado_em: 2026-10-30
+
+- id: to-transparencia
+  nome: Portal da Transparência do Tocantins
+  orgao: Poder Executivo do estado (TO)
+  esfera: estadual
+  ente: TO
+  categoria: transparencia
+  nivel_confianca: T0
+  url_base: https://transparencia.to.gov.br/
+  formato: HTML
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Ver docs/FONTES.md (observação da UF)."
+  status: validado com limitação
+  validado_em: 2026-10-30

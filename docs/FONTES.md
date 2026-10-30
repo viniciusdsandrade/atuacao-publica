@@ -27,6 +27,7 @@ Os dois arquivos mudam juntos.
 | `senado-api` | Senado Federal, dados abertos | T0 | JSON (via `Accept`) | nenhuma | validado | 2026-10-30 |
 | `senado-ceaps` | Senado Federal, CEAPS | T0 | CSV latin-1 | nenhuma | validado | 2026-10-30 |
 | `tse-dados-abertos` | TSE, portal de dados abertos (CKAN) | T0 | CSV latin-1 em ZIP | nenhuma | validado | 2026-10-30 |
+| `tse-cdn` | TSE, arquivos dos dados abertos (CDN) | T0 | CSV latin-1 e PDF em ZIP | nenhuma | validado | 2026-10-30 |
 | `tse-divulgacand` | TSE, DivulgaCandContas | T0 | JSON | nenhuma | bloqueado | 2026-10-30 |
 | `cgu-portal-api` | CGU, API do Portal da Transparência | T0 | JSON | chave `chave-api-dados` | validado com limitação | 2026-10-30 |
 | `cgu-portal-arquivos` | CGU, downloads do Portal da Transparência | T0 | CSV em ZIP | nenhuma | validado | 2026-10-30 |
@@ -35,6 +36,8 @@ Os dois arquivos mudam juntos.
 | `planalto-legislacao` | Presidência, legislação | T0 | HTML | nenhuma | não validado | 2026-10-30 |
 | `dou` | Imprensa Nacional, Diário Oficial da União | T0 | HTML | nenhuma | validado com limitação | 2026-10-30 |
 | `normas-leg` | Portal Normas (LexML) | T0 | HTML | nenhuma | validado | 2026-10-30 |
+| `t1-site-mandato` | Site oficial do mandato ou do gabinete (genérica) | T1 | HTML | nenhuma | validado com limitação | 2026-10-30 |
+| `t1-site-partido` | Site oficial do partido (genérica) | T1 | HTML | nenhuma | validado com limitação | 2026-10-30 |
 | `base-dos-dados` | Base dos Dados | T2 | SQL e CSV | conta para consultas | validado com limitação | 2026-10-30 |
 | `querido-diario` | Querido Diário (OKBR) | T2 | JSON | nenhuma | não validado | 2026-10-30 |
 | `serenata` | Operação Serenata de Amor | T2 | código e CSV | nenhuma | validado com limitação | 2026-10-30 |
@@ -204,6 +207,13 @@ Os dois arquivos mudam juntos.
 
 - URL: `https://normas.leg.br/?urn={urn}`. Responde 200.
 - Serve de link humano para o texto das normas listadas pela `senado-api`.
+
+### Fontes T1 genéricas
+
+- `t1-site-mandato`: site oficial do mandato ou do gabinete. Referência para conferir o domínio: perfil do parlamentar na casa legislativa (`https://www.camara.leg.br/deputados/quem-sao`, 200).
+- `t1-site-partido`: site oficial do partido. Referência: lista de partidos do TSE (`https://www.tse.jus.br/partidos/partidos-registrados-no-tse`), que responde 403 ao User-Agent do projeto. A revisão confere no navegador.
+- Registro de fonte T1 sempre aparece com o rótulo "declaração do próprio político".
+- A URL de origem não precisa estar no domínio de `url_base` (`dominio_livre: true`). A revisão humana confere o domínio.
 
 ### Fontes T2
 
