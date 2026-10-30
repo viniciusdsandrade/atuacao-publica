@@ -55,6 +55,35 @@ public final class Coleta {
         return arquivo;
     }
 
+    /**
+     * Baixa um ZIP grande só para ler o índice de arquivos. Guarda a lista e o sha256 do ZIP, não o ZIP.
+     * Lê o diretório central (ZipFile): funciona com entradas STORED e DEFLATED.
+     */
+    public Arquivo listarZip(String url, String caminho, Politica politica) throws IOException, InterruptedException {
+        Path destino = ctx.raw().resolve(fonte).resolve(caminho);
+        Path meta = lateral(destino);
+        if (politica == Politica.SE_AUSENTE && Files.exists(meta) && Files.exists(destino)) {
+            Arquivo emCache = Json.ler(meta, Arquivo.class);
+            arquivos.add(emCache);
+            return emCache;
+        }
+        Path temporario = Files.createTempFile(ctx.raw(), "zip-", ".zip");
+        try {
+            Http.Baixado baixado = ctx.http().baixar(url, temporario, "application/zip");
+            List<String> nomes = new ArrayList<>();
+            try (java.util.zip.ZipFile zip = new java.util.zip.ZipFile(baixado.arquivo().toFile())) {
+                zip.stream().forEach(e -> nomes.add(e.getName()));
+            }
+            Json.gravar(destino, nomes, true);
+            Arquivo arquivo = new Arquivo(url, ctx.relativo(destino), baixado.sha256(), baixado.bytes(), ctx.agora());
+            Json.gravar(meta, arquivo, true);
+            arquivos.add(arquivo);
+            return arquivo;
+        } finally {
+            Files.deleteIfExists(temporario);
+        }
+    }
+
     public void contar(String chave, int quantidade) {
         contagens.merge(chave, quantidade, Integer::sum);
     }

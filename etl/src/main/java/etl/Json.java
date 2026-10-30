@@ -9,8 +9,13 @@ import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 import java.util.zip.GZIPInputStream;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 
+import tools.jackson.core.JsonParser;
+import tools.jackson.core.JsonToken;
 import tools.jackson.core.StreamWriteFeature;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
@@ -95,6 +100,50 @@ public final class Json {
 
     public static JsonNode arvore(Object valor) {
         return SAIDA.valueToTree(valor);
+    }
+
+    /**
+     * Percorre em streaming o array do campo de topo (por exemplo, "dados"), um elemento por vez.
+     * Evita carregar arquivos de centenas de MB como árvore.
+     */
+    public static void paraCada(InputStream entrada, String campo, Consumer<JsonNode> acao) {
+        try (JsonParser parser = FONTE.createParser(entrada)) {
+            JsonToken token;
+            while ((token = parser.nextToken()) != null) {
+                if (token == JsonToken.PROPERTY_NAME && campo.equals(parser.currentName()) && parser.streamReadContext().getParent().inRoot()) {
+                    if (parser.nextToken() == JsonToken.START_ARRAY) {
+                        while (parser.nextToken() == JsonToken.START_OBJECT) {
+                            acao.accept(FONTE.readTree(parser));
+                        }
+                    }
+                    return;
+                }
+            }
+        }
+    }
+
+    public static void paraCada(Path arquivo, String campo, Consumer<JsonNode> acao) {
+        try (InputStream entrada = abrir(arquivo)) {
+            paraCada(entrada, campo, acao);
+        } catch (IOException e) {
+            throw new UncheckedIOException("falha ao ler " + arquivo, e);
+        }
+    }
+
+    /** Primeiro arquivo .json dentro de um ZIP, em streaming. */
+    public static void paraCadaNoZip(Path zip, String campo, Consumer<JsonNode> acao) {
+        try (ZipInputStream entrada = new ZipInputStream(Files.newInputStream(zip))) {
+            ZipEntry item;
+            while ((item = entrada.getNextEntry()) != null) {
+                if (item.getName().endsWith(".json")) {
+                    paraCada(entrada, campo, acao);
+                    return;
+                }
+            }
+            throw new IOException("nenhum .json em " + zip);
+        } catch (IOException e) {
+            throw new UncheckedIOException("falha ao ler " + zip, e);
+        }
     }
 
     /** As APIs em XML convertido para JSON trazem objeto quando há um só elemento e array quando há vários. */
