@@ -5,7 +5,11 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import etl.fontes.Camara;
 import etl.fontes.Contrib;
+import etl.fontes.Executivo;
+import etl.fontes.Senado;
+import etl.fontes.Tse;
 
 /** Ponto de entrada: {@code java -jar etl.jar <fetch|normalize|publish> [fonte]}, a partir da raiz do repositório. */
 public final class Main {
@@ -13,13 +17,17 @@ public final class Main {
     private static final Map<String, Fonte> FONTES = new LinkedHashMap<>();
 
     static {
+        registrar(new Camara());
+        registrar(new Senado());
+        registrar(new Tse());
+        registrar(new Executivo());
         registrar(new Contrib());
         registrar(new Catalogo());
     }
 
     /** Fontes que rodam quando o comando não recebe fonte. contrib e fontes rodam só quando pedidas no fetch. */
-    private static final List<String> FETCH_PADRAO = List.of();
-    private static final List<String> NORMALIZE_PADRAO = List.of("contrib");
+    private static final List<String> FETCH_PADRAO = List.of("camara", "senado", "tse", "executivo");
+    private static final List<String> NORMALIZE_PADRAO = List.of("camara", "senado", "tse", "executivo", "contrib");
 
     public static void main(String[] args) {
         // O validador de schema usa SLF4J sem provedor; o aviso de "no providers" não interessa aqui.
@@ -35,10 +43,7 @@ public final class Main {
         int codigo = switch (args[0]) {
             case "fetch" -> fetch(ctx, selecionar(filtro, FETCH_PADRAO));
             case "normalize" -> normalize(ctx, selecionar(filtro, NORMALIZE_PADRAO));
-            default -> {
-                System.err.println("publish: ainda não implementado");
-                yield 3;
-            }
+            default -> new Publicador(ctx).publicar();
         };
         System.exit(codigo);
     }

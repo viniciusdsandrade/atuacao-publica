@@ -20,7 +20,7 @@ public final class Guarda {
 
     private static final Map<String, Pattern> PADROES = Map.of("CPF", CPF, "telefone", TELEFONE, "e-mail", EMAIL);
 
-    /** Campos com número de 11 dígitos que não é CPF (identificadores oficiais e URLs). */
+    /** Campos de identificador oficial: sequências numéricas que não são CPF nem telefone. */
     private static final List<String> CAMPOS_IGNORADOS = List.of(
             "id", "id_fonte", "votacao_id", "politico_id", "fornecedor_cnpj", "documento_numero", "numero", "caminho");
 
@@ -66,9 +66,10 @@ public final class Guarda {
             String campo = caminho.substring(caminho.lastIndexOf('/') + 1);
             String valor = no.stringValue();
             boolean url = valor.startsWith("http://") || valor.startsWith("https://");
+            boolean identificador = CAMPOS_IGNORADOS.contains(campo);
             for (String tipo : violacoes(valor)) {
-                boolean identificador = tipo.equals("CPF") && (url || CAMPOS_IGNORADOS.contains(campo));
-                if (!identificador && !(url && tipo.equals("telefone"))) {
+                // Identificador oficial e URL têm sequências numéricas que lembram CPF e telefone; e-mail vale sempre.
+                if (tipo.equals("e-mail") || !(identificador || url)) {
                     achados.add(tipo + " em " + caminho);
                 }
             }

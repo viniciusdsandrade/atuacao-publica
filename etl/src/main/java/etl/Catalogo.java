@@ -6,13 +6,16 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 import tools.jackson.databind.JsonNode;
 
 /** Catálogo de fontes (contrib/fontes.yaml): allowlist de fonte_id e links oficiais por UF. */
 public final class Catalogo implements Fonte {
 
     public record Item(String id, String nome, String orgao, String esfera, String ente, String categoria,
-                       String nivelConfianca, String urlBase, Boolean dominioLivre, String formato,
+                       String nivelConfianca, String urlBase,
+                       @JsonInclude(JsonInclude.Include.NON_NULL) Boolean dominioLivre, String formato,
                        String autenticacao, String licenca, String limitacoes, String status, String validadoEm) {
 
         /** A URL pertence à fonte: começa pela url_base (http e https equivalem). */
