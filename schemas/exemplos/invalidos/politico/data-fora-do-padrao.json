@@ -96,7 +96,7 @@
       "arquivos": [
         {
           "ano": 2026,
-          "caminho": "politicos/cam-900001/votos-2026.json",
+          "caminho": "politicos/cam-900001/votos-2026.json.gz",
           "total": 1
         }
       ],
@@ -133,7 +133,7 @@
       "arquivos": [
         {
           "ano": 2026,
-          "caminho": "politicos/cam-900001/despesas-2026.json",
+          "caminho": "politicos/cam-900001/despesas-2026.json.gz",
           "total": 2
         }
       ],

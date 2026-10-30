@@ -11,14 +11,17 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.zip.GZIPInputStream;
+import java.util.zip.GZIPOutputStream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
 import tools.jackson.core.JsonParser;
 import tools.jackson.core.JsonToken;
 import tools.jackson.core.StreamWriteFeature;
+import tools.jackson.databind.DeserializationFeature;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectReader;
 import tools.jackson.databind.PropertyNamingStrategies;
 import tools.jackson.databind.SerializationFeature;
 import tools.jackson.databind.json.JsonMapper;
@@ -39,6 +42,10 @@ public final class Json {
     public static final ObjectMapper YAML = YAMLMapper.builder()
             .propertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE)
             .build();
+
+    /** Leitura de um elemento por vez de um array grande: o próximo elemento não é "token sobrando". */
+    private static final ObjectReader ELEMENTO = FONTE.readerFor(JsonNode.class)
+            .without(DeserializationFeature.FAIL_ON_TRAILING_TOKENS);
 
     private static final ObjectMapper SAIDA_LEGIVEL = SAIDA.rebuild()
             .enable(SerializationFeature.INDENT_OUTPUT)
@@ -98,6 +105,20 @@ public final class Json {
         gravar(arquivo, valor, false);
     }
 
+    /** Grava JSON compactado com gzip, de forma atômica. */
+    public static void gravarGz(Path arquivo, Object valor) {
+        try {
+            Files.createDirectories(arquivo.getParent());
+            Path temporario = arquivo.resolveSibling(arquivo.getFileName() + ".tmp");
+            try (OutputStream saida = new GZIPOutputStream(Files.newOutputStream(temporario), 1 << 16)) {
+                SAIDA.writeValue(saida, valor);
+            }
+            Files.move(temporario, arquivo, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
+        } catch (IOException e) {
+            throw new UncheckedIOException("falha ao gravar " + arquivo, e);
+        }
+    }
+
     public static JsonNode arvore(Object valor) {
         return SAIDA.valueToTree(valor);
     }
@@ -113,7 +134,7 @@ public final class Json {
                 if (token == JsonToken.PROPERTY_NAME && campo.equals(parser.currentName()) && parser.streamReadContext().getParent().inRoot()) {
                     if (parser.nextToken() == JsonToken.START_ARRAY) {
                         while (parser.nextToken() == JsonToken.START_OBJECT) {
-                            acao.accept(FONTE.readTree(parser));
+                            acao.accept(ELEMENTO.readValue(parser));
                         }
                     }
                     return;

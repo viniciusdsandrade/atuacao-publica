@@ -52,7 +52,7 @@
       "type": "string",
       "pattern": "^(BR|[A-Z]{2}|[0-9]{7})$"
     },
-    "texto": { "type": "string", "minLength": 1, "maxLength": 20000 },
+    "texto": { "type": "string", "minLength": 1, "maxLength": 200000 },
     "texto_ou_nulo": {
       "anyOf": [{ "$ref": "#/$defs/texto" }, { "type": "null" }]
     },

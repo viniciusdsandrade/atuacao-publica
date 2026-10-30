@@ -280,7 +280,7 @@ public final class Publicador {
             return arquivos;
         }
         for (var item : porAno.entrySet()) {
-            String caminho = "politicos/" + perfil.id + "/" + bloco + "-" + item.getKey() + ".json";
+            String caminho = "politicos/" + perfil.id + "/" + bloco + "-" + item.getKey() + ".json.gz";
             ObjectNode detalhe = Json.SAIDA.createObjectNode().put("politico_id", perfil.id).put("tipo", bloco)
                     .put("ano", item.getKey()).put("gerado_em", ctx.agora().toString());
             ArrayNode lista = detalhe.putArray("registros");
@@ -290,7 +290,8 @@ public final class Publicador {
                 rejeitados.add(new Meta.Rejeitado(caminho, "schema: " + String.join("; ", erros.subList(0, Math.min(3, erros.size())))));
                 continue;
             }
-            Json.gravar(pasta.resolve(perfil.id).resolve(bloco + "-" + item.getKey() + ".json"), detalhe);
+            // Detalhe anual compactado: repete chaves e textos em centenas de registros e cai a cerca de 1/10.
+            Json.gravarGz(pasta.resolve(perfil.id).resolve(bloco + "-" + item.getKey() + ".json.gz"), detalhe);
             arquivos.add(Json.SAIDA.createObjectNode().put("ano", item.getKey()).put("caminho", caminho)
                     .put("total", item.getValue().size()));
         }

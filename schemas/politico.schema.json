@@ -73,14 +73,14 @@
           "additionalProperties": { "$ref": "comum.schema.json#/$defs/contagem" }
         },
         "arquivos": {
-          "description": "Detalhe anual em arquivo separado.",
+          "description": "Detalhe anual em arquivo separado, compactado com gzip.",
           "type": "array",
           "items": {
             "type": "object",
             "required": ["ano", "caminho", "total"],
             "properties": {
               "ano": { "type": "integer" },
-              "caminho": { "type": "string", "pattern": "^politicos/[a-z]{2,10}-[0-9A-Za-z]+/[a-z_]+-[0-9]{4}\\.json$" },
+              "caminho": { "type": "string", "pattern": "^politicos/[a-z]{2,10}-[0-9A-Za-z]+/[a-z_]+-[0-9]{4}\\.json\\.gz$" },
               "total": { "$ref": "comum.schema.json#/$defs/contagem" }
             },
             "additionalProperties": false
