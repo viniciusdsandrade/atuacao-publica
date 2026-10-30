@@ -1,7 +1,24 @@
-<a class="pular" href="#conteudo">Pular para o conteúdo</a>
-<header>
-  <p class="marca">Atuação Pública</p>
+<a class="pular" href="#conteudo" (click)="$event.preventDefault(); conteudo.focus()">Pular para o conteúdo</a>
+<header class="topo">
+  <a class="marca" routerLink="/">Atuação Pública</a>
+  <nav aria-label="Principal">
+    <ul>
+      <li><a routerLink="/" routerLinkActive="ativo" [routerLinkActiveOptions]="{ exact: true }">Políticos</a></li>
+      <li><a routerLink="/metodologia" routerLinkActive="ativo">Metodologia</a></li>
+      <li><a routerLink="/fontes" routerLinkActive="ativo">Fontes</a></li>
+      <li><a routerLink="/contribuir" routerLinkActive="ativo">Contribuir</a></li>
+    </ul>
+  </nav>
 </header>
-<main id="conteudo">
+<main id="conteudo" #conteudo tabindex="-1">
   <router-outlet />
 </main>
+<footer class="rodape">
+  <p>
+    Dados de fontes oficiais, com fonte e data de captura em cada bloco. Dado ausente na fonte aparece como
+    "sem registro na fonte". O site não usa cookies nem rastreadores.
+  </p>
+  <p>
+    <a routerLink="/politica-editorial">Política editorial</a> · Código sob licença MIT · Dados sob licença CC BY 4.0
+  </p>
+</footer>
