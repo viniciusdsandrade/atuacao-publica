@@ -20,8 +20,9 @@ public final class Meta {
             return new Cursor(fonte, "nao_executada", null, null, null, Map.of(), List.of(), List.of());
         }
 
+        /** Falha na coleta ou coleta parcial: parte dos dados pode vir de coleta anterior. */
         public boolean desatualizado() {
-            return "falha".equals(status);
+            return "falha".equals(status) || "parcial".equals(status);
         }
     }
 

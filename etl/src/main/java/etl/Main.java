@@ -70,17 +70,23 @@ public final class Main {
             List<String> erros = List.of();
             try {
                 fonte.fetch(ctx, coleta);
+                if (!coleta.reservasUsadas().isEmpty()) {
+                    status = "parcial";
+                    erros = coleta.reservasUsadas();
+                    erros.forEach(e -> System.err.println(fonte.nome() + ": coleta parcial: " + e));
+                }
             } catch (Exception e) {
                 status = "falha";
                 erros = List.of(mensagem(e));
                 falhas++;
                 System.err.println(fonte.nome() + ": falha na coleta: " + mensagem(e));
             }
+            boolean coletou = !"falha".equals(status);
             Meta.gravar(ctx, new Meta.Cursor(fonte.nome(), status, ctx.agora(),
-                    "ok".equals(status) ? ctx.agora() : anterior.ultimaColetaOk(),
-                    "ok".equals(status) ? periodo(coleta, anterior) : anterior.periodo(),
-                    "ok".equals(status) ? coleta.contagens() : anterior.contagens(),
-                    "ok".equals(status) ? coleta.arquivos() : anterior.arquivos(), erros));
+                    coletou ? ctx.agora() : anterior.ultimaColetaOk(),
+                    coletou ? periodo(coleta, anterior) : anterior.periodo(),
+                    coletou ? coleta.contagens() : anterior.contagens(),
+                    coletou ? coleta.arquivos() : anterior.arquivos(), erros));
         }
         return falhas == 0 ? 0 : 1;
     }

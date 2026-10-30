@@ -9,6 +9,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentSkipListMap;
 
 /**
  * Cache de dados brutos em data/raw/{fonte}. Cada arquivo tem ao lado um .meta.json
@@ -31,6 +33,10 @@ public final class Coleta {
     private final List<Arquivo> arquivos = Collections.synchronizedList(new ArrayList<>());
     private final Map<String, Integer> contagens = Collections.synchronizedMap(new TreeMap<>());
     private volatile Meta.Periodo periodo;
+    static final int LIMITE_DE_FALHAS = 3;
+    private final Map<String, Integer> falhasSeguidas = new ConcurrentHashMap<>();
+    private final Map<String, Integer> reservas = new ConcurrentSkipListMap<>();
+    private final Map<String, String> primeiroErro = new ConcurrentHashMap<>();
 
     public Coleta(Contexto ctx, String fonte) {
         this.ctx = ctx;
@@ -41,18 +47,64 @@ public final class Coleta {
             throws IOException, InterruptedException {
         Path destino = ctx.raw().resolve(fonte).resolve(caminho);
         Path meta = lateral(destino);
-        if (politica == Politica.SE_AUSENTE && Files.exists(meta)) {
-            Arquivo emCache = Json.ler(meta, Arquivo.class);
-            if (Files.exists(ctx.dados().resolve(emCache.caminho()))) {
-                arquivos.add(emCache);
-                return emCache;
-            }
+        Arquivo emCache = emCache(meta);
+        if (politica == Politica.SE_AUSENTE && emCache != null) {
+            arquivos.add(emCache);
+            return emCache;
         }
-        Http.Baixado baixado = ctx.http().baixar(url, destino, accept);
-        Arquivo arquivo = new Arquivo(url, ctx.relativo(baixado.arquivo()), baixado.sha256(), baixado.bytes(), ctx.agora());
-        Json.gravar(meta, arquivo, true);
-        arquivos.add(arquivo);
-        return arquivo;
+        String grupo = grupo(caminho);
+        if (emCache != null && falhasSeguidas.getOrDefault(grupo, 0) >= LIMITE_DE_FALHAS) {
+            return reserva(grupo, emCache, null);
+        }
+        try {
+            Http.Baixado baixado = ctx.http().baixar(url, destino, accept);
+            Arquivo arquivo = new Arquivo(url, ctx.relativo(baixado.arquivo()), baixado.sha256(), baixado.bytes(), ctx.agora());
+            Json.gravar(meta, arquivo, true);
+            arquivos.add(arquivo);
+            falhasSeguidas.put(grupo, 0);
+            return arquivo;
+        } catch (IOException e) {
+            falhasSeguidas.merge(grupo, 1, Integer::sum);
+            if (emCache == null) {
+                throw e;
+            }
+            return reserva(grupo, emCache, e.getMessage());
+        }
+    }
+
+    /**
+     * A atualização falhou e há cópia anterior: publica a cópia, com a data de captura original.
+     * Depois de LIMITE_DE_FALHAS falhas seguidas no mesmo tipo de arquivo, nem tenta de novo nesta execução.
+     */
+    private Arquivo reserva(String grupo, Arquivo emCache, String erro) {
+        reservas.merge(grupo, 1, Integer::sum);
+        if (erro != null) {
+            primeiroErro.putIfAbsent(grupo, erro);
+        }
+        arquivos.add(emCache);
+        return emCache;
+    }
+
+    /** Falhas de atualização cobertas por cópia anterior, por tipo de arquivo. Vazio quando tudo foi atualizado. */
+    public List<String> reservasUsadas() {
+        List<String> descricoes = new ArrayList<>();
+        reservas.forEach((grupo, n) -> descricoes.add(grupo + ": " + n + " arquivo(s) mantidos da coleta anterior ("
+                + primeiroErro.getOrDefault(grupo, "falhas seguidas") + ")"));
+        return descricoes;
+    }
+
+    private Arquivo emCache(Path meta) {
+        if (!Files.exists(meta)) {
+            return null;
+        }
+        Arquivo arquivo = Json.ler(meta, Arquivo.class);
+        return Files.exists(ctx.dados().resolve(arquivo.caminho())) ? arquivo : null;
+    }
+
+    /** Tipo de arquivo para o disjuntor: a primeira pasta do caminho (frentes/204554.json → frentes). */
+    private static String grupo(String caminho) {
+        int barra = caminho.indexOf('/');
+        return barra < 0 ? caminho : caminho.substring(0, barra);
     }
 
     /**
