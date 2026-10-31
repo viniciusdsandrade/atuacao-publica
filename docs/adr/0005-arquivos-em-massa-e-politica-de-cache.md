@@ -34,6 +34,7 @@ A coleta do Senado levou 3 minutos, a do TSE 1 minuto e a do Executivo 11 segund
 ## Consequências
 
 - A primeira coleta da Câmara faz cerca de 3.800 requisições; as seguintes reaproveitam os anos fechados.
+- Em 2026-10-31, com o cache preenchido, a coleta da Câmara baixou 1.213 arquivos e reaproveitou 2.599, em 15 minutos no GitHub Actions.
 - Uma falha pontual da fonte não apaga dados do site: o bloco mostra o aviso de fonte desatualizada.
 - O cache do GitHub Actions guarda `data/raw` entre execuções. Se o cache sumir, a próxima execução baixa tudo de novo e publica o mesmo resultado.
 - Uma carga que estoura o limite de tempo não se perde: a execução seguinte reaproveita os arquivos de período fechado já baixados.
