@@ -82,4 +82,24 @@ class CamaraTest {
         assertFalse(intervalos.get(0).contem(LocalDateTime.of(2024, 5, 1, 15, 0)), "licença fica fora");
         assertTrue(intervalos.get(1).contem(LocalDateTime.of(2026, 10, 1, 15, 0)), "último intervalo fica aberto");
     }
+
+    @Test
+    void quemSaiuTemDataEDescricaoEQuemFicouAteOFimTemMandatoEncerrado() {
+        Camara.Legislatura leg57 = new Camara.Legislatura(57, LocalDate.of(2023, 2, 1), LocalDate.of(2027, 1, 31));
+        JsonNode historico = Json.FONTE.readTree("""
+                [
+                  {"dataHora": "2023-02-01T12:05", "situacao": "Exercício", "idLegislatura": 57},
+                  {"dataHora": "2024-03-10T10:00", "situacao": "Afastado", "idLegislatura": 57,
+                   "descricaoStatus": "Saída - Afastamento para investidura em cargo"}
+                ]
+                """);
+        Camara.Intervalo saiu = Camara.intervalos(historico, leg57).getLast();
+        assertEquals("Fora de exercício desde 2024-03-10 (Saída - Afastamento para investidura em cargo)",
+                Camara.situacaoNaLegislatura(historico, leg57, saiu, LocalDate.of(2026, 10, 31)));
+
+        Camara.Intervalo ateOFim = new Camara.Intervalo(LocalDateTime.of(2023, 2, 1, 12, 5), null);
+        assertEquals("Mandato encerrado em 2027-01-31",
+                Camara.situacaoNaLegislatura(historico, leg57, ateOFim, LocalDate.of(2027, 2, 2)));
+        assertEquals("Fora de exercício", Camara.situacaoNaLegislatura(historico, leg57, ateOFim, LocalDate.of(2026, 10, 31)));
+    }
 }

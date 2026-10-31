@@ -9,6 +9,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -60,6 +61,21 @@ public final class Camara implements Fonte {
     record Legislatura(int id, LocalDate inicio, LocalDate fim) {
     }
 
+    /** Legislaturas cobertas, da primeira (ADR-0006) até a vigente. */
+    record Cobertura(List<Legislatura> legislaturas) {
+        LocalDate inicio() {
+            return legislaturas.getFirst().inicio();
+        }
+
+        Legislatura atual() {
+            return legislaturas.getLast();
+        }
+
+        boolean contem(Integer idLegislatura) {
+            return idLegislatura != null && legislaturas.stream().anyMatch(l -> l.id() == idLegislatura);
+        }
+    }
+
     @Override
     public String nome() {
         return "camara";
@@ -70,16 +86,44 @@ public final class Camara implements Fonte {
     @Override
     public void fetch(Contexto ctx, Coleta coleta) throws Exception {
         Coleta.Arquivo arquivoLeg = coleta.obter(API + "/legislaturas?data=" + ctx.hoje(), "legislatura.json", JSON, Politica.SEMPRE);
-        Legislatura leg = legislatura(Json.ler(Coleta.caminho(ctx, arquivoLeg)));
+        Legislatura atual = legislatura(Json.ler(Coleta.caminho(ctx, arquivoLeg)));
         Coleta.Arquivo lista = coleta.obter(API + "/deputados?itens=1000", "deputados.json", JSON, Politica.SEMPRE);
-        List<String> ids = new ArrayList<>();
+        Set<String> emExercicio = new LinkedHashSet<>();
         for (JsonNode d : Json.ler(Coleta.caminho(ctx, lista)).path("dados")) {
-            ids.add(Json.texto(d, "id"));
+            emExercicio.add(Json.texto(d, "id"));
         }
-        coleta.contar("deputados", ids.size());
+        // Quem exerceu mandato desde a primeira legislatura coberta continua no arquivo (ADR-0006).
+        List<Legislatura> legislaturas = new ArrayList<>();
+        Set<String> ids = new LinkedHashSet<>(emExercicio);
+        Set<String> daAtual = new HashSet<>();
+        for (int numero = PRIMEIRA_LEGISLATURA; numero <= atual.id(); numero++) {
+            Politica politica = numero == atual.id() ? Politica.SEMPRE : Politica.SE_AUSENTE;
+            if (numero == atual.id()) {
+                legislaturas.add(atual);
+            } else {
+                Coleta.Arquivo arq = coleta.obter(API + "/legislaturas/" + numero, "legislaturas/" + numero + ".json", JSON, politica);
+                legislaturas.add(legislatura(Json.ler(Coleta.caminho(ctx, arq))));
+            }
+            String url = API + "/deputados?idLegislatura=" + numero + "&itens=1000";
+            for (int pagina = 1; url != null; pagina++) {
+                Coleta.Arquivo arq = coleta.obter(url, membrosDaLegislatura(numero, pagina), JSON, politica);
+                JsonNode resposta = Json.ler(Coleta.caminho(ctx, arq));
+                boolean vigente = numero == atual.id();
+                resposta.path("dados").forEach(d -> {
+                    ids.add(Json.texto(d, "id"));
+                    if (vigente) {
+                        daAtual.add(Json.texto(d, "id"));
+                    }
+                });
+                url = proxima(resposta);
+            }
+        }
+        Cobertura cobertura = new Cobertura(legislaturas);
+        coleta.contar("deputados", emExercicio.size());
+        coleta.contar("deputados_fora_de_exercicio", ids.size() - emExercicio.size());
 
         int anoAtual = ctx.hoje().getYear();
-        for (int ano = leg.inicio().getYear(); ano <= anoAtual; ano++) {
+        for (int ano = cobertura.inicio().getYear(); ano <= anoAtual; ano++) {
             Politica doAno = Politica.porAno(ano, ctx.hoje());
             for (String nome : ANUAIS) {
                 Politica politica = SEMPRE_ATUAIS.contains(nome) ? Politica.SEMPRE : doAno;
@@ -88,25 +132,36 @@ public final class Camara implements Fonte {
             }
             coleta.obter(COTAS + "/Ano-" + ano + ".json.zip", "cotas/Ano-" + ano + ".json.zip", "application/zip", doAno);
         }
-        coleta.obter(ARQUIVOS + "/orgaosDeputados/json/orgaosDeputados-L" + leg.id() + ".json",
-                "arquivos/orgaosDeputados-L" + leg.id() + ".json", JSON, Politica.SEMPRE);
+        for (Legislatura leg : legislaturas) {
+            coleta.obter(ARQUIVOS + "/orgaosDeputados/json/orgaosDeputados-L" + leg.id() + ".json",
+                    "arquivos/orgaosDeputados-L" + leg.id() + ".json", JSON, leg == atual ? Politica.SEMPRE : Politica.SE_AUSENTE);
+        }
 
-        List<String> falhas = paraCadaDeputado(ids, id -> coletarDeputado(ctx, coleta, id, leg));
+        List<String> falhas = paraCadaDeputado(new ArrayList<>(ids),
+                id -> coletarDeputado(ctx, coleta, id, cobertura, emExercicio.contains(id) || daAtual.contains(id)));
         coleta.contar("deputados_com_falha", falhas.size());
         if (!falhas.isEmpty()) {
             throw new IllegalStateException("coleta incompleta para " + falhas.size() + " deputado(s): " + falhas.getFirst());
         }
-        coleta.periodo(new Meta.Periodo(leg.inicio(), ctx.hoje()));
+        coleta.periodo(new Meta.Periodo(cobertura.inicio(), ctx.hoje()));
     }
 
-    private static void coletarDeputado(Contexto ctx, Coleta coleta, String id, Legislatura leg) throws Exception {
-        // Detalhe e frentes mudam pouco. O histórico define os períodos de exercício usados na participação: todo dia.
+    private static String membrosDaLegislatura(int numero, int pagina) {
+        return "legislaturas/" + numero + "-deputados-p" + pagina + ".json";
+    }
+
+    private static void coletarDeputado(Contexto ctx, Coleta coleta, String id, Cobertura cobertura, boolean naLegislaturaAtual)
+            throws Exception {
+        // Detalhe e frentes mudam pouco. O histórico define os períodos de exercício usados na participação: todo dia
+        // para quem é da legislatura vigente, porque suplentes entram e saem; para legislaturas passadas, uma vez por semana.
         coleta.obter(API + "/deputados/" + id, "deputados/" + id + ".json", JSON, Politica.SEMANAL);
-        coleta.obter(API + "/deputados/" + id + "/historico", "historico/" + id + ".json", JSON, Politica.SEMPRE);
+        coleta.obter(API + "/deputados/" + id + "/historico", "historico/" + id + ".json", JSON,
+                naLegislaturaAtual ? Politica.SEMPRE : Politica.SEMANAL);
         coleta.obterOpcional(API + "/deputados/" + id + "/frentes", "frentes/" + id + ".json", JSON, Politica.SEMANAL);
         int anoAtual = ctx.hoje().getYear();
-        for (int ano = leg.inicio().getYear(); ano <= anoAtual; ano++) {
-            LocalDate de = ano == leg.inicio().getYear() ? leg.inicio() : LocalDate.of(ano, 1, 1);
+        LocalDate inicio = cobertura.inicio();
+        for (int ano = inicio.getYear(); ano <= anoAtual; ano++) {
+            LocalDate de = ano == inicio.getYear() ? inicio : LocalDate.of(ano, 1, 1);
             LocalDate ate = ano == anoAtual ? ctx.hoje() : LocalDate.of(ano, 12, 31);
             Politica politica = Politica.porAno(ano, ctx.hoje());
             String url = API + "/deputados/" + id + "/discursos?dataInicio=" + de + "&dataFim=" + ate + "&itens=100";
@@ -156,10 +211,36 @@ public final class Camara implements Fonte {
         return "discursos/" + id + "-" + ano + "-p" + pagina + ".json";
     }
 
+    /** /legislaturas?data= devolve uma lista; /legislaturas/{id}, um objeto. */
     private static Legislatura legislatura(JsonNode resposta) {
-        JsonNode dados = resposta.path("dados").get(0);
+        JsonNode dados = resposta.path("dados");
+        if (dados.isArray()) {
+            dados = dados.get(0);
+        }
         return new Legislatura(Json.inteiro(dados, "id"), LocalDate.parse(Json.texto(dados, "dataInicio")),
                 LocalDate.parse(Json.texto(dados, "dataFim")));
+    }
+
+    /** Legislaturas cobertas, lidas do cache bruto na mesma ordem da coleta. */
+    private static Cobertura cobertura(Contexto ctx) {
+        Legislatura atual = legislatura(Json.ler(caminho(ctx, "legislatura.json")));
+        List<Legislatura> legislaturas = new ArrayList<>();
+        for (int numero = PRIMEIRA_LEGISLATURA; numero < atual.id(); numero++) {
+            legislaturas.add(legislatura(Json.ler(caminho(ctx, "legislaturas/" + numero + ".json"))));
+        }
+        legislaturas.add(atual);
+        return new Cobertura(legislaturas);
+    }
+
+    /** Ids de quem exerceu mandato em alguma legislatura coberta, pelas listas da Câmara por legislatura. */
+    private static Set<String> membros(Contexto ctx, Cobertura cobertura) {
+        Set<String> ids = new LinkedHashSet<>();
+        for (Legislatura leg : cobertura.legislaturas()) {
+            for (int pagina = 1; Coleta.metadados(ctx, "camara", membrosDaLegislatura(leg.id(), pagina)) != null; pagina++) {
+                Json.ler(caminho(ctx, membrosDaLegislatura(leg.id(), pagina))).path("dados").forEach(d -> ids.add(Json.texto(d, "id")));
+            }
+        }
+        return ids;
     }
 
     // ------------------------------------------------------------ normalize
@@ -188,22 +269,29 @@ public final class Camara implements Fonte {
 
     @Override
     public void normalize(Contexto ctx) {
-        Legislatura leg = legislatura(Json.ler(caminho(ctx, "legislatura.json")));
+        Cobertura cobertura = cobertura(ctx);
+        Map<String, JsonNode> atuais = new LinkedHashMap<>();
+        for (JsonNode d : Json.ler(caminho(ctx, "deputados.json")).path("dados")) {
+            atuais.put(Json.texto(d, "id"), d);
+        }
+        Set<String> ids = new LinkedHashSet<>(atuais.keySet());
+        ids.addAll(membros(ctx, cobertura));
         Map<String, Acumulado> acumulados = new LinkedHashMap<>();
         List<Pessoa> pessoas = new ArrayList<>();
         Map<String, List<Intervalo>> exercicio = new HashMap<>();
-        Map<String, Mandato> mandatos = new HashMap<>();
+        Map<String, List<Mandato>> mandatos = new HashMap<>();
         Map<String, List<FonteUsada>> fontes = new LinkedHashMap<>();
 
-        for (JsonNode d : Json.ler(caminho(ctx, "deputados.json")).path("dados")) {
-            String id = Json.texto(d, "id");
+        for (String id : ids) {
+            JsonNode d = atuais.get(id);
+            boolean emExercicio = d != null;
             acumulados.put(id, new Acumulado());
             Coleta.Arquivo detalheArq = arquivo(ctx, "deputados/" + id + ".json");
             JsonNode detalhe = Json.ler(Coleta.caminho(ctx, detalheArq)).path("dados");
             JsonNode status = detalhe.path("ultimoStatus");
-            // O detalhe é renovado uma vez por semana; partido e UF vêm da lista diária de deputados em exercício.
-            String uf = primeiro(Json.texto(d, "siglaUf"), Json.texto(status, "siglaUf"));
-            String partido = primeiro(Json.texto(d, "siglaPartido"), Json.texto(status, "siglaPartido"));
+            // O detalhe é renovado uma vez por semana; partido e UF de quem está em exercício vêm da lista diária.
+            String uf = primeiro(emExercicio ? Json.texto(d, "siglaUf") : null, Json.texto(status, "siglaUf"));
+            String partido = primeiro(emExercicio ? Json.texto(d, "siglaPartido") : null, Json.texto(status, "siglaPartido"));
             Prov prov = Prov.de("camara-api", API + "/deputados/" + id, detalheArq);
             List<LinkOficial> links = new ArrayList<>();
             links.add(new LinkOficial("Página na Câmara dos Deputados", "https://www.camara.leg.br/deputados/" + id, prov));
@@ -211,31 +299,43 @@ public final class Camara implements Fonte {
             if (site != null && site.matches("^https?://\\S+$")) {
                 links.add(new LinkOficial("Site informado à Câmara", site, prov));
             }
-            pessoas.add(new Pessoa("camara", id, primeiro(Json.texto(status, "nomeEleitoral"), Json.texto(status, "nome")),
-                    "deputado_federal", "federal", "BR", uf, partido,
-                    Json.texto(status, "urlFoto"), Json.texto(status, "situacao"), true, links));
 
             Coleta.Arquivo historicoArq = arquivo(ctx, "historico/" + id + ".json");
-            List<Intervalo> intervalos = intervalos(Json.ler(Coleta.caminho(ctx, historicoArq)).path("dados"), leg);
-            exercicio.put(id, intervalos);
-            LocalDate inicioExercicio = intervalos.isEmpty() ? null : intervalos.getFirst().inicio().toLocalDate();
-            mandatos.put(id, new Mandato("deputado_federal", "federal", "BR", uf,
-                    inicioExercicio, leg.fim(), Json.texto(status, "situacao"), Json.texto(status, "condicaoEleitoral"),
-                    leg.id(), null, null, Prov.de("camara-api", API + "/deputados/" + id + "/historico", historicoArq)));
+            JsonNode historico = Json.ler(Coleta.caminho(ctx, historicoArq)).path("dados");
+            Prov provHistorico = Prov.de("camara-api", API + "/deputados/" + id + "/historico", historicoArq);
+            List<Mandato> dele = new ArrayList<>();
+            List<Intervalo> todos = new ArrayList<>();
+            for (Legislatura leg : cobertura.legislaturas()) {
+                List<Intervalo> intervalos = intervalos(historico, leg);
+                if (intervalos.isEmpty()) {
+                    continue;
+                }
+                todos.addAll(intervalos);
+                String situacao = leg == cobertura.atual() && emExercicio ? Json.texto(status, "situacao")
+                        : situacaoNaLegislatura(historico, leg, intervalos.getLast(), ctx.hoje());
+                dele.add(new Mandato("deputado_federal", "federal", "BR", uf, intervalos.getFirst().inicio().toLocalDate(),
+                        leg.fim(), situacao, primeiro(condicao(historico, leg), Json.texto(status, "condicaoEleitoral")),
+                        leg.id(), null, null, provHistorico));
+            }
+            exercicio.put(id, todos);
+            mandatos.put(id, dele);
+            String situacao = emExercicio || dele.isEmpty() ? Json.texto(status, "situacao") : dele.getLast().situacao();
+            pessoas.add(new Pessoa("camara", id, primeiro(Json.texto(status, "nomeEleitoral"), Json.texto(status, "nome")),
+                    "deputado_federal", "federal", "BR", uf, partido, Json.texto(status, "urlFoto"), situacao, emExercicio, links));
         }
         fontes.put("mandatos", List.of(FonteUsada.de("camara-api", arquivo(ctx, "deputados.json"))));
 
-        votos(ctx, leg, acumulados, exercicio, fontes);
-        despesas(ctx, leg, acumulados, fontes);
-        proposicoes(ctx, leg, acumulados, fontes);
-        eventos(ctx, leg, acumulados, fontes);
-        orgaos(ctx, leg, acumulados, fontes);
+        votos(ctx, cobertura, acumulados, exercicio, fontes);
+        despesas(ctx, cobertura, acumulados, fontes);
+        proposicoes(ctx, cobertura, acumulados, fontes);
+        eventos(ctx, cobertura, acumulados, fontes);
+        orgaos(ctx, cobertura, acumulados, fontes);
 
         Path saida = ctx.normalizado().resolve("camara");
         for (Pessoa pessoa : pessoas) {
             String id = pessoa.idFonte();
             Acumulado a = acumulados.get(id);
-            a.orgaos.addAll(frentes(ctx, id, leg));
+            a.orgaos.addAll(frentes(ctx, id, cobertura));
             List<Participacao> participacao = new ArrayList<>();
             for (var ano : a.participacao.entrySet()) {
                 int[] n = ano.getValue();
@@ -245,10 +345,13 @@ public final class Camara implements Fonte {
             }
             Map<String, List<FonteUsada>> fontesDoDeputado = new LinkedHashMap<>(fontes);
             Coleta.Arquivo arqFrentes = Coleta.metadados(ctx, "camara", "frentes/" + id + ".json");
-            fontesDoDeputado.put("orgaos_e_frentes", arqFrentes == null ? fontes.get("orgaos_e_frentes")
-                    : List.of(fontes.get("orgaos_e_frentes").getFirst(), FonteUsada.de("camara-api", arqFrentes)));
-            List<Discurso> discursos = discursos(ctx, id, leg, fontesDoDeputado);
-            Json.gravar(saida.resolve("blocos").resolve(id + ".json"), new Blocos(List.of(mandatos.get(id)), participacao,
+            List<FonteUsada> fontesDeOrgaos = new ArrayList<>(fontes.get("orgaos_e_frentes"));
+            if (arqFrentes != null) {
+                fontesDeOrgaos.add(FonteUsada.de("camara-api", arqFrentes));
+            }
+            fontesDoDeputado.put("orgaos_e_frentes", fontesDeOrgaos);
+            List<Discurso> discursos = discursos(ctx, id, cobertura, fontesDoDeputado);
+            Json.gravar(saida.resolve("blocos").resolve(id + ".json"), new Blocos(mandatos.get(id), participacao,
                     a.votos, a.despesas, a.proposicoes, discursos, a.eventos, a.orgaos, fontesDoDeputado));
         }
         Json.gravar(saida.resolve("pessoas.json"), pessoas);
@@ -259,6 +362,40 @@ public final class Camara implements Fonte {
         boolean contem(LocalDateTime instante) {
             return !instante.isBefore(inicio) && (fim == null || instante.isBefore(fim));
         }
+    }
+
+    /**
+     * Situação de um mandato sem exercício hoje. Quem exerceu até o fim da legislatura tem o mandato encerrado. Quem
+     * saiu antes tem a data e a descrição da mudança registradas pela Câmara.
+     */
+    static String situacaoNaLegislatura(JsonNode historico, Legislatura leg, Intervalo ultimo, LocalDate hoje) {
+        if (ultimo.fim() == null) {
+            // Intervalo aberto numa legislatura vigente: a pessoa saiu da lista de exercício e o histórico ainda não mostra.
+            return hoje.isAfter(leg.fim()) ? "Mandato encerrado em " + leg.fim() : "Fora de exercício";
+        }
+        if (!ultimo.fim().toLocalDate().isBefore(leg.fim())) {
+            return "Mandato encerrado em " + leg.fim();
+        }
+        String descricao = null;
+        for (JsonNode h : historico) {
+            if (leg.id() == Json.inteiro(h, "idLegislatura") && ultimo.fim().equals(LocalDateTime.parse(Json.texto(h, "dataHora")))
+                    && Json.texto(h, "situacao") != null) {
+                descricao = primeiro(Json.texto(h, "descricaoStatus"), Json.texto(h, "situacao"));
+            }
+        }
+        return "Fora de exercício desde " + ultimo.fim().toLocalDate() + (descricao == null ? "" : " (" + descricao + ")");
+    }
+
+    /** Condição eleitoral (titular ou suplente) na entrada da legislatura. */
+    static String condicao(JsonNode historico, Legislatura leg) {
+        List<JsonNode> daLegislatura = new ArrayList<>();
+        for (JsonNode h : historico) {
+            if (leg.id() == Json.inteiro(h, "idLegislatura") && Json.texto(h, "condicaoEleitoral") != null) {
+                daLegislatura.add(h);
+            }
+        }
+        daLegislatura.sort(Comparator.comparing(h -> Json.texto(h, "dataHora")));
+        return daLegislatura.isEmpty() ? null : Json.texto(daLegislatura.getFirst(), "condicaoEleitoral");
     }
 
     /** Intervalos com situação "Exercício" na legislatura. Registro de situação nula não muda o intervalo. */
@@ -281,10 +418,10 @@ public final class Camara implements Fonte {
         return intervalos;
     }
 
-    private static void votos(Contexto ctx, Legislatura leg, Map<String, Acumulado> acumulados,
+    private static void votos(Contexto ctx, Cobertura cobertura, Map<String, Acumulado> acumulados,
                               Map<String, List<Intervalo>> exercicio, Map<String, List<FonteUsada>> fontes) {
         List<FonteUsada> usadas = new ArrayList<>();
-        for (int ano = leg.inicio().getYear(); ano <= ctx.hoje().getYear(); ano++) {
+        for (int ano = cobertura.inicio().getYear(); ano <= ctx.hoje().getYear(); ano++) {
             Map<String, Votacao> votacoes = new HashMap<>();
             Coleta.Arquivo arqVotacoes = arquivo(ctx, "arquivos/votacoes-" + ano + ".json");
             Json.paraCada(Coleta.caminho(ctx, arqVotacoes), "dados", v -> votacoes.put(Json.texto(v, "id"),
@@ -364,10 +501,10 @@ public final class Camara implements Fonte {
         fontes.put("participacao_votacoes", usadas);
     }
 
-    private static void despesas(Contexto ctx, Legislatura leg, Map<String, Acumulado> acumulados,
+    private static void despesas(Contexto ctx, Cobertura cobertura, Map<String, Acumulado> acumulados,
                                  Map<String, List<FonteUsada>> fontes) {
         List<FonteUsada> usadas = new ArrayList<>();
-        for (int ano = leg.inicio().getYear(); ano <= ctx.hoje().getYear(); ano++) {
+        for (int ano = cobertura.inicio().getYear(); ano <= ctx.hoje().getYear(); ano++) {
             Coleta.Arquivo arq = arquivo(ctx, "cotas/Ano-" + ano + ".json.zip");
             Prov prov = Prov.de("camara-cotas", arq.url(), arq);
             Json.paraCadaNoZip(Coleta.caminho(ctx, arq), "dados", d -> {
@@ -410,14 +547,14 @@ public final class Camara implements Fonte {
         return chave.toString();
     }
 
-    private static void proposicoes(Contexto ctx, Legislatura leg, Map<String, Acumulado> acumulados,
+    private static void proposicoes(Contexto ctx, Cobertura cobertura, Map<String, Acumulado> acumulados,
                                     Map<String, List<FonteUsada>> fontes) {
         record Autoria(String deputado, String proposicao, Integer ordem, Boolean proponente) {
         }
         List<Autoria> autorias = new ArrayList<>();
         Set<String> necessarias = new HashSet<>();
         List<FonteUsada> usadas = new ArrayList<>();
-        for (int ano = leg.inicio().getYear(); ano <= ctx.hoje().getYear(); ano++) {
+        for (int ano = cobertura.inicio().getYear(); ano <= ctx.hoje().getYear(); ano++) {
             Coleta.Arquivo arq = arquivo(ctx, "arquivos/proposicoesAutores-" + ano + ".json");
             Json.paraCada(Coleta.caminho(ctx, arq), "dados", a -> {
                 String deputado = Json.texto(a, "idDeputadoAutor");
@@ -434,7 +571,7 @@ public final class Camara implements Fonte {
         Map<String, JsonNode> dados = new HashMap<>();
         Map<String, List<String>> temas = new HashMap<>();
         Map<String, Coleta.Arquivo> origem = new HashMap<>();
-        for (int ano = leg.inicio().getYear(); ano <= ctx.hoje().getYear(); ano++) {
+        for (int ano = cobertura.inicio().getYear(); ano <= ctx.hoje().getYear(); ano++) {
             Coleta.Arquivo arq = arquivo(ctx, "arquivos/proposicoes-" + ano + ".json");
             Json.paraCada(Coleta.caminho(ctx, arq), "dados", p -> {
                 String id = Json.texto(p, "id");
@@ -475,10 +612,10 @@ public final class Camara implements Fonte {
         fontes.put("proposicoes", usadas);
     }
 
-    private static void eventos(Contexto ctx, Legislatura leg, Map<String, Acumulado> acumulados,
+    private static void eventos(Contexto ctx, Cobertura cobertura, Map<String, Acumulado> acumulados,
                                 Map<String, List<FonteUsada>> fontes) {
         List<FonteUsada> usadas = new ArrayList<>();
-        for (int ano = leg.inicio().getYear(); ano <= ctx.hoje().getYear(); ano++) {
+        for (int ano = cobertura.inicio().getYear(); ano <= ctx.hoje().getYear(); ano++) {
             Map<String, JsonNode> eventos = new HashMap<>();
             Coleta.Arquivo arqEventos = arquivo(ctx, "arquivos/eventos-" + ano + ".json");
             Json.paraCada(Coleta.caminho(ctx, arqEventos), "dados", e -> eventos.put(Json.texto(e, "id"), e));
@@ -504,31 +641,35 @@ public final class Camara implements Fonte {
         fontes.put("eventos", usadas);
     }
 
-    private static void orgaos(Contexto ctx, Legislatura leg, Map<String, Acumulado> acumulados,
+    private static void orgaos(Contexto ctx, Cobertura cobertura, Map<String, Acumulado> acumulados,
                                Map<String, List<FonteUsada>> fontes) {
-        Coleta.Arquivo arq = arquivo(ctx, "arquivos/orgaosDeputados-L" + leg.id() + ".json");
-        Json.paraCada(Coleta.caminho(ctx, arq), "dados", o -> {
-            String uri = Json.texto(o, "uriDeputado");
-            Acumulado a = uri == null ? null : acumulados.get(uri.substring(uri.lastIndexOf('/') + 1));
-            if (a == null) {
-                return;
-            }
-            a.orgaos.add(new OrgaoOuFrente("orgao", primeiro(Json.texto(o, "nomeOrgao"), Json.texto(o, "siglaOrgao")),
-                    Json.texto(o, "siglaOrgao"), Json.texto(o, "cargo"), data(Json.texto(o, "dataInicio")),
-                    data(Json.texto(o, "dataFim")), Prov.de("camara-arquivos", Json.texto(o, "uriOrgao"), arq)));
-        });
-        fontes.put("orgaos_e_frentes", List.of(FonteUsada.de("camara-arquivos", arq)));
+        List<FonteUsada> usadas = new ArrayList<>();
+        for (Legislatura leg : cobertura.legislaturas()) {
+            Coleta.Arquivo arq = arquivo(ctx, "arquivos/orgaosDeputados-L" + leg.id() + ".json");
+            Json.paraCada(Coleta.caminho(ctx, arq), "dados", o -> {
+                String uri = Json.texto(o, "uriDeputado");
+                Acumulado a = uri == null ? null : acumulados.get(uri.substring(uri.lastIndexOf('/') + 1));
+                if (a == null) {
+                    return;
+                }
+                a.orgaos.add(new OrgaoOuFrente("orgao", primeiro(Json.texto(o, "nomeOrgao"), Json.texto(o, "siglaOrgao")),
+                        Json.texto(o, "siglaOrgao"), Json.texto(o, "cargo"), data(Json.texto(o, "dataInicio")),
+                        data(Json.texto(o, "dataFim")), Prov.de("camara-arquivos", Json.texto(o, "uriOrgao"), arq)));
+            });
+            usadas.add(FonteUsada.de("camara-arquivos", arq));
+        }
+        fontes.put("orgaos_e_frentes", usadas);
     }
 
     /** Frentes são dado complementar: sem coleta do deputado, a lista fica vazia (coleta parcial). */
-    private static List<OrgaoOuFrente> frentes(Contexto ctx, String id, Legislatura leg) {
+    private static List<OrgaoOuFrente> frentes(Contexto ctx, String id, Cobertura cobertura) {
         List<OrgaoOuFrente> frentes = new ArrayList<>();
         Coleta.Arquivo arq = Coleta.metadados(ctx, "camara", "frentes/" + id + ".json");
         if (arq == null) {
             return frentes;
         }
         for (JsonNode f : Json.ler(Coleta.caminho(ctx, arq)).path("dados")) {
-            if (leg.id() == Json.inteiro(f, "idLegislatura")) {
+            if (cobertura.contem(Json.inteiro(f, "idLegislatura"))) {
                 frentes.add(new OrgaoOuFrente("frente", Json.texto(f, "titulo"), null, null, null, null,
                         Prov.de("camara-api", API + "/frentes/" + Json.texto(f, "id"), arq)));
             }
@@ -536,10 +677,10 @@ public final class Camara implements Fonte {
         return frentes;
     }
 
-    private static List<Discurso> discursos(Contexto ctx, String id, Legislatura leg, Map<String, List<FonteUsada>> fontes) {
+    private static List<Discurso> discursos(Contexto ctx, String id, Cobertura cobertura, Map<String, List<FonteUsada>> fontes) {
         List<Discurso> discursos = new ArrayList<>();
         List<FonteUsada> usadas = new ArrayList<>();
-        for (int ano = leg.inicio().getYear(); ano <= ctx.hoje().getYear(); ano++) {
+        for (int ano = cobertura.inicio().getYear(); ano <= ctx.hoje().getYear(); ano++) {
             for (int pagina = 1; ; pagina++) {
                 Coleta.Arquivo arq = Coleta.metadados(ctx, "camara", discursos(id, ano, pagina));
                 if (arq == null) {
