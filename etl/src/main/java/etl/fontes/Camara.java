@@ -97,9 +97,10 @@ public final class Camara implements Fonte {
     }
 
     private static void coletarDeputado(Contexto ctx, Coleta coleta, String id, Legislatura leg) throws Exception {
-        coleta.obter(API + "/deputados/" + id, "deputados/" + id + ".json", JSON, Politica.SEMPRE);
+        // Detalhe e frentes mudam pouco. O histórico define os períodos de exercício usados na participação: todo dia.
+        coleta.obter(API + "/deputados/" + id, "deputados/" + id + ".json", JSON, Politica.SEMANAL);
         coleta.obter(API + "/deputados/" + id + "/historico", "historico/" + id + ".json", JSON, Politica.SEMPRE);
-        coleta.obterOpcional(API + "/deputados/" + id + "/frentes", "frentes/" + id + ".json", JSON, Politica.SEMPRE);
+        coleta.obterOpcional(API + "/deputados/" + id + "/frentes", "frentes/" + id + ".json", JSON, Politica.SEMANAL);
         int anoAtual = ctx.hoje().getYear();
         for (int ano = leg.inicio().getYear(); ano <= anoAtual; ano++) {
             LocalDate de = ano == leg.inicio().getYear() ? leg.inicio() : LocalDate.of(ano, 1, 1);
@@ -197,6 +198,9 @@ public final class Camara implements Fonte {
             Coleta.Arquivo detalheArq = arquivo(ctx, "deputados/" + id + ".json");
             JsonNode detalhe = Json.ler(Coleta.caminho(ctx, detalheArq)).path("dados");
             JsonNode status = detalhe.path("ultimoStatus");
+            // O detalhe é renovado uma vez por semana; partido e UF vêm da lista diária de deputados em exercício.
+            String uf = primeiro(Json.texto(d, "siglaUf"), Json.texto(status, "siglaUf"));
+            String partido = primeiro(Json.texto(d, "siglaPartido"), Json.texto(status, "siglaPartido"));
             Prov prov = Prov.de("camara-api", API + "/deputados/" + id, detalheArq);
             List<LinkOficial> links = new ArrayList<>();
             links.add(new LinkOficial("Página na Câmara dos Deputados", "https://www.camara.leg.br/deputados/" + id, prov));
@@ -205,14 +209,14 @@ public final class Camara implements Fonte {
                 links.add(new LinkOficial("Site informado à Câmara", site, prov));
             }
             pessoas.add(new Pessoa("camara", id, primeiro(Json.texto(status, "nomeEleitoral"), Json.texto(status, "nome")),
-                    "deputado_federal", "federal", "BR", Json.texto(status, "siglaUf"), Json.texto(status, "siglaPartido"),
+                    "deputado_federal", "federal", "BR", uf, partido,
                     Json.texto(status, "urlFoto"), Json.texto(status, "situacao"), links));
 
             Coleta.Arquivo historicoArq = arquivo(ctx, "historico/" + id + ".json");
             List<Intervalo> intervalos = intervalos(Json.ler(Coleta.caminho(ctx, historicoArq)).path("dados"), leg);
             exercicio.put(id, intervalos);
             LocalDate inicioExercicio = intervalos.isEmpty() ? null : intervalos.getFirst().inicio().toLocalDate();
-            mandatos.put(id, new Mandato("deputado_federal", "federal", "BR", Json.texto(status, "siglaUf"),
+            mandatos.put(id, new Mandato("deputado_federal", "federal", "BR", uf,
                     inicioExercicio, leg.fim(), Json.texto(status, "situacao"), Json.texto(status, "condicaoEleitoral"),
                     leg.id(), null, null, Prov.de("camara-api", API + "/deputados/" + id + "/historico", historicoArq)));
         }

@@ -3,8 +3,10 @@ package etl;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -25,7 +27,9 @@ public final class Coleta {
         /** Baixa de novo a cada execução (período aberto). */
         SEMPRE,
         /** Reusa o arquivo em cache (período fechado). */
-        SE_AUSENTE;
+        SE_AUSENTE,
+        /** Dado que muda pouco: reusa a cópia por até uma semana. Cada arquivo tem seu dia de rodízio, e a carga fica espalhada. */
+        SEMANAL;
 
         /**
          * Arquivo de um ano: o ano corrente fica aberto. O ano anterior fica aberto até 31 de março,
@@ -46,6 +50,7 @@ public final class Coleta {
     private final Map<String, Integer> contagens = Collections.synchronizedMap(new TreeMap<>());
     private volatile Meta.Periodo periodo;
     static final int LIMITE_DE_FALHAS = 3;
+    static final int DIAS_DO_RODIZIO = 7;
     private final Map<String, Integer> falhas = new ConcurrentHashMap<>();
     private final Map<String, Integer> reservas = new ConcurrentSkipListMap<>();
     private final Map<String, String> primeiroErro = new ConcurrentHashMap<>();
@@ -79,7 +84,8 @@ public final class Coleta {
         Path destino = ctx.raw().resolve(fonte).resolve(caminho);
         Path meta = lateral(destino);
         Arquivo emCache = emCache(meta);
-        if (politica == Politica.SE_AUSENTE && emCache != null) {
+        if (emCache != null && (politica == Politica.SE_AUSENTE
+                || politica == Politica.SEMANAL && !vencida(caminho, emCache.capturadoEm(), ctx.agora()))) {
             doCache.incrementAndGet();
             arquivos.add(emCache);
             return emCache;
@@ -136,6 +142,13 @@ public final class Coleta {
         }
         Arquivo arquivo = Json.ler(meta, Arquivo.class);
         return Files.exists(ctx.dados().resolve(arquivo.caminho())) ? arquivo : null;
+    }
+
+    /** Cópia SEMANAL vencida: é o dia de rodízio do arquivo, ou a cópia passou de uma semana porque uma execução falhou. */
+    static boolean vencida(String caminho, Instant capturadaEm, Instant agora) {
+        LocalDate hoje = LocalDate.ofInstant(agora, ZoneOffset.UTC);
+        boolean diaDoRodizio = Math.floorMod(caminho.hashCode() + hoje.toEpochDay(), DIAS_DO_RODIZIO) == 0;
+        return diaDoRodizio || capturadaEm.isBefore(agora.minus(Duration.ofDays(DIAS_DO_RODIZIO)));
     }
 
     /** Tipo de arquivo para o disjuntor: a primeira pasta do caminho (frentes/204554.json → frentes). */
