@@ -55,7 +55,8 @@ Estado real de cada fase. Atualizado ao fechar cada fase.
    - Levantamento e validação das fontes: concluído em 2026-10-31 (`docs/FONTES.md`, seção "Piloto municipal").
    - A câmara tem dados abertos (SAPL): mandatos, votos nominais, presença, autoria e normas.
    - A prefeitura não tem dados abertos nem agenda oficial publicada. O portal da transparência exige chave.
-   - Próximo passo: modelo municipal (cargos `prefeito` e `vereador`, ente pelo código IBGE) e adaptador do SAPL.
+   - Modelo municipal e adaptador do SAPL: concluído em 2026-10-31 (ADR-0007, schemas com cargos `prefeito`, `vice_prefeito` e `vereador`, identificador `sapl-{ibge}-{id}`, adaptador `Sapl.java` e testes).
+   - Próximo passo: coleta e publicação dos vereadores do piloto municipal e cruzamento com o TSE de 2024.
 2. Assembleias legislativas e governos estaduais: um adaptador por estado.
 3. Gastos e agenda de governadores a partir dos portais estaduais catalogados em `docs/FONTES.md`.
 4. Gastos do Executivo federal (cartão de pagamento e viagens) pelo Portal da Transparência.
