@@ -1,13 +1,13 @@
 <h1>Políticos</h1>
 <p class="intro">
-  Atividade de parlamentares federais, da Presidência da República e de governadores, a partir de fontes oficiais.
+  Atividade de parlamentares federais, da Presidência da República, de governadores e do piloto municipal (Campinas/SP), a partir de fontes oficiais.
   Cada registro traz a fonte e a data de captura. Quem deixa o cargo continua no arquivo, com o histórico do período coberto.
 </p>
 
 <form class="filtros" role="search" (submit)="$event.preventDefault()">
   <div class="campo">
-    <label for="busca">Nome</label>
-    <input id="busca" type="search" autocomplete="off" [value]="busca()" (input)="busca.set(valor($event))" />
+    <label for="busca">Busca</label>
+    <input id="busca" type="search" placeholder="Nome, município, cargo ou partido" autocomplete="off" [value]="busca()" (input)="busca.set(valor($event))" />
   </div>
   <div class="campo">
     <label for="situacao">Situação</label>
@@ -16,6 +16,15 @@
       <option value="posse">Eleitos aguardando posse</option>
       <option value="fora">Fora de exercício</option>
       <option value="">Todos</option>
+    </select>
+  </div>
+  <div class="campo">
+    <label for="esfera">Esfera</label>
+    <select id="esfera" [value]="esfera()" (change)="esfera.set(valor($event))">
+      <option value="">Todas</option>
+      @for (e of esferas(); track e) {
+        <option [value]="e">{{ rotuloEsfera(e) }}</option>
+      }
     </select>
   </div>
   <div class="campo">
@@ -55,7 +64,13 @@
       <li>
         <a [routerLink]="['/politico', p.id]">
           <span class="nome">{{ p.nome }}</span>
-          <span class="detalhe">{{ rotuloCargo(p.cargo) }}{{ p.uf ? ' · ' + p.uf : '' }}{{ p.partido ? ' · ' + p.partido : '' }}</span>
+          <span class="detalhe">
+            {{ rotuloCargo(p.cargo) }}
+            @if (rotuloLocal(p.esfera, p.ente, p.uf); as local) {
+              · {{ local }}
+            }
+            {{ p.partido ? ' · ' + p.partido : '' }}
+          </span>
           @if (situacaoDe(p) !== 'exercicio' && p.situacao) {
             <span class="detalhe">{{ p.situacao }}</span>
           }

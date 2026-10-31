@@ -10,6 +10,17 @@ export const CARGOS: Record<string, string> = {
   vereador: 'Vereador(a)',
 };
 
+export const ESFERAS: Record<string, string> = {
+  federal: 'Federal',
+  estadual: 'Estadual',
+  municipal: 'Municipal',
+};
+
+/** Entes municipais catalogados (código IBGE de 7 dígitos para nome do município). */
+export const ENTES_MUNICIPAIS: Record<string, string> = {
+  '3509502': 'Campinas',
+};
+
 export const BLOCOS: Record<string, string> = {
   mandatos: 'Mandatos',
   participacao_votacoes: 'Participação em votações nominais',
@@ -40,6 +51,36 @@ export const SEM_REGISTRO = 'Sem registro na fonte.';
 
 export function rotuloCargo(cargo: string): string {
   return CARGOS[cargo] ?? cargo;
+}
+
+export function rotuloEsfera(esfera: string): string {
+  return ESFERAS[esfera] ?? esfera;
+}
+
+export function nomeDoEnte(ente: string | null | undefined): string {
+  if (!ente) {
+    return '';
+  }
+  return ENTES_MUNICIPAIS[ente] ?? ente;
+}
+
+/** Formata a localização de um político ou mandato: "Campinas (SP)", "SP", etc. */
+export function rotuloLocal(
+  esfera: string | null | undefined,
+  ente: string | null | undefined,
+  uf: string | null | undefined,
+): string {
+  if (esfera === 'municipal') {
+    const nome = nomeDoEnte(ente);
+    return nome ? `${nome}${uf ? ' (' + uf + ')' : ''}` : (uf ?? '');
+  }
+  if (esfera === 'estadual') {
+    return uf ?? nomeDoEnte(ente);
+  }
+  if (esfera === 'federal') {
+    return uf ?? '';
+  }
+  return uf ?? nomeDoEnte(ente);
 }
 
 export function rotuloBloco(bloco: string): string {

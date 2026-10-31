@@ -4,7 +4,11 @@
       <p class="voltar"><a routerLink="/">Voltar à lista</a></p>
       <h1>{{ p.nome }}</h1>
       <p class="cargo">
-        {{ rotuloCargo(p.cargo_atual) }}{{ p.uf ? ' · ' + p.uf : '' }} · Partido: {{ p.partido_atual ?? semRegistro }}
+        {{ rotuloCargo(p.cargo_atual) }}
+        @if (rotuloLocal(p.esfera, p.ente, p.uf); as local) {
+          · {{ local }}
+        }
+        · Partido: {{ p.partido_atual ?? semRegistro }}
       </p>
       <p>Situação na fonte: {{ p.situacao ?? semRegistro }}</p>
       @if (!p.em_exercicio) {

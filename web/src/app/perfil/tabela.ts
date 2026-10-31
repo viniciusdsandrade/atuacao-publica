@@ -1,7 +1,7 @@
 import { Component, input } from '@angular/core';
 
 import { Registro } from '../modelo';
-import { data, moeda, rotuloCargo, SEM_REGISTRO } from '../rotulos';
+import { data, moeda, nomeDoEnte, rotuloCargo, rotuloLocal, SEM_REGISTRO } from '../rotulos';
 
 /** Tabela de registros de um bloco. Usada no perfil (mais recentes) e no detalhe anual (todos). */
 @Component({
@@ -16,7 +16,20 @@ export class Tabela {
   protected readonly data = data;
   protected readonly moeda = moeda;
   protected readonly rotuloCargo = rotuloCargo;
+  protected readonly rotuloLocal = rotuloLocal;
+  protected readonly nomeDoEnte = nomeDoEnte;
   protected readonly semRegistro = SEM_REGISTRO;
+
+  protected localCandidatura(r: Registro): string {
+    const ente = typeof r['ente'] === 'string' ? r['ente'] : '';
+    if (ente === '3509502') {
+      return 'Campinas (SP)';
+    }
+    if (ente === 'BR') {
+      return 'Brasil';
+    }
+    return ente || SEM_REGISTRO;
+  }
 
   protected texto(valor: unknown): string {
     return valor === null || valor === undefined || valor === '' ? SEM_REGISTRO : String(valor);

@@ -5,7 +5,7 @@ import { catchError, combineLatest, map, of, switchMap } from 'rxjs';
 
 import { Dados } from '../dados';
 import { Bloco, DespesaAgregada, Perfil as PerfilPublicado } from '../modelo';
-import { data, moeda, NOTAS, rotuloBloco, rotuloCargo, SEM_REGISTRO } from '../rotulos';
+import { data, moeda, NOTAS, rotuloBloco, rotuloCargo, rotuloLocal, SEM_REGISTRO } from '../rotulos';
 import { Proveniencia } from './proveniencia';
 import { Tabela } from './tabela';
 
@@ -43,6 +43,7 @@ export class Perfil {
 
   protected readonly rotuloCargo = rotuloCargo;
   protected readonly rotuloBloco = rotuloBloco;
+  protected readonly rotuloLocal = rotuloLocal;
   protected readonly data = data;
   protected readonly moeda = moeda;
   protected readonly semRegistro = SEM_REGISTRO;

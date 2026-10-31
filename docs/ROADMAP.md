@@ -57,7 +57,7 @@ Estado real de cada fase. Atualizado ao fechar cada fase.
    - A prefeitura não tem dados abertos nem agenda oficial publicada. O portal da transparência exige chave.
    - Modelo municipal e adaptador do SAPL: concluído em 2026-10-31 (ADR-0007, schemas com cargos `prefeito`, `vice_prefeito` e `vereador`, identificador `sapl-{ibge}-{id}`, adaptador `Sapl.java` e testes).
    - Coleta, publicação e cruzamento com o TSE de 2024: concluído em 2026-10-31 (38 vereadores com mandatos, votos e candidaturas do TSE vinculadas; prefeito de Campinas publicado via TSE e contribuição de mandato; total de 1.053 perfis publicados).
-   - Próximo passo: adaptação da interface web para navegação municipal (busca por município/UF, visualização do piloto).
+   - Adaptação da interface web para navegação municipal: concluído em 2026-10-31 (filtro de esfera, busca integrada por município, rótulos de localização, exibição de entes municipais nas tabelas de mandatos e candidaturas, e grid responsivo de filtros).
 2. Assembleias legislativas e governos estaduais: um adaptador por estado.
 3. Gastos e agenda de governadores a partir dos portais estaduais catalogados em `docs/FONTES.md`.
 4. Gastos do Executivo federal (cartão de pagamento e viagens) pelo Portal da Transparência.

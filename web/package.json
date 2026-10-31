@@ -1,13 +1,15 @@
 {
   "name": "web",
   "version": "0.0.0",
+  "type": "module",
   "scripts": {
     "ng": "ng",
     "docs": "mkdir -p public/docs && cp ../docs/METODOLOGIA.md ../docs/FONTES.md ../docs/POLITICA_EDITORIAL.md ../CONTRIBUTING.md public/docs/",
     "prestart": "npm run docs && ln -sfn ../../data/publicado public/dados",
     "start": "ng serve",
     "prebuild": "npm run docs",
-    "build": "ng build"
+    "build": "ng build",
+    "test": "node --test src/app/*.test.ts"
   },
   "private": true,
   "dependencies": {
