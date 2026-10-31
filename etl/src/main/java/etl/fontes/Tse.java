@@ -33,12 +33,29 @@ import tools.jackson.databind.JsonNode;
 public final class Tse implements Fonte {
 
     static final String CDN = "https://cdn.tse.jus.br/estatistica/sead/odsele";
-    static final Set<String> CARGOS = Set.of("PRESIDENTE", "VICE-PRESIDENTE", "GOVERNADOR", "VICE-GOVERNADOR",
+    static final Set<String> CARGOS_GERAIS = Set.of("PRESIDENTE", "VICE-PRESIDENTE", "GOVERNADOR", "VICE-GOVERNADOR",
             "SENADOR", "1º SUPLENTE", "2º SUPLENTE", "DEPUTADO FEDERAL");
-    static final Set<String> EXECUTIVO = Set.of("PRESIDENTE", "GOVERNADOR");
+    static final Set<String> CARGOS_MUNICIPAIS = Set.of("PREFEITO", "VICE-PREFEITO", "VEREADOR");
+    static final Set<String> CARGOS = Set.of("PRESIDENTE", "VICE-PRESIDENTE", "GOVERNADOR", "VICE-GOVERNADOR",
+            "SENADOR", "1º SUPLENTE", "2º SUPLENTE", "DEPUTADO FEDERAL", "PREFEITO", "VICE-PREFEITO", "VEREADOR");
+    static final Set<String> EXECUTIVO = Set.of("PRESIDENTE", "GOVERNADOR", "PREFEITO");
     static final Set<String> ELEITO = Set.of("ELEITO", "ELEITO POR QP", "ELEITO POR MÉDIA");
+    /** Unidades eleitorais municipais cobertas (piloto municipal ADR-0007). */
+    static final Set<String> UES_MUNICIPAIS = Set.of("62910"); // Campinas - SP
     static final List<String> UFS = List.of("BR", "AC", "AL", "AM", "AP", "BA", "CE", "DF", "ES", "GO", "MA", "MG", "MS",
             "MT", "PA", "PB", "PE", "PI", "PR", "RJ", "RN", "RO", "RR", "RS", "SC", "SE", "SP", "TO");
+
+    static boolean cargoValido(Map<String, String> linha) {
+        String cargo = linha.get("DS_CARGO");
+        if (CARGOS_GERAIS.contains(cargo)) {
+            return true;
+        }
+        if (CARGOS_MUNICIPAIS.contains(cargo)) {
+            String ue = linha.get("SG_UE");
+            return ue != null && UES_MUNICIPAIS.contains(ue);
+        }
+        return false;
+    }
 
     /** Candidatura normalizada, sem CPF, título, e-mail nem data de nascimento. */
     public record Linha(String sq, int ano, String cargo, String uf, String nomeUrna, String partido, boolean eleito,
@@ -57,14 +74,19 @@ public final class Tse implements Fonte {
     static final int PRIMEIRA_ELEICAO = 2018;
     /** Presidente e governadores: a cobertura começa nos mandatos iniciados em 2023. */
     static final int PRIMEIRA_ELEICAO_EXECUTIVA = 2022;
+    /** Piloto municipal de Campinas (ADR-0007): mandatos municipais iniciados em 2025. */
+    static final int PRIMEIRA_ELEICAO_MUNICIPAL = 2024;
 
-    /** Eleições gerais cobertas, de 4 em 4 anos, da primeira até o ano corrente. */
+    /** Eleições cobertas até o ano corrente: gerais (de 4 em 4 anos desde 2018) e municipais (desde 2024). */
     static List<Integer> eleicoes(int anoAtual) {
-        List<Integer> anos = new ArrayList<>();
+        Set<Integer> anos = new java.util.TreeSet<>();
         for (int ano = PRIMEIRA_ELEICAO; ano <= anoAtual; ano += 4) {
             anos.add(ano);
         }
-        return anos;
+        for (int ano = PRIMEIRA_ELEICAO_MUNICIPAL; ano <= anoAtual; ano += 4) {
+            anos.add(ano);
+        }
+        return new ArrayList<>(anos);
     }
 
     @Override
@@ -81,7 +103,8 @@ public final class Tse implements Fonte {
             if (ano < PRIMEIRA_ELEICAO_EXECUTIVA) {
                 continue;
             }
-            for (String uf : UFS) {
+            List<String> ufs = (ano % 4 == 0) ? List.of("SP") : UFS;
+            for (String uf : ufs) {
                 coleta.listarZip(CDN + "/proposta_governo/proposta_governo_" + ano + "_" + uf + ".zip",
                         "propostas/" + ano + "_" + uf + ".json", Politica.SE_AUSENTE);
             }
@@ -98,7 +121,7 @@ public final class Tse implements Fonte {
             Map<String, Map<String, String>> porSq = new LinkedHashMap<>();
             Map<String, Integer> turnos = new HashMap<>();
             lerBrasil(Coleta.caminho(ctx, arqCand), linha -> {
-                if (!CARGOS.contains(linha.get("DS_CARGO"))) {
+                if (!cargoValido(linha)) {
                     return;
                 }
                 String sq = linha.get("SQ_CANDIDATO");
@@ -120,7 +143,8 @@ public final class Tse implements Fonte {
             // Nome do PDF: {UF}/{ANO}{UF}{SQ}.pdf em 2022 e {UF}/{ANO}{UF}{SQ}_01.pdf em 2026. Vale o primeiro arquivo do SQ.
             Map<String, String> planoPorSq = new HashMap<>();
             Map<String, String> urlPropostas = new HashMap<>();
-            for (String uf : UFS) {
+            List<String> ufs = (ano % 4 == 0) ? List.of("SP") : UFS;
+            for (String uf : ufs) {
                 Coleta.Arquivo lista = Coleta.metadados(ctx, "tse", "propostas/" + ano + "_" + uf + ".json");
                 if (lista == null) {
                     continue;
@@ -143,6 +167,7 @@ public final class Tse implements Fonte {
                 String sq = item.getKey();
                 String uf = l.get("SG_UF");
                 String cargo = l.get("DS_CARGO");
+                String ente = CARGOS_MUNICIPAIS.contains(cargo) ? Sapl.IBGE : uf;
                 String resultado = semNulo(l.get("DS_SIT_TOT_TURNO"));
                 String planoUrl = null;
                 String planoArquivo = null;
@@ -150,7 +175,7 @@ public final class Tse implements Fonte {
                     planoUrl = urlPropostas.get(uf);
                     planoArquivo = planoPorSq.get(uf + ":" + sq);
                 }
-                Candidatura registro = new Candidatura(ano, turnos.get(sq), cargo, uf, semNulo(l.get("NM_URNA_CANDIDATO")),
+                Candidatura registro = new Candidatura(ano, turnos.get(sq), cargo, ente, semNulo(l.get("NM_URNA_CANDIDATO")),
                         semNulo(l.get("SG_PARTIDO")), semNulo(l.get("NR_CANDIDATO")), semNulo(l.get("DS_SITUACAO_CANDIDATURA")),
                         resultado, bens.get(sq), planoUrl, planoArquivo, prov);
                 linhas.add(new Linha(sq, ano, cargo, uf, registro.nomeUrna(), registro.partido(),
@@ -184,7 +209,7 @@ public final class Tse implements Fonte {
                 continue;
             }
             lerBrasil(Coleta.caminho(ctx, arq), l -> {
-                if (CARGOS.contains(l.get("DS_CARGO"))) {
+                if (cargoValido(l)) {
                     String cpf = Texto.digitos(l.get("NR_CPF_CANDIDATO"));
                     chaves.put(l.get("SQ_CANDIDATO"), new Chave(cpf.length() == 11 ? cpf : null,
                             Texto.normalizarNome(l.get("NM_CANDIDATO")), l.get("SG_UF"), Texto.dataBr(l.get("DT_NASCIMENTO")),

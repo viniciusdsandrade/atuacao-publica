@@ -10,8 +10,8 @@ class TseTest {
 
     @Test
     void eleicoesCobertasNaoEncolhemComOTempo() {
-        assertEquals(List.of(2018, 2022, 2026), Tse.eleicoes(2026));
-        assertEquals(List.of(2018, 2022, 2026), Tse.eleicoes(2027));
-        assertEquals(List.of(2018, 2022, 2026, 2030), Tse.eleicoes(2030));
+        assertEquals(List.of(2018, 2022, 2024, 2026), Tse.eleicoes(2026));
+        assertEquals(List.of(2018, 2022, 2024, 2026), Tse.eleicoes(2027));
+        assertEquals(List.of(2018, 2022, 2024, 2026, 2028, 2030), Tse.eleicoes(2030));
     }
 }

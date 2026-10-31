@@ -82,14 +82,23 @@ final class Vinculo {
         return perfis;
     }
 
-    /** Câmara por CPF; Senado por nome civil, UF e data de nascimento entre candidaturas ao Senado. */
+    /** Câmara por CPF; Senado por nome civil, UF e data de nascimento; SAPL por nome civil e de urna (ADR-0007). */
     private static void vincularLegisladores(Contexto ctx, List<Perfil> perfis, Map<String, Tse.Chave> chaves,
                                              Map<String, List<JsonNode>> porCpf, List<JsonNode> candidaturas) {
         Map<String, String> cpfPorSenadoChave = new HashMap<>();
+        Map<String, JsonNode> candPorSaplNomeCivil = new HashMap<>();
+        Map<String, JsonNode> candPorSaplNomeUrna = new HashMap<>();
         for (JsonNode c : candidaturas) {
             Tse.Chave chave = chaves.get(c.get("sq").stringValue());
-            if (chave != null && chave.cpf() != null && chave.cargo().matches("SENADOR|1º SUPLENTE|2º SUPLENTE")) {
-                cpfPorSenadoChave.put(chave.nomeCivil() + "|" + chave.uf() + "|" + chave.nascimento(), chave.cpf());
+            if (chave != null) {
+                if (chave.cpf() != null && chave.cargo().matches("SENADOR|1º SUPLENTE|2º SUPLENTE")) {
+                    cpfPorSenadoChave.put(chave.nomeCivil() + "|" + chave.uf() + "|" + chave.nascimento(), chave.cpf());
+                } else if ("VEREADOR".equals(chave.cargo())) {
+                    candPorSaplNomeCivil.put(chave.nomeCivil(), c);
+                    if (c.hasNonNull("nome_urna")) {
+                        candPorSaplNomeUrna.put(Texto.normalizarNome(c.get("nome_urna").stringValue()), c);
+                    }
+                }
             }
         }
         for (Perfil p : perfis) {
@@ -107,6 +116,23 @@ final class Vinculo {
                     String chave = Texto.normalizarNome(Json.texto(s.path("IdentificacaoParlamentar"), "NomeCompletoParlamentar"))
                             + "|" + p.uf + "|" + Json.texto(s.path("DadosBasicosParlamentar"), "DataNascimento");
                     cpf = cpfPorSenadoChave.get(chave);
+                }
+            } else if ("sapl".equals(p.fonteCli)) {
+                Coleta.Arquivo arq = Coleta.metadados(ctx, "sapl", "parlamentares/" + p.ids.get("sapl") + ".json");
+                if (arq != null) {
+                    JsonNode parl = Json.ler(Coleta.caminho(ctx, arq));
+                    String nomeCompleto = Texto.normalizarNome(Json.texto(parl, "nome_completo"));
+                    String nomeParlamentar = Texto.normalizarNome(Json.texto(parl, "nome_parlamentar"));
+                    JsonNode cand = candPorSaplNomeCivil.get(nomeCompleto);
+                    if (cand == null) {
+                        cand = candPorSaplNomeUrna.get(nomeParlamentar);
+                    }
+                    if (cand == null) {
+                        cand = candPorSaplNomeUrna.get(nomeCompleto);
+                    }
+                    if (cand != null) {
+                        anexarCandidaturas(p, List.of(cand));
+                    }
                 }
             }
             if (cpf != null) {
@@ -148,8 +174,9 @@ final class Vinculo {
             for (JsonNode c : eleitos(candidaturas, eleicao, cargo)) {
                 Perfil p = perfilDoEleito(c, chaves, porCpf, perfilPorCpf, novos);
                 String uf = Json.texto(c, "uf");
-                String esfera = cargo.equals("presidente") ? "federal" : "estadual";
-                String ente = cargo.equals("presidente") ? "BR" : uf;
+                boolean municipal = cargo.equals("prefeito");
+                String esfera = cargo.equals("presidente") ? "federal" : (municipal ? "municipal" : "estadual");
+                String ente = cargo.equals("presidente") ? "BR" : (municipal ? (regra.hasNonNull("ente") ? Json.texto(regra, "ente") : Sapl.IBGE) : uf);
                 p.papel(cargo, esfera, ente, cargo.equals("presidente") ? null : uf, Json.texto(c, "partido"), fase.situacao(),
                         fase.prioridade(), inicio);
                 ObjectNode mandato = Json.SAIDA.createObjectNode();
@@ -162,13 +189,15 @@ final class Vinculo {
                 p.bloco("mandatos").add(mandato);
                 usarFonte(p, "mandatos", Json.SAIDA.createObjectNode().<ObjectNode>set("fonte_id", regra.get("fonte_id"))
                         .<ObjectNode>set("url_origem", regra.get("url_origem")).set("capturado_em", regra.get("capturado_em")));
-                if (esfera.equals("estadual")) {
-                    for (Catalogo.Item item : catalogo.linksDaUf(uf)) {
-                        ObjectNode link = Json.SAIDA.createObjectNode().put("rotulo", item.nome()).put("url", item.urlBase())
-                                .put("fonte_id", item.id()).put("url_origem", item.urlBase())
-                                .put("capturado_em", item.validadoEm() + "T00:00:00Z");
-                        if (!p.links.contains(link)) {
-                            p.links.add(link);
+                if (esfera.equals("estadual") || esfera.equals("municipal")) {
+                    for (Catalogo.Item item : catalogo.linksDaUf(ente)) {
+                        if (item.validadoEm() != null) {
+                            ObjectNode link = Json.SAIDA.createObjectNode().put("rotulo", item.nome()).put("url", item.urlBase())
+                                    .put("fonte_id", item.id()).put("url_origem", item.urlBase())
+                                    .put("capturado_em", item.validadoEm() + "T00:00:00Z");
+                            if (!p.links.contains(link)) {
+                                p.links.add(link);
+                            }
                         }
                     }
                 }
