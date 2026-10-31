@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 
 import etl.Publicador.Perfil;
+import etl.fontes.Sapl;
 import etl.fontes.Tse;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.node.ObjectNode;
@@ -26,6 +27,7 @@ final class Vinculo {
         List<Perfil> perfis = new ArrayList<>();
         perfis.addAll(legisladores(ctx, "camara", "cam", "camara"));
         perfis.addAll(legisladores(ctx, "senado", "sen", "senado"));
+        perfis.addAll(legisladores(ctx, "sapl", "sapl-" + Sapl.IBGE, "sapl"));
         List<JsonNode> candidaturas = Tse.linhas(ctx);
         if (!candidaturas.isEmpty()) {
             Map<String, Tse.Chave> chaves = Tse.chaves(ctx);
