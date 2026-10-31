@@ -49,6 +49,8 @@ Os dois arquivos mudam juntos.
 - URL base: `https://dadosabertos.camara.leg.br/api/v2`
 - Endpoints validados com resposta 200:
   - `/deputados`: 513 deputados em exercício numa chamada com `itens=1000`.
+  - `/deputados?idLegislatura={n}&itens=1000`: todos os que exerceram mandato na legislatura. Na 57ª, 882 registros de 648 pessoas: a pessoa se repete a cada troca de partido (validado em 2026-10-31).
+  - `/legislaturas/{id}`: início e fim de uma legislatura. Responde objeto, e não lista como `/legislaturas?data=`.
   - `/deputados/{id}`: traz `cpf`, `dataNascimento`, `redeSocial`, `urlWebsite` e gabinete com telefone e e-mail.
   - `/deputados/{id}/historico`: mudanças de situação (`Exercício`, `FIM_MANDATO` e outras) com `dataHora` e `idLegislatura`.
   - `/deputados/{id}/discursos`: `sumario` oficial, `tipoDiscurso`, `dataHoraInicio`, `urlTexto` (pode vir `null`).
@@ -59,7 +61,7 @@ Os dois arquivos mudam juntos.
   - `/deputados/{id}/despesas` responde 200 com lista vazia para todos os deputados testados, em 2025 e 2026. Usamos `camara-cotas`.
   - Não há endpoint de presença em sessão de plenário. Publicamos "participação em votações nominais". Nunca chamamos isso de presença.
   - Presença em evento (reunião de comissão, sessão) vem de `/eventos/{id}/deputados` e do arquivo `eventosPresencaDeputados`. A lista traz só quem esteve presente. Não traz motivo de ausência.
-  - `/frentes` devolve todas as legislaturas. Filtramos `idLegislatura = 57`.
+  - `/frentes` devolve todas as legislaturas. Filtramos as legislaturas cobertas, a partir da 57ª.
   - Em 2026-10-30, `/deputados/{id}/frentes` respondeu 504 depois de 15 segundos, de forma repetida. O ETL usou a cópia da coleta anterior (ADR-0005).
   - O `sumario` de discurso traz entidades HTML (`&nbsp;`).
   - Dados descartados na ingestão: `cpf`, `dataNascimento`, e-mail, telefone e gabinete.

@@ -98,7 +98,7 @@ Não é presença. É a contagem de votos registrados em votações nominais.
 
 ## Órgãos e frentes
 
-- **Câmara.** `orgaosDeputados-L{legislatura}` (cargo, início e fim) e `/deputados/{id}/frentes` filtrado pela legislatura vigente.
+- **Câmara.** `orgaosDeputados-L{legislatura}` de cada legislatura coberta (cargo, início e fim) e `/deputados/{id}/frentes` filtrado pelas legislaturas cobertas.
 - **Senado.** `/senador/{codigo}/comissoes`, com participação ativa em algum momento desde o início da cobertura (2023-02-01).
 
 ## Candidaturas
