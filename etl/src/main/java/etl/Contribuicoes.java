@@ -20,7 +20,8 @@ final class Contribuicoes {
     private Contribuicoes() {
     }
 
-    static void anexar(Contexto ctx, Catalogo catalogo, List<Perfil> perfis, List<Meta.Rejeitado> rejeitados) {
+    static void anexar(Contexto ctx, Catalogo catalogo, List<Perfil> perfis, Map<String, String> aliases,
+                       List<Meta.Rejeitado> rejeitados) {
         Path arquivo = ctx.normalizado().resolve("contrib").resolve("registros.json");
         if (!Files.exists(arquivo)) {
             return;
@@ -31,7 +32,7 @@ final class Contribuicoes {
             String id = registro.get("politico_id").stringValue();
             String tipo = registro.get("tipo").stringValue();
             JsonNode entrada = registro.get("entrada");
-            Perfil perfil = porId.get(id);
+            Perfil perfil = porId.containsKey(id) ? porId.get(id) : porId.get(aliases.get(id));
             String origem = "contrib/" + registro.get("esfera").stringValue() + "/" + registro.get("cargo").stringValue()
                     + "/" + id + "/" + tipo + ".yaml";
             if (perfil == null) {
@@ -54,20 +55,44 @@ final class Contribuicoes {
                     perfil.links.add(proveniencia(r, entrada));
                 }
                 case "mandato" -> {
-                    // Correção de mandato só entra com fonte T0 e vence o dado automático do mesmo cargo.
+                    // Correção de mandato só entra com fonte T0. Ela vence o dado automático do mesmo cargo no mesmo
+                    // período; os outros mandatos da pessoa ficam (ADR-0006).
                     String cargo = entrada.get("cargo").stringValue();
-                    perfil.bloco("mandatos").removeIf(m -> cargo.equals(m.path("cargo").asString()) && !m.has("contribuidor"));
+                    String inicio = Json.texto(entrada, "inicio");
+                    String fim = Json.texto(entrada, "fim");
+                    JsonNode substituido = null;
+                    for (JsonNode m : List.copyOf(perfil.bloco("mandatos"))) {
+                        if (cargo.equals(m.path("cargo").asString()) && !m.has("contribuidor")
+                                && sobrepoe(inicio, fim, Json.texto(m, "inicio"), Json.texto(m, "fim"))) {
+                            substituido = substituido == null ? m : substituido;
+                            perfil.bloco("mandatos").remove(m);
+                        }
+                    }
                     ObjectNode r = copiar(entrada, "cargo");
-                    r.put("esfera", perfil.esfera).put("ente", perfil.ente).put("uf", perfil.uf);
+                    r.put("esfera", substituido == null ? perfil.esfera : Json.texto(substituido, "esfera"))
+                            .put("ente", substituido == null ? perfil.ente : Json.texto(substituido, "ente"))
+                            .put("uf", substituido == null ? perfil.uf : Json.texto(substituido, "uf"));
                     r.set("inicio", entrada.get("inicio"));
                     r.set("fim", entrada.get("fim"));
                     r.set("situacao", entrada.get("situacao"));
                     r.set("texto_oficial", entrada.get("texto_oficial"));
                     perfil.bloco("mandatos").add(proveniencia(r, entrada));
+                    if (cargo.equals(perfil.cargo)) {
+                        String hoje = ctx.hoje().toString();
+                        perfil.situacao = Json.texto(entrada, "situacao");
+                        perfil.emExercicio = (inicio == null || inicio.compareTo(hoje) <= 0) && (fim == null || fim.compareTo(hoje) > 0);
+                    }
                 }
                 default -> rejeitados.add(new Meta.Rejeitado(origem, "tipo desconhecido: " + tipo));
             }
         }
+    }
+
+    /** Períodos [inicio, fim) em ISO 8601 que se sobrepõem. Data ausente deixa o período aberto daquele lado. */
+    static boolean sobrepoe(String inicioA, String fimA, String inicioB, String fimB) {
+        boolean aAntesDoFimDeB = inicioA == null || fimB == null || inicioA.compareTo(fimB) < 0;
+        boolean bAntesDoFimDeA = inicioB == null || fimA == null || inicioB.compareTo(fimA) < 0;
+        return aAntesDoFimDeB && bAntesDoFimDeA;
     }
 
     private static ObjectNode copiar(JsonNode entrada, String... campos) {

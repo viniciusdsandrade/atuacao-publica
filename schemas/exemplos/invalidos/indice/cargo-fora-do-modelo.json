@@ -10,6 +10,8 @@
       "ente": "BR",
       "uf": "SP",
       "partido": "PARTIDO",
+      "situacao": null,
+      "em_exercicio": true,
       "foto_url": null,
       "ids_externos": {
         "camara": "900001"
@@ -23,6 +25,8 @@
       "ente": "AC",
       "uf": "AC",
       "partido": null,
+      "situacao": null,
+      "em_exercicio": true,
       "foto_url": null,
       "ids_externos": {
         "tse": {

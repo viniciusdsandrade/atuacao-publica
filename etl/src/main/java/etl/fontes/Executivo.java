@@ -28,22 +28,29 @@ public final class Executivo implements Fonte {
         return "executivo";
     }
 
-    /** Início do mandato presidencial vigente, lido de contrib/mandatos.yaml (dado, não código). */
-    static LocalDate inicioDoMandato(Contexto ctx) {
+    /**
+     * Início da cobertura: o primeiro mandato presidencial de contrib/mandatos.yaml (dado, não código).
+     * Os atos de mandatos encerrados continuam no perfil de quem os assinou (ADR-0006).
+     */
+    static LocalDate inicioDaCobertura(Contexto ctx) {
+        LocalDate primeiro = null;
         for (JsonNode regra : Json.lerYaml(ctx.contrib().resolve("mandatos.yaml"))) {
             LocalDate inicio = LocalDate.parse(Json.texto(regra, "inicio"));
-            LocalDate fim = LocalDate.parse(Json.texto(regra, "fim"));
-            if ("presidente".equals(Json.texto(regra, "cargo")) && !ctx.hoje().isBefore(inicio) && ctx.hoje().isBefore(fim)) {
-                return inicio;
+            if ("presidente".equals(Json.texto(regra, "cargo")) && !ctx.hoje().isBefore(inicio)
+                    && (primeiro == null || inicio.isBefore(primeiro))) {
+                primeiro = inicio;
             }
         }
-        throw new IllegalStateException("contrib/mandatos.yaml sem regra de mandato presidencial vigente");
+        if (primeiro == null) {
+            throw new IllegalStateException("contrib/mandatos.yaml sem regra de mandato presidencial já iniciado");
+        }
+        return primeiro;
     }
 
     @Override
     public void fetch(Contexto ctx, Coleta coleta) throws Exception {
         int anoAtual = ctx.hoje().getYear();
-        LocalDate inicio = inicioDoMandato(ctx);
+        LocalDate inicio = inicioDaCobertura(ctx);
         for (int ano = inicio.getYear(); ano <= anoAtual; ano++) {
             Politica politica = Politica.porAno(ano, ctx.hoje());
             for (String tipo : TIPOS) {
@@ -58,7 +65,7 @@ public final class Executivo implements Fonte {
     @Override
     public void normalize(Contexto ctx) {
         List<AtoNormativo> atos = new ArrayList<>();
-        LocalDate inicio = inicioDoMandato(ctx);
+        LocalDate inicio = inicioDaCobertura(ctx);
         for (int ano = inicio.getYear(); ano <= ctx.hoje().getYear(); ano++) {
             for (String tipo : TIPOS) {
                 Coleta.Arquivo arq = arquivo(ctx, "legislacao/" + tipo + "-" + ano + ".json");

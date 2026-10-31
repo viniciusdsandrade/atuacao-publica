@@ -35,6 +35,25 @@ public final class Publicador {
             "presidente", List.of("mandatos", "candidaturas", "atos_normativos", "agenda_oficial", "posicionamentos_declarados"),
             "governador", List.of("mandatos", "candidaturas", "posicionamentos_declarados"));
 
+    /** Ordem dos blocos no perfil. Quem ocupou mais de um cargo recebe os blocos de todos eles (ADR-0006). */
+    private static final List<String> ORDEM_DOS_BLOCOS = List.of("mandatos", "participacao_votacoes", "votos", "despesas",
+            "proposicoes", "discursos", "eventos", "orgaos_e_frentes", "candidaturas", "atos_normativos", "agenda_oficial",
+            "posicionamentos_declarados");
+
+    static List<String> blocosDoPerfil(Perfil perfil) {
+        Set<String> cargos = perfil.cargos.isEmpty() ? Set.of(perfil.cargo) : perfil.cargos;
+        List<String> blocos = new ArrayList<>();
+        for (String bloco : ORDEM_DOS_BLOCOS) {
+            for (String cargo : cargos) {
+                if (BLOCOS.get(cargo).contains(bloco)) {
+                    blocos.add(bloco);
+                    break;
+                }
+            }
+        }
+        return blocos;
+    }
+
     /** Blocos com muitos registros: o perfil traz contagens e os mais recentes; o detalhe vai por ano. */
     private static final Map<String, String> AMOSTRA = Map.of(
             "votos", "voto", "proposicoes", "tipo", "discursos", "tipo", "eventos", "tipo",
@@ -69,6 +88,35 @@ public final class Publicador {
         final Map<String, List<JsonNode>> fontes = new LinkedHashMap<>();
         /** Ids que redirecionam para este perfil (ADR-0002, item 6). */
         final Set<String> aliases = new LinkedHashSet<>();
+        /** Todos os cargos da pessoa na cobertura: o perfil traz os blocos de cada um (ADR-0006). */
+        final Set<String> cargos = new LinkedHashSet<>();
+        boolean emExercicio;
+        /** Prioridade do papel principal: em exercício, depois posse prevista, depois fora de exercício. */
+        int prioridade;
+        java.time.LocalDate inicioDoPapel;
+
+        static final int FORA_DE_EXERCICIO = 1;
+        static final int POSSE_PREVISTA = 2;
+        static final int EM_EXERCICIO = 3;
+
+        /** Registra um papel. O principal define cargo, situação e local do perfil. */
+        void papel(String cargo, String esfera, String ente, String uf, String partido, String situacao, int prioridade,
+                   java.time.LocalDate inicio) {
+            cargos.add(cargo);
+            boolean principal = this.cargo == null || prioridade > this.prioridade || prioridade == this.prioridade
+                    && inicio != null && (inicioDoPapel == null || inicio.isAfter(inicioDoPapel));
+            if (principal) {
+                this.cargo = cargo;
+                this.esfera = esfera;
+                this.ente = ente;
+                this.uf = uf;
+                this.partido = partido;
+                this.situacao = situacao;
+                this.prioridade = prioridade;
+                this.inicioDoPapel = inicio;
+                this.emExercicio = prioridade == EM_EXERCICIO;
+            }
+        }
 
         List<JsonNode> bloco(String nome) {
             return registros.computeIfAbsent(nome, k -> new ArrayList<>());
@@ -100,7 +148,7 @@ public final class Publicador {
         Anterior anterior = anterior();
         List<Perfil> perfis = new ArrayList<>(Vinculo.perfis(ctx, catalogo));
         Map<String, String> aliases = identificadores(perfis, anterior);
-        Contribuicoes.anexar(ctx, catalogo, perfis, rejeitados);
+        Contribuicoes.anexar(ctx, catalogo, perfis, aliases, rejeitados);
 
         // Monta numa pasta nova e só troca pela publicada se nenhum perfil anterior sumir (ADR-0006).
         Path pasta = ctx.publicado().resolve("politicos");
@@ -158,7 +206,7 @@ public final class Publicador {
         ObjectNode doc = Json.SAIDA.createObjectNode();
         doc.put("id", perfil.id).put("nome", perfil.nome).put("cargo_atual", perfil.cargo).put("esfera", perfil.esfera)
                 .put("ente", perfil.ente).put("uf", perfil.uf).put("partido_atual", perfil.partido)
-                .put("situacao", perfil.situacao).put("foto_url", perfil.foto);
+                .put("situacao", perfil.situacao).put("em_exercicio", perfil.emExercicio).put("foto_url", perfil.foto);
         ObjectNode ids = doc.putObject("ids_externos");
         perfil.ids.forEach(ids::put);
         if (!perfil.tse.isEmpty()) {
@@ -169,7 +217,7 @@ public final class Publicador {
         perfil.links.forEach(links::add);
         doc.put("atualizado_em", ctx.agora().toString());
         ObjectNode blocos = doc.putObject("blocos");
-        for (String bloco : BLOCOS.get(perfil.cargo)) {
+        for (String bloco : blocosDoPerfil(perfil)) {
             List<JsonNode> registros = seguros(perfil, bloco, perfil.registros.getOrDefault(bloco, List.of()));
             blocos.set(bloco, bloco(perfil, bloco, registros, pasta));
         }
@@ -333,6 +381,8 @@ public final class Publicador {
         e.set("ente", doc.get("ente"));
         e.set("uf", doc.get("uf"));
         e.set("partido", doc.get("partido_atual"));
+        e.set("situacao", doc.get("situacao"));
+        e.set("em_exercicio", doc.get("em_exercicio"));
         e.set("foto_url", doc.get("foto_url"));
         e.set("ids_externos", doc.get("ids_externos"));
         return e;

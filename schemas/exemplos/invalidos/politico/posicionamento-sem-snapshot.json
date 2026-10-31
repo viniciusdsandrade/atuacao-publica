@@ -7,6 +7,7 @@
   "uf": "SP",
   "partido_atual": "PARTIDO",
   "situacao": "Exercício",
+  "em_exercicio": true,
   "foto_url": "https://www.camara.leg.br/internet/deputado/bandep/900001.jpg",
   "ids_externos": {
     "camara": "900001",

@@ -2,8 +2,8 @@
   "gerado_em": "2026-10-30T03:10:00Z",
   "total": 2,
   "politicos": [
-    { "id": "cam-900001", "nome": "Pessoa Exemplo Um", "cargo": "deputado_federal", "esfera": "federal", "ente": "BR", "uf": "SP", "partido": "PARTIDO", "foto_url": null, "ids_externos": { "camara": "900001" } },
-    { "id": "tse-990000000002", "nome": "PESSOA EXEMPLO DOIS", "cargo": "governador", "esfera": "estadual", "ente": "AC", "uf": "AC", "partido": null, "foto_url": null, "ids_externos": { "tse": { "2022": "990000000002" } } }
+    { "id": "cam-900001", "nome": "Pessoa Exemplo Um", "cargo": "deputado_federal", "esfera": "federal", "ente": "BR", "uf": "SP", "partido": "PARTIDO", "situacao": "Exercício", "em_exercicio": true, "foto_url": null, "ids_externos": { "camara": "900001" } },
+    { "id": "tse-990000000002", "nome": "PESSOA EXEMPLO DOIS", "cargo": "governador", "esfera": "estadual", "ente": "AC", "uf": "AC", "partido": null, "situacao": "Mandato vigente (eleito em 2022), até 2027-01-06", "em_exercicio": true, "foto_url": null, "ids_externos": { "tse": { "2022": "990000000002" } } }
   ],
   "aliases": { "sen-90001": "cam-900001" }
 }

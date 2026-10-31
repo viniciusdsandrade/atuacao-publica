@@ -10,7 +10,7 @@
       "type": "array",
       "items": {
         "type": "object",
-        "required": ["id", "nome", "cargo", "esfera", "ente", "uf", "partido", "foto_url", "ids_externos"],
+        "required": ["id", "nome", "cargo", "esfera", "ente", "uf", "partido", "situacao", "em_exercicio", "foto_url", "ids_externos"],
         "properties": {
           "id": { "$ref": "comum.schema.json#/$defs/politico_id" },
           "nome": { "$ref": "comum.schema.json#/$defs/texto" },
@@ -19,6 +19,8 @@
           "ente": { "$ref": "comum.schema.json#/$defs/ente" },
           "uf": { "anyOf": [{ "$ref": "comum.schema.json#/$defs/uf" }, { "type": "null" }] },
           "partido": { "$ref": "comum.schema.json#/$defs/texto_ou_nulo" },
+          "situacao": { "$ref": "comum.schema.json#/$defs/texto_ou_nulo" },
+          "em_exercicio": { "type": "boolean" },
           "foto_url": { "$ref": "comum.schema.json#/$defs/url_ou_nulo" },
           "ids_externos": { "$ref": "politico.schema.json#/$defs/ids_externos" }
         },

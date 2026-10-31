@@ -5,8 +5,13 @@ As fontes estão descritas em `docs/FONTES.md`.
 
 ## Regras gerais
 
-- **Cobertura temporal.** Começa no início da legislatura vigente da Câmara (`/legislaturas?data=hoje`). Na 57ª legislatura, o início é 2023-02-01. No Executivo, começa no início do mandato (2023-01-01). Histórico anterior fica fora da POC.
-- **Transição.** A legislatura vigente e os mandatos vêm dos dados. Em fevereiro de 2027, a nova legislatura entra sem mudança de código.
+- **Cobertura temporal.** Começa na 57ª legislatura (2023-02-01) e nos mandatos executivos iniciados em 2023 (ADR-0006). A cobertura só cresce: quem sai do cargo continua no arquivo. Histórico anterior a 2023 fica fora.
+- **Transição.** As datas de posse vêm dos dados: `contrib/mandatos.yaml` para presidente e governador, e a legislatura da Câmara para deputado e senador. A troca de mandatos não exige mudança de código.
+- **Situação.** Cada perfil diz se a pessoa está em exercício. A situação mostrada é a do papel principal:
+  - deputado e senador: a situação informada pela casa legislativa (por exemplo, `Exercício`);
+  - presidente e governador: "Mandato vigente" ou "Mandato encerrado em {data}". O TSE registra a eleição; o exercício é deduzido das datas legais de posse. Renúncia ou sucessão entram por contribuição com fonte T0;
+  - eleito que ainda não tomou posse: "Eleito em {ano}; posse prevista em {data}";
+  - eleito que a casa ainda não registra em exercício depois da data de posse: "Eleito em {ano}; sem registro de exercício".
 - **Ausência.** Campo sem valor na fonte é `null` no JSON e "sem registro na fonte" na tela.
 - **Datas.** ISO 8601. Instantes de captura em UTC.
 - **Atualização.** Cada bloco do perfil mostra a data de captura. Quando a última coleta de uma fonte falha, o bloco mostra o aviso "fonte desatualizada" e mantém o último dado válido.

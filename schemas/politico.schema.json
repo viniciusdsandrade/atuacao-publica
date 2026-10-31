@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "Perfil publicado (politicos/{id}.json)",
   "type": "object",
-  "required": ["id", "nome", "cargo_atual", "esfera", "ente", "uf", "partido_atual", "foto_url", "ids_externos", "links_oficiais", "atualizado_em", "blocos"],
+  "required": ["id", "nome", "cargo_atual", "esfera", "ente", "uf", "partido_atual", "situacao", "em_exercicio", "foto_url", "ids_externos", "links_oficiais", "atualizado_em", "blocos"],
   "properties": {
     "id": { "$ref": "comum.schema.json#/$defs/politico_id" },
     "nome": { "description": "Nome parlamentar ou nome de urna.", "$ref": "comum.schema.json#/$defs/texto" },
@@ -12,6 +12,7 @@
     "uf": { "anyOf": [{ "$ref": "comum.schema.json#/$defs/uf" }, { "type": "null" }] },
     "partido_atual": { "$ref": "comum.schema.json#/$defs/texto_ou_nulo" },
     "situacao": { "$ref": "comum.schema.json#/$defs/texto_ou_nulo" },
+    "em_exercicio": { "description": "Em exercício hoje. Falso para quem saiu e para quem aguarda posse (ADR-0006).", "type": "boolean" },
     "foto_url": { "$ref": "comum.schema.json#/$defs/url_ou_nulo" },
     "ids_externos": { "$ref": "#/$defs/ids_externos" },
     "links_oficiais": {

@@ -6,6 +6,8 @@
   "ente": "AC",
   "uf": "AC",
   "partido_atual": null,
+  "situacao": "Mandato vigente (eleito em 2022), até 2027-01-06",
+  "em_exercicio": true,
   "foto_url": null,
   "ids_externos": { "tse": { "2022": "990000000002" } },
   "links_oficiais": [],
