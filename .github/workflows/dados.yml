@@ -27,6 +27,9 @@ jobs:
     if: github.event_name == 'workflow_dispatch' || vars.ETL_AGENDADO == 'true'
     runs-on: ubuntu-24.04
     timeout-minutes: 180
+    permissions:
+      contents: read
+      issues: write
     env:
       FONTE: ${{ inputs.fonte || 'todas' }}
     steps:
@@ -98,6 +101,14 @@ jobs:
             echo "|---|---|---|"
             jq -r '.fontes[] | "| \(.fonte) | \(.status) | \(.ultima_coleta_ok // "-") |"' data/publicado/_meta/execucao.json
           } >> "$GITHUB_STEP_SUMMARY"
+      - name: alerta de fonte sem coleta válida
+        # A falha de uma fonte não derruba o job; sem este passo, ela só apareceria no resumo da execução.
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          ALERTA_DIAS: '3'
+        run: scripts/alerta-coleta.sh
       - name: site com os dados publicados
         working-directory: web
         env:

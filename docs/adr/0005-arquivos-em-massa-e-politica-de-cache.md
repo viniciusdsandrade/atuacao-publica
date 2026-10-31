@@ -29,6 +29,7 @@ A coleta do Senado levou 3 minutos, a do TSE 1 minuto e a do Executivo 11 segund
 6. ZIP grande do qual só interessa a lista de arquivos (propostas de governo do TSE): baixar para um temporário, ler o diretório central e guardar só a lista com o sha256 do ZIP.
 7. No CI, cada fonte roda em passo próprio, com limite de tempo. Fonte lenta não consome o tempo das outras.
 8. O cache do Actions é gravado no fim do job mesmo quando um passo falha ou estoura o limite. Se o processo for encerrado no meio da coleta, o cursor da fonte registra a falha.
+9. Fonte com mais de 3 dias sem coleta válida abre uma issue com o rótulo `coleta`. A issue fecha sozinha quando a coleta volta. A falha de uma fonte não derruba o job, então sem esse alerta ela só apareceria no resumo da execução.
 
 ## Consequências
 

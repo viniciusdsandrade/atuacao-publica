@@ -49,6 +49,7 @@ O pipeline de dados não roda e não publica nada até o mantenedor ativar:
 2. Em **Settings > Secrets and variables > Actions > Variables**, crie `ETL_AGENDADO = true` para ligar a execução diária.
 3. Crie `PUBLICAR_PAGES = true` para ligar o deploy.
 4. Dispare **Actions > dados > Run workflow** para a primeira carga.
+5. Mantenha as issues ligadas no repositório: o pipeline abre uma issue com o rótulo `coleta` quando uma fonte passa de 3 dias sem coleta válida.
 
 ## Checklist de abertura do repositório
 

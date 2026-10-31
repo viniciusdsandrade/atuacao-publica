@@ -83,6 +83,8 @@ Falha de uma fonte não derruba as demais: o cursor `data/publicado/_meta/{fonte
 
 Cada fonte tem um limite de tempo. Se uma fonte estourar o limite, o cursor registra a falha e o cache guarda o que já foi baixado. A próxima execução reaproveita os arquivos de período fechado.
 
+Uma fonte com mais de 3 dias sem coleta válida abre uma issue com o rótulo `coleta`. A issue fecha sozinha quando a coleta volta.
+
 A execução diária (06:17 UTC) e o deploy no GitHub Pages ficam desligados até o mantenedor ativar. Passos em `docs/MAINTAINER_CHECKLIST.md`.
 
 ## Rodar o site na sua máquina
