@@ -16,6 +16,17 @@ Estado real de cada fase. Atualizado ao fechar cada fase.
 | 7 | Pipeline agendado, deploy, relatório de execução | concluída: workflow `dados` verificado no GitHub Actions, com as quatro fontes coletadas e 622 perfis publicados; agendamento e deploy dependem de ativação pelo mantenedor |
 | 8 | Contribuição de ponta a ponta | concluída: registro real de agenda oficial validado no CI do pull request #1 e integrado após revisão humana |
 
+## Arquivo histórico (ADR-0006)
+
+| Etapa | Estado |
+|---|---|
+| Trava do publish, identificadores estáveis e aliases | concluída |
+| Ensaio de data futura (`ETL_AGORA`) | concluída |
+| Presidente e governadores: mandato vigente, encerrado ou com posse prevista | concluída: ensaio de 5 e 6 de janeiro de 2027 sem perfil perdido |
+| Eleitos em 2026 que aguardam posse | concluída: 240 perfis novos (209 deputados, 18 senadores, 13 governadores), 862 no total |
+| Câmara e Senado: todos os que exerceram mandato desde 2023, não só quem está no cargo | pendente |
+| Site: situação, filtro de quem está em exercício e redirecionamento de aliases | pendente |
+
 ## Limitações conhecidas
 
 - `/deputados/{id}/despesas` da Câmara responde vazio. O ETL usa o arquivo anual de cotas.
