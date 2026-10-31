@@ -77,14 +77,13 @@ public final class Camara implements Fonte {
 
         int anoAtual = ctx.hoje().getYear();
         for (int ano = leg.inicio().getYear(); ano <= anoAtual; ano++) {
-            boolean aberto = ano >= anoAtual - 1;
+            Politica doAno = Politica.porAno(ano, ctx.hoje());
             for (String nome : ANUAIS) {
-                Politica politica = aberto || SEMPRE_ATUAIS.contains(nome) ? Politica.SEMPRE : Politica.SE_AUSENTE;
+                Politica politica = SEMPRE_ATUAIS.contains(nome) ? Politica.SEMPRE : doAno;
                 coleta.obter(ARQUIVOS + "/" + nome + "/json/" + nome + "-" + ano + ".json",
                         "arquivos/" + nome + "-" + ano + ".json", JSON, politica);
             }
-            coleta.obter(COTAS + "/Ano-" + ano + ".json.zip", "cotas/Ano-" + ano + ".json.zip", "application/zip",
-                    aberto ? Politica.SEMPRE : Politica.SE_AUSENTE);
+            coleta.obter(COTAS + "/Ano-" + ano + ".json.zip", "cotas/Ano-" + ano + ".json.zip", "application/zip", doAno);
         }
         coleta.obter(ARQUIVOS + "/orgaosDeputados/json/orgaosDeputados-L" + leg.id() + ".json",
                 "arquivos/orgaosDeputados-L" + leg.id() + ".json", JSON, Politica.SEMPRE);
@@ -105,7 +104,7 @@ public final class Camara implements Fonte {
         for (int ano = leg.inicio().getYear(); ano <= anoAtual; ano++) {
             LocalDate de = ano == leg.inicio().getYear() ? leg.inicio() : LocalDate.of(ano, 1, 1);
             LocalDate ate = ano == anoAtual ? ctx.hoje() : LocalDate.of(ano, 12, 31);
-            Politica politica = ano >= anoAtual - 1 ? Politica.SEMPRE : Politica.SE_AUSENTE;
+            Politica politica = Politica.porAno(ano, ctx.hoje());
             String url = API + "/deputados/" + id + "/discursos?dataInicio=" + de + "&dataFim=" + ate + "&itens=100";
             for (int pagina = 1; url != null; pagina++) {
                 Coleta.Arquivo arquivo = coleta.obter(url, discursos(id, ano, pagina), JSON, politica);

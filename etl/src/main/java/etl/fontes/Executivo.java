@@ -45,7 +45,7 @@ public final class Executivo implements Fonte {
         int anoAtual = ctx.hoje().getYear();
         LocalDate inicio = inicioDoMandato(ctx);
         for (int ano = inicio.getYear(); ano <= anoAtual; ano++) {
-            Politica politica = ano >= anoAtual - 1 ? Politica.SEMPRE : Politica.SE_AUSENTE;
+            Politica politica = Politica.porAno(ano, ctx.hoje());
             for (String tipo : TIPOS) {
                 coleta.obter(Senado.API + "/legislacao/lista?tipo=" + tipo + "&ano=" + ano, "legislacao/" + tipo + "-" + ano + ".json",
                         "application/json", politica);

@@ -21,7 +21,7 @@ A coleta do Senado levou 3 minutos, a do TSE 1 minuto e a do Executivo 11 segund
 1. Usar o arquivo anual em massa sempre que a fonte publicar um. A API por registro fica para o que não tem arquivo (detalhe, histórico, frentes e discursos do deputado; dados por senador).
 2. Guardar no cache bruto o que o servidor envia compactado, com a extensão `.gz`.
 3. Política por arquivo:
-   - `SEMPRE`: período aberto (ano corrente e anterior) e arquivos cujo conteúdo muda com o tempo (situação de proposições). Baixa de novo a cada execução.
+   - `SEMPRE`: período aberto e arquivos cujo conteúdo muda com o tempo (situação de proposições). Baixa de novo a cada execução. O período aberto é o ano corrente e, até 31 de março, o ano anterior: registros dele ainda podem chegar ou mudar no início do ano seguinte.
    - `SE_AUSENTE`: período fechado. Reaproveita o cache.
 4. Se a atualização falhar e houver cópia anterior, usar a cópia com a data de captura original e marcar a fonte como `parcial`.
 5. Depois de 3 falhas no mesmo tipo de arquivo, não tentar de novo na mesma execução. Fonte que alterna sucesso e erro não pode prender a coleta por horas.

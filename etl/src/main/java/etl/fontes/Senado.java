@@ -75,7 +75,7 @@ public final class Senado implements Fonte {
         }
         for (int ano = leg.inicio().getYear(); ano <= atual.getYear(); ano++) {
             coleta.obter(CEAPS + "/despesa_ceaps_" + ano + ".csv", "ceaps/despesa_ceaps_" + ano + ".csv", "*/*",
-                    ano >= atual.getYear() - 1 ? Politica.SEMPRE : Politica.SE_AUSENTE);
+                    Politica.porAno(ano, ctx.hoje()));
         }
 
         List<String> codigos = new ArrayList<>();
@@ -90,7 +90,7 @@ public final class Senado implements Fonte {
                 LocalDate de = ano == leg.inicio().getYear() ? leg.inicio() : LocalDate.of(ano, 1, 1);
                 LocalDate ate = ano == atual.getYear() ? ctx.hoje() : LocalDate.of(ano, 12, 31);
                 coleta.obter(API + "/senador/" + codigo + "/discursos?dataInicio=" + de.format(COMPACTA) + "&dataFim=" + ate.format(COMPACTA),
-                        "discursos/" + codigo + "-" + ano + ".json", JSON, ano >= atual.getYear() - 1 ? Politica.SEMPRE : Politica.SE_AUSENTE);
+                        "discursos/" + codigo + "-" + ano + ".json", JSON, Politica.porAno(ano, ctx.hoje()));
             }
         });
         coleta.contar("senadores_com_falha", falhas.size());

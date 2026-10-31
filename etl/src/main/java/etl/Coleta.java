@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -24,7 +25,16 @@ public final class Coleta {
         /** Baixa de novo a cada execução (período aberto). */
         SEMPRE,
         /** Reusa o arquivo em cache (período fechado). */
-        SE_AUSENTE
+        SE_AUSENTE;
+
+        /**
+         * Arquivo de um ano: o ano corrente fica aberto. O ano anterior fica aberto até 31 de março,
+         * porque registros dele ainda podem chegar ou mudar no início do ano seguinte. Os demais ficam fechados.
+         */
+        public static Politica porAno(int ano, LocalDate hoje) {
+            boolean aberto = ano >= hoje.getYear() || ano == hoje.getYear() - 1 && hoje.getMonthValue() <= 3;
+            return aberto ? SEMPRE : SE_AUSENTE;
+        }
     }
 
     public record Arquivo(String url, String caminho, String sha256, long bytes, Instant capturadoEm) {
