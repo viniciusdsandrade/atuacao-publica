@@ -38,6 +38,11 @@ public final class Main {
             System.err.println("fontes: " + String.join(", ", FONTES.keySet()));
             System.exit(2);
         }
+        String agoraFixo = System.getenv("ETL_AGORA");
+        if (args[0].equals("fetch") && agoraFixo != null && !agoraFixo.isBlank()) {
+            System.err.println("ETL_AGORA vale só para normalize e publish: o fetch não pede às fontes dados de uma data simulada");
+            System.exit(2);
+        }
         Contexto ctx = Contexto.doAmbiente();
         String filtro = args.length > 1 ? args[1] : null;
         int codigo = switch (args[0]) {

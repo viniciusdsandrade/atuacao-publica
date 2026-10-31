@@ -17,7 +17,16 @@ public record Contexto(Path raiz, Path dados, Http http, Validador validador, In
         String agente = Projeto.NOME + "/" + Projeto.VERSAO + (repositorio == null ? "" : " (+" + repositorio + ")");
         int concorrencia = Integer.parseInt(System.getenv().getOrDefault("ETL_CONCORRENCIA", "2"));
         return new Contexto(raiz, dados, new Http(agente, concorrencia), new Validador(raiz.resolve("schemas")),
-                Instant.now().truncatedTo(ChronoUnit.SECONDS), repositorio);
+                agora(System.getenv("ETL_AGORA")), repositorio);
+    }
+
+    /** ETL_AGORA fixa o instante da execução, para ensaiar uma data futura com os dados já coletados (ADR-0006). */
+    static Instant agora(String fixo) {
+        if (fixo == null || fixo.isBlank()) {
+            return Instant.now().truncatedTo(ChronoUnit.SECONDS);
+        }
+        String valor = fixo.strip();
+        return valor.length() == 10 ? LocalDate.parse(valor).atStartOfDay(ZoneOffset.UTC).toInstant() : Instant.parse(valor);
     }
 
     /** A raiz é a pasta com schemas/ e contrib/. Aceita rodar a partir de etl/. */
