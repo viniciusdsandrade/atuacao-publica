@@ -87,7 +87,8 @@ public final class Registros {
      * Pessoa como uma fonte a vê, antes do vínculo entre fontes.
      * Não guarda dado sensível: o vínculo lê as chaves do cache bruto, em memória (ADR-0003).
      */
+    /** Pessoa de uma casa legislativa. Quem saiu continua na lista, com emExercicio falso (ADR-0006). */
     public record Pessoa(String fonte, String idFonte, String nome, String cargo, String esfera, String ente, String uf,
-                         String partido, String fotoUrl, String situacao, List<LinkOficial> links) {
+                         String partido, String fotoUrl, String situacao, boolean emExercicio, List<LinkOficial> links) {
     }
 }

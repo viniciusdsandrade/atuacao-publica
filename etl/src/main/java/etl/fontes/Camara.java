@@ -43,6 +43,9 @@ import tools.jackson.databind.JsonNode;
 /** Câmara dos Deputados: API v2, arquivos anuais e cota parlamentar (docs/FONTES.md). */
 public final class Camara implements Fonte {
 
+    /** Primeira legislatura coberta, a mesma para Câmara e Senado (ADR-0006). A cobertura só cresce a partir dela. */
+    public static final int PRIMEIRA_LEGISLATURA = 57;
+
     static final String API = "https://dadosabertos.camara.leg.br/api/v2";
     static final String ARQUIVOS = "https://dadosabertos.camara.leg.br/arquivos";
     static final String COTAS = "https://www.camara.leg.br/cotas";
@@ -210,7 +213,7 @@ public final class Camara implements Fonte {
             }
             pessoas.add(new Pessoa("camara", id, primeiro(Json.texto(status, "nomeEleitoral"), Json.texto(status, "nome")),
                     "deputado_federal", "federal", "BR", uf, partido,
-                    Json.texto(status, "urlFoto"), Json.texto(status, "situacao"), links));
+                    Json.texto(status, "urlFoto"), Json.texto(status, "situacao"), true, links));
 
             Coleta.Arquivo historicoArq = arquivo(ctx, "historico/" + id + ".json");
             List<Intervalo> intervalos = intervalos(Json.ler(Coleta.caminho(ctx, historicoArq)).path("dados"), leg);

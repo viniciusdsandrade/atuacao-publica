@@ -82,7 +82,7 @@ Não é presença. É a contagem de votos registrados em votações nominais.
 ## Proposições
 
 - **Câmara.** Arquivos `proposicoesAutores` dos anos da legislatura, filtrados pelo deputado. Tipo, número, ano, ementa, situação e link vêm de `proposicoes`. Temas vêm de `proposicoesTemas`. O campo `ordem_assinatura` e o campo `proponente` vêm da fonte.
-- **Senado.** `/processo?codigoParlamentarAutor={codigo}&tramitouLegislaturaAtual=S`, filtrado por apresentação a partir do início da legislatura. A listagem não traz temas: o campo fica `null`.
+- **Senado.** `/processo?codigoParlamentarAutor={codigo}`, filtrado por apresentação a partir do início da cobertura (2023-02-01). A listagem não traz temas: o campo fica `null`.
 
 ## Discursos
 
@@ -99,7 +99,7 @@ Não é presença. É a contagem de votos registrados em votações nominais.
 ## Órgãos e frentes
 
 - **Câmara.** `orgaosDeputados-L{legislatura}` (cargo, início e fim) e `/deputados/{id}/frentes` filtrado pela legislatura vigente.
-- **Senado.** `/senador/{codigo}/comissoes`, com participação ativa em algum momento da legislatura vigente.
+- **Senado.** `/senador/{codigo}/comissoes`, com participação ativa em algum momento desde o início da cobertura (2023-02-01).
 
 ## Candidaturas
 

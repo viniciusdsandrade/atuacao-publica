@@ -113,9 +113,10 @@ Os dois arquivos mudam juntos.
 - Documentação OpenAPI: `/dadosabertos/v3/api-docs` (versão 4.1.3.108, 157 caminhos).
 - Endpoints validados com resposta 200:
   - `/senador/lista/atual`: 81 senadores com mandato, legislaturas e exercícios.
+  - `/senador/lista/legislatura/{numero}`: titulares e suplentes da legislatura, com os períodos de exercício (`Exercicios`: início, fim e causa do afastamento). Na 57ª, 246 mandatos; 107 pessoas exerceram mandato desde 2023-02-01 (validado em 2026-10-31).
   - `/senador/{codigo}`, `/senador/{codigo}/mandatos`, `/senador/{codigo}/discursos`, `/senador/{codigo}/comissoes`, `/senador/{codigo}/licencas`, `/senador/{codigo}/cargos`.
   - `/votacao?dataInicio=AAAA-MM-DD&dataFim=AAAA-MM-DD`: array na raiz, com `votos[]` embutido (81 votos por votação).
-  - `/processo?codigoParlamentarAutor={codigo}&tramitouLegislaturaAtual=S`: 379 processos para o senador testado, com `identificacao`, `ementa`, `situacaoAtual`, `dataApresentacao`, `urlDocumento`.
+  - `/processo?codigoParlamentarAutor={codigo}`: todos os processos do autor, com `identificacao`, `ementa`, `situacaoAtual`, `dataApresentacao`, `urlDocumento`. O ETL filtra pela data de apresentação.
   - `/plenario/votacao/orientacaoBancada/{AAAAMMDD}/{AAAAMMDD}`: orientação por liderança. Liga com `/votacao` por `sequencialVotacao`.
   - `/legislacao/lista?tipo={LEI|DEC|MPV|LCP}&ano={ano}`: normas federais. Em 2026: 204 leis, 332 decretos, 66 medidas provisórias, 14 leis complementares.
   - `/legislacao/{id}`: detalhe da norma, com link para `normas.leg.br`.
@@ -127,6 +128,8 @@ Os dois arquivos mudam juntos.
   - Códigos de voto vistos: `Sim`, `Não`, `Abstenção`, `Votou` (votação secreta), `Presidente (art. 51 RISF)`, `P-NRV`, `AP`, `LS`, `NCom`. A documentação de referência cita também `MIS`, `LP`, `LAP`.
   - A orientação usa nomes de partido diferentes da sigla do senador (`Progressistas`, `Republicanos`).
   - `/processo` não traz temas na listagem.
+  - O filtro `tramitouLegislaturaAtual=S` perde autorias: para um senador testado em 2026-10-31, 284 desde 2023-02-01 com o filtro e 298 sem ele. Numa legislatura nova, perderia também as da anterior. Não usamos o filtro.
+  - A lista por legislatura traz suplente que nunca assumiu. O ETL só inclui quem tem período de exercício no intervalo coberto.
   - Dados descartados: e-mail, telefones, endereço, data de nascimento.
 
 ### `senado-ceaps`: Senado Federal, CEAPS
