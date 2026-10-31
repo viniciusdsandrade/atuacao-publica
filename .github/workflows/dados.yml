@@ -11,7 +11,7 @@ on:
       fonte:
         description: Fonte a coletar. As demais seguem do cache de dados brutos.
         type: choice
-        options: [todas, camara, senado, tse, executivo]
+        options: [todas, camara, senado, tse, executivo, contrib]
         default: todas
 
 permissions:
@@ -77,6 +77,12 @@ jobs:
         continue-on-error: true
         timeout-minutes: 90
         run: java -Xmx4g -jar etl/target/etl.jar fetch camara
+      - name: fetch contrib
+        # Confere se as URLs de origem e os snapshots dos registros manuais ainda respondem.
+        if: env.FONTE == 'todas' || env.FONTE == 'contrib'
+        continue-on-error: true
+        timeout-minutes: 10
+        run: java -jar etl/target/etl.jar fetch contrib
       - name: normalize
         continue-on-error: true
         run: java -Xmx4g -jar etl/target/etl.jar normalize
