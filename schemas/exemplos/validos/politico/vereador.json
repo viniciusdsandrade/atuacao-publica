@@ -1,0 +1,58 @@
+{
+  "id": "sapl-3509502-101",
+  "nome": "Vereador Exemplo",
+  "cargo_atual": "vereador",
+  "esfera": "municipal",
+  "ente": "3509502",
+  "uf": "SP",
+  "partido_atual": "PARTIDO",
+  "situacao": "Exercício",
+  "em_exercicio": true,
+  "foto_url": "https://sapl.campinas.sp.leg.br/media/sapl/public/parlamentar/101.jpg",
+  "ids_externos": {
+    "sapl": "101",
+    "tse": {
+      "2024": "250001999999"
+    }
+  },
+  "links_oficiais": [
+    {
+      "rotulo": "Página no SAPL",
+      "url": "https://sapl.campinas.sp.leg.br/parlamentar/101",
+      "fonte_id": "campinas-camara-sapl",
+      "url_origem": "https://sapl.campinas.sp.leg.br/api/parlamentares/parlamentar/101/",
+      "capturado_em": "2026-10-31T03:00:00Z"
+    }
+  ],
+  "atualizado_em": "2026-10-31T03:10:00Z",
+  "blocos": {
+    "mandatos": {
+      "fontes": [
+        {
+          "fonte_id": "campinas-camara-sapl",
+          "url_origem": "https://sapl.campinas.sp.leg.br/api/parlamentares/mandato/?legislatura=19",
+          "capturado_em": "2026-10-31T03:00:00Z"
+        }
+      ],
+      "atualizado_em": "2026-10-31T03:00:00Z",
+      "desatualizado": false,
+      "total": 1,
+      "registros": [
+        {
+          "cargo": "vereador",
+          "esfera": "municipal",
+          "ente": "3509502",
+          "uf": "SP",
+          "inicio": "2025-01-01",
+          "fim": "2028-12-31",
+          "situacao": "Exercício",
+          "condicao": "Titular",
+          "legislatura": 19,
+          "fonte_id": "campinas-camara-sapl",
+          "url_origem": "https://sapl.campinas.sp.leg.br/api/parlamentares/mandato/?legislatura=19",
+          "capturado_em": "2026-10-31T03:00:00Z"
+        }
+      ]
+    }
+  }
+}

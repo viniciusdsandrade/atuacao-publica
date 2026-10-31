@@ -5,6 +5,9 @@ export const CARGOS: Record<string, string> = {
   governador: 'Governador(a)',
   deputado_federal: 'Deputado(a) federal',
   senador: 'Senador(a)',
+  prefeito: 'Prefeito(a)',
+  vice_prefeito: 'Vice-prefeito(a)',
+  vereador: 'Vereador(a)',
 };
 
 export const BLOCOS: Record<string, string> = {
