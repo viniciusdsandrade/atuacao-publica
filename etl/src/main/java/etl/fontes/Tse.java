@@ -51,15 +51,18 @@ public final class Tse implements Fonte {
     }
 
     /**
-     * Eleições gerais que alimentam mandatos vigentes: a cada 4 anos, nos anos com resto 2 na divisão por 4,
-     * até 8 anos atrás (mandato de senador).
+     * Primeira eleição coberta (ADR-0006). Os senadores em exercício no início da 57ª legislatura, em 2023,
+     * foram eleitos em 2018, para mandato de oito anos. A cobertura não encolhe com o passar dos anos.
      */
+    static final int PRIMEIRA_ELEICAO = 2018;
+    /** Presidente e governadores: a cobertura começa nos mandatos iniciados em 2023. */
+    static final int PRIMEIRA_ELEICAO_EXECUTIVA = 2022;
+
+    /** Eleições gerais cobertas, de 4 em 4 anos, da primeira até o ano corrente. */
     static List<Integer> eleicoes(int anoAtual) {
         List<Integer> anos = new ArrayList<>();
-        for (int ano = anoAtual - 8; ano <= anoAtual; ano++) {
-            if (ano % 4 == 2) {
-                anos.add(ano);
-            }
+        for (int ano = PRIMEIRA_ELEICAO; ano <= anoAtual; ano += 4) {
+            anos.add(ano);
         }
         return anos;
     }
@@ -73,8 +76,11 @@ public final class Tse implements Fonte {
             coleta.obter(CDN + "/consulta_cand/consulta_cand_" + ano + ".zip", "consulta_cand_" + ano + ".zip", "application/zip", politica);
             coleta.obter(CDN + "/bem_candidato/bem_candidato_" + ano + ".zip", "bem_candidato_" + ano + ".zip", "application/zip", politica);
         }
-        // Propostas de governo: só as eleições dos mandatos executivos vigentes e a mais recente.
-        for (int ano : anos.subList(Math.max(0, anos.size() - 2), anos.size())) {
+        // Propostas de governo: todas as eleições de mandatos executivos cobertos.
+        for (int ano : anos) {
+            if (ano < PRIMEIRA_ELEICAO_EXECUTIVA) {
+                continue;
+            }
             for (String uf : UFS) {
                 coleta.listarZip(CDN + "/proposta_governo/proposta_governo_" + ano + "_" + uf + ".zip",
                         "propostas/" + ano + "_" + uf + ".json", Politica.SE_AUSENTE);
