@@ -59,9 +59,9 @@ public final class Sapl implements Fonte {
         List<Legislatura> legislaturas = legislaturas(Json.ler(Coleta.caminho(ctx, arqLeg)));
         Legislatura atual = legislaturaVigente(legislaturas, ctx.hoje());
 
-        Coleta.Arquivo arqMandatos = coleta.obter(API + "/parlamentares/mandato/?legislatura=" + atual.id(),
+        Coleta.Arquivo arqMandatos = coleta.obter(API + "/parlamentares/mandato/?legislatura=" + atual.id() + "&page_size=100",
                 "mandatos/" + atual.id() + ".json", JSON, Politica.SEMPRE);
-        Coleta.Arquivo arqAtivos = coleta.obter(API + "/parlamentares/parlamentar/?ativo=True", "parlamentares-ativos.json",
+        Coleta.Arquivo arqAtivos = coleta.obter(API + "/parlamentares/parlamentar/?ativo=True&page_size=100", "parlamentares-ativos.json",
                 JSON, Politica.SEMPRE);
 
         Set<String> ids = new HashSet<>();
@@ -168,7 +168,7 @@ public final class Sapl implements Fonte {
             Map<String, Map<String, Integer>> votosPorTipo = new TreeMap<>();
             if (arqVotos != null) {
                 for (JsonNode v : resultados(Json.ler(Coleta.caminho(ctx, arqVotos)))) {
-                    String dataHora = Json.texto(v, "data_hora");
+                    String dataHora = formatarDataHora(Json.texto(v, "data_hora"));
                     String votoTxt = Json.texto(v, "voto");
                     String regId = extrairId(v, "registro_votacao");
                     if (dataHora != null && votoTxt != null) {
@@ -218,6 +218,24 @@ public final class Sapl implements Fonte {
         }
         JsonNode r = raiz.get("results");
         return r != null && r.isArray() ? Json.lista(r) : Json.lista(raiz);
+    }
+
+    static String formatarDataHora(String dataHora) {
+        if (dataHora == null || dataHora.isBlank()) {
+            return null;
+        }
+        int ponto = dataHora.indexOf('.');
+        if (ponto > 0) {
+            dataHora = dataHora.substring(0, ponto);
+        } else {
+            int mais = dataHora.indexOf('+');
+            int menos = dataHora.indexOf('-', 10);
+            int corte = mais > 0 ? mais : (menos > 0 ? menos : -1);
+            if (corte > 0) {
+                dataHora = dataHora.substring(0, corte);
+            }
+        }
+        return dataHora.length() >= 19 ? dataHora.substring(0, 19) : (dataHora.length() >= 10 ? dataHora.substring(0, 10) : null);
     }
 
     static String extrairId(JsonNode no, String campo) {
@@ -297,10 +315,14 @@ public final class Sapl implements Fonte {
         for (JsonNode f : resultados(raiz)) {
             String desf = Json.texto(f, "data_desfiliacao");
             if (desf == null || LocalDate.parse(desf).isAfter(hoje)) {
-                String sigla = Json.texto(f, "sigla_partido");
-                if (sigla == null) {
-                    sigla = Json.texto(f, "partido");
+                String str = Json.texto(f, "__str__");
+                if (str != null && str.contains(" - ")) {
+                    String[] partes = str.split(" - ");
+                    if (partes.length >= 2 && !partes[1].isBlank()) {
+                        return partes[1].strip();
+                    }
                 }
+                String sigla = Json.texto(f, "sigla_partido");
                 if (sigla != null) {
                     return sigla;
                 }

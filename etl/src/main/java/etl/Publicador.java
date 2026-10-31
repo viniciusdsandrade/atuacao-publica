@@ -32,8 +32,12 @@ public final class Publicador {
                     "discursos", "eventos", "orgaos_e_frentes", "candidaturas", "posicionamentos_declarados"),
             "senador", List.of("mandatos", "participacao_votacoes", "votos", "despesas", "proposicoes",
                     "discursos", "eventos", "orgaos_e_frentes", "candidaturas", "posicionamentos_declarados"),
+            "vereador", List.of("mandatos", "participacao_votacoes", "votos", "despesas", "proposicoes",
+                    "discursos", "eventos", "orgaos_e_frentes", "candidaturas", "posicionamentos_declarados"),
             "presidente", List.of("mandatos", "candidaturas", "atos_normativos", "agenda_oficial", "posicionamentos_declarados"),
-            "governador", List.of("mandatos", "candidaturas", "posicionamentos_declarados"));
+            "governador", List.of("mandatos", "candidaturas", "posicionamentos_declarados"),
+            "prefeito", List.of("mandatos", "candidaturas", "atos_normativos", "agenda_oficial", "posicionamentos_declarados"),
+            "vice_prefeito", List.of("mandatos", "candidaturas", "posicionamentos_declarados"));
 
     /** Ordem dos blocos no perfil. Quem ocupou mais de um cargo recebe os blocos de todos eles (ADR-0006). */
     private static final List<String> ORDEM_DOS_BLOCOS = List.of("mandatos", "participacao_votacoes", "votos", "despesas",
@@ -45,7 +49,8 @@ public final class Publicador {
         List<String> blocos = new ArrayList<>();
         for (String bloco : ORDEM_DOS_BLOCOS) {
             for (String cargo : cargos) {
-                if (BLOCOS.get(cargo).contains(bloco)) {
+                List<String> permitidos = BLOCOS.get(cargo);
+                if (permitidos != null && permitidos.contains(bloco)) {
                     blocos.add(bloco);
                     break;
                 }

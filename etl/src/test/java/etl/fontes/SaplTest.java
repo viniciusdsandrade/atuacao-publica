@@ -80,15 +80,22 @@ class SaplTest {
     }
 
     @Test
+    void formataDataHoraTruncandoMicrossegundosEFuso() {
+        assertEquals("2024-01-04T13:59:00", Sapl.formatarDataHora("2024-01-04T13:59:00.323885-03:00"));
+        assertEquals("2024-01-04T13:59:00", Sapl.formatarDataHora("2024-01-04T13:59:00-03:00"));
+        assertEquals("2024-01-04", Sapl.formatarDataHora("2024-01-04"));
+    }
+
+    @Test
     void filiacaoAtivaDeterminaPartido() {
         JsonNode json = Json.FONTE.readTree("""
                 {
                   "results": [
-                    {"sigla_partido": "ANTIGO", "data_filiacao": "2020-01-01", "data_desfiliacao": "2024-03-01"},
-                    {"sigla_partido": "ATUAL", "data_filiacao": "2024-03-02", "data_desfiliacao": null}
+                    {"__str__": "Nome - ANTIGO - Partido Antigo", "data": "2020-01-01", "data_desfiliacao": "2024-03-01"},
+                    {"__str__": "Nome - PL - Partido Liberal", "data": "2024-03-02", "data_desfiliacao": null}
                   ]
                 }
                 """);
-        assertEquals("ATUAL", Sapl.extrairPartido(json, HOJE));
+        assertEquals("PL", Sapl.extrairPartido(json, HOJE));
     }
 }
