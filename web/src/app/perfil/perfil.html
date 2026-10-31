@@ -7,6 +7,15 @@
         {{ rotuloCargo(p.cargo_atual) }}{{ p.uf ? ' · ' + p.uf : '' }} · Partido: {{ p.partido_atual ?? semRegistro }}
       </p>
       <p>Situação na fonte: {{ p.situacao ?? semRegistro }}</p>
+      @if (!p.em_exercicio) {
+        <p class="aviso">
+          @if (p.situacao?.includes('posse prevista')) {
+            Ainda não tomou posse. Depois da posse, o perfil passa a mostrar a atividade no cargo.
+          } @else {
+            Não está em exercício. O perfil continua no arquivo, com a atividade do período coberto.
+          }
+        </p>
+      }
       @if (p.links_oficiais.length || p.foto_url) {
         <ul class="links">
           @for (l of p.links_oficiais; track l.url) {

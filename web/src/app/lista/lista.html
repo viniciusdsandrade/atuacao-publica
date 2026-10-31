@@ -1,13 +1,22 @@
 <h1>Políticos</h1>
 <p class="intro">
   Atividade de parlamentares federais, da Presidência da República e de governadores, a partir de fontes oficiais.
-  Cada registro traz a fonte e a data de captura.
+  Cada registro traz a fonte e a data de captura. Quem deixa o cargo continua no arquivo, com o histórico do período coberto.
 </p>
 
 <form class="filtros" role="search" (submit)="$event.preventDefault()">
   <div class="campo">
     <label for="busca">Nome</label>
     <input id="busca" type="search" autocomplete="off" [value]="busca()" (input)="busca.set(valor($event))" />
+  </div>
+  <div class="campo">
+    <label for="situacao">Situação</label>
+    <select id="situacao" [value]="situacao()" (change)="escolherSituacao($event)">
+      <option value="exercicio">Em exercício</option>
+      <option value="posse">Eleitos aguardando posse</option>
+      <option value="fora">Fora de exercício</option>
+      <option value="">Todos</option>
+    </select>
   </div>
   <div class="campo">
     <label for="cargo">Cargo</label>
@@ -47,6 +56,9 @@
         <a [routerLink]="['/politico', p.id]">
           <span class="nome">{{ p.nome }}</span>
           <span class="detalhe">{{ rotuloCargo(p.cargo) }}{{ p.uf ? ' · ' + p.uf : '' }}{{ p.partido ? ' · ' + p.partido : '' }}</span>
+          @if (situacaoDe(p) !== 'exercicio' && p.situacao) {
+            <span class="detalhe">{{ p.situacao }}</span>
+          }
         </a>
       </li>
     } @empty {

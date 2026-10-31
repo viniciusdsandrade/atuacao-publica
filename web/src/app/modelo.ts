@@ -19,6 +19,8 @@ export interface EntradaIndice {
   ente: string;
   uf: string | null;
   partido: string | null;
+  situacao: string | null;
+  em_exercicio: boolean;
   foto_url: string | null;
 }
 
@@ -73,6 +75,7 @@ export interface Perfil {
   uf: string | null;
   partido_atual: string | null;
   situacao: string | null;
+  em_exercicio: boolean;
   foto_url: string | null;
   ids_externos: Record<string, unknown>;
   links_oficiais: LinkOficial[];
