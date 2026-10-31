@@ -9,11 +9,14 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.TreeSet;
 import java.util.stream.Stream;
 
 import tools.jackson.databind.JsonNode;
@@ -64,6 +67,8 @@ public final class Publicador {
         final List<JsonNode> links = new ArrayList<>();
         final Map<String, List<JsonNode>> registros = new LinkedHashMap<>();
         final Map<String, List<JsonNode>> fontes = new LinkedHashMap<>();
+        /** Ids que redirecionam para este perfil (ADR-0002, item 6). */
+        final Set<String> aliases = new LinkedHashSet<>();
 
         List<JsonNode> bloco(String nome) {
             return registros.computeIfAbsent(nome, k -> new ArrayList<>());
@@ -92,35 +97,48 @@ public final class Publicador {
     public int publicar() {
         Instant inicio = Instant.now().truncatedTo(java.time.temporal.ChronoUnit.SECONDS);
         Catalogo catalogo = Catalogo.carregar(ctx);
-        Map<String, String> idsAnteriores = idsAnteriores();
+        Anterior anterior = anterior();
         List<Perfil> perfis = new ArrayList<>(Vinculo.perfis(ctx, catalogo));
-        for (Perfil perfil : perfis) {
-            perfil.id = idsAnteriores.getOrDefault(perfil.chaveExterna, perfil.id);
-        }
+        Map<String, String> aliases = identificadores(perfis, anterior);
         Contribuicoes.anexar(ctx, catalogo, perfis, rejeitados);
 
+        // Monta numa pasta nova e só troca pela publicada se nenhum perfil anterior sumir (ADR-0006).
         Path pasta = ctx.publicado().resolve("politicos");
-        apagar(pasta);
+        Path nova = ctx.publicado().resolve("politicos.novo");
+        apagar(nova);
         ArrayNode indice = Json.SAIDA.createArrayNode();
-        int publicados = 0;
+        Set<String> publicados = new HashSet<>();
         perfis.sort(Comparator.comparing(p -> Texto.normalizarNome(p.nome)));
         for (Perfil perfil : perfis) {
-            ObjectNode documento = documento(perfil, pasta);
+            ObjectNode documento = documento(perfil, nova);
             List<String> erros = ctx.validador().validar("politico", documento);
             String caminho = "politicos/" + perfil.id + ".json";
             if (!erros.isEmpty()) {
                 rejeitados.add(new Meta.Rejeitado(caminho, "schema: " + String.join("; ", erros.subList(0, Math.min(3, erros.size())))));
                 continue;
             }
-            Json.gravar(pasta.resolve(perfil.id + ".json"), documento);
+            Json.gravar(nova.resolve(perfil.id + ".json"), documento);
             indice.add(entradaDoIndice(documento));
-            publicados++;
+            publicados.add(perfil.id);
         }
+        aliases.values().removeIf(destino -> !publicados.contains(destino));
+        List<String> sumiram = sumiram(anterior, publicados, aliases, permitidos());
+        if (!sumiram.isEmpty()) {
+            apagar(nova);
+            System.err.println("publish: bloqueado: " + sumiram.size() + " perfil(is) da publicação anterior sumiriam: "
+                    + String.join(", ", sumiram.subList(0, Math.min(20, sumiram.size()))));
+            System.err.println("publish: nada foi gravado; o site continua com a publicação anterior (ADR-0006)");
+            return 1;
+        }
+        apagar(pasta);
+        mover(nova, pasta);
+        ObjectNode mapa = Json.SAIDA.createObjectNode();
+        aliases.forEach(mapa::put);
         gravarValidado("indice", ctx.publicado().resolve("index.json"), Json.SAIDA.createObjectNode()
                 .put("gerado_em", ctx.agora().toString())
                 .put("total", indice.size())
                 .<ObjectNode>set("politicos", indice)
-                .set("aliases", Json.SAIDA.createObjectNode()));
+                .set("aliases", mapa));
         gravarValidado("fontes", ctx.publicado().resolve("fontes.json"), Json.arvore(catalogo.itens()));
 
         List<Meta.StatusFonte> status = new ArrayList<>();
@@ -129,11 +147,11 @@ public final class Publicador {
             status.add(new Meta.StatusFonte(fonte, c.status(), c.ultimaColetaOk(), c.erros().isEmpty() ? null : c.erros().getFirst()));
         }
         Meta.Execucao execucao = new Meta.Execucao(new Meta.Projeto(Projeto.NOME, Projeto.VERSAO, ctx.repositorioUrl()),
-                inicio, Instant.now().truncatedTo(java.time.temporal.ChronoUnit.SECONDS), status, publicados, rejeitados);
+                inicio, Instant.now().truncatedTo(java.time.temporal.ChronoUnit.SECONDS), status, publicados.size(), rejeitados);
         gravarValidado("execucao", Meta.pasta(ctx).resolve("execucao.json"), Json.arvore(execucao));
-        System.out.println("publish: " + publicados + " perfis publicados, " + rejeitados.size() + " rejeição(ões)");
+        System.out.println("publish: " + publicados.size() + " perfis publicados, " + aliases.size() + " alias(es), " + rejeitados.size() + " rejeição(ões)");
         rejeitados.stream().limit(10).forEach(r -> System.out.println("publish: rejeitado " + r.arquivo() + ": " + r.motivo()));
-        return publicados > 0 ? 0 : 1;
+        return publicados.isEmpty() ? 1 : 0;
     }
 
     private ObjectNode documento(Perfil perfil, Path pasta) {
@@ -328,27 +346,119 @@ public final class Publicador {
         Json.gravar(arquivo, documento);
     }
 
-    /** Identificador canônico já publicado para cada identificador externo (ADR-0002, item 5). */
-    private Map<String, String> idsAnteriores() {
+    /** Publicação anterior: id canônico por identificador externo, ids publicados e aliases. */
+    record Anterior(Map<String, String> porChave, Set<String> ids, Map<String, String> aliases) {
+    }
+
+    private Anterior anterior() {
         Path indice = ctx.publicado().resolve("index.json");
-        Map<String, String> ids = new HashMap<>();
+        Map<String, String> porChave = new HashMap<>();
+        Set<String> ids = new HashSet<>();
+        Map<String, String> aliases = new HashMap<>();
         if (!Files.exists(indice)) {
-            return ids;
+            return new Anterior(porChave, ids, aliases);
         }
-        for (JsonNode p : Json.ler(indice).path("politicos")) {
+        JsonNode documento = Json.ler(indice);
+        for (JsonNode p : documento.path("politicos")) {
             String id = p.get("id").stringValue();
+            ids.add(id);
             JsonNode externos = p.path("ids_externos");
             if (externos.hasNonNull("camara")) {
-                ids.put("camara:" + externos.get("camara").stringValue(), id);
+                porChave.put("camara:" + externos.get("camara").stringValue(), id);
             }
             if (externos.hasNonNull("senado")) {
-                ids.put("senado:" + externos.get("senado").stringValue(), id);
+                porChave.put("senado:" + externos.get("senado").stringValue(), id);
             }
             for (var tse : externos.path("tse").properties()) {
-                ids.put("tse:" + tse.getValue().stringValue(), id);
+                porChave.put("tse:" + tse.getValue().stringValue(), id);
+            }
+        }
+        for (var alias : documento.path("aliases").properties()) {
+            aliases.put(alias.getKey(), alias.getValue().stringValue());
+        }
+        return new Anterior(porChave, ids, aliases);
+    }
+
+    /**
+     * Identificador estável (ADR-0002, itens 5 e 6; ADR-0006): o perfil mantém o id já publicado para qualquer um
+     * dos seus identificadores externos. O id que deixou de ser canônico vira alias, e alias publicado continua valendo.
+     */
+    static Map<String, String> identificadores(List<Perfil> perfis, Anterior anterior) {
+        Set<String> tomados = new HashSet<>();
+        for (Perfil perfil : perfis) {
+            String derivado = perfil.id;
+            for (String chave : chaves(perfil)) {
+                String publicado = anterior.porChave().get(chave);
+                if (publicado != null && !tomados.contains(publicado)) {
+                    perfil.id = publicado;
+                    break;
+                }
+            }
+            if (!tomados.add(perfil.id)) {
+                throw new IllegalStateException("dois perfis com o identificador " + perfil.id);
+            }
+            perfil.aliases.add(derivado);
+        }
+        Map<String, String> destinoAtual = new HashMap<>();
+        for (Perfil perfil : perfis) {
+            perfil.aliases.forEach(a -> destinoAtual.putIfAbsent(a, perfil.id));
+            destinoAtual.put(perfil.id, perfil.id);
+        }
+        Map<String, String> aliases = new TreeMap<>();
+        anterior.aliases().forEach((alias, destino) -> {
+            String atual = destinoAtual.get(destino);
+            if (atual != null) {
+                aliases.put(alias, atual);
+            }
+        });
+        for (Perfil perfil : perfis) {
+            perfil.aliases.forEach(a -> aliases.putIfAbsent(a, perfil.id));
+        }
+        aliases.keySet().removeIf(tomados::contains);
+        return aliases;
+    }
+
+    /** Chaves de busca na publicação anterior: a principal, as das casas e as do TSE, da eleição mais recente para a mais antiga. */
+    private static List<String> chaves(Perfil perfil) {
+        List<String> chaves = new ArrayList<>();
+        chaves.add(perfil.chaveExterna);
+        perfil.ids.forEach((fonte, id) -> chaves.add(fonte + ":" + id));
+        new TreeMap<>(perfil.tse).descendingMap().values().forEach(sq -> chaves.add("tse:" + sq));
+        return chaves;
+    }
+
+    /** Ids e aliases da publicação anterior que não aparecem na nova, fora os liberados em ETL_PERMITIR_REMOCAO. */
+    static List<String> sumiram(Anterior anterior, Set<String> publicados, Map<String, String> aliases, Set<String> permitidos) {
+        Set<String> antes = new TreeSet<>(anterior.ids());
+        antes.addAll(anterior.aliases().keySet());
+        List<String> sumiram = new ArrayList<>();
+        for (String id : antes) {
+            if (!publicados.contains(id) && !aliases.containsKey(id) && !permitidos.contains(id)) {
+                sumiram.add(id);
+            }
+        }
+        return sumiram;
+    }
+
+    private static Set<String> permitidos() {
+        String lista = System.getenv("ETL_PERMITIR_REMOCAO");
+        Set<String> ids = new HashSet<>();
+        if (lista != null) {
+            for (String id : lista.split(",")) {
+                if (!id.isBlank()) {
+                    ids.add(id.strip());
+                }
             }
         }
         return ids;
+    }
+
+    private static void mover(Path origem, Path destino) {
+        try {
+            Files.move(origem, destino, java.nio.file.StandardCopyOption.ATOMIC_MOVE);
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
     }
 
     private static String textoOuVazio(JsonNode registro, String campo) {
