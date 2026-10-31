@@ -1112,3 +1112,140 @@
   limitacoes: "Ver docs/FONTES.md (observação da UF)."
   status: validado com limitação
   validado_em: 2026-10-30
+
+# Piloto municipal (docs/FONTES.md, seção "Piloto municipal").
+
+- id: campinas-camara-sapl
+  nome: Câmara Municipal de Campinas, SAPL (API REST)
+  orgao: Câmara Municipal de Campinas
+  esfera: municipal
+  ente: "3509502"
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://sapl.campinas.sp.leg.br/api/
+  formato: JSON e PDF
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "De 2 a 6 s por chamada. Votos antigos trazem a data da migração do sistema: a data vem da sessão. Discursos sem texto."
+  status: validado
+  validado_em: 2026-10-31
+
+- id: campinas-camara-transparencia
+  nome: Câmara Municipal de Campinas, portal da transparência (API interna)
+  orgao: Câmara Municipal de Campinas
+  esfera: municipal
+  ente: "3509502"
+  categoria: transparencia
+  nivel_confianca: T0
+  url_base: https://transparencia.campinas.sp.leg.br/
+  formato: JSON
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "API interna sem documentação. Sem verba de gabinete. Ativo não é em exercício: o exercício vem do SAPL."
+  status: validado com limitação
+  validado_em: 2026-10-31
+
+- id: campinas-camara-diario-oficial
+  nome: Câmara Municipal de Campinas, Diário Oficial do Legislativo
+  orgao: Câmara Municipal de Campinas
+  esfera: municipal
+  ente: "3509502"
+  categoria: diario_oficial
+  nivel_confianca: T0
+  url_base: https://diario.campinas.sp.leg.br/
+  formato: HTML com JSON embutido
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Sem API formal. Filtros não confirmados."
+  status: validado com limitação
+  validado_em: 2026-10-31
+
+- id: campinas-camara-agenda-presidencia
+  nome: Câmara Municipal de Campinas, agenda da Presidência
+  orgao: Câmara Municipal de Campinas
+  esfera: municipal
+  ente: "3509502"
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://www.campinas.sp.leg.br/
+  formato: HTML
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Só em HTML; o iCalendar responde sem eventos. Cobre só o presidente da Câmara."
+  status: validado com limitação
+  validado_em: 2026-10-31
+
+- id: campinas-pmc-diario-oficial
+  nome: Prefeitura de Campinas, Diário Oficial do Município
+  orgao: Prefeitura Municipal de Campinas
+  esfera: municipal
+  ente: "3509502"
+  categoria: diario_oficial
+  nivel_confianca: T0
+  url_base: https://portal-adm.campinas.sp.gov.br/
+  formato: JSON (índice) e PDF
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "API interna do portal, sem documentação. Conteúdo só em PDF."
+  status: validado com limitação
+  validado_em: 2026-10-31
+
+- id: campinas-pmc-biblioteca-juridica
+  nome: Prefeitura de Campinas, Biblioteca Jurídica
+  orgao: Prefeitura Municipal de Campinas
+  esfera: municipal
+  ente: "3509502"
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://bibliotecajuridica.campinas.sp.gov.br/
+  formato: HTML (iso-8859-1)
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Sem API: busca por POST, resultado em HTML."
+  status: validado com limitação
+  validado_em: 2026-10-31
+
+- id: campinas-pmc-transparencia
+  nome: Prefeitura de Campinas, portal da transparência
+  orgao: Prefeitura Municipal de Campinas
+  esfera: municipal
+  ente: "3509502"
+  categoria: transparencia
+  nivel_confianca: T0
+  url_base: https://transparencia.campinas.sp.gov.br/
+  formato: página e API JSON
+  autenticacao: chave x-api-key
+  licenca: null
+  limitacoes: "A API responde 401 sem chave. A chave usada pela página no navegador não é usada pelo projeto: acesso a pedir à Prefeitura."
+  status: não validado
+  validado_em: 2026-10-31
+
+- id: tce-sp-transparencia-api
+  nome: Tribunal de Contas do Estado de São Paulo, API de transparência dos municípios
+  orgao: Tribunal de Contas do Estado de São Paulo
+  esfera: estadual
+  ente: SP
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://transparencia.tce.sp.gov.br/api/json/
+  formato: JSON
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Um mês por resposta, sem paginação. Defasagem de cerca de 2 meses. Só identifica o órgão. Fornecedor pessoa física com parte do CPF."
+  status: validado com limitação
+  validado_em: 2026-10-31
+
+- id: tce-sp-conjunto-dados
+  nome: Tribunal de Contas do Estado de São Paulo, arquivos anuais de despesas e receitas
+  orgao: Tribunal de Contas do Estado de São Paulo
+  esfera: estadual
+  ente: SP
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://transparencia.tce.sp.gov.br/conjunto-de-dados
+  formato: CSV latin-1 em ZIP
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Arquivo do estado inteiro (1,96 GiB em 2025). Sem arquivo de 2026. Conferir o mascaramento de CPF antes de ingerir."
+  status: validado com limitação
+  validado_em: 2026-10-31

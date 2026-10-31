@@ -289,6 +289,93 @@ Nenhum site bloqueou o cliente.
 | TO | `to-diario-oficial` | diário oficial | Diário Oficial do Estado do Tocantins | https://diariooficial.to.gov.br/ | 200 | PDFs servidos por doe.to.gov.br (raiz responde 403) |
 | TO | `to-transparencia` | transparência | Portal da Transparência do Tocantins | https://transparencia.to.gov.br/ | 200 | aplicação exige JavaScript; www falha no TLS |
 
+## Piloto municipal
+
+Prefeitura e câmara de vereadores de Campinas (SP), código IBGE 3509502.
+Validação em 2026-10-31, com o User-Agent do projeto e intervalo de 2,5 s ou mais por domínio.
+Nenhum servidor bloqueou o cliente.
+
+| id | Fonte | Nível | Formato | Autenticação | Status | Validado em |
+|---|---|---|---|---|---|---|
+| `campinas-camara-sapl` | Câmara Municipal, SAPL (API REST) | T0 | JSON e PDF | nenhuma | validado | 2026-10-31 |
+| `campinas-camara-transparencia` | Câmara Municipal, portal da transparência (API interna) | T0 | JSON | nenhuma | validado com limitação | 2026-10-31 |
+| `campinas-camara-diario-oficial` | Câmara Municipal, Diário Oficial do Legislativo | T0 | HTML com JSON embutido | nenhuma | validado com limitação | 2026-10-31 |
+| `campinas-camara-agenda-presidencia` | Câmara Municipal, agenda da Presidência | T0 | HTML | nenhuma | validado com limitação | 2026-10-31 |
+| `campinas-pmc-diario-oficial` | Prefeitura, Diário Oficial do Município | T0 | JSON (índice) e PDF | nenhuma | validado com limitação | 2026-10-31 |
+| `campinas-pmc-biblioteca-juridica` | Prefeitura, Biblioteca Jurídica (legislação municipal) | T0 | HTML (iso-8859-1) | nenhuma | validado com limitação | 2026-10-31 |
+| `campinas-pmc-transparencia` | Prefeitura, portal da transparência | T0 | página e API JSON | chave `x-api-key` | não validado | 2026-10-31 |
+| `tce-sp-transparencia-api` | TCE-SP, API de despesas e receitas dos municípios | T0 | JSON | nenhuma | validado com limitação | 2026-10-31 |
+| `tce-sp-conjunto-dados` | TCE-SP, arquivos anuais de despesas e receitas | T0 | CSV latin-1 em ZIP | nenhuma | validado com limitação | 2026-10-31 |
+
+As eleições municipais vêm de `tse-cdn`: `consulta_cand_2024.zip` (61,7 MiB) e `consulta_cand_2020.zip` (81,4 MiB).
+Em 2024, o município (`SG_UE` 62910) tem 1 prefeito, 1 vice-prefeito e 33 vereadores eleitos, todos no 1º turno.
+
+### `campinas-camara-sapl`: SAPL da Câmara Municipal
+
+- URL base: `https://sapl.campinas.sp.leg.br/api/`. A raiz lista 133 endpoints.
+- Endpoints validados com resposta 200:
+  - `parlamentares/legislatura/`: 19 legislaturas. A vigente é a 19ª, de 2025-01-01 a 2028-12-31.
+  - `parlamentares/mandato/?legislatura=19`: 38 mandatos, com `data_inicio_mandato`, `data_fim_mandato`, `titular` e `tipo_afastamento`. Cobre suplente que assumiu.
+  - `parlamentares/parlamentar/?ativo=True`: 33 ativos, 327 no total.
+  - `parlamentares/filiacao/`: partido com data de filiação e de desfiliação.
+  - `sessao/votoparlamentar/`: 130.617 votos nominais. Aceita `?parlamentar=`.
+  - `sessao/registrovotacao/`, `sessao/ordemdia/{id}/`, `sessao/sessaoplenaria/`.
+  - `sessao/sessaoplenariapresenca/` e `sessao/presencaordemdia/`: presença em sessão.
+  - `materia/materialegislativa/`, `materia/autoria/` e `base/autor/`: proposições e autoria.
+  - `norma/normajuridica/`: 58.068 normas, com filtros `tipo` e `ano`. Inclui decretos do Executivo.
+  - `sessao/orador/` e `sessao/oradorexpediente/`: ordem e tempo de fala.
+- Limitações e armadilhas:
+  - De 2 a 6 s por chamada. Não declara limite de taxa.
+  - Pagina com `page` e `page_size`. `sessaoplenaria` ignora `page_size` e devolve a lista inteira, inclusive sessões futuras.
+  - Filtro booleano exige `True`: `ativo=true` responde 400.
+  - Em votos antigos, `votoparlamentar.data_hora` traz a data da migração do sistema. A data do voto vem da sessão ou da ordem do dia.
+  - `autoria.autor` aponta para `base/autor`, e não para o parlamentar. A ligação é por `autor.object_id`.
+  - Discursos: só ordem e tempo do orador. `url_discurso` vem vazio.
+  - Não há chave comum com o TSE: o vínculo é por nome, partido e legislatura.
+  - Dados descartados na ingestão: telefone e e-mail de gabinete.
+
+### `campinas-camara-transparencia`: portal da transparência da Câmara Municipal
+
+- URL base: `https://transparencia.campinas.sp.leg.br/api/v1/`. API interna da página, sem documentação.
+- Endpoints validados com resposta 200:
+  - `portal/vereadores/filtro_vereador_ativo_inativo/?status=True`: traz `idSAPL` e `idAutoriaSAPL`, a ponte com o SAPL.
+  - Despesas por vereador e ano, por categoria: combustível, correspondência e outras.
+  - `despesas-parlamentares-e-administrativas/hospedagens-e-viagens-parlamentares/por-ano/?ano={ano}`: hospedagem, passagens e diárias.
+- Limitações e armadilhas:
+  - Pode mudar sem aviso.
+  - Não há verba de gabinete nem ressarcimento.
+  - "Ativo" não é "em exercício": o exercício vem do mandato no SAPL.
+  - Valores vêm como texto.
+
+### `campinas-camara-diario-oficial` e `campinas-camara-agenda-presidencia`
+
+- Diário Oficial do Legislativo: `https://diario.campinas.sp.leg.br/`, com o texto integral em JSON embutido na página. Sem API formal; os filtros não estão confirmados.
+- Agenda da Presidência: `https://www.campinas.sp.leg.br/comunicacao/agenda-de-eventos-da-presidencia`. Só em HTML; o iCalendar responde sem eventos. Cobre só o presidente da Câmara.
+
+### Fontes da Prefeitura
+
+- `campinas-pmc-diario-oficial`: índice em `https://portal-adm.campinas.sp.gov.br/api/v2/publicacoes-dom`, de 1995 a 2026, e edições em PDF. API interna, sem documentação. Sem texto estruturado.
+- `campinas-pmc-biblioteca-juridica`: `https://bibliotecajuridica.campinas.sp.gov.br/`. Busca por POST, resultado em HTML iso-8859-1.
+- `campinas-pmc-transparencia`: a API responde 401 sem a chave `x-api-key`. A página usa uma chave no navegador. Não usamos essa chave: o acesso deve ser pedido à Prefeitura.
+
+### `tce-sp-transparencia-api` e `tce-sp-conjunto-dados`: Tribunal de Contas do Estado de São Paulo
+
+- API: `https://transparencia.tce.sp.gov.br/api/json/`. `municipios`, `despesas/{municipio}/{ano}/{mes}` e `receitas/{municipio}/{ano}/{mes}`.
+- Arquivos anuais: `https://transparencia.tce.sp.gov.br/conjunto-de-dados`, de 2008 a 2025, do estado inteiro (`despesas-2025.zip` tem 1,96 GiB).
+- Limitações e armadilhas:
+  - Um mês por resposta, de 3 a 8 MB, sem paginação. Defasagem de cerca de 2 meses.
+  - Identifica só o órgão: não separa o gabinete do prefeito nem o vereador.
+  - Valores em texto, com formatos diferentes na despesa e na receita.
+  - Fornecedor pessoa física aparece com parte do CPF. O dado não entra no site.
+  - Os dados são declarados pelo próprio município.
+
+### Lacunas do piloto
+
+- A Prefeitura não tem portal de dados abertos.
+- Não há agenda oficial do prefeito publicada.
+- Não há registro estruturado de exercício ou licença do prefeito.
+- Despesas do gabinete do prefeito e diárias do Executivo não estão abertas. Pedido por LAI sugerido.
+
 ## Fora da política de fontes
 
 Imprensa, blogs, agregadores sem metodologia, redes sociais de terceiros, mensagens, vídeos não oficiais, Wikipedia e rankings de terceiros.

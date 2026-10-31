@@ -51,7 +51,11 @@ Estado real de cada fase. Atualizado ao fechar cada fase.
 
 ### Esfera estadual e municipal
 
-1. Piloto municipal: prefeitura e câmara de vereadores de um município, com um adaptador por fonte.
+1. Piloto municipal: prefeitura e câmara de vereadores, com um adaptador por fonte.
+   - Levantamento e validação das fontes: concluído em 2026-10-31 (`docs/FONTES.md`, seção "Piloto municipal").
+   - A câmara tem dados abertos (SAPL): mandatos, votos nominais, presença, autoria e normas.
+   - A prefeitura não tem dados abertos nem agenda oficial publicada. O portal da transparência exige chave.
+   - Próximo passo: modelo municipal (cargos `prefeito` e `vereador`, ente pelo código IBGE) e adaptador do SAPL.
 2. Assembleias legislativas e governos estaduais: um adaptador por estado.
 3. Gastos e agenda de governadores a partir dos portais estaduais catalogados em `docs/FONTES.md`.
 4. Gastos do Executivo federal (cartão de pagamento e viagens) pelo Portal da Transparência.
