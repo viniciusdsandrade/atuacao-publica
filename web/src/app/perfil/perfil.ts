@@ -64,6 +64,10 @@ export class Perfil {
   }
 
   /** Total por ano a partir das somas mensais publicadas. */
+  protected unidade(bloco: string): string {
+    return bloco === 'despesas_executivo' ? 'pagamentos' : 'lançamentos';
+  }
+
   protected despesasPorAno(bloco: Bloco): { ano: number; valor: number; quantidade: number }[] {
     const anos = new Map<number, { ano: number; valor: number; quantidade: number }>();
     for (const m of bloco.por_mes ?? []) {

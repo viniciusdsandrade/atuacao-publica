@@ -34,6 +34,7 @@ export const BLOCOS: Record<string, string> = {
   posicionamentos_declarados: 'Posicionamentos declarados',
   agenda_oficial: 'Agenda oficial',
   atos_normativos: 'Atos do Poder Executivo federal no período do mandato',
+  despesas_executivo: 'Despesas pagas pela administração direta do município no período do mandato',
 };
 
 /** Notas fixas de método, iguais para todos os perfis do bloco. */
@@ -43,6 +44,8 @@ export const NOTAS: Record<string, string> = {
   eventos: 'A fonte lista só quem esteve presente. O site não calcula taxa de presença.',
   despesas: 'Valores líquidos informados pela casa legislativa. Compensações negativas entram na soma.',
   atos_normativos: 'A fonte não informa quem assinou cada ato.',
+  despesas_executivo:
+    'Valor pago pelo órgão da prefeitura, somado por mês pelo Tribunal de Contas do Estado. Autarquias, fundações e a Câmara ficam fora. A fonte não informa quem autorizou cada pagamento.',
   candidaturas: 'O TSE registra a eleição, não o exercício do cargo.',
   posicionamentos_declarados: 'Registros manuais revisados, com snapshot arquivado da fonte.',
 };

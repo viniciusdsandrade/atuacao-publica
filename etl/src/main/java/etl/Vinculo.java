@@ -42,6 +42,7 @@ final class Vinculo {
             perfis.addAll(executivos(ctx, catalogo, perfis, chaves, porCpf, candidaturas));
             perfis.addAll(legisladoresEleitos(ctx, perfis, chaves, porCpf, candidaturas));
             atos(ctx, perfis);
+            despesasDoExecutivoMunicipal(ctx, perfis);
         }
         return perfis;
     }
@@ -323,6 +324,51 @@ final class Vinculo {
         List<JsonNode> usadas = p.fontes.computeIfAbsent(bloco, k -> new ArrayList<>());
         if (!usadas.contains(fonte)) {
             usadas.add(fonte);
+        }
+    }
+
+    /**
+     * Despesas pagas pela administração direta do município em cada mandato de prefeito já iniciado (ADR-0008).
+     * Só o órgão da prefeitura e o evento "Valor Pago" entram no perfil.
+     */
+    private static void despesasDoExecutivoMunicipal(Contexto ctx, List<Perfil> perfis) {
+        Path arquivo = ctx.normalizado().resolve("tcesp").resolve("despesas.json");
+        if (!Files.exists(arquivo)) {
+            return;
+        }
+        JsonNode agregados = Json.ler(arquivo);
+        String hoje = ctx.hoje().toString();
+        for (Perfil p : perfis) {
+            if (!p.cargos.contains("prefeito")) {
+                continue;
+            }
+            for (JsonNode mandato : p.bloco("mandatos")) {
+                String inicio = Json.texto(mandato, "inicio");
+                String fim = Json.texto(mandato, "fim");
+                String ente = Json.texto(mandato, "ente");
+                if (!"prefeito".equals(Json.texto(mandato, "cargo")) || inicio == null || inicio.compareTo(hoje) > 0 || ente == null) {
+                    continue;
+                }
+                for (JsonNode a : agregados) {
+                    String orgao = Json.texto(a, "orgao");
+                    String primeiroDia = String.format("%04d-%02d-01", a.get("ano").asInt(), a.get("mes").asInt());
+                    boolean noMandato = primeiroDia.compareTo(inicio.substring(0, 8) + "01") >= 0 && (fim == null || primeiroDia.compareTo(fim) < 0);
+                    if (!ente.equals(Json.texto(a, "ente")) || !noMandato || orgao == null
+                            || !orgao.toUpperCase().startsWith("PREFEITURA MUNICIPAL") || !"Valor Pago".equals(Json.texto(a, "evento"))) {
+                        continue;
+                    }
+                    ObjectNode registro = Json.SAIDA.createObjectNode();
+                    registro.put("ano", a.get("ano").asInt()).put("mes", a.get("mes").asInt()).put("categoria", orgao)
+                            .set("valor", a.get("valor"));
+                    registro.put("quantidade", a.get("quantidade").asInt());
+                    for (String campo : List.of("fonte_id", "url_origem", "capturado_em")) {
+                        registro.set(campo, a.get(campo));
+                    }
+                    p.bloco("despesas_executivo").add(registro);
+                    usarFonte(p, "despesas_executivo", Json.SAIDA.createObjectNode().<ObjectNode>set("fonte_id", a.get("fonte_id"))
+                            .<ObjectNode>set("url_origem", a.get("url_origem")).set("capturado_em", a.get("capturado_em")));
+                }
+            }
         }
     }
 

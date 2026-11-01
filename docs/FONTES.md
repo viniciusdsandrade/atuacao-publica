@@ -372,9 +372,12 @@ Em 2024, o município (`SG_UE` 62910) tem 1 prefeito, 1 vice-prefeito e 33 verea
 
 - API: `https://transparencia.tce.sp.gov.br/api/json/`. `municipios`, `despesas/{municipio}/{ano}/{mes}` e `receitas/{municipio}/{ano}/{mes}`.
 - Arquivos anuais: `https://transparencia.tce.sp.gov.br/conjunto-de-dados`, de 2008 a 2025, do estado inteiro (`despesas-2025.zip` tem 1,96 GiB).
+- Uso no projeto (ADR-0008): bloco `despesas_executivo` do prefeito, com o valor pago pelo órgão da administração direta, somado por mês. Nenhum lançamento individual é publicado.
+- Campos da resposta: `orgao`, `mes`, `evento` (`Empenhado`, `Valor Liquidado`, `Valor Pago`, `Anulação`, `Reforço`), `nr_empenho`, `id_fornecedor`, `nm_fornecedor`, `dt_emissao_despesa` e `vl_despesa` (texto com vírgula decimal).
 - Limitações e armadilhas:
-  - Um mês por resposta, de 3 a 8 MB, sem paginação. Defasagem de cerca de 2 meses.
+  - Um mês por resposta, de 3 a 8 MB, sem paginação. Defasagem de cerca de 2 meses: em 2026-11-01, outubro e setembro de 2026 responderam lista vazia.
   - Identifica só o órgão: não separa o gabinete do prefeito nem o vereador.
+  - Os eventos contábeis são etapas da mesma despesa. Somar eventos diferentes conta o mesmo gasto mais de uma vez.
   - Valores em texto, com formatos diferentes na despesa e na receita.
   - Fornecedor pessoa física aparece com parte do CPF. O dado não entra no site.
   - Os dados são declarados pelo próprio município.

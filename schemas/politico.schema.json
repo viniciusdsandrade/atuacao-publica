@@ -32,6 +32,7 @@
         "eventos": { "$ref": "#/$defs/bloco_eventos" },
         "orgaos_e_frentes": { "$ref": "#/$defs/bloco_orgaos" },
         "candidaturas": { "$ref": "#/$defs/bloco_candidaturas" },
+        "despesas_executivo": { "$ref": "#/$defs/bloco_despesas" },
         "posicionamentos_declarados": { "$ref": "#/$defs/bloco_posicionamentos" },
         "agenda_oficial": { "$ref": "#/$defs/bloco_agenda" },
         "atos_normativos": { "$ref": "#/$defs/bloco_atos" }

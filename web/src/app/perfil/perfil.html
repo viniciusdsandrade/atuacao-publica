@@ -52,16 +52,15 @@
         @if (bloco.total === 0) {
           <p class="vazio">{{ semRegistro }}</p>
         } @else {
-          @switch (b) {
-            @case ('despesas') {
-              <p class="destaque">Total no período: {{ moeda(bloco.valor_total) }} em {{ bloco.total }} lançamentos.</p>
+          @if (b === 'despesas' || b === 'despesas_executivo') {
+              <p class="destaque">Total no período: {{ moeda(bloco.valor_total) }} em {{ bloco.total }} {{ unidade(b) }}.</p>
               @for (a of despesasPorAno(bloco); track a.ano) {
                 <details>
-                  <summary>{{ a.ano }}: {{ moeda(a.valor) }} ({{ a.quantidade }} lançamentos)</summary>
+                  <summary>{{ a.ano }}: {{ moeda(a.valor) }} ({{ a.quantidade }} {{ unidade(b) }})</summary>
                   <div class="tabela-rolagem">
                     <table>
-                      <caption>Por categoria em {{ a.ano }}</caption>
-                      <thead><tr><th scope="col">Categoria</th><th scope="col">Valor</th><th scope="col">Lançamentos</th></tr></thead>
+                      <caption>Por {{ b === 'despesas' ? 'categoria' : 'órgão' }} em {{ a.ano }}</caption>
+                      <thead><tr><th scope="col">{{ b === 'despesas' ? 'Categoria' : 'Órgão' }}</th><th scope="col">Valor</th><th scope="col">{{ unidade(b) === 'pagamentos' ? 'Pagamentos' : 'Lançamentos' }}</th></tr></thead>
                       <tbody>
                         @for (c of categorias(bloco, a.ano); track c.categoria) {
                           <tr><td>{{ c.categoria }}</td><td class="numero">{{ moeda(c.valor) }}</td><td class="numero">{{ c.quantidade }}</td></tr>
@@ -71,8 +70,7 @@
                   </div>
                 </details>
               }
-            }
-            @default {
+          } @else {
               @if (porTipo(bloco).length) {
                 <p class="tipos">
                   Por tipo:
@@ -87,7 +85,6 @@
               } @else if (bloco.registros) {
                 <app-tabela [bloco]="b" [registros]="bloco.registros" />
               }
-            }
           }
           @if (bloco.arquivos?.length) {
             <p class="arquivos">

@@ -36,13 +36,14 @@ public final class Publicador {
                     "discursos", "eventos", "orgaos_e_frentes", "candidaturas", "posicionamentos_declarados"),
             "presidente", List.of("mandatos", "candidaturas", "atos_normativos", "agenda_oficial", "posicionamentos_declarados"),
             "governador", List.of("mandatos", "candidaturas", "posicionamentos_declarados"),
-            "prefeito", List.of("mandatos", "candidaturas", "atos_normativos", "agenda_oficial", "posicionamentos_declarados"),
+            "prefeito", List.of("mandatos", "candidaturas", "despesas_executivo", "atos_normativos", "agenda_oficial",
+                    "posicionamentos_declarados"),
             "vice_prefeito", List.of("mandatos", "candidaturas", "posicionamentos_declarados"));
 
     /** Ordem dos blocos no perfil. Quem ocupou mais de um cargo recebe os blocos de todos eles (ADR-0006). */
     private static final List<String> ORDEM_DOS_BLOCOS = List.of("mandatos", "participacao_votacoes", "votos", "despesas",
-            "proposicoes", "discursos", "eventos", "orgaos_e_frentes", "candidaturas", "atos_normativos", "agenda_oficial",
-            "posicionamentos_declarados");
+            "proposicoes", "discursos", "eventos", "orgaos_e_frentes", "candidaturas", "despesas_executivo", "atos_normativos",
+            "agenda_oficial", "posicionamentos_declarados");
 
     static List<String> blocosDoPerfil(Perfil perfil) {
         Set<String> cargos = perfil.cargos.isEmpty() ? Set.of(perfil.cargo) : perfil.cargos;
@@ -67,9 +68,10 @@ public final class Publicador {
             "votos", "data", "proposicoes", "data_apresentacao", "discursos", "data", "eventos", "data",
             "atos_normativos", "data", "agenda_oficial", "data", "despesas", "data");
     /** Fonte da CLI de onde vem cada bloco, para marcar bloco desatualizado quando a coleta falha. */
-    private static final Map<String, String> ORIGEM_DO_BLOCO = Map.of("candidaturas", "tse", "atos_normativos", "executivo");
+    private static final Map<String, String> ORIGEM_DO_BLOCO = Map.of("candidaturas", "tse", "atos_normativos", "executivo",
+            "despesas_executivo", "tcesp");
     static final int RECENTES = 20;
-    static final List<String> FONTES_CLI = List.of("camara", "senado", "tse", "executivo", "sapl", "contrib");
+    static final List<String> FONTES_CLI = List.of("camara", "senado", "tse", "executivo", "sapl", "tcesp", "contrib");
 
     /** Perfil em construção, antes da validação. */
     static final class Perfil {
@@ -261,6 +263,8 @@ public final class Publicador {
 
         if (bloco.equals("despesas")) {
             despesas(perfil, registros, no, pasta);
+        } else if (bloco.equals("despesas_executivo")) {
+            despesasAgregadas(registros, no);
         } else if (AMOSTRA.containsKey(bloco)) {
             amostra(perfil, bloco, registros, no, pasta);
         } else {
@@ -318,6 +322,43 @@ public final class Publicador {
         no.set("arquivos", detalhes(perfil, "despesas", ordenados, pasta));
     }
 
+    /**
+     * Despesas que já chegam somadas por mês e órgão (ADR-0008): o total conta os pagamentos da fonte,
+     * e não há arquivo de detalhe, porque nenhum lançamento individual é publicado.
+     */
+    private static void despesasAgregadas(List<JsonNode> registros, ObjectNode no) {
+        Map<String, BigDecimal[]> porMes = new TreeMap<>();
+        Map<String, BigDecimal[]> porCategoria = new TreeMap<>();
+        Map<Integer, JsonNode> provPorAno = new HashMap<>();
+        Map<String, JsonNode> provPorMes = new HashMap<>();
+        BigDecimal total = BigDecimal.ZERO;
+        int pagamentos = 0;
+        for (JsonNode r : registros) {
+            BigDecimal valor = r.get("valor").decimalValue();
+            int ano = r.get("ano").asInt();
+            int quantidade = r.get("quantidade").asInt();
+            String chaveMes = ano + "|" + String.format("%02d", r.get("mes").asInt());
+            total = total.add(valor);
+            pagamentos += quantidade;
+            somar(porMes, chaveMes, valor, quantidade);
+            somar(porCategoria, ano + "|" + r.get("categoria").stringValue(), valor, quantidade);
+            provPorAno.putIfAbsent(ano, r);
+            provPorMes.putIfAbsent(chaveMes, r);
+        }
+        no.put("total", pagamentos);
+        no.put("valor_total", total);
+        ArrayNode mensal = no.putArray("por_mes");
+        porMes.forEach((chave, soma) -> {
+            String[] partes = chave.split("\\|", 2);
+            mensal.add(agregado(provPorMes.get(chave), Integer.parseInt(partes[0]), Integer.parseInt(partes[1]), null, soma));
+        });
+        ArrayNode categorias = no.putArray("por_categoria");
+        porCategoria.forEach((chave, soma) -> {
+            String[] partes = chave.split("\\|", 2);
+            categorias.add(agregado(provPorAno.get(Integer.parseInt(partes[0])), Integer.parseInt(partes[0]), null, partes[1], soma));
+        });
+    }
+
     private static ObjectNode agregado(JsonNode exemplo, int ano, Integer mes, String categoria, BigDecimal[] soma) {
         ObjectNode a = Json.SAIDA.createObjectNode();
         a.put("ano", ano);
@@ -332,9 +373,13 @@ public final class Publicador {
     }
 
     private static void somar(Map<String, BigDecimal[]> mapa, String chave, BigDecimal valor) {
+        somar(mapa, chave, valor, 1);
+    }
+
+    private static void somar(Map<String, BigDecimal[]> mapa, String chave, BigDecimal valor, int quantidade) {
         BigDecimal[] atual = mapa.computeIfAbsent(chave, k -> new BigDecimal[] {BigDecimal.ZERO, BigDecimal.ZERO});
         atual[0] = atual[0].add(valor);
-        atual[1] = atual[1].add(BigDecimal.ONE);
+        atual[1] = atual[1].add(BigDecimal.valueOf(quantidade));
     }
 
     /** Grava politicos/{id}/{bloco}-{ano}.json e devolve a lista de arquivos para o perfil. */

@@ -11,7 +11,7 @@ on:
       fonte:
         description: Fonte a coletar. As demais seguem do cache de dados brutos.
         type: choice
-        options: [todas, camara, senado, tse, executivo, sapl, contrib]
+        options: [todas, camara, senado, tse, executivo, sapl, tcesp, contrib]
         default: todas
 
 permissions:
@@ -86,6 +86,12 @@ jobs:
         continue-on-error: true
         timeout-minutes: 90
         run: java -Xmx4g -jar etl/target/etl.jar fetch sapl
+      - name: fetch tcesp
+        # Despesas do município do piloto no TCE-SP: um arquivo por mês do mandato, os 6 últimos renovados toda semana.
+        if: env.FONTE == 'todas' || env.FONTE == 'tcesp'
+        continue-on-error: true
+        timeout-minutes: 20
+        run: java -Xmx4g -jar etl/target/etl.jar fetch tcesp
       - name: fetch contrib
         # Confere se as URLs de origem e os snapshots dos registros manuais ainda respondem.
         if: env.FONTE == 'todas' || env.FONTE == 'contrib'
