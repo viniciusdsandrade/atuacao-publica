@@ -69,7 +69,7 @@ public final class Publicador {
     /** Fonte da CLI de onde vem cada bloco, para marcar bloco desatualizado quando a coleta falha. */
     private static final Map<String, String> ORIGEM_DO_BLOCO = Map.of("candidaturas", "tse", "atos_normativos", "executivo");
     static final int RECENTES = 20;
-    static final List<String> FONTES_CLI = List.of("camara", "senado", "tse", "executivo", "contrib");
+    static final List<String> FONTES_CLI = List.of("camara", "senado", "tse", "executivo", "sapl", "contrib");
 
     /** Perfil em construção, antes da validação. */
     static final class Perfil {

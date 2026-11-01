@@ -11,7 +11,7 @@ on:
       fonte:
         description: Fonte a coletar. As demais seguem do cache de dados brutos.
         type: choice
-        options: [todas, camara, senado, tse, executivo, contrib]
+        options: [todas, camara, senado, tse, executivo, sapl, contrib]
         default: todas
 
 permissions:
@@ -80,6 +80,12 @@ jobs:
         continue-on-error: true
         timeout-minutes: 90
         run: java -Xmx4g -jar etl/target/etl.jar fetch camara
+      - name: fetch sapl
+        # Câmara municipal do piloto: cerca de mil chamadas na primeira carga, renovadas em rodízio semanal.
+        if: env.FONTE == 'todas' || env.FONTE == 'sapl'
+        continue-on-error: true
+        timeout-minutes: 90
+        run: java -Xmx4g -jar etl/target/etl.jar fetch sapl
       - name: fetch contrib
         # Confere se as URLs de origem e os snapshots dos registros manuais ainda respondem.
         if: env.FONTE == 'todas' || env.FONTE == 'contrib'

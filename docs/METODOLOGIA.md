@@ -5,7 +5,7 @@ As fontes estão descritas em `docs/FONTES.md`.
 
 ## Regras gerais
 
-- **Cobertura temporal.** Começa na 57ª legislatura (2023-02-01) e nos mandatos executivos iniciados em 2023 (ADR-0006). A cobertura só cresce: quem sai do cargo continua no arquivo. Histórico anterior a 2023 fica fora.
+- **Cobertura temporal.** Começa na 57ª legislatura (2023-02-01) e nos mandatos executivos iniciados em 2023 (ADR-0006). A cobertura só cresce: quem sai do cargo continua no arquivo. Histórico anterior a 2023 fica fora. No piloto municipal, a cobertura começa na legislatura vigente da câmara (2025-01-01) e no mandato de prefeito iniciado em 2025 (ADR-0007).
 - **Transição.** As datas de posse vêm dos dados: `contrib/mandatos.yaml` para presidente e governador, e a legislatura da Câmara para deputado e senador. A troca de mandatos não exige mudança de código.
 - **Situação.** Cada perfil diz se a pessoa está em exercício. A situação mostrada é a do papel principal:
   - deputado e senador: a situação informada pela casa legislativa (por exemplo, `Exercício`);
@@ -39,10 +39,21 @@ Não é presença. É a contagem de votos registrados em votações nominais.
 2. `votos_registrados`: votos `Sim`, `Não`, `Abstenção`, `Obstrução` ou `Votou` (votação secreta).
 3. `por_tipo`: contagem de cada sigla da fonte, como `AP` (atividade parlamentar), `LS` (licença saúde), `NCom` (não compareceu), `P-NRV` (presente sem registrar voto) e `Presidente (art. 51 RISF)`.
 
+### Câmara municipal (piloto, SAPL)
+
+1. Universo: votos individuais de `sessao/votoparlamentar` cujo registro de votação (`sessao/registrovotacao`) aponta para um item da ordem do dia ou do expediente da legislatura vigente.
+2. Data: o voto individual não traz data confiável (votos migrados trazem a data da migração). A data é a do item votado (`data_ordem` da ordem do dia ou do expediente).
+3. `votacoes_nominais`: votos individuais do item 1, por ano.
+4. `votos_registrados`: votos `Sim`, `Não` ou `Abstenção`.
+5. `por_tipo`: contagem de cada valor da fonte, inclusive `Não Votou` e `Ausente`.
+6. `sem_registro`: a fonte lista só quem teve voto lançado. O campo fica `null`.
+7. Voto sem registro de votação ou sem item votado na coleta fica fora. A quantidade aparece na saída do `normalize`.
+
 ### Limites
 
 - Votação simbólica não tem voto individual e fica fora.
-- As duas casas registram ausência de forma diferente. Os números das casas não são comparáveis entre si.
+- As casas registram ausência de forma diferente. Os números das casas não são comparáveis entre si.
+- No piloto municipal, a orientação de partido e de governo fica `null`: a fonte não publica orientação.
 
 ## Orientação de voto
 
@@ -73,6 +84,15 @@ Não é presença. É a contagem de votos registrados em votações nominais.
 - Deduplicação: linhas idênticas em todas as colunas contam uma vez.
 - A fonte não publica URL do documento fiscal.
 
+### Câmara municipal (piloto, portal da transparência)
+
+- Fonte: API interna do portal da transparência da câmara, por vereador e ano.
+- Categorias: `Combustível` e `Material de escritório` (`custo_total` de cada lançamento), `Hospedagem` e `Passagens` (`valor_hospedagem` e `valor_passagens` de cada viagem).
+- Ponte com o SAPL: campo `idSAPL` da lista de vereadores do portal.
+- A fonte não publica fornecedor, CNPJ nem documento fiscal. Esses campos ficam `null`.
+- Reprografia e correspondência vêm só em quantidade, sem valor, e ficam fora.
+- Não há verba de gabinete nem ressarcimento na fonte. O total não é comparável com a cota parlamentar federal.
+
 ### Minimização
 
 - CPF de fornecedor pessoa física é descartado. Só CNPJ (14 dígitos) é publicado.
@@ -83,11 +103,13 @@ Não é presença. É a contagem de votos registrados em votações nominais.
 
 - **Câmara.** Arquivos `proposicoesAutores` dos anos da legislatura, filtrados pelo deputado. Tipo, número, ano, ementa, situação e link vêm de `proposicoes`. Temas vêm de `proposicoesTemas`. O campo `ordem_assinatura` e o campo `proponente` vêm da fonte.
 - **Senado.** `/processo?codigoParlamentarAutor={codigo}`, filtrado por apresentação a partir do início da cobertura (2023-02-01). A listagem não traz temas: o campo fica `null`.
+- **Câmara municipal (piloto).** `materia/materialegislativa?autores={autor}&ano={ano}` do SAPL, por ano da legislatura vigente. O `autor` vem de `base/autor` pelo `object_id` do parlamentar. Entram todos os tipos de matéria, inclusive indicações e requerimentos. Situação: `resultado` da fonte, ou "Em tramitação" e "Tramitação encerrada" pelo campo `em_tramitacao`. Temas ficam vazios: a fonte não classifica.
 
 ## Discursos
 
 - **Câmara.** `/deputados/{id}/discursos`. Publica tipo, data, fase, sumário oficial e link do texto quando a fonte informa.
 - **Senado.** `/senador/{codigo}/discursos`. Publica tipo de uso da palavra, data, resumo oficial e link do texto.
+- **Câmara municipal (piloto).** `sessao/oradorexpediente` e `sessao/orador` do SAPL. A fonte registra só a ordem de fala e a hora: tipo ("Orador do Expediente" ou "Orador das Explicações Pessoais"), data e hora da sessão e observação. Não há texto nem resumo.
 - Entidades HTML do texto oficial (`&nbsp;`) viram caractere comum. O conteúdo não muda.
 
 ## Eventos e presença em eventos
@@ -95,6 +117,7 @@ Não é presença. É a contagem de votos registrados em votações nominais.
 - **Câmara.** Eventos com presença registrada em `eventosPresencaDeputados`, com tipo, situação e descrição de `eventos` e órgão de `eventosOrgaos`.
 - A lista da fonte traz só presentes. O projeto não calcula taxa de presença em evento.
 - **Senado.** Sem fonte equivalente na POC: "sem registro na fonte".
+- **Câmara municipal (piloto).** Presença em sessão plenária de `sessao/sessaoplenariapresenca` do SAPL, nas sessões da legislatura vigente já realizadas. Tipo, número e data vêm de `sessao/sessaoplenaria`. A fonte lista só presentes. O projeto não calcula taxa de presença.
 
 ## Órgãos e frentes
 
@@ -111,6 +134,7 @@ Não é presença. É a contagem de votos registrados em votações nominais.
 - Planos de governo: só das duas eleições mais recentes (2022 e 2026). Planos de 2018 ficam fora da POC.
 - Quando o ZIP da fonte não traz o arquivo do candidato, o campo fica "sem registro na fonte". Em 2022, 1 dos 28 eleitos para cargo executivo está nessa situação.
 - Vínculo com o perfil: CPF, em memória, para deputados. Nome civil, UF e data de nascimento, em memória, para senadores. O vínculo entre eleições usa CPF. O CPF nunca é gravado.
+- **Piloto municipal.** Eleição de 2024 (`consulta_cand_2024` e `bem_candidato_2024`), filtrada pelo município piloto. O SAPL não publica CPF: o vínculo do vereador com a candidatura usa nome civil e nome de urna normalizados, dentro do município e da eleição.
 
 ## Executivo
 
@@ -118,6 +142,7 @@ Não é presença. É a contagem de votos registrados em votações nominais.
 - **Governadores.** O TSE registra a eleição, não o exercício do cargo. Renúncia, afastamento ou sucessão dependem de ato estadual. Correção desse tipo entra por contribuição com fonte T0 (diário oficial do estado).
 - **Atos normativos.** Leis, leis complementares, medidas provisórias e decretos de `/legislacao/lista` do Senado, e vetos de `/materia/vetos/{ano}`, publicados no período do mandato. A fonte não informa quem assinou cada ato. O bloco se chama "atos do Poder Executivo federal no período do mandato".
 - **Agenda oficial.** A agenda presidencial existe só em HTML. Ela entra por contribuição manual com snapshot.
+- **Prefeito (piloto).** O perfil vem da candidatura eleita no TSE de 2024. O mandato vem de `contrib/mandatos.yaml` (posse em 2025-01-01 e fim em 2029-01-01, art. 29 da Constituição). A prefeitura não publica dados abertos: atos e agenda entram por contribuição com fonte T0.
 
 ## Validação antes de publicar
 

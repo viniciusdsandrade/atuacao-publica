@@ -28,7 +28,7 @@ public final class Main {
     }
 
     /** Fontes que rodam quando o comando não recebe fonte. contrib e fontes rodam só quando pedidas no fetch. */
-    private static final List<String> FETCH_PADRAO = List.of("camara", "senado", "tse", "executivo");
+    private static final List<String> FETCH_PADRAO = List.of("camara", "senado", "tse", "executivo", "sapl");
     private static final List<String> NORMALIZE_PADRAO = List.of("camara", "senado", "tse", "executivo", "contrib", "sapl");
 
     public static void main(String[] args) {

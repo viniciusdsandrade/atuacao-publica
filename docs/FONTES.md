@@ -320,34 +320,42 @@ Em 2024, o município (`SG_UE` 62910) tem 1 prefeito, 1 vice-prefeito e 33 verea
   - `parlamentares/mandato/?legislatura=19`: 38 mandatos, com `data_inicio_mandato`, `data_fim_mandato`, `titular` e `tipo_afastamento`. Cobre suplente que assumiu.
   - `parlamentares/parlamentar/?ativo=True`: 33 ativos, 327 no total.
   - `parlamentares/filiacao/`: partido com data de filiação e de desfiliação.
-  - `sessao/votoparlamentar/`: 130.617 votos nominais. Aceita `?parlamentar=`.
-  - `sessao/registrovotacao/`, `sessao/ordemdia/{id}/`, `sessao/sessaoplenaria/`.
-  - `sessao/sessaoplenariapresenca/` e `sessao/presencaordemdia/`: presença em sessão.
-  - `materia/materialegislativa/`, `materia/autoria/` e `base/autor/`: proposições e autoria.
+  - `sessao/votoparlamentar/?parlamentar={id}&votacao__gte={registro}`: votos individuais, 130.617 no total. O filtro por registro de votação restringe à legislatura vigente.
+  - `sessao/registrovotacao/?ordem__gte={ordem}` e `?expediente__gte={expediente}`: registro de cada votação, com `ordem` ou `expediente` e o resultado em `__str__`.
+  - `sessao/ordemdia/?sessao_plenaria={id}` e `sessao/expedientemateria/?sessao_plenaria={id}`: itens votados de cada sessão, com `data_ordem` e matéria em `__str__`.
+  - `sessao/sessaoplenaria/`: lista inteira (2.102 sessões em 2026-11-01), com `data_inicio`, `hora_inicio`, `tipo`, `numero` e `legislatura_numero`.
+  - `sessao/sessaoplenariapresenca/?parlamentar={id}&sessao_plenaria__gte={sessao}`: presença em sessão. `sessao/presencaordemdia/` traz a presença na ordem do dia.
+  - `materia/materialegislativa/?autores={autor}&ano={ano}`: matérias de autoria. `materia/tipomaterialegislativa/` dá sigla e descrição de cada tipo. `base/autor/?object_id={id}` liga o parlamentar ao autor.
   - `norma/normajuridica/`: 58.068 normas, com filtros `tipo` e `ano`. Inclui decretos do Executivo.
-  - `sessao/orador/` e `sessao/oradorexpediente/`: ordem e tempo de fala.
+  - `sessao/orador/` e `sessao/oradorexpediente/`, com `?parlamentar=` e `sessao_plenaria__gte`: ordem e tempo de fala.
 - Limitações e armadilhas:
   - De 2 a 6 s por chamada. Não declara limite de taxa.
-  - Pagina com `page` e `page_size`. `sessaoplenaria` ignora `page_size` e devolve a lista inteira, inclusive sessões futuras.
+  - Pagina com `page` e `page_size`, no máximo 100 por página. `sessaoplenaria` ignora `page_size` e devolve a lista inteira, inclusive sessões futuras.
   - Filtro booleano exige `True`: `ativo=true` responde 400.
-  - Em votos antigos, `votoparlamentar.data_hora` traz a data da migração do sistema. A data do voto vem da sessão ou da ordem do dia.
+  - Filtros de intervalo valem em campos diretos (`data_ordem__gte`) e em chaves (`votacao__gte`, `sessao_plenaria__gte`, `ordem__gte`). Filtro por relação indireta (`sessao_plenaria__legislatura`) e `ordering` são ignorados em silêncio.
+  - `ordemdia` e `expedientemateria` vêm ordenados por data, com empate instável: a mesma lista paginada repete e omite itens entre páginas (136 de 1.754 em 2026-11-01). As demais listas vêm por id e paginam de forma estável. Por isso os itens são coletados por sessão, numa página só.
+  - `votoparlamentar` não traz `ordem` nem `expediente`, e `data_hora` vem nula ou com a data da migração do sistema (2024-01-04). A data do voto vem do item votado: voto -> `votacao` (registro) -> `ordem` ou `expediente` -> `data_ordem`.
   - `autoria.autor` aponta para `base/autor`, e não para o parlamentar. A ligação é por `autor.object_id`.
   - Discursos: só ordem e tempo do orador. `url_discurso` vem vazio.
   - Não há chave comum com o TSE: o vínculo é por nome, partido e legislatura.
   - Dados descartados na ingestão: telefone e e-mail de gabinete.
+- Volume da coleta: cerca de 1.500 chamadas na primeira carga da legislatura (itens votados de 253 sessões, registros, votos, presenças, falas e matérias de 38 vereadores), em cerca de 10 minutos. Depois, renovação semanal em rodízio.
 
 ### `campinas-camara-transparencia`: portal da transparência da Câmara Municipal
 
 - URL base: `https://transparencia.campinas.sp.leg.br/api/v1/`. API interna da página, sem documentação.
-- Endpoints validados com resposta 200:
-  - `portal/vereadores/filtro_vereador_ativo_inativo/?status=True`: traz `idSAPL` e `idAutoriaSAPL`, a ponte com o SAPL.
-  - Despesas por vereador e ano, por categoria: combustível, correspondência e outras.
-  - `despesas-parlamentares-e-administrativas/hospedagens-e-viagens-parlamentares/por-ano/?ano={ano}`: hospedagem, passagens e diárias.
+- Endpoints validados com resposta 200 (lidos do script da página em 2026-11-01):
+  - `portal/vereadores/filtro_vereador_ativo_inativo/?status=True` (e `False`): traz `id`, `idSAPL` e `idAutoriaSAPL`, a ponte com o SAPL.
+  - `despesas-parlamentares-e-administrativas/despesas-com-{categoria}-por-vereador/filtro-por-vereador-ano/?vereador={id}&ano={ano}`, com `categoria` em `combustivel`, `material-de-escritorio`, `reprografia` e `correspondencia`. `.../anos/?vereador={id}` lista os anos com lançamento.
+  - `despesas-parlamentares-e-administrativas/hospedagens-e-viagens-parlamentares/por-ano/?ano={ano}`: viagens de todos os vereadores, com `valor_hospedagem` e `valor_passagens`.
 - Limitações e armadilhas:
   - Pode mudar sem aviso.
   - Não há verba de gabinete nem ressarcimento.
   - "Ativo" não é "em exercício": o exercício vem do mandato no SAPL.
-  - Valores vêm como texto.
+  - Valores vêm como texto, com ponto decimal (`"137.15"`).
+  - Combustível e material de escritório trazem `custo_total`. Reprografia e correspondência trazem só quantidade.
+  - Não há fornecedor, CNPJ nem documento fiscal.
+  - `viagens-de-parlamentares/por-ano/` respondeu 404 em 2026-11-01.
 
 ### `campinas-camara-diario-oficial` e `campinas-camara-agenda-presidencia`
 

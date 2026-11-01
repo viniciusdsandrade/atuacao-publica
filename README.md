@@ -3,11 +3,11 @@
 Portal público sobre a atividade de políticos brasileiros: o que cada um fez, faz e declara que vai fazer.
 Todo registro vem de fonte oficial e traz a proveniência: fonte, URL de origem e data de captura.
 
-Estado: prova de conceito na esfera federal. Detalhes em `docs/ROADMAP.md`.
+Estado: prova de conceito na esfera federal concluída e piloto municipal em andamento. Detalhes em `docs/ROADMAP.md`.
 
 ## O que é
 
-- Votos e participação em votações nominais (Câmara e Senado).
+- Votos e participação em votações nominais (Câmara, Senado e câmara municipal do piloto).
 - Despesas da cota parlamentar, por mês e por categoria, com o detalhe de cada lançamento.
 - Proposições de autoria, discursos, eventos com presença registrada, órgãos, comissões e frentes.
 - Candidaturas no TSE: resultado, total de bens declarados e plano de governo.
@@ -15,6 +15,7 @@ Estado: prova de conceito na esfera federal. Detalhes em `docs/ROADMAP.md`.
 - Posicionamentos declarados, só por contribuição revisada e com snapshot arquivado.
 
 Escopo: deputados federais (513), senadores (81), Presidência da República e os 27 governadores.
+Piloto municipal: prefeito e vereadores de um município, com dados da câmara (SAPL e portal da transparência) e do TSE.
 
 ## O que não é
 
@@ -67,7 +68,7 @@ A primeira coleta transfere cerca de 1 GB (as propostas de governo do TSE vêm e
    java -Xmx4g -jar etl/target/etl.jar fetch
    ```
 
-   Para uma fonte só: `fetch camara`, `fetch senado`, `fetch tse` ou `fetch executivo`.
+   Para uma fonte só: `fetch camara`, `fetch senado`, `fetch tse`, `fetch executivo` ou `fetch sapl` (câmara municipal do piloto).
 4. Normalize: `java -Xmx4g -jar etl/target/etl.jar normalize`
 5. Publique: `java -Xmx4g -jar etl/target/etl.jar publish`
 6. Confira o resultado em `data/publicado/_meta/execucao.json`.
