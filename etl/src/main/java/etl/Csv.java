@@ -1,7 +1,10 @@
 package etl;
 
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
 import java.io.UncheckedIOException;
 import java.nio.charset.Charset;
 import java.util.Map;
@@ -29,19 +32,75 @@ public final class Csv {
      */
     public static void paraCada(InputStream entrada, Charset codificacao, int pularLinhas, Consumer<Map<String, String>> acao) {
         try {
-            String texto = new String(entrada.readAllBytes(), codificacao);
+            BufferedReader leitor = new BufferedReader(new InputStreamReader(entrada, codificacao));
             for (int i = 0; i < pularLinhas; i++) {
-                texto = texto.substring(texto.indexOf('\n') + 1);
+                leitor.readLine();
             }
-            texto = ASPA_SOLTA.matcher(texto).replaceAll("\"\"");
             CsvSchema schema = CsvSchema.emptySchema().withHeader().withColumnSeparator(';');
-            try (MappingIterator<Map<String, String>> linhas = MAPPER.readerForMapOf(String.class).with(schema).readValues(texto)) {
+            try (MappingIterator<Map<String, String>> linhas = MAPPER.readerForMapOf(String.class).with(schema)
+                    .readValues(new LinhasCorrigidas(leitor))) {
                 while (linhas.hasNextValue()) {
                     acao.accept(linhas.nextValue());
                 }
             }
         } catch (IOException e) {
             throw new UncheckedIOException(e);
+        }
+    }
+
+    /**
+     * Entrega o CSV linha a linha, com a aspa solta corrigida, sem carregar o arquivo inteiro:
+     * o CSV de candidaturas do TSE passa de 300 MB.
+     */
+    private static final class LinhasCorrigidas extends Reader {
+        private final BufferedReader origem;
+        private String atual = "";
+        private int posicao;
+        private boolean fim;
+
+        LinhasCorrigidas(BufferedReader origem) {
+            this.origem = origem;
+        }
+
+        @Override
+        public int read(char[] destino, int inicio, int tamanho) throws IOException {
+            if (tamanho == 0) {
+                return 0;
+            }
+            while (posicao >= atual.length()) {
+                if (fim) {
+                    return -1;
+                }
+                String linha = proximaLinha();
+                if (linha.isEmpty()) {
+                    fim = true;
+                    return -1;
+                }
+                atual = ASPA_SOLTA.matcher(linha).replaceAll("\"\"");
+                posicao = 0;
+            }
+            int n = Math.min(tamanho, atual.length() - posicao);
+            atual.getChars(posicao, posicao + n, destino, inicio);
+            posicao += n;
+            return n;
+        }
+
+        /** Uma linha com o terminador original (\r\n ou \n), para não alterar campo com quebra de linha. */
+        private String proximaLinha() throws IOException {
+            StringBuilder linha = new StringBuilder();
+            int c;
+            while ((c = origem.read()) != -1) {
+                linha.append((char) c);
+                if (c == '\n') {
+                    break;
+                }
+            }
+            return linha.toString();
+        }
+
+        @Override
+        public void close() throws IOException {
+            origem.close();
         }
     }
 }
