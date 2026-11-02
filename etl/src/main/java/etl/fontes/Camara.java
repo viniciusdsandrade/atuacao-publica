@@ -47,7 +47,10 @@ import tools.jackson.databind.JsonNode;
 public final class Camara implements Fonte {
 
     /** Primeira legislatura coberta, a mesma para Câmara e Senado (ADR-0006). A cobertura só cresce a partir dela. */
-    public static final int PRIMEIRA_LEGISLATURA = 57;
+    /** Primeira legislatura coberta: a 56ª, pela parte a partir do início da cobertura (ADR-0009). */
+    public static final int PRIMEIRA_LEGISLATURA = 56;
+    /** Início da cobertura temporal, no federal e no piloto (ADR-0009). Anos anteriores entram quando o mantenedor pedir. */
+    public static final LocalDate INICIO_DA_COBERTURA = LocalDate.of(2022, 1, 1);
 
     static final String API = "https://dadosabertos.camara.leg.br/api/v2";
     static final String ARQUIVOS = "https://dadosabertos.camara.leg.br/arquivos";
@@ -65,8 +68,10 @@ public final class Camara implements Fonte {
 
     /** Legislaturas cobertas, da primeira (ADR-0006) até a vigente. */
     record Cobertura(List<Legislatura> legislaturas) {
+        /** Início da cobertura: o da primeira legislatura, nunca antes de INICIO_DA_COBERTURA. */
         LocalDate inicio() {
-            return legislaturas.getFirst().inicio();
+            LocalDate primeira = legislaturas.getFirst().inicio();
+            return primeira.isBefore(INICIO_DA_COBERTURA) ? INICIO_DA_COBERTURA : primeira;
         }
 
         Legislatura atual() {
@@ -290,6 +295,7 @@ public final class Camara implements Fonte {
         Map<String, List<FonteUsada>> fontes = new LinkedHashMap<>();
 
         int semArquivo = 0;
+        int foraDaCobertura = 0;
         for (String id : ids) {
             if (Coleta.metadados(ctx, "camara", "deputados/" + id + ".json") == null
                     || Coleta.metadados(ctx, "camara", "historico/" + id + ".json") == null) {
@@ -331,6 +337,12 @@ public final class Camara implements Fonte {
                         leg.fim(), situacao, primeiro(condicao(historico, leg), Json.texto(status, "condicaoEleitoral")),
                         leg.id(), null, null, provHistorico));
             }
+            if (!todos.isEmpty() && !exerceuDesde(todos, INICIO_DA_COBERTURA)) {
+                // Membro da primeira legislatura coberta que saiu antes do início da cobertura (ADR-0009).
+                acumulados.remove(id);
+                foraDaCobertura++;
+                continue;
+            }
             exercicio.put(id, todos);
             mandatos.put(id, dele);
             String situacao = emExercicio || dele.isEmpty() ? Json.texto(status, "situacao") : dele.getLast().situacao();
@@ -340,6 +352,9 @@ public final class Camara implements Fonte {
         fontes.put("mandatos", List.of(FonteUsada.de("camara-api", arquivo(ctx, "deputados.json"))));
         if (semArquivo > 0) {
             System.out.println("camara: " + semArquivo + " deputado(s) sem detalhe ou histórico coletado, fora desta publicação");
+        }
+        if (foraDaCobertura > 0) {
+            System.out.println("camara: " + foraDaCobertura + " deputado(s) sem exercício desde " + INICIO_DA_COBERTURA + ", fora da cobertura");
         }
 
         votos(ctx, cobertura, acumulados, exercicio, fontes);
@@ -416,6 +431,16 @@ public final class Camara implements Fonte {
     }
 
     /** Intervalos com situação "Exercício" na legislatura. Registro de situação nula não muda o intervalo. */
+    /** Algum período de exercício termina no início da cobertura ou depois, ou ainda está aberto. */
+    static boolean exerceuDesde(List<Intervalo> intervalos, LocalDate inicio) {
+        for (Intervalo i : intervalos) {
+            if (i.fim() == null || !i.fim().toLocalDate().isBefore(inicio)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     static List<Intervalo> intervalos(JsonNode historico, Legislatura leg) {
         List<JsonNode> mudancas = new ArrayList<>();
         for (JsonNode h : historico) {

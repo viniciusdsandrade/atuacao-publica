@@ -29,7 +29,8 @@ public final class Executivo implements Fonte {
     }
 
     /**
-     * Início da cobertura: o primeiro mandato presidencial de contrib/mandatos.yaml (dado, não código).
+     * Início da cobertura: o primeiro mandato presidencial de contrib/mandatos.yaml (dado, não código),
+     * nunca antes de Camara.INICIO_DA_COBERTURA (ADR-0009).
      * Os atos de mandatos encerrados continuam no perfil de quem os assinou (ADR-0006).
      */
     static LocalDate inicioDaCobertura(Contexto ctx) {
@@ -44,7 +45,7 @@ public final class Executivo implements Fonte {
         if (primeiro == null) {
             throw new IllegalStateException("contrib/mandatos.yaml sem regra de mandato presidencial já iniciado");
         }
-        return primeiro;
+        return primeiro.isBefore(Camara.INICIO_DA_COBERTURA) ? Camara.INICIO_DA_COBERTURA : primeiro;
     }
 
     @Override

@@ -5,7 +5,7 @@ As fontes estão descritas em `docs/FONTES.md`.
 
 ## Regras gerais
 
-- **Cobertura temporal.** Começa na 57ª legislatura (2023-02-01) e nos mandatos executivos iniciados em 2023 (ADR-0006). A cobertura só cresce: quem sai do cargo continua no arquivo. Histórico anterior a 2023 fica fora. No piloto municipal, a cobertura começa na legislatura vigente da câmara (2025-01-01) e no mandato de prefeito iniciado em 2025 (ADR-0007).
+- **Cobertura temporal.** Começa em 2022-01-01 (ADR-0009, que revisa o ADR-0006): a 56ª legislatura entra pela parte a partir dessa data, e os mandatos executivos em curso nela entram com os atos a partir dela. Só entra quem exerceu mandato a partir dessa data. A cobertura só cresce: quem sai do cargo continua no arquivo. Histórico anterior a 2022 fica fora. No piloto municipal, a cobertura começa na legislatura vigente da câmara (2025-01-01) e no mandato de prefeito iniciado em 2025 (ADR-0007), até a etapa B do ADR-0009.
 - **Transição.** As datas de posse vêm dos dados: `contrib/mandatos.yaml` para presidente e governador, e a legislatura da Câmara para deputado e senador. A troca de mandatos não exige mudança de código.
 - **Situação.** Cada perfil diz se a pessoa está em exercício. A situação mostrada é a do papel principal:
   - deputado e senador: a situação informada pela casa legislativa (por exemplo, `Exercício`);
@@ -102,7 +102,7 @@ Não é presença. É a contagem de votos registrados em votações nominais.
 ## Proposições
 
 - **Câmara.** Arquivos `proposicoesAutores` dos anos da legislatura, filtrados pelo deputado. Tipo, número, ano, ementa, situação e link vêm de `proposicoes`. Temas vêm de `proposicoesTemas`. O campo `ordem_assinatura` e o campo `proponente` vêm da fonte.
-- **Senado.** `/processo?codigoParlamentarAutor={codigo}`, filtrado por apresentação a partir do início da cobertura (2023-02-01). A listagem não traz temas: o campo fica `null`.
+- **Senado.** `/processo?codigoParlamentarAutor={codigo}`, filtrado por apresentação a partir do início da cobertura (2022-01-01). A listagem não traz temas: o campo fica `null`.
 - **Câmara municipal (piloto).** `materia/materialegislativa?autores={autor}&ano={ano}` do SAPL, por ano da legislatura vigente. O `autor` vem de `base/autor` pelo `object_id` do parlamentar. Entram todos os tipos de matéria, inclusive indicações e requerimentos. Situação: `resultado` da fonte, ou "Em tramitação" e "Tramitação encerrada" pelo campo `em_tramitacao`. Temas ficam vazios: a fonte não classifica.
 
 ## Discursos
@@ -122,7 +122,7 @@ Não é presença. É a contagem de votos registrados em votações nominais.
 ## Órgãos e frentes
 
 - **Câmara.** `orgaosDeputados-L{legislatura}` de cada legislatura coberta (cargo, início e fim) e `/deputados/{id}/frentes` filtrado pelas legislaturas cobertas.
-- **Senado.** `/senador/{codigo}/comissoes`, com participação ativa em algum momento desde o início da cobertura (2023-02-01).
+- **Senado.** `/senador/{codigo}/comissoes`, com participação ativa em algum momento desde o início da cobertura (2022-01-01).
 
 ## Candidaturas
 

@@ -102,4 +102,28 @@ class CamaraTest {
                 Camara.situacaoNaLegislatura(historico, leg57, ateOFim, LocalDate.of(2027, 2, 2)));
         assertEquals("Fora de exercício", Camara.situacaoNaLegislatura(historico, leg57, ateOFim, LocalDate.of(2026, 10, 31)));
     }
+    @Test
+    void membroQueSaiuAntesDoInicioDaCoberturaFicaFora() {
+        Camara.Legislatura leg56 = new Camara.Legislatura(56, LocalDate.of(2019, 2, 1), LocalDate.of(2023, 1, 31));
+        JsonNode saiuEm2020 = Json.FONTE.readTree("""
+                [
+                  {"dataHora": "2019-02-01T12:00", "situacao": "Exercício", "idLegislatura": 56},
+                  {"dataHora": "2020-04-01T12:00", "situacao": "Afastado", "idLegislatura": 56}
+                ]
+                """);
+        JsonNode ficouAte2023 = Json.FONTE.readTree("""
+                [
+                  {"dataHora": "2019-02-01T12:00", "situacao": "Exercício", "idLegislatura": 56},
+                  {"dataHora": "2023-01-31T23:59", "situacao": "Fim de Mandato", "idLegislatura": 56}
+                ]
+                """);
+        JsonNode aindaEmExercicio = Json.FONTE.readTree("""
+                [{"dataHora": "2019-02-01T12:00", "situacao": "Exercício", "idLegislatura": 56}]
+                """);
+        LocalDate inicio = LocalDate.of(2022, 1, 1);
+        assertFalse(Camara.exerceuDesde(Camara.intervalos(saiuEm2020, leg56), inicio));
+        assertTrue(Camara.exerceuDesde(Camara.intervalos(ficouAte2023, leg56), inicio));
+        assertTrue(Camara.exerceuDesde(Camara.intervalos(aindaEmExercicio, leg56), inicio));
+        assertEquals(LocalDate.of(2022, 1, 1), Camara.INICIO_DA_COBERTURA);
+    }
 }

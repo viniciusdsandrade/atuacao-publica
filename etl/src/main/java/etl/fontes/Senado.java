@@ -126,7 +126,10 @@ public final class Senado implements Fonte {
         return codigos;
     }
 
-    /** Início da primeira legislatura coberta, lido dos mandatos da lista daquela legislatura. */
+    /**
+     * Início da cobertura: o da primeira legislatura coberta, lido dos mandatos da lista daquela legislatura,
+     * nunca antes de Camara.INICIO_DA_COBERTURA (ADR-0009).
+     */
     static LocalDate inicioDaCobertura(List<JsonNode> porLegislatura) {
         for (JsonNode p : porLegislatura) {
             for (JsonNode m : Json.lista(p.path("Mandatos").path("Mandato"))) {
@@ -134,7 +137,8 @@ public final class Senado implements Fonte {
                     JsonNode l = m.path(campo);
                     Integer numero = Json.inteiro(l, "NumeroLegislatura");
                     if (numero != null && numero == Camara.PRIMEIRA_LEGISLATURA && Json.texto(l, "DataInicio") != null) {
-                        return LocalDate.parse(Json.texto(l, "DataInicio"));
+                        LocalDate inicio = LocalDate.parse(Json.texto(l, "DataInicio"));
+                        return inicio.isBefore(Camara.INICIO_DA_COBERTURA) ? Camara.INICIO_DA_COBERTURA : inicio;
                     }
                 }
             }

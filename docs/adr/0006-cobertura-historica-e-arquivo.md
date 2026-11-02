@@ -16,7 +16,7 @@ Decisão do mantenedor: o site funciona como biblioteca, histórico e auditoria.
 
 ## Decisão
 
-1. A cobertura começa na 57ª legislatura (2023-02-01) e nos mandatos executivos iniciados em 2023. Ela só cresce.
+1. A cobertura começa na 57ª legislatura (2023-02-01) e nos mandatos executivos iniciados em 2023. Ela só cresce. Revisão (ADR-0009, 2026-11-02): o início passa a 2022-01-01, dentro da 56ª legislatura.
 2. A cobertura do TSE começa na eleição de 2018, a dos senadores em exercício em 2023, e não encolhe com o passar dos anos. Os planos de governo cobrem as eleições do Executivo desde 2022.
 3. Há perfil para toda pessoa que exerceu mandato coberto, inclusive suplente que assumiu e quem saiu antes do fim.
 4. Há perfil para quem foi eleito e ainda não tomou posse:
