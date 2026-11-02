@@ -36,6 +36,22 @@ class ColetaTest {
     }
 
     @Test
+    void copiaDeOutraUrlNoMesmoCaminhoNaoValeComoCache() throws Exception {
+        Contexto ctx = new Contexto(tmp, tmp.resolve("data"), new Http("teste/0", 1), null, Instant.now(), null);
+        Path arquivo = ctx.raw().resolve("teste").resolve("grupo").resolve("a.json");
+        java.nio.file.Files.createDirectories(arquivo.getParent());
+        java.nio.file.Files.writeString(arquivo, "{}");
+        Coleta.Arquivo copia = new Coleta.Arquivo("https://exemplo.invalid/a?legislatura=19", "raw/teste/grupo/a.json", "x", 2,
+                Instant.now());
+        Json.gravar(arquivo.resolveSibling("a.json.meta.json"), copia, true);
+        Coleta coleta = new Coleta(ctx, "teste", Duration.ZERO);
+        assertEquals(copia, coleta.obterOpcional("https://exemplo.invalid/a?legislatura=19", "grupo/a.json", "application/json",
+                Politica.SE_AUSENTE));
+        assertNull(coleta.obterOpcional("https://exemplo.invalid/a?legislatura=18", "grupo/a.json", "application/json",
+                Politica.SE_AUSENTE));
+    }
+
+    @Test
     void semOrcamentoNadaMuda() {
         Contexto ctx = new Contexto(tmp, tmp.resolve("data"), new Http("teste/0", 1), null, Instant.now(), null);
         Coleta coleta = new Coleta(ctx, "teste", null);

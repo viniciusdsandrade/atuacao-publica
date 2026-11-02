@@ -109,6 +109,10 @@ public final class Coleta {
         Path destino = ctx.raw().resolve(fonte).resolve(caminho);
         Path meta = lateral(destino);
         Arquivo emCache = emCache(meta);
+        if (emCache != null && !url.equals(emCache.url())) {
+            // Outro recurso no mesmo caminho (a consulta mudou com a cobertura): a cópia anterior não vale nem como reserva.
+            emCache = null;
+        }
         if (emCache != null && (politica == Politica.SE_AUSENTE
                 || politica == Politica.SEMANAL && !vencida(caminho, emCache.capturadoEm(), ctx.agora()))) {
             doCache.incrementAndGet();
