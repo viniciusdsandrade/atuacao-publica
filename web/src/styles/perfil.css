@@ -100,12 +100,14 @@ app-proveniencia {
   display: none;
 }
 
-/* position: relative contém e recorta os textos .sr-only (absolutos) das chips fora da tela. */
+/* position: relative contém e recorta os textos .sr-only (absolutos) das chips fora da tela.
+   O preenchimento dá folga ao anel de foco, que o overflow recortaria; a margem negativa devolve o alinhamento. */
 .perfil-nav ul {
   position: relative;
   display: flex;
   gap: 0.5rem;
-  padding: 0.125rem 0;
+  margin: -0.375rem;
+  padding: 0.375rem;
   overflow-x: auto;
   list-style: none;
   scrollbar-width: none;
