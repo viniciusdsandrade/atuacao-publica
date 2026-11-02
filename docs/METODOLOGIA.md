@@ -123,6 +123,7 @@ Não é presença. É a contagem de votos registrados em votações nominais.
 
 - **Câmara.** `orgaosDeputados-L{legislatura}` de cada legislatura coberta (cargo, início e fim) e `/deputados/{id}/frentes` filtrado pelas legislaturas cobertas.
 - **Senado.** `/senador/{codigo}/comissoes`, com participação ativa em algum momento desde o início da cobertura (2022-01-01).
+- **Câmara municipal (piloto).** `comissoes/participacao` do SAPL por vereador, com a comissão e o período vindos de `comissoes/composicao` (coletada por período), `comissoes/comissao` e `comissoes/periodo`. Papel: cargo da fonte (`Presidente`, `Membro`, `Relator`, `Suplente`); membro não titular recebe o sufixo "(suplente)". Entram as participações cujo fim é posterior ao início da cobertura ou está aberto.
 
 ## Candidaturas
 
@@ -143,6 +144,7 @@ Não é presença. É a contagem de votos registrados em votações nominais.
 - **Atos normativos.** Leis, leis complementares, medidas provisórias e decretos de `/legislacao/lista` do Senado, e vetos de `/materia/vetos/{ano}`, publicados no período do mandato. A fonte não informa quem assinou cada ato. O bloco se chama "atos do Poder Executivo federal no período do mandato".
 - **Agenda oficial.** A agenda presidencial existe só em HTML. Ela entra por contribuição manual com snapshot.
 - **Despesas do Executivo municipal (piloto, ADR-0008).** Bloco `despesas_executivo` do prefeito. Fonte: `despesas/{municipio}/{ano}/{mes}` da API do TCE-SP, para cada mês do mandato já iniciado. Entram só os lançamentos do órgão cujo nome começa com "PREFEITURA MUNICIPAL" (administração direta) e do evento `Valor Pago`. O ETL soma por mês e por órgão e conta os pagamentos. Fornecedor, empenho e data de cada lançamento não são publicados. Os 6 meses mais recentes são renovados toda semana; os anteriores vêm do cache. Mês sem resposta da fonte fica sem registro.
+- **Atos normativos municipais (piloto, ADR-0009).** Leis, leis complementares e decretos de `norma/normajuridica` do SAPL, por ano e tipo, publicados no período de cada mandato de prefeito. Os tipos seguem o schema federal: `LEI`, `LCP` e `DEC`. A fonte não informa quem assinou cada ato: o bloco se chama "atos normativos do município no período do mandato".
 - **Prefeito e vice-prefeito (piloto).** Os perfis vêm das candidaturas eleitas no TSE de 2020 e de 2024. Os mandatos vêm de `contrib/mandatos.yaml` (posse em 1º de janeiro do ano seguinte à eleição e fim na posse do sucessor, art. 29 da Constituição). A prefeitura não publica dados abertos: agenda entra por contribuição com fonte T0.
 
 ## Validação antes de publicar

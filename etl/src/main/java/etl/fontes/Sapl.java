@@ -28,12 +28,15 @@ import etl.Registros.Evento;
 import etl.Registros.FonteUsada;
 import etl.Registros.LinkOficial;
 import etl.Registros.Mandato;
+import etl.Registros.OrgaoOuFrente;
 import etl.Registros.Participacao;
 import etl.Registros.Pessoa;
 import etl.Registros.Proposicao;
 import etl.Registros.Prov;
 import etl.Registros.Voto;
 import etl.Texto;
+import com.fasterxml.jackson.annotation.JsonUnwrapped;
+
 import tools.jackson.databind.JsonNode;
 
 /**
@@ -65,6 +68,8 @@ public final class Sapl implements Fonte {
     private static final int DIAS_DE_REVISAO = 60;
     private static final Set<String> VOTOS_REGISTRADOS = Set.of("Sim", "Não", "Abstenção");
 
+    /** Tipos de norma coletados (id no SAPL -> sigla do schema): lei, lei complementar e decreto (ADR-0009). */
+    static final Map<String, String> TIPOS_DE_NORMA = Map.of("1", "LEI", "2", "LCP", "4", "DEC");
     private static final Pattern RESULTADO = Pattern.compile("Votação: (.+?) - Matéria: (.+)$");
     private static final Pattern ITEM = Pattern.compile("^\\d+ - (.+)$");
 
@@ -88,6 +93,15 @@ public final class Sapl implements Fonte {
     }
 
     public record Filiacao(String partido, LocalDate inicio, LocalDate fim) {
+    }
+
+    /** Norma municipal (lei, lei complementar ou decreto), com o ente, para o vínculo com o prefeito. */
+    public record Norma(String ente, String idFonte, String tipo, String numero, LocalDate data, String nome, String ementa,
+                        @JsonUnwrapped Prov prov) {
+    }
+
+    /** Período de composição de comissão. */
+    public record Periodo(int id, LocalDate inicio, LocalDate fim) {
     }
 
     @Override
@@ -139,6 +153,20 @@ public final class Sapl implements Fonte {
         }
 
         List<Integer> anos = anos(cobertas, ctx.hoje());
+        // Normas municipais por ano e tipo, para os atos do prefeito (ADR-0009).
+        for (int ano : anos) {
+            for (var tipo : TIPOS_DE_NORMA.entrySet()) {
+                paginas(ctx, coleta, API + "/norma/normajuridica/?ano=" + ano + "&tipo=" + tipo.getKey(),
+                        "normas/" + ano + "-" + tipo.getValue(), politicaAnual(ano, ctx.hoje()));
+            }
+        }
+        // Comissões: listas gerais e a composição por período, porque a lista geral de composição pagina de forma instável.
+        paginas(ctx, coleta, API + "/comissoes/comissao/?", "comissoes/comissao", Politica.SEMANAL);
+        paginas(ctx, coleta, API + "/comissoes/cargocomissao/?", "comissoes/cargo", Politica.SEMANAL);
+        paginas(ctx, coleta, API + "/comissoes/periodo/?", "comissoes/periodo", Politica.SEMANAL);
+        for (Periodo periodo : periodos(ctx).values()) {
+            paginas(ctx, coleta, API + "/comissoes/composicao/?periodo=" + periodo.id(), "composicoes/" + periodo.id(), Politica.SEMANAL);
+        }
         Map<Integer, Item> ordens = itens(ctx, "ordens", realizadas);
         Map<Integer, Item> expedientes = itens(ctx, "expedientes", realizadas);
         Integer minOrdem = minimo(ordens.keySet());
@@ -179,6 +207,7 @@ public final class Sapl implements Fonte {
                 paginas(ctx, coleta, API + "/sessao/orador/?parlamentar=" + id + "&sessao_plenaria__gte=" + minSessao,
                         "oradores-explicacoes/" + id, Politica.SEMANAL);
             }
+            paginas(ctx, coleta, API + "/comissoes/participacao/?parlamentar=" + id, "participacoes/" + id, Politica.SEMANAL);
             Coleta.Arquivo arqAutor = coleta.obterOpcional(API + "/base/autor/?object_id=" + id, "autores/" + id + ".json", JSON,
                     Politica.SEMANAL);
             String autorId = arqAutor == null ? null : autorId(Json.ler(Coleta.caminho(ctx, arqAutor)), id);
@@ -282,6 +311,10 @@ public final class Sapl implements Fonte {
         Coleta.Arquivo arqTipos = Coleta.metadados(ctx, "sapl", "tipos-materia.json");
         Map<String, String[]> tipos = arqTipos == null ? Map.of() : tiposDeMateria(Json.ler(Coleta.caminho(ctx, arqTipos)));
         Map<String, String> idsTransparencia = idsTransparencia(ctx);
+        Map<Integer, String[]> comissoes = comissoes(ctx);
+        Map<Integer, String> cargosDeComissao = cargosDeComissao(ctx);
+        Map<Integer, Periodo> periodos = periodos(ctx);
+        Map<Integer, int[]> composicoes = composicoes(ctx, periodos);
 
         Set<String> todosIds = new HashSet<>(porParlamentar.keySet());
         todosIds.addAll(ativosIds);
@@ -381,14 +414,141 @@ public final class Sapl implements Fonte {
             List<Proposicao> proposicoes = proposicoes(ctx, id, anos, tipos, fontesDoVereador);
             List<Discurso> discursos = discursos(ctx, id, sessoes, fontesDoVereador);
             List<Evento> eventos = presencas(ctx, id, sessoes, ctx.hoje(), fontesDoVereador);
+            List<OrgaoOuFrente> orgaos = comissoesDoVereador(ctx, id, comissoes, cargosDeComissao, periodos, composicoes, fontesDoVereador);
             Camara.Blocos blocos = new Camara.Blocos(mandatosBloco, participacoes, votos, despesas, proposicoes, discursos,
-                    eventos, List.of(), fontesDoVereador);
+                    eventos, orgaos, fontesDoVereador);
             Json.gravar(pastaBlocos.resolve(id + ".json"), blocos);
         }
 
+        List<Norma> normas = normas(ctx, anos);
+        Json.gravar(saida.resolve("normas.json"), normas);
         Json.gravar(saida.resolve("pessoas.json"), pessoas);
-        System.out.println("sapl: " + pessoas.size() + " vereadores normalizados"
+        System.out.println("sapl: " + pessoas.size() + " vereadores e " + normas.size() + " normas normalizados"
                 + (votosSemData > 0 ? ", " + votosSemData + " votos de antes da cobertura ou sem item votado, fora" : ""));
+    }
+
+    /** Normas municipais dos anos cobertos, por tipo. */
+    private static List<Norma> normas(Contexto ctx, List<Integer> anos) {
+        List<Norma> normas = new ArrayList<>();
+        for (int ano : anos) {
+            for (String sigla : TIPOS_DE_NORMA.values()) {
+                String caminho = "normas/" + ano + "-" + sigla;
+                Coleta.Arquivo arq = primeiraPagina(ctx, caminho);
+                if (arq == null) {
+                    continue;
+                }
+                for (JsonNode n : paginados(ctx, caminho)) {
+                    Norma norma = norma(n, sigla, arq);
+                    if (norma != null) {
+                        normas.add(norma);
+                    }
+                }
+            }
+        }
+        normas.sort(Comparator.comparing(Norma::data).reversed());
+        return normas;
+    }
+
+    static Norma norma(JsonNode n, String sigla, Coleta.Arquivo arq) {
+        String id = Json.texto(n, "id");
+        LocalDate data = data(Json.texto(n, "data"));
+        if (id == null || data == null) {
+            return null;
+        }
+        return new Norma(IBGE, id, sigla, Json.texto(n, "numero"), data, Json.texto(n, "__str__"), Json.texto(n, "ementa"),
+                Prov.de(FONTE_ID, SITE + "/norma/" + id, arq));
+    }
+
+    /** id -> {nome, sigla} das comissões. */
+    private static Map<Integer, String[]> comissoes(Contexto ctx) {
+        Map<Integer, String[]> map = new HashMap<>();
+        for (JsonNode c : paginados(ctx, "comissoes/comissao")) {
+            Integer id = Json.inteiro(c, "id");
+            if (id != null) {
+                map.put(id, new String[] {Json.texto(c, "nome"), Json.texto(c, "sigla")});
+            }
+        }
+        return map;
+    }
+
+    private static Map<Integer, String> cargosDeComissao(Contexto ctx) {
+        Map<Integer, String> map = new HashMap<>();
+        for (JsonNode c : paginados(ctx, "comissoes/cargo")) {
+            Integer id = Json.inteiro(c, "id");
+            if (id != null) {
+                map.put(id, Json.texto(c, "nome"));
+            }
+        }
+        return map;
+    }
+
+    private static Map<Integer, Periodo> periodos(Contexto ctx) {
+        Map<Integer, Periodo> map = new TreeMap<>();
+        for (JsonNode p : paginados(ctx, "comissoes/periodo")) {
+            Integer id = Json.inteiro(p, "id");
+            LocalDate fim = data(Json.texto(p, "data_fim"));
+            if (id != null && (fim == null || !fim.isBefore(Camara.INICIO_DA_COBERTURA))) {
+                map.put(id, new Periodo(id, data(Json.texto(p, "data_inicio")), fim));
+            }
+        }
+        return map;
+    }
+
+    /** id da composição -> {comissão, período}. */
+    private static Map<Integer, int[]> composicoes(Contexto ctx, Map<Integer, Periodo> periodos) {
+        Map<Integer, int[]> map = new HashMap<>();
+        for (Periodo periodo : periodos.values()) {
+            for (JsonNode c : paginados(ctx, "composicoes/" + periodo.id())) {
+                Integer id = Json.inteiro(c, "id");
+                Integer comissao = Json.inteiro(c, "comissao");
+                if (id != null && comissao != null) {
+                    map.put(id, new int[] {comissao, periodo.id()});
+                }
+            }
+        }
+        return map;
+    }
+
+    /** Participações em comissão que tocam o período coberto. */
+    private static List<OrgaoOuFrente> comissoesDoVereador(Contexto ctx, String id, Map<Integer, String[]> comissoes,
+                                                          Map<Integer, String> cargos, Map<Integer, Periodo> periodos,
+                                                          Map<Integer, int[]> composicoes, Map<String, List<FonteUsada>> fontes) {
+        Coleta.Arquivo arq = primeiraPagina(ctx, "participacoes/" + id);
+        if (arq == null) {
+            return List.of();
+        }
+        Prov prov = Prov.de(FONTE_ID, API + "/comissoes/participacao/?parlamentar=" + id, arq);
+        List<OrgaoOuFrente> lista = new ArrayList<>();
+        for (JsonNode p : paginados(ctx, "participacoes/" + id)) {
+            int[] composicao = composicoes.get(Json.inteiro(p, "composicao"));
+            if (composicao == null) {
+                continue;
+            }
+            String[] comissao = comissoes.get(composicao[0]);
+            Periodo periodo = periodos.get(composicao[1]);
+            if (comissao == null || periodo == null) {
+                continue;
+            }
+            LocalDate inicio = primeiro(data(Json.texto(p, "data_designacao")), periodo.inicio());
+            LocalDate fim = primeiro(data(Json.texto(p, "data_desligamento")), periodo.fim());
+            if (fim != null && fim.isBefore(Camara.INICIO_DA_COBERTURA)) {
+                continue;
+            }
+            lista.add(new OrgaoOuFrente("comissao", comissao[0], comissao[1],
+                    papel(cargos.get(Json.inteiro(p, "cargo")), p.path("titular").asBoolean(true)), inicio, fim, prov));
+        }
+        lista.sort(Comparator.comparing((OrgaoOuFrente o) -> o.inicio() == null ? LocalDate.MIN : o.inicio()).reversed());
+        fontes.put("orgaos_e_frentes", List.of(FonteUsada.de(FONTE_ID, arq)));
+        return lista;
+    }
+
+    static String papel(String cargo, boolean titular) {
+        String nome = cargo == null ? "Membro" : cargo;
+        return titular || "Suplente".equalsIgnoreCase(nome) ? nome : nome + " (suplente)";
+    }
+
+    private static LocalDate primeiro(LocalDate a, LocalDate b) {
+        return a != null ? a : b;
     }
 
     /** Presença em sessão plenária da legislatura vigente, até hoje. A fonte lista só presentes. */

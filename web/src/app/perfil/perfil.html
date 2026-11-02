@@ -36,7 +36,7 @@
     <nav class="sumario" aria-label="Blocos do perfil">
       <ul>
         @for (b of blocos(); track b) {
-          <li><button type="button" class="link" (click)="ir(b)">{{ rotuloBloco(b) }}</button></li>
+          <li><button type="button" class="link" (click)="ir(b)">{{ titulo(b) }}</button></li>
         }
       </ul>
     </nav>
@@ -44,7 +44,7 @@
     @for (b of blocos(); track b) {
       @let bloco = p.blocos[b];
       <section class="bloco" [id]="b" tabindex="-1" [attr.aria-labelledby]="'titulo-' + b">
-        <h2 [id]="'titulo-' + b">{{ rotuloBloco(b) }}</h2>
+        <h2 [id]="'titulo-' + b">{{ titulo(b) }}</h2>
         @if (nota(b); as n) {
           <p class="nota">{{ n }}</p>
         }

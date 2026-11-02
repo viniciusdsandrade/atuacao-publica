@@ -55,7 +55,18 @@ export class Perfil {
     alvo?.focus({ preventScroll: true });
   }
 
+  /** O bloco de atos tem rótulo e nota próprios no município: a fonte é a câmara, não o Senado. */
+  protected titulo(bloco: string): string {
+    if (bloco === 'atos_normativos' && this.perfil()?.esfera === 'municipal') {
+      return 'Atos normativos do município no período do mandato';
+    }
+    return rotuloBloco(bloco);
+  }
+
   protected nota(bloco: string): string | null {
+    if (bloco === 'atos_normativos' && this.perfil()?.esfera === 'municipal') {
+      return 'Leis, leis complementares e decretos registrados pela câmara municipal no SAPL. A fonte não informa quem assinou cada ato.';
+    }
     return NOTAS[bloco] ?? null;
   }
 

@@ -139,6 +139,25 @@ class SaplTest {
     }
 
     @Test
+    void normaMunicipalViraAtoComTipoDoSchema() {
+        JsonNode json = Json.FONTE.readTree("""
+                {"id": 55896, "__str__": "Lei Complementar nº 513, de 31 de dezembro de 2024", "numero": "513", "ano": 2024,
+                 "data": "2024-12-31", "ementa": "ALTERA A LEI Nº 13.213."}
+                """);
+        etl.Coleta.Arquivo arq = new etl.Coleta.Arquivo("https://exemplo.invalid/l", "raw/sapl/normas/2024-LCP-p1.json", "x", 1,
+                java.time.Instant.parse("2026-11-02T00:00:00Z"));
+        Sapl.Norma norma = Sapl.norma(json, Sapl.TIPOS_DE_NORMA.get("2"), arq);
+        assertEquals("LCP", norma.tipo());
+        assertEquals("513", norma.numero());
+        assertEquals(LocalDate.of(2024, 12, 31), norma.data());
+        assertEquals("3509502", norma.ente());
+        assertEquals("https://sapl.campinas.sp.leg.br/norma/55896", norma.prov().urlOrigem());
+        assertEquals("Membro", Sapl.papel("Membro", true));
+        assertEquals("Presidente (suplente)", Sapl.papel("Presidente", false));
+        assertEquals("Suplente", Sapl.papel("Suplente", false));
+    }
+
+    @Test
     void partidoNaDataSegueAsFiliacoes() {
         JsonNode json = Json.FONTE.readTree("""
                 {

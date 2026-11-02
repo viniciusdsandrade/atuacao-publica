@@ -59,8 +59,8 @@ Alvo fixado em 2026-11-02: nível federal e município piloto, de 2022-01-01 a 2
 |---|---|---|---|
 | A | 2022 federal: Câmara e Senado desde 2022-01-01 (56ª legislatura), Presidência com mandato de 2019 a 2023 | 4 a 5 h | em andamento |
 | B | Campinas 2022 a 2024: SAPL com 18ª legislatura, transparência, TSE 2020, prefeito anterior, vice-prefeito, TCE | 4 a 5 h | em andamento |
-| C | Atos normativos municipais no prefeito (SAPL) | 2 h | aguardando aprovação |
-| D | Comissões dos vereadores (SAPL) | 2 h | aguardando aprovação |
+| C | Atos normativos municipais no prefeito (SAPL) | 2 h | em andamento |
+| D | Comissões dos vereadores (SAPL) | 2 h | em andamento |
 | E | Cartão de pagamento e viagens da Presidência (Portal da Transparência, ZIPs sem chave) | 4 a 5 h | aguardando aprovação |
 | F | Agenda da Presidência: validação do padrão por dia e do arquivo de 2022; adaptador só se passar | 1 h, depois 4 a 6 h | aguardando aprovação |
 

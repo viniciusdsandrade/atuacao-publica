@@ -327,7 +327,8 @@ Em 2024, o município (`SG_UE` 62910) tem 1 prefeito, 1 vice-prefeito e 33 verea
   - `sessao/sessaoplenaria/`: lista inteira (2.102 sessões em 2026-11-01), com `data_inicio`, `hora_inicio`, `tipo`, `numero` e `legislatura_numero`.
   - `sessao/sessaoplenariapresenca/?parlamentar={id}&sessao_plenaria__gte={sessao}`: presença em sessão. `sessao/presencaordemdia/` traz a presença na ordem do dia.
   - `materia/materialegislativa/?autores={autor}&ano={ano}`: matérias de autoria. `materia/tipomaterialegislativa/` dá sigla e descrição de cada tipo. `base/autor/?object_id={id}` liga o parlamentar ao autor.
-  - `norma/normajuridica/`: 58.068 normas, com filtros `tipo` e `ano`. Inclui decretos do Executivo.
+  - `norma/normajuridica/?ano={ano}&tipo={tipo}`: 58.068 normas. Tipos usados: 1 (lei), 2 (lei complementar) e 4 (decreto). Traz `data`, `numero`, `ementa` e `texto_integral` (PDF). Página: `/norma/{id}`.
+  - `comissoes/participacao/?parlamentar={id}`, `comissoes/composicao/?periodo={id}`, `comissoes/comissao/`, `comissoes/periodo/` e `comissoes/cargocomissao/`: comissões. A lista geral de composição pagina de forma instável (330 únicos em 335); por período cabe numa página.
   - `sessao/orador/` e `sessao/oradorexpediente/`, com `?parlamentar=` e `sessao_plenaria__gte`: ordem e tempo de fala.
 - Limitações e armadilhas:
   - De 2 a 6 s por chamada. Não declara limite de taxa.
