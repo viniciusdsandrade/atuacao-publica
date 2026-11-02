@@ -133,7 +133,7 @@ Não é presença. É a contagem de votos registrados em votações nominais.
 - Plano de governo (Presidência e governos estaduais): arquivo PDF dentro do ZIP `proposta_governo_{ano}_{UF}.zip` do TSE. O perfil publica a URL do ZIP e o caminho do arquivo. O ETL confere o nome no índice do ZIP: `{UF}/{ANO}{UF}{SQ}.pdf` em 2022 e `{UF}/{ANO}{UF}{SQ}_01.pdf` em 2026. Vale o primeiro arquivo do candidato.
 - Planos de governo: só das duas eleições mais recentes (2022 e 2026). Planos de 2018 ficam fora da POC.
 - Quando o ZIP da fonte não traz o arquivo do candidato, o campo fica "sem registro na fonte". Em 2022, 1 dos 28 eleitos para cargo executivo está nessa situação.
-- Vínculo com o perfil: CPF, em memória, para deputados. Nome civil, UF e data de nascimento, em memória, para senadores. O vínculo entre eleições usa CPF. O CPF nunca é gravado.
+- Vínculo com o perfil: CPF, em memória, para deputados. Nome civil, UF e data de nascimento, em memória, para senadores. O vínculo entre eleições usa CPF; quando o TSE mascara o CPF (arquivo de 2024), usa nome civil e data de nascimento, também em memória. Quem passou de uma casa a outra dentro da cobertura (deputado que virou senador) tem um perfil só, com os blocos das duas casas. Nem CPF nem data de nascimento são gravados.
 - **Piloto municipal.** Eleições de 2020 e 2024 (`consulta_cand` e `bem_candidato`), filtradas pelo município piloto. O SAPL não publica CPF: a candidatura mais recente com o mesmo nome civil ou nome de urna normalizado, dentro do município, serve de ponte; as demais eleições da pessoa vêm pelo CPF dessa candidatura, em memória, como nas outras casas. Planos de governo municipais: só a partir de 2022, como no federal; 2020 fica sem plano.
 
 ## Executivo

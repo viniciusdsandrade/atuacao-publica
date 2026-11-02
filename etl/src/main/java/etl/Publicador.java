@@ -92,6 +92,8 @@ public final class Publicador {
         final Map<String, String> tse = new TreeMap<>();
         final List<JsonNode> links = new ArrayList<>();
         final Map<String, List<JsonNode>> registros = new LinkedHashMap<>();
+        /** Blocos normalizados de cada casa legislativa da pessoa, lidos na publicação do perfil. */
+        final List<Path> arquivosDeBlocos = new ArrayList<>();
         final Map<String, List<JsonNode>> fontes = new LinkedHashMap<>();
         /** Ids que redirecionam para este perfil (ADR-0002, item 6). */
         final Set<String> aliases = new LinkedHashSet<>();
@@ -133,6 +135,9 @@ public final class Publicador {
         String origemDoBloco(String nome) {
             if (nome.equals("posicionamentos_declarados") || nome.equals("agenda_oficial")) {
                 return null;
+            }
+            if (nome.equals("atos_normativos") && cargos.contains("prefeito") && !cargos.contains("presidente")) {
+                return "sapl";
             }
             return ORIGEM_DO_BLOCO.getOrDefault(nome, fonteCli);
         }
@@ -224,11 +229,28 @@ public final class Publicador {
         perfil.links.forEach(links::add);
         doc.put("atualizado_em", ctx.agora().toString());
         ObjectNode blocos = doc.putObject("blocos");
+        Map<String, List<JsonNode>> todos = registrosDoPerfil(perfil);
         for (String bloco : blocosDoPerfil(perfil)) {
-            List<JsonNode> registros = seguros(perfil, bloco, perfil.registros.getOrDefault(bloco, List.of()));
+            List<JsonNode> registros = seguros(perfil, bloco, todos.getOrDefault(bloco, List.of()));
             blocos.set(bloco, bloco(perfil, bloco, registros, pasta));
         }
         return doc;
+    }
+
+    /** Registros em memória mais os blocos da casa legislativa lidos do normalizado agora, só para este perfil. */
+    private static Map<String, List<JsonNode>> registrosDoPerfil(Perfil perfil) {
+        Map<String, List<JsonNode>> registros = new LinkedHashMap<>();
+        perfil.registros.forEach((bloco, lista) -> registros.put(bloco, new ArrayList<>(lista)));
+        for (Path arquivo : perfil.arquivosDeBlocos) {
+            JsonNode blocos = Json.ler(arquivo);
+            for (var bloco : blocos.properties()) {
+                if (!bloco.getKey().equals("fontes") && !bloco.getKey().equals("mandatos")) {
+                    List<JsonNode> lista = registros.computeIfAbsent(bloco.getKey(), k -> new ArrayList<>());
+                    bloco.getValue().forEach(lista::add);
+                }
+            }
+        }
+        return registros;
     }
 
     /** Remove registro com CPF, telefone ou e-mail. O motivo vai para o relatório, sem o trecho. */
@@ -498,6 +520,13 @@ public final class Publicador {
                 throw new IllegalStateException("dois perfis com o identificador " + perfil.id);
             }
             perfil.aliases.add(derivado);
+            // Perfis que a publicação anterior tinha em separado e agora são a mesma pessoa: o id antigo vira alias.
+            for (String chave : chaves(perfil)) {
+                String publicado = anterior.porChave().get(chave);
+                if (publicado != null && !publicado.equals(perfil.id)) {
+                    perfil.aliases.add(publicado);
+                }
+            }
         }
         Map<String, String> destinoAtual = new HashMap<>();
         for (Perfil perfil : perfis) {

@@ -32,19 +32,57 @@ final class Vinculo {
         if (!candidaturas.isEmpty()) {
             Map<String, Tse.Chave> chaves = Tse.chaves(ctx);
             Map<String, List<JsonNode>> porCpf = new HashMap<>();
+            // O TSE mascara o CPF em alguns arquivos (eleição de 2024): nome civil e data de nascimento, em memória, fazem a ponte.
+            Map<String, List<JsonNode>> porPessoa = new HashMap<>();
             for (JsonNode c : candidaturas) {
                 Tse.Chave chave = chaves.get(c.get("sq").stringValue());
                 if (chave != null && chave.cpf() != null) {
                     porCpf.computeIfAbsent(chave.cpf(), k -> new ArrayList<>()).add(c);
                 }
+                if (pessoa(chave) != null) {
+                    porPessoa.computeIfAbsent(pessoa(chave), k -> new ArrayList<>()).add(c);
+                }
             }
-            vincularLegisladores(ctx, perfis, chaves, porCpf, candidaturas);
-            perfis.addAll(executivos(ctx, catalogo, perfis, chaves, porCpf, candidaturas));
-            perfis.addAll(legisladoresEleitos(ctx, perfis, chaves, porCpf, candidaturas));
+            Ligacoes ligacoes = new Ligacoes(chaves, porCpf, porPessoa);
+            vincularLegisladores(ctx, perfis, ligacoes, candidaturas);
+            perfis.addAll(executivos(ctx, catalogo, perfis, ligacoes, candidaturas));
+            perfis.addAll(legisladoresEleitos(ctx, perfis, ligacoes, candidaturas));
             atos(ctx, perfis);
             despesasDoExecutivoMunicipal(ctx, perfis);
+            atosMunicipais(ctx, perfis);
         }
         return perfis;
+    }
+
+    /** Chaves do TSE em memória (ADR-0003): candidaturas por CPF e por nome civil com data de nascimento. */
+    record Ligacoes(Map<String, Tse.Chave> chaves, Map<String, List<JsonNode>> porCpf, Map<String, List<JsonNode>> porPessoa) {
+        /** Todas as candidaturas da pessoa: as do CPF e as do nome com nascimento (eleição com CPF mascarado), sem repetir. */
+        List<JsonNode> daPessoa(Tse.Chave chave, JsonNode candidatura) {
+            List<JsonNode> todas = new ArrayList<>();
+            if (chave != null && chave.cpf() != null) {
+                todas.addAll(porCpf.getOrDefault(chave.cpf(), List.of()));
+            }
+            String p = pessoa(chave);
+            if (p != null) {
+                for (JsonNode c : porPessoa.getOrDefault(p, List.of())) {
+                    if (todas.stream().noneMatch(t -> t.get("sq").equals(c.get("sq")))) {
+                        todas.add(c);
+                    }
+                }
+            }
+            return todas.isEmpty() ? List.of(candidatura) : todas;
+        }
+
+        /** O mesmo, a partir só do CPF (Câmara e Senado): a pessoa vem da primeira candidatura com esse CPF. */
+        List<JsonNode> doCpf(String cpf) {
+            List<JsonNode> doCpf = porCpf.getOrDefault(cpf, List.of());
+            return doCpf.isEmpty() ? doCpf : daPessoa(chaves.get(doCpf.getFirst().get("sq").stringValue()), doCpf.getFirst());
+        }
+    }
+
+    static String pessoa(Tse.Chave chave) {
+        return chave == null || chave.nomeCivil() == null || chave.nascimento() == null ? null
+                : chave.nomeCivil() + "|" + chave.nascimento();
     }
 
     /** Um perfil por pessoa de uma casa legislativa, com os blocos normalizados da casa. */
@@ -68,12 +106,12 @@ final class Vinculo {
             p.foto = Json.texto(pessoa, "foto_url");
             p.ids.put(chaveId, idFonte);
             pessoa.path("links").forEach(p.links::add);
-            JsonNode blocos = Json.ler(pasta.resolve("blocos").resolve(idFonte + ".json"));
-            for (var bloco : blocos.properties()) {
-                if (!bloco.getKey().equals("fontes")) {
-                    bloco.getValue().forEach(p.bloco(bloco.getKey())::add);
-                }
-            }
+            // Só mandatos e fontes ficam em memória: contribuições e vínculo os consultam. Os blocos pesados (votos,
+            // despesas, proposições) são lidos de novo ao publicar cada perfil: a memória é a de um perfil, não a do arquivo todo.
+            Path arquivoDeBlocos = pasta.resolve("blocos").resolve(idFonte + ".json");
+            JsonNode blocos = Json.ler(arquivoDeBlocos);
+            blocos.path("mandatos").forEach(p.bloco("mandatos")::add);
+            p.arquivosDeBlocos.add(arquivoDeBlocos);
             for (var usadas : blocos.path("fontes").properties()) {
                 List<JsonNode> lista = p.fontes.computeIfAbsent(usadas.getKey(), k -> new ArrayList<>());
                 usadas.getValue().forEach(lista::add);
@@ -84,8 +122,9 @@ final class Vinculo {
     }
 
     /** Câmara por CPF; Senado por nome civil, UF e data de nascimento; SAPL por nome civil e de urna (ADR-0007). */
-    private static void vincularLegisladores(Contexto ctx, List<Perfil> perfis, Map<String, Tse.Chave> chaves,
-                                             Map<String, List<JsonNode>> porCpf, List<JsonNode> candidaturas) {
+    private static void vincularLegisladores(Contexto ctx, List<Perfil> perfis, Ligacoes ligacoes, List<JsonNode> candidaturas) {
+        Map<String, Tse.Chave> chaves = ligacoes.chaves();
+        Map<String, List<JsonNode>> porCpf = ligacoes.porCpf();
         Map<String, String> cpfPorSenadoChave = new HashMap<>();
         Map<String, JsonNode> candPorSaplNomeCivil = new HashMap<>();
         Map<String, JsonNode> candPorSaplNomeUrna = new HashMap<>();
@@ -95,13 +134,17 @@ final class Vinculo {
                 if (chave.cpf() != null && chave.cargo().matches("SENADOR|1º SUPLENTE|2º SUPLENTE")) {
                     cpfPorSenadoChave.put(chave.nomeCivil() + "|" + chave.uf() + "|" + chave.nascimento(), chave.cpf());
                 } else if ("VEREADOR".equals(chave.cargo())) {
-                    candPorSaplNomeCivil.put(chave.nomeCivil(), c);
+                    // A candidatura mais recente com o nome vale como ponte; as demais eleições vêm pelo CPF, em memória.
+                    candPorSaplNomeCivil.merge(chave.nomeCivil(), c, Vinculo::maisRecente);
                     if (c.hasNonNull("nome_urna")) {
-                        candPorSaplNomeUrna.put(Texto.normalizarNome(c.get("nome_urna").stringValue()), c);
+                        candPorSaplNomeUrna.merge(Texto.normalizarNome(c.get("nome_urna").stringValue()), c, Vinculo::maisRecente);
                     }
                 }
             }
         }
+        // Uma pessoa, duas casas (deputado que virou senador dentro da cobertura): um perfil só, pelo CPF em memória.
+        Map<String, Perfil> legisladorPorCpf = new HashMap<>();
+        List<Perfil> fundidos = new ArrayList<>();
         for (Perfil p : perfis) {
             String cpf = null;
             if ("camara".equals(p.fonteCli)) {
@@ -132,14 +175,59 @@ final class Vinculo {
                         cand = candPorSaplNomeUrna.get(nomeCompleto);
                     }
                     if (cand != null) {
-                        anexarCandidaturas(p, List.of(cand));
+                        Tse.Chave chave = chaves.get(cand.get("sq").stringValue());
+                        cpf = chave == null ? null : chave.cpf();
+                        if (cpf == null) {
+                            anexarCandidaturas(p, ligacoes.daPessoa(chave, cand));
+                        }
                     }
                 }
             }
             if (cpf != null) {
-                anexarCandidaturas(p, porCpf.getOrDefault(cpf, List.of()));
+                Perfil alvo = legisladorPorCpf.putIfAbsent(cpf, p);
+                if (alvo != null) {
+                    fundir(alvo, p);
+                    fundidos.add(p);
+                    continue;
+                }
+                anexarCandidaturas(p, ligacoes.doCpf(cpf));
             }
         }
+        perfis.removeAll(fundidos);
+        if (!fundidos.isEmpty()) {
+            System.out.println("vinculo: " + fundidos.size() + " perfil(is) de outra casa fundido(s) na mesma pessoa");
+        }
+    }
+
+    /** Junta no primeiro perfil (casa de maior precedência, ADR-0002) os cargos, blocos e fontes do segundo (ADR-0006). */
+    private static void fundir(Perfil alvo, Perfil outro) {
+        alvo.papel(outro.cargo, outro.esfera, outro.ente, outro.uf, outro.partido, outro.situacao, outro.prioridade, outro.inicioDoPapel);
+        outro.ids.forEach(alvo.ids::putIfAbsent);
+        outro.tse.forEach(alvo.tse::putIfAbsent);
+        for (JsonNode link : outro.links) {
+            if (!alvo.links.contains(link)) {
+                alvo.links.add(link);
+            }
+        }
+        outro.registros.forEach((bloco, lista) -> alvo.bloco(bloco).addAll(lista));
+        outro.fontes.forEach((bloco, lista) -> {
+            List<JsonNode> usadas = alvo.fontes.computeIfAbsent(bloco, k -> new ArrayList<>());
+            lista.forEach(f -> {
+                if (!usadas.contains(f)) {
+                    usadas.add(f);
+                }
+            });
+        });
+        alvo.arquivosDeBlocos.addAll(outro.arquivosDeBlocos);
+        alvo.aliases.add(outro.id);
+        alvo.aliases.addAll(outro.aliases);
+        if (alvo.foto == null) {
+            alvo.foto = outro.foto;
+        }
+    }
+
+    private static JsonNode maisRecente(JsonNode a, JsonNode b) {
+        return b.get("ano").asInt() > a.get("ano").asInt() ? b : a;
     }
 
     private static void anexarCandidaturas(Perfil p, List<JsonNode> linhas) {
@@ -162,10 +250,11 @@ final class Vinculo {
      * Presidente e governadores de todas as regras de contrib/mandatos.yaml: mandato vigente, encerrado ou com posse
      * prevista (ADR-0006). O TSE registra a eleição; renúncia ou sucessão entram por contribuição com fonte T0.
      */
-    private static List<Perfil> executivos(Contexto ctx, Catalogo catalogo, List<Perfil> existentes, Map<String, Tse.Chave> chaves,
-                                           Map<String, List<JsonNode>> porCpf, List<JsonNode> candidaturas) {
+    private static List<Perfil> executivos(Contexto ctx, Catalogo catalogo, List<Perfil> existentes, Ligacoes ligacoes,
+                                           List<JsonNode> candidaturas) {
         List<Perfil> novos = new ArrayList<>();
-        Map<String, Perfil> perfilPorCpf = perfilPorCpf(existentes, chaves);
+        Map<String, Perfil> perfilPorCpf = perfilPorCpf(existentes, ligacoes.chaves());
+        Map<String, Perfil> perfilPorPessoa = perfilPorPessoa(existentes, ligacoes.chaves());
         for (JsonNode regra : Json.lerYaml(ctx.contrib().resolve("mandatos.yaml"))) {
             LocalDate inicio = LocalDate.parse(Json.texto(regra, "inicio"));
             LocalDate fim = LocalDate.parse(Json.texto(regra, "fim"));
@@ -173,9 +262,9 @@ final class Vinculo {
             int eleicao = Json.inteiro(regra, "eleicao");
             Fase fase = Fase.de(ctx.hoje(), inicio, fim, eleicao);
             for (JsonNode c : eleitos(candidaturas, eleicao, cargo)) {
-                Perfil p = perfilDoEleito(c, chaves, porCpf, perfilPorCpf, novos);
+                Perfil p = perfilDoEleito(c, ligacoes, perfilPorCpf, perfilPorPessoa, novos);
                 String uf = Json.texto(c, "uf");
-                boolean municipal = cargo.equals("prefeito");
+                boolean municipal = cargo.equals("prefeito") || cargo.equals("vice_prefeito");
                 String esfera = cargo.equals("presidente") ? "federal" : (municipal ? "municipal" : "estadual");
                 String ente = cargo.equals("presidente") ? "BR" : (municipal ? (regra.hasNonNull("ente") ? Json.texto(regra, "ente") : Sapl.IBGE) : uf);
                 p.papel(cargo, esfera, ente, cargo.equals("presidente") ? null : uf, Json.texto(c, "partido"), fase.situacao(),
@@ -212,8 +301,9 @@ final class Vinculo {
      * A posse é o início da legislatura, segundo a Câmara (Constituição, art. 57, § 4º). Antes dela, o perfil mostra a
      * posse prevista. Depois, quem a casa ainda não registra continua no arquivo, sem registro de exercício.
      */
-    private static List<Perfil> legisladoresEleitos(Contexto ctx, List<Perfil> existentes, Map<String, Tse.Chave> chaves,
-                                                    Map<String, List<JsonNode>> porCpf, List<JsonNode> candidaturas) {
+    private static List<Perfil> legisladoresEleitos(Contexto ctx, List<Perfil> existentes, Ligacoes ligacoes,
+                                                    List<JsonNode> candidaturas) {
+        Map<String, Tse.Chave> chaves = ligacoes.chaves();
         List<Perfil> novos = new ArrayList<>();
         Coleta.Arquivo arquivoLeg = Coleta.metadados(ctx, "camara", "legislatura.json");
         if (arquivoLeg == null) {
@@ -233,6 +323,7 @@ final class Vinculo {
                 .put("url_origem", "https://dadosabertos.camara.leg.br/api/v2/legislaturas/" + idLeg)
                 .put("capturado_em", arquivoLeg.capturadoEm().toString());
         Map<String, Perfil> perfilPorCpf = perfilPorCpf(existentes, chaves);
+        Map<String, Perfil> perfilPorPessoa = perfilPorPessoa(existentes, chaves);
         for (String cargo : List.of("deputado_federal", "senador")) {
             String casa = cargo.equals("deputado_federal") ? "camara" : "senado";
             String situacao = antesDaPosse ? "Eleito em " + eleicao + "; posse prevista em " + posse
@@ -240,10 +331,13 @@ final class Vinculo {
             for (JsonNode c : eleitos(candidaturas, eleicao, cargo)) {
                 Tse.Chave chave = chaves.get(c.get("sq").stringValue());
                 Perfil existente = chave == null || chave.cpf() == null ? null : perfilPorCpf.get(chave.cpf());
+                if (existente == null && pessoa(chave) != null) {
+                    existente = perfilPorPessoa.get(pessoa(chave));
+                }
                 if (!antesDaPosse && existente != null && casa.equals(existente.fonteCli)) {
                     continue;
                 }
-                Perfil p = perfilDoEleito(c, chaves, porCpf, perfilPorCpf, novos);
+                Perfil p = perfilDoEleito(c, ligacoes, perfilPorCpf, perfilPorPessoa, novos);
                 String uf = Json.texto(c, "uf");
                 p.papel(cargo, "federal", "BR", uf, Json.texto(c, "partido"), situacao,
                         antesDaPosse ? Perfil.POSSE_PREVISTA : Perfil.FORA_DE_EXERCICIO, posse);
@@ -276,7 +370,7 @@ final class Vinculo {
         List<JsonNode> eleitos = new ArrayList<>();
         for (JsonNode c : candidaturas) {
             if (c.get("ano").asInt() == eleicao && c.get("eleito").asBoolean()
-                    && cargo.equals(Texto.normalizarNome(c.get("cargo").stringValue()).toLowerCase().replace(' ', '_'))) {
+                    && cargo.equals(Texto.normalizarNome(c.get("cargo").stringValue()).toLowerCase().replace(' ', '_').replace('-', '_'))) {
                 eleitos.add(c);
             }
         }
@@ -297,13 +391,17 @@ final class Vinculo {
         return porCpf;
     }
 
-    /** O perfil da pessoa eleita: o que já existe para o mesmo CPF ou um perfil novo, a partir do TSE. */
-    private static Perfil perfilDoEleito(JsonNode c, Map<String, Tse.Chave> chaves, Map<String, List<JsonNode>> porCpf,
-                                         Map<String, Perfil> perfilPorCpf, List<Perfil> novos) {
+    /** O perfil da pessoa eleita: o que já existe para o mesmo CPF, ou para o mesmo nome civil e nascimento, ou um perfil novo. */
+    private static Perfil perfilDoEleito(JsonNode c, Ligacoes ligacoes, Map<String, Perfil> perfilPorCpf,
+                                         Map<String, Perfil> perfilPorPessoa, List<Perfil> novos) {
         String sq = c.get("sq").stringValue();
-        Tse.Chave chave = chaves.get(sq);
+        Tse.Chave chave = ligacoes.chaves().get(sq);
         String cpf = chave == null ? null : chave.cpf();
+        String pessoa = pessoa(chave);
         Perfil p = cpf == null ? null : perfilPorCpf.get(cpf);
+        if (p == null && pessoa != null) {
+            p = perfilPorPessoa.get(pessoa);
+        }
         if (p != null) {
             return p;
         }
@@ -312,12 +410,28 @@ final class Vinculo {
         p.chaveExterna = "tse:" + sq;
         p.fonteCli = "tse";
         p.nome = Json.texto(c, "nome_urna");
-        anexarCandidaturas(p, cpf == null ? List.of(c) : porCpf.getOrDefault(cpf, List.of(c)));
+        anexarCandidaturas(p, ligacoes.daPessoa(chave, c));
         if (cpf != null) {
             perfilPorCpf.put(cpf, p);
         }
+        if (pessoa != null) {
+            perfilPorPessoa.put(pessoa, p);
+        }
         novos.add(p);
         return p;
+    }
+
+    private static Map<String, Perfil> perfilPorPessoa(List<Perfil> perfis, Map<String, Tse.Chave> chaves) {
+        Map<String, Perfil> porPessoa = new HashMap<>();
+        for (Perfil p : perfis) {
+            for (String sq : p.tse.values()) {
+                String pessoa = pessoa(chaves.get(sq));
+                if (pessoa != null) {
+                    porPessoa.putIfAbsent(pessoa, p);
+                }
+            }
+        }
+        return porPessoa;
     }
 
     private static void usarFonte(Perfil p, String bloco, ObjectNode fonte) {
@@ -367,6 +481,41 @@ final class Vinculo {
                     p.bloco("despesas_executivo").add(registro);
                     usarFonte(p, "despesas_executivo", Json.SAIDA.createObjectNode().<ObjectNode>set("fonte_id", a.get("fonte_id"))
                             .<ObjectNode>set("url_origem", a.get("url_origem")).set("capturado_em", a.get("capturado_em")));
+                }
+            }
+        }
+    }
+
+    /** Leis, leis complementares e decretos do município em cada mandato de prefeito já iniciado (ADR-0009). */
+    private static void atosMunicipais(Contexto ctx, List<Perfil> perfis) {
+        Path arquivo = ctx.normalizado().resolve("sapl").resolve("normas.json");
+        if (!Files.exists(arquivo)) {
+            return;
+        }
+        JsonNode normas = Json.ler(arquivo);
+        String hoje = ctx.hoje().toString();
+        for (Perfil p : perfis) {
+            if (!p.cargos.contains("prefeito")) {
+                continue;
+            }
+            for (JsonNode mandato : p.bloco("mandatos")) {
+                String inicio = Json.texto(mandato, "inicio");
+                String fim = Json.texto(mandato, "fim");
+                String ente = Json.texto(mandato, "ente");
+                if (!"prefeito".equals(Json.texto(mandato, "cargo")) || inicio == null || inicio.compareTo(hoje) > 0 || ente == null) {
+                    continue;
+                }
+                for (JsonNode n : normas) {
+                    String data = Json.texto(n, "data");
+                    if (!ente.equals(Json.texto(n, "ente")) || data == null || data.compareTo(inicio) < 0
+                            || (fim != null && data.compareTo(fim) >= 0)) {
+                        continue;
+                    }
+                    ObjectNode ato = ((ObjectNode) n).deepCopy();
+                    ato.remove("ente");
+                    p.bloco("atos_normativos").add(ato);
+                    usarFonte(p, "atos_normativos", Json.SAIDA.createObjectNode().<ObjectNode>set("fonte_id", n.get("fonte_id"))
+                            .put("url_origem", Sapl.API + "/norma/normajuridica/").set("capturado_em", n.get("capturado_em")));
                 }
             }
         }
