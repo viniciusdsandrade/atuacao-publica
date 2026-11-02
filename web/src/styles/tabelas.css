@@ -116,6 +116,12 @@
   .tabela-rolagem tbody tr:hover td {
     background: none;
   }
+
+  /* Alvo de toque maior para o link da fonte em cada cartão. */
+  .tabela-rolagem td a {
+    display: inline-block;
+    padding-block: 0.25rem;
+  }
 }
 
 /* Tabela de oito colunas (candidaturas) precisa de mais espaço: empilha antes. */
@@ -174,6 +180,11 @@
 
   .tabela-rolagem table[data-cols='8'] tbody tr:hover td {
     background: none;
+  }
+
+  .tabela-rolagem table[data-cols='8'] td a {
+    display: inline-block;
+    padding-block: 0.25rem;
   }
 }
 
