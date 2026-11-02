@@ -1,0 +1,58 @@
+@switch (carga().estado) {
+  @case ('erro') {
+    <div class="caixa-vazia" role="alert">
+      <app-icone nome="alerta" />
+      <h1>Documento indisponível</h1>
+      <p>O arquivo do documento não respondeu. Tente de novo mais tarde.</p>
+      <a class="botao botao--primario" routerLink="/">Ir para a lista de políticos</a>
+    </div>
+  }
+  @case ('carregando') {
+    <p class="sr-only" role="status">Carregando o documento.</p>
+    <div class="painel doc-artigo doc-esqueleto" aria-hidden="true">
+      <span class="esqueleto esqueleto--titulo"></span>
+      @for (n of esqueletos; track n) {
+        <span class="esqueleto esqueleto--texto"></span>
+      }
+    </div>
+  }
+  @default {
+    <div class="doc-pagina">
+      @if (sumario().length) {
+        <aside class="doc-sumario" aria-label="Sumário do documento">
+          <button
+            type="button"
+            class="botao botao--pequeno doc-sumario-botao"
+            aria-controls="doc-sumario-lista"
+            [attr.aria-expanded]="sumarioAberto()"
+            (click)="sumarioAberto.set(!sumarioAberto())"
+          >
+            <app-icone nome="filtros" /> Neste documento
+          </button>
+          <nav id="doc-sumario-lista" class="doc-sumario-lista" [class.aberto]="sumarioAberto()" aria-label="Neste documento">
+            <p class="doc-sumario-titulo" aria-hidden="true">Neste documento</p>
+            <ol>
+              @for (i of sumario(); track i.id) {
+                <li [class.doc-sumario-sub]="i.nivel === 3">
+                  <a
+                    [routerLink]="[]"
+                    [fragment]="i.id"
+                    [attr.aria-current]="ativo() === i.id ? 'location' : null"
+                    (click)="ir(i.id)"
+                    >{{ i.texto }}</a
+                  >
+                </li>
+              }
+            </ol>
+          </nav>
+        </aside>
+      }
+      <article #artigo class="doc-artigo prosa" [innerHTML]="html()"></article>
+    </div>
+    <p class="doc-topo">
+      <button type="button" class="botao botao--discreto botao--pequeno" (click)="voltarAoTopo()">
+        <app-icone nome="topo" [pequeno]="true" /> Voltar ao topo
+      </button>
+    </p>
+  }
+}
