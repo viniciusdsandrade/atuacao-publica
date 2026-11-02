@@ -39,6 +39,8 @@ import etl.Registros.Proposicao;
 import etl.Registros.Prov;
 import etl.Registros.Voto;
 import etl.Texto;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import tools.jackson.databind.JsonNode;
 
 /** Câmara dos Deputados: API v2, arquivos anuais e cota parlamentar (docs/FONTES.md). */
@@ -251,7 +253,9 @@ public final class Camara implements Fonte {
     /** Blocos de um deputado, antes do vínculo com outras fontes. */
     public record Blocos(List<Mandato> mandatos, List<Participacao> participacaoVotacoes, List<Voto> votos,
                          List<Despesa> despesas, List<Proposicao> proposicoes, List<Discurso> discursos,
-                         List<Evento> eventos, List<OrgaoOuFrente> orgaosEFrentes,
+                         List<Evento> eventos,
+                         // O nome do bloco publicado é orgaos_e_frentes; o snake_case automático daria orgaos_efrentes.
+                         @JsonProperty("orgaos_e_frentes") List<OrgaoOuFrente> orgaosEFrentes,
                          Map<String, List<FonteUsada>> fontes) {
     }
 
