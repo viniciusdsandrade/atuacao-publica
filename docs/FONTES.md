@@ -63,6 +63,7 @@ Os dois arquivos mudam juntos.
   - Presença em evento (reunião de comissão, sessão) vem de `/eventos/{id}/deputados` e do arquivo `eventosPresencaDeputados`. A lista traz só quem esteve presente. Não traz motivo de ausência.
   - `/frentes` devolve todas as legislaturas. Filtramos as legislaturas cobertas, a partir da 57ª.
   - Em 2026-10-30, `/deputados/{id}/frentes` respondeu 504 depois de 15 segundos, de forma repetida. O ETL usou a cópia da coleta anterior (ADR-0005).
+  - A partir do runner do GitHub Actions, a API respondeu 504 e recusou conexão em escala nas execuções de 2026-11-01 e 2026-11-02 (326 e 212 respostas 504, 173 timeouts de conexão), enquanto respondia normalmente de outra rede. A coleta da Câmara no CI depende do cache de dados brutos e do orçamento de tempo (`ETL_ORCAMENTO_MINUTOS`).
   - O `sumario` de discurso traz entidades HTML (`&nbsp;`).
   - Dados descartados na ingestão: `cpf`, `dataNascimento`, e-mail, telefone e gabinete.
   - Redes sociais ficam para a fase 2.

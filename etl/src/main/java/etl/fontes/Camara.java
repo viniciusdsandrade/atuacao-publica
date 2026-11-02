@@ -140,8 +140,10 @@ public final class Camara implements Fonte {
         List<String> falhas = paraCadaDeputado(new ArrayList<>(ids),
                 id -> coletarDeputado(ctx, coleta, id, cobertura, emExercicio.contains(id) || daAtual.contains(id)));
         coleta.contar("deputados_com_falha", falhas.size());
-        if (!falhas.isEmpty()) {
-            throw new IllegalStateException("coleta incompleta para " + falhas.size() + " deputado(s): " + falhas.getFirst());
+        // Deputado sem detalhe ou histórico, e sem cópia anterior, fica fora desta publicação. A fonte segue parcial:
+        // a falha de poucos não pode descartar a coleta dos outros 600.
+        for (String falha : falhas) {
+            coleta.falhaParcial("deputados", falha);
         }
         coleta.periodo(new Meta.Periodo(cobertura.inicio(), ctx.hoje()));
     }
@@ -164,10 +166,11 @@ public final class Camara implements Fonte {
             LocalDate de = ano == inicio.getYear() ? inicio : LocalDate.of(ano, 1, 1);
             LocalDate ate = ano == anoAtual ? ctx.hoje() : LocalDate.of(ano, 12, 31);
             Politica politica = Politica.porAno(ano, ctx.hoje());
+            // Discursos são complementares: a falha deles não derruba o deputado nem a fonte.
             String url = API + "/deputados/" + id + "/discursos?dataInicio=" + de + "&dataFim=" + ate + "&itens=100";
             for (int pagina = 1; url != null; pagina++) {
-                Coleta.Arquivo arquivo = coleta.obter(url, discursos(id, ano, pagina), JSON, politica);
-                url = proxima(Json.ler(Coleta.caminho(ctx, arquivo)));
+                Coleta.Arquivo arquivo = coleta.obterOpcional(url, discursos(id, ano, pagina), JSON, politica);
+                url = arquivo == null ? null : proxima(Json.ler(Coleta.caminho(ctx, arquivo)));
             }
         }
     }
@@ -282,7 +285,14 @@ public final class Camara implements Fonte {
         Map<String, List<Mandato>> mandatos = new HashMap<>();
         Map<String, List<FonteUsada>> fontes = new LinkedHashMap<>();
 
+        int semArquivo = 0;
         for (String id : ids) {
+            if (Coleta.metadados(ctx, "camara", "deputados/" + id + ".json") == null
+                    || Coleta.metadados(ctx, "camara", "historico/" + id + ".json") == null) {
+                // Coleta parcial sem cópia anterior (deputado novo durante instabilidade da API): entra na próxima execução.
+                semArquivo++;
+                continue;
+            }
             JsonNode d = atuais.get(id);
             boolean emExercicio = d != null;
             acumulados.put(id, new Acumulado());
@@ -324,6 +334,9 @@ public final class Camara implements Fonte {
                     "deputado_federal", "federal", "BR", uf, partido, Json.texto(status, "urlFoto"), situacao, emExercicio, links));
         }
         fontes.put("mandatos", List.of(FonteUsada.de("camara-api", arquivo(ctx, "deputados.json"))));
+        if (semArquivo > 0) {
+            System.out.println("camara: " + semArquivo + " deputado(s) sem detalhe ou histórico coletado, fora desta publicação");
+        }
 
         votos(ctx, cobertura, acumulados, exercicio, fontes);
         despesas(ctx, cobertura, acumulados, fontes);
@@ -602,7 +615,11 @@ public final class Camara implements Fonte {
             String tipo = Json.texto(p, "siglaTipo");
             Integer numero = Json.inteiro(p, "numero");
             Integer ano = Json.inteiro(p, "ano");
-            acumulados.get(autoria.deputado()).proposicoes.add(new Proposicao(autoria.proposicao(), tipo, numero, ano,
+            Acumulado autor = acumulados.get(autoria.deputado());
+            if (autor == null) {
+                continue;
+            }
+            autor.proposicoes.add(new Proposicao(autoria.proposicao(), tipo, numero, ano,
                     tipo + " " + numero + "/" + ano, Texto.semEntidades(Json.texto(p, "ementa")),
                     Json.texto(p.path("ultimoStatus"), "descricaoSituacao"), temas.getOrDefault(autoria.proposicao(), List.of()),
                     Json.texto(p, "dataApresentacao"), autoria.ordem(), autoria.proponente(),

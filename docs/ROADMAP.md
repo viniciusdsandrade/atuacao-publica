@@ -32,7 +32,7 @@ Estado real de cada fase. Atualizado ao fechar cada fase.
 
 - `/deputados/{id}/despesas` da Câmara responde vazio. O ETL usa o arquivo anual de cotas.
 - `/deputados/{id}/frentes` respondeu 504 seguidamente em 2026-10-30. O ETL manteve a cópia da coleta anterior e marcou a fonte como parcial (ADR-0005).
-- Em 2026-10-30, entre 12:40 e 15:10 UTC, a API da Câmara respondeu 504 a boa parte das requisições. Com o cache vazio, a coleta da Câmara falha nesses períodos. Com o cache preenchido, os blocos usam a cópia anterior e ficam marcados como desatualizados. A execução diária, quando ativada, roda às 06:17 UTC.
+- A API da Câmara responde 504 e recusa conexões em escala a partir do runner do GitHub Actions (execuções de 2026-11-01 e 2026-11-02), e também respondeu 504 em 2026-10-30 de outra rede. Com o cache preenchido, os blocos usam a cópia anterior e ficam marcados como desatualizados. Desde 2026-11-02 a coleta tem orçamento de tempo, discursos são complementares e a falha em poucos deputados deixa a fonte parcial, não em falha. A execução diária roda às 06:17 UTC.
 - DivulgaCandContas bloqueia o User-Agent do projeto. O ETL usa os arquivos do TSE.
 - A agenda presidencial existe só em HTML e iCalendar por compromisso. Ela entra por contribuição manual.
 - O e-Agendas não traz a Presidência da República.

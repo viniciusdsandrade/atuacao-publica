@@ -15,6 +15,7 @@ import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -60,9 +61,33 @@ public final class Coleta {
     private final AtomicInteger baixados = new AtomicInteger();
     private final AtomicInteger doCache = new AtomicInteger();
 
+    /** Tempo máximo de coleta. Esgotado, o restante vem do cache e a fonte fica parcial. Nulo: sem limite. */
+    private final Duration orcamento;
+    private final AtomicBoolean orcamentoAvisado = new AtomicBoolean();
+
     public Coleta(Contexto ctx, String fonte) {
+        this(ctx, fonte, orcamentoDoAmbiente());
+    }
+
+    public Coleta(Contexto ctx, String fonte, Duration orcamento) {
         this.ctx = ctx;
         this.fonte = fonte;
+        this.orcamento = orcamento;
+    }
+
+    /** ETL_ORCAMENTO_MINUTOS: abaixo do limite de tempo do passo no CI, para o cursor e o cache serem gravados. */
+    static Duration orcamentoDoAmbiente() {
+        String minutos = System.getenv("ETL_ORCAMENTO_MINUTOS");
+        return minutos == null || minutos.isBlank() ? null : Duration.ofMinutes(Long.parseLong(minutos.strip()));
+    }
+
+    boolean orcamentoEsgotado() {
+        return orcamento != null && System.nanoTime() - inicio >= orcamento.toNanos();
+    }
+
+    /** Registra uma falha que não derruba a fonte: ela fica parcial, com o motivo no cursor. */
+    public void falhaParcial(String grupo, String erro) {
+        reserva(grupo, null, erro);
     }
 
     public Arquivo obter(String url, String caminho, String accept, Politica politica)
@@ -93,6 +118,16 @@ public final class Coleta {
         String grupo = grupo(caminho);
         if ((emCache != null || opcional) && falhas.getOrDefault(grupo, 0) >= LIMITE_DE_FALHAS) {
             return reserva(grupo, emCache, null);
+        }
+        if (orcamentoEsgotado()) {
+            String motivo = "orçamento de tempo de " + orcamento.toMinutes() + " min esgotado";
+            if (orcamentoAvisado.compareAndSet(false, true)) {
+                System.err.println(fonte + ": " + motivo + "; o restante vem do cache");
+            }
+            if (emCache != null || opcional) {
+                return reserva(grupo, emCache, motivo);
+            }
+            throw new IOException(motivo + " antes de " + caminho);
         }
         try {
             Http.Baixado baixado = ctx.http().baixar(url, destino, accept);

@@ -3,16 +3,47 @@ package etl;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+
+import java.io.IOException;
+import java.nio.file.Path;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 import etl.Coleta.Politica;
 
 class ColetaTest {
+
+    @TempDir
+    Path tmp;
+
+    @Test
+    void orcamentoEsgotadoNaoVaiARedeEDeixaAFonteParcial() throws Exception {
+        Contexto ctx = new Contexto(tmp, tmp.resolve("data"), new Http("teste/0", 1), null, Instant.now(), null);
+        Coleta coleta = new Coleta(ctx, "teste", Duration.ZERO);
+        assertTrue(coleta.orcamentoEsgotado());
+        assertNull(coleta.obterOpcional("https://exemplo.invalid/a", "grupo/a.json", "application/json", Politica.SEMPRE));
+        assertThrows(IOException.class,
+                () -> coleta.obter("https://exemplo.invalid/b", "grupo/b.json", "application/json", Politica.SEMPRE));
+        assertEquals(1, coleta.reservasUsadas().size());
+        assertTrue(coleta.reservasUsadas().getFirst().contains("orçamento de tempo"));
+    }
+
+    @Test
+    void semOrcamentoNadaMuda() {
+        Contexto ctx = new Contexto(tmp, tmp.resolve("data"), new Http("teste/0", 1), null, Instant.now(), null);
+        Coleta coleta = new Coleta(ctx, "teste", null);
+        assertTrue(!coleta.orcamentoEsgotado());
+        coleta.falhaParcial("deputados", "123: HTTP 504");
+        assertEquals(1, coleta.reservasUsadas().size());
+        assertTrue(coleta.reservasUsadas().getFirst().startsWith("deputados: 1 arquivo(s)"));
+    }
 
     @Test
     void anoAnteriorFicaAbertoAteMarco() {

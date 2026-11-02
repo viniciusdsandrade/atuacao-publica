@@ -59,44 +59,59 @@ jobs:
         working-directory: etl
         run: ./mvnw -B -ntp -q package -DskipTests
       # Um passo por fonte, cada um com limite de tempo: fonte lenta não consome o tempo das outras.
-      # Falha ou limite estourado não derruba o job: o cursor registra a falha e o publish marca o bloco.
+      # ETL_ORCAMENTO_MINUTOS fica abaixo do limite do passo: esgotado, o restante vem do cache, a fonte fica parcial,
+      # e o cursor e o cache são gravados. Falha ou limite estourado não derruba o job.
       - name: fetch tse
         if: env.FONTE == 'todas' || env.FONTE == 'tse'
         continue-on-error: true
         timeout-minutes: 20
+        env:
+          ETL_ORCAMENTO_MINUTOS: '15'
         run: java -Xmx4g -jar etl/target/etl.jar fetch tse
       - name: fetch executivo
         if: env.FONTE == 'todas' || env.FONTE == 'executivo'
         continue-on-error: true
         timeout-minutes: 10
+        env:
+          ETL_ORCAMENTO_MINUTOS: '7'
         run: java -Xmx4g -jar etl/target/etl.jar fetch executivo
       - name: fetch senado
         if: env.FONTE == 'todas' || env.FONTE == 'senado'
         continue-on-error: true
         timeout-minutes: 30
+        env:
+          ETL_ORCAMENTO_MINUTOS: '22'
         run: java -Xmx4g -jar etl/target/etl.jar fetch senado
       - name: fetch camara
         if: env.FONTE == 'todas' || env.FONTE == 'camara'
         continue-on-error: true
         timeout-minutes: 90
+        env:
+          ETL_ORCAMENTO_MINUTOS: '75'
         run: java -Xmx4g -jar etl/target/etl.jar fetch camara
       - name: fetch sapl
         # Câmara municipal do piloto: cerca de mil chamadas na primeira carga, renovadas em rodízio semanal.
         if: env.FONTE == 'todas' || env.FONTE == 'sapl'
         continue-on-error: true
         timeout-minutes: 90
+        env:
+          ETL_ORCAMENTO_MINUTOS: '75'
         run: java -Xmx4g -jar etl/target/etl.jar fetch sapl
       - name: fetch tcesp
         # Despesas do município do piloto no TCE-SP: um arquivo por mês do mandato, os 6 últimos renovados toda semana.
         if: env.FONTE == 'todas' || env.FONTE == 'tcesp'
         continue-on-error: true
         timeout-minutes: 20
+        env:
+          ETL_ORCAMENTO_MINUTOS: '15'
         run: java -Xmx4g -jar etl/target/etl.jar fetch tcesp
       - name: fetch contrib
         # Confere se as URLs de origem e os snapshots dos registros manuais ainda respondem.
         if: env.FONTE == 'todas' || env.FONTE == 'contrib'
         continue-on-error: true
         timeout-minutes: 10
+        env:
+          ETL_ORCAMENTO_MINUTOS: '7'
         run: java -jar etl/target/etl.jar fetch contrib
       - name: normalize
         continue-on-error: true
