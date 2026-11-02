@@ -35,7 +35,7 @@ Estado real de cada fase. Atualizado ao fechar cada fase.
 - `/deputados/{id}/frentes` respondeu 504 seguidamente em 2026-10-30. O ETL manteve a cópia da coleta anterior e marcou a fonte como parcial (ADR-0005).
 - A API da Câmara responde 504 e recusa conexões em escala a partir do runner do GitHub Actions (execuções de 2026-11-01 e 2026-11-02), e também respondeu 504 em 2026-10-30 de outra rede. Com o cache preenchido, os blocos usam a cópia anterior e ficam marcados como desatualizados. Desde 2026-11-02 a coleta tem orçamento de tempo, discursos são complementares e a falha em poucos deputados deixa a fonte parcial, não em falha. A execução diária roda às 06:17 UTC.
 - DivulgaCandContas bloqueia o User-Agent do projeto. O ETL usa os arquivos do TSE.
-- A agenda presidencial existe só em HTML e iCalendar por compromisso. Ela entra por contribuição manual.
+- A agenda presidencial existe só em HTML, uma página por dia. Desde 2026-11-02 é coletada pela página do dia (ADR-0011); 2022 vem do Internet Archive, e dias sem captura ficam sem registro.
 - O e-Agendas não traz a Presidência da República.
 - O Planalto recusou conexão a partir do ambiente de validação. Os atos normativos vêm da API do Senado.
 - A listagem de autorias do Senado (`/processo`) não traz temas.
@@ -57,7 +57,7 @@ Estado real de cada fase. Atualizado ao fechar cada fase.
 
 ## Cobertura 2022 a 2026 (ADR-0009)
 
-Alvo fixado em 2026-11-02: nível federal e município piloto, de 2022-01-01 a 2026-10-31. Cobertura após as etapas A a D: cerca de 80% por fonte e mês; faltam as etapas E e F.
+Alvo fixado em 2026-11-02: nível federal e município piloto, de 2022-01-01 a 2026-10-31. Cobertura após as etapas A a F: o que tem fonte publicada está coletado; resta só a defasagem das próprias fontes (TCE-SP e cartão de pagamento, cerca de 2 meses).
 
 | Etapa | Entrega | Estimativa | Estado |
 |---|---|---|---|
@@ -65,8 +65,8 @@ Alvo fixado em 2026-11-02: nível federal e município piloto, de 2022-01-01 a 2
 | B | Campinas 2022 a 2024: SAPL com 18ª legislatura, transparência, TSE 2020, prefeito anterior, vice-prefeito, TCE | 4 a 5 h | concluída em 2026-11-02: 50 vereadores, 35.647 votos, 20.253 lançamentos de despesa, prefeito com os mandatos de 2021 e 2025 e 56 meses de despesas, vice-prefeito publicado |
 | C | Atos normativos municipais no prefeito (SAPL) | 2 h | concluída em 2026-11-02: 3.904 normas de 2022 a 2026, 3.902 no período dos mandatos |
 | D | Comissões dos vereadores (SAPL) | 2 h | concluída em 2026-11-02: 1.161 participações em comissão desde 2022 |
-| E | Cartão de pagamento e viagens da Presidência (Portal da Transparência, ZIPs sem chave) | 4 a 5 h | em andamento |
-| F | Agenda da Presidência: validação do padrão por dia e do arquivo de 2022; adaptador só se passar | 1 h, depois 4 a 6 h | em andamento: padrão por dia e arquivo de 2022 validados; adaptador escrito (ADR-0011) |
+| E | Cartão de pagamento e viagens da Presidência (Portal da Transparência, ZIPs sem chave) | 4 a 5 h | concluída em 2026-11-02: 12 meses no mandato de 2019 a 2023 e 45 no vigente; cartão por unidade gestora, diárias, passagens e outros gastos |
+| F | Agenda da Presidência: validação do padrão por dia e do arquivo de 2022; adaptador só se passar | 1 h, depois 4 a 6 h | concluída em 2026-11-02: 6.209 compromissos em 1.767 dias (372 sem agenda publicada); 723 de 2022 pelo Internet Archive |
 
 Sem fonte publicada, fora do alvo: agenda do prefeito, presença em evento no Senado, verba de gabinete da câmara municipal.
 
