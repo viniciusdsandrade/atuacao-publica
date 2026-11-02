@@ -34,7 +34,8 @@ public final class Publicador {
                     "discursos", "eventos", "orgaos_e_frentes", "candidaturas", "posicionamentos_declarados"),
             "vereador", List.of("mandatos", "participacao_votacoes", "votos", "despesas", "proposicoes",
                     "discursos", "eventos", "orgaos_e_frentes", "candidaturas", "posicionamentos_declarados"),
-            "presidente", List.of("mandatos", "candidaturas", "atos_normativos", "agenda_oficial", "posicionamentos_declarados"),
+            "presidente", List.of("mandatos", "candidaturas", "despesas_executivo", "atos_normativos", "agenda_oficial",
+                    "posicionamentos_declarados"),
             "governador", List.of("mandatos", "candidaturas", "posicionamentos_declarados"),
             "prefeito", List.of("mandatos", "candidaturas", "despesas_executivo", "atos_normativos", "agenda_oficial",
                     "posicionamentos_declarados"),
@@ -71,7 +72,7 @@ public final class Publicador {
     private static final Map<String, String> ORIGEM_DO_BLOCO = Map.of("candidaturas", "tse", "atos_normativos", "executivo",
             "despesas_executivo", "tcesp");
     static final int RECENTES = 20;
-    static final List<String> FONTES_CLI = List.of("camara", "senado", "tse", "executivo", "sapl", "tcesp", "contrib");
+    static final List<String> FONTES_CLI = List.of("camara", "senado", "tse", "executivo", "sapl", "tcesp", "cgu", "contrib");
 
     /** Perfil em construção, antes da validação. */
     static final class Perfil {
@@ -138,6 +139,9 @@ public final class Publicador {
             }
             if (nome.equals("atos_normativos") && cargos.contains("prefeito") && !cargos.contains("presidente")) {
                 return "sapl";
+            }
+            if (nome.equals("despesas_executivo") && cargos.contains("presidente")) {
+                return "cgu";
             }
             return ORIGEM_DO_BLOCO.getOrDefault(nome, fonteCli);
         }

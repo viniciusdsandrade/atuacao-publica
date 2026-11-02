@@ -57,15 +57,23 @@ export class Perfil {
 
   /** O bloco de atos tem rótulo e nota próprios no município: a fonte é a câmara, não o Senado. */
   protected titulo(bloco: string): string {
-    if (bloco === 'atos_normativos' && this.perfil()?.esfera === 'municipal') {
+    const esfera = this.perfil()?.esfera;
+    if (bloco === 'atos_normativos' && esfera === 'municipal') {
       return 'Atos normativos do município no período do mandato';
+    }
+    if (bloco === 'despesas_executivo' && esfera === 'federal') {
+      return 'Cartão de pagamento e viagens da Presidência da República no período do mandato';
     }
     return rotuloBloco(bloco);
   }
 
   protected nota(bloco: string): string | null {
-    if (bloco === 'atos_normativos' && this.perfil()?.esfera === 'municipal') {
+    const esfera = this.perfil()?.esfera;
+    if (bloco === 'atos_normativos' && esfera === 'municipal') {
       return 'Leis, leis complementares e decretos registrados pela câmara municipal no SAPL. A fonte não informa quem assinou cada ato.';
+    }
+    if (bloco === 'despesas_executivo' && esfera === 'federal') {
+      return 'Cartão de pagamento do Governo Federal e viagens realizadas do órgão Presidência da República, somados por mês a partir dos arquivos do Portal da Transparência. Transações sob sigilo entram pelo valor, sem detalhe. A fonte não informa quem autorizou cada gasto.';
     }
     return NOTAS[bloco] ?? null;
   }

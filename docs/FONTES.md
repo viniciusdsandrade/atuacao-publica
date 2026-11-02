@@ -184,7 +184,10 @@ Os dois arquivos mudam juntos.
 - Limites documentados: 400 requisições por minuto, 700 entre 0h e 6h.
 - A documentação (`/v3/api-docs`, sem chave) lista `/api-de-dados/cartoes`, `/api-de-dados/viagens`, `/api-de-dados/viagens/{id}` e `/api-de-dados/viagens-por-cpf`.
 - Downloads sem chave: `https://portaldatransparencia.gov.br/download-de-dados/cpgf/{AAAAMM}` e `/viagens/{ano}`. Redirecionam (302) para ZIP em `dadosabertos-download.cgu.gov.br`.
-- Fora da POC: gastos do Executivo entram na fase 2.
+- Uso no projeto (ADR-0010): bloco `despesas_executivo` do presidente, com o órgão 20101 (Presidência da República) somado por mês e categoria.
+- `cpgf/{AAAAMM}`: ZIP de cerca de 300 KB com um CSV (latin-1, ponto e vírgula): órgão superior, órgão, unidade gestora, ano e mês do extrato, CPF mascarado e nome do portador, CNPJ ou CPF e nome do favorecido, transação, data e valor. Na Presidência, em junho de 2025, 1.027 de 1.141 transações vieram como "Informações protegidas por sigilo", com valor e sem data.
+- `viagens/{ano}`: ZIP de cerca de 160 MB com `{ano}_Viagem.csv` (814 mil linhas em 2025), `_Passagem`, `_Trecho` e `_Pagamento`. A viagem traz órgão superior e solicitante, CPF mascarado e nome do viajante, cargo, período, destinos, motivo e valores de diárias, passagens, devolução e outros gastos. O nome do ZIP muda a cada geração (`2025_20260920_Viagens.zip`), e a URL de download não.
+- Velocidade variável: o mesmo ZIP levou mais de 10 minutos numa tentativa e 8 segundos em outra, em 2026-11-02.
 
 ### `cgu-eagendas`: e-Agendas
 

@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 
 import etl.fontes.Camara;
+import etl.fontes.Cgu;
 import etl.fontes.Contrib;
 import etl.fontes.Executivo;
 import etl.fontes.Sapl;
@@ -27,11 +28,12 @@ public final class Main {
         registrar(new Catalogo());
         registrar(new Sapl());
         registrar(new TceSp());
+        registrar(new Cgu());
     }
 
     /** Fontes que rodam quando o comando não recebe fonte. contrib e fontes rodam só quando pedidas no fetch. */
-    private static final List<String> FETCH_PADRAO = List.of("camara", "senado", "tse", "executivo", "sapl", "tcesp");
-    private static final List<String> NORMALIZE_PADRAO = List.of("camara", "senado", "tse", "executivo", "contrib", "sapl", "tcesp");
+    private static final List<String> FETCH_PADRAO = List.of("camara", "senado", "tse", "executivo", "sapl", "tcesp", "cgu");
+    private static final List<String> NORMALIZE_PADRAO = List.of("camara", "senado", "tse", "executivo", "contrib", "sapl", "tcesp", "cgu");
 
     public static void main(String[] args) {
         // O validador de schema usa SLF4J sem provedor; o aviso de "no providers" não interessa aqui.

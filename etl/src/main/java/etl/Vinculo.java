@@ -49,6 +49,7 @@ final class Vinculo {
             perfis.addAll(legisladoresEleitos(ctx, perfis, ligacoes, candidaturas));
             atos(ctx, perfis);
             despesasDoExecutivoMunicipal(ctx, perfis);
+            despesasDoExecutivoFederal(ctx, perfis);
             atosMunicipais(ctx, perfis);
         }
         return perfis;
@@ -473,6 +474,45 @@ final class Vinculo {
                     }
                     ObjectNode registro = Json.SAIDA.createObjectNode();
                     registro.put("ano", a.get("ano").asInt()).put("mes", a.get("mes").asInt()).put("categoria", orgao)
+                            .set("valor", a.get("valor"));
+                    registro.put("quantidade", a.get("quantidade").asInt());
+                    for (String campo : List.of("fonte_id", "url_origem", "capturado_em")) {
+                        registro.set(campo, a.get(campo));
+                    }
+                    p.bloco("despesas_executivo").add(registro);
+                    usarFonte(p, "despesas_executivo", Json.SAIDA.createObjectNode().<ObjectNode>set("fonte_id", a.get("fonte_id"))
+                            .<ObjectNode>set("url_origem", a.get("url_origem")).set("capturado_em", a.get("capturado_em")));
+                }
+            }
+        }
+    }
+
+    /** Cartão de pagamento e viagens da Presidência da República em cada mandato presidencial já iniciado (ADR-0010). */
+    private static void despesasDoExecutivoFederal(Contexto ctx, List<Perfil> perfis) {
+        Path arquivo = ctx.normalizado().resolve("cgu").resolve("despesas.json");
+        if (!Files.exists(arquivo)) {
+            return;
+        }
+        JsonNode agregados = Json.ler(arquivo);
+        String hoje = ctx.hoje().toString();
+        for (Perfil p : perfis) {
+            if (!p.cargos.contains("presidente")) {
+                continue;
+            }
+            for (JsonNode mandato : p.bloco("mandatos")) {
+                String inicio = Json.texto(mandato, "inicio");
+                String fim = Json.texto(mandato, "fim");
+                if (!"presidente".equals(Json.texto(mandato, "cargo")) || inicio == null || inicio.compareTo(hoje) > 0) {
+                    continue;
+                }
+                for (JsonNode a : agregados) {
+                    String primeiroDia = String.format("%04d-%02d-01", a.get("ano").asInt(), a.get("mes").asInt());
+                    boolean noMandato = primeiroDia.compareTo(inicio.substring(0, 8) + "01") >= 0 && (fim == null || primeiroDia.compareTo(fim) < 0);
+                    if (!"BR".equals(Json.texto(a, "ente")) || !noMandato) {
+                        continue;
+                    }
+                    ObjectNode registro = Json.SAIDA.createObjectNode();
+                    registro.put("ano", a.get("ano").asInt()).put("mes", a.get("mes").asInt()).put("categoria", Json.texto(a, "categoria"))
                             .set("valor", a.get("valor"));
                     registro.put("quantidade", a.get("quantidade").asInt());
                     for (String campo : List.of("fonte_id", "url_origem", "capturado_em")) {
