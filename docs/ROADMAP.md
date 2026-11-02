@@ -50,6 +50,12 @@ Estado real de cada fase. Atualizado ao fechar cada fase.
 - O arquivo de candidaturas do TSE de 2024 vem com o CPF mascarado. O vínculo dessa eleição com as demais usa nome civil e data de nascimento, em memória.
 - SAPL do piloto: o filtro de votos por registro de votação admite votos anteriores a 2022, porque os ids de registro não seguem a ordem das sessões. Esses votos ficam fora, e a quantidade aparece na saída do `normalize`.
 - Até 2026-11-02, o bloco de órgãos e frentes saía vazio para deputados e senadores por um erro no nome do campo normalizado. Corrigido.
+- O tema do site segue o sistema. Não há alternância manual.
+- O cabeçalho das tabelas não fica fixo na rolagem.
+- A lista da página inicial exibe 48 cartões por vez. A busca do navegador (Ctrl+F) só acha o que está na tela. Use a busca do site.
+- Não validado: leitor de tela real (VoiceOver, NVDA, TalkBack) e aparelhos móveis físicos. A auditoria de acessibilidade foi automatizada e por teclado.
+- A auditoria de interface roda em scripts locais. Ela não está no CI.
+- O site só vai ao ar pelo workflow `dados` (agendado ou manual). Mudança só de interface espera a próxima execução.
 
 ## Ativação pendente (decisão do mantenedor)
 
@@ -69,6 +75,26 @@ Alvo fixado em 2026-11-02: nível federal e município piloto, de 2022-01-01 a 2
 | F | Agenda da Presidência: validação do padrão por dia e do arquivo de 2022; adaptador só se passar | 1 h, depois 4 a 6 h | concluída em 2026-11-02: 6.209 compromissos em 1.767 dias (372 sem agenda publicada); 723 de 2022 pelo Internet Archive |
 
 Sem fonte publicada, fora do alvo: agenda do prefeito, presença em evento no Senado, verba de gabinete da câmara municipal.
+
+## Interface do site (ADR-0012)
+
+Concluída em 2026-11-02. A interface foi refeita sem mudar dado, rota nem fonte.
+
+| Etapa | Entrega | Estado |
+|---|---|---|
+| Casca | Cabeçalho e rodapé novos, tema claro e escuro, anel de foco com contraste, foco movido ao conteúdo na troca de página, título de aba por perfil, rolagem restaurada ao voltar | concluída |
+| Página inicial | Apresentação do site, busca por palavras, situação e esfera com contagem, filtros no endereço, "Mostrar mais", estados de carga e de erro | concluída |
+| Estado das coletas | Página própria (`#/estado`) e resumo na página inicial | concluída |
+| Perfil | Sumário por blocos com o bloco em leitura, endereço por bloco, blocos sem registro mais baixos, tabelas em cartões no celular, despesas por ano, link para o JSON do perfil | concluída |
+| Detalhe anual | Migalhas, troca de ano, filtro em todos os campos e paginação | concluída |
+| Documentos | Tipografia de leitura, sumário por seção, links externos em outra aba, tabelas e código rolantes por teclado | concluída |
+| Impressão | Perfil e documentos em preto sobre branco, com o endereço de cada fonte | concluída |
+
+Verificação de 2026-11-02, com scripts locais (Playwright e axe-core, fora do repositório):
+
+- axe-core sem achados em 96 combinações de página, largura (1366, 390 e 320 px) e tema, no Chromium. Sem achados também nas amostras de Firefox e WebKit.
+- Fluxos de lista, perfil, detalhe, documentos e teclado passam no Chromium, no Firefox e no WebKit, também na versão de produção servida em subcaminho.
+- Nenhuma requisição a terceiros e nenhum erro de console, com a CSP intacta.
 
 ## Fase 2 (depois da POC)
 
