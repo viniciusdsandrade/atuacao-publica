@@ -512,13 +512,19 @@ public final class Publicador {
     static Map<String, String> identificadores(List<Perfil> perfis, Anterior anterior) {
         Set<String> tomados = new HashSet<>();
         Map<Perfil, String> derivados = new HashMap<>();
+        // Dono de cada id derivado. Um perfil que mantém o id derivado não entra em `tomados`, então sem isto outro perfil
+        // da mesma pessoa, ainda não fundido, levaria o id dele pela chave da casa ou do TSE e os dois sairiam com o mesmo id.
+        Map<String, Perfil> donos = new HashMap<>();
+        for (Perfil perfil : perfis) {
+            derivados.put(perfil, perfil.id);
+            donos.putIfAbsent(perfil.id, perfil);
+        }
         // Primeiro as chaves das casas (a principal e os ids externos): o id publicado de um perfil é dele.
         // Só depois as chaves do TSE, que podem apontar para o id de outro perfil da mesma pessoa ainda não fundido.
         for (Perfil perfil : perfis) {
-            derivados.put(perfil, perfil.id);
             for (String chave : chavesDasCasas(perfil)) {
                 String publicado = anterior.porChave().get(chave);
-                if (publicado != null && !tomados.contains(publicado)) {
+                if (publicado != null && adotavel(publicado, perfil, tomados, donos)) {
                     perfil.id = publicado;
                     tomados.add(publicado);
                     break;
@@ -531,7 +537,7 @@ public final class Publicador {
             }
             for (String chave : chavesDoTse(perfil)) {
                 String publicado = anterior.porChave().get(chave);
-                if (publicado != null && !tomados.contains(publicado)) {
+                if (publicado != null && adotavel(publicado, perfil, tomados, donos)) {
                     perfil.id = publicado;
                     tomados.add(publicado);
                     break;
@@ -573,6 +579,12 @@ public final class Publicador {
     }
 
     /** Chaves de busca na publicação anterior: a principal, as das casas e as do TSE, da eleição mais recente para a mais antiga. */
+    /** O id publicado serve a este perfil se ninguém o tomou e se não é o id derivado de outro perfil. */
+    private static boolean adotavel(String publicado, Perfil perfil, Set<String> tomados, Map<String, Perfil> donos) {
+        Perfil dono = donos.get(publicado);
+        return !tomados.contains(publicado) && (dono == null || dono == perfil);
+    }
+
     private static List<String> chaves(Perfil perfil) {
         List<String> chaves = new ArrayList<>(chavesDasCasas(perfil));
         chaves.addAll(chavesDoTse(perfil));

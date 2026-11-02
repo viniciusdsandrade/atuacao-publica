@@ -52,6 +52,30 @@ class PublicadorTest {
     }
 
     @Test
+    void idPublicadoNaoPassaParaPerfilQueJaTemEsseIdComoDerivado() {
+        // Pessoa publicada como sapl-306, fundida com a Câmara (camara:152610) e com o TSE (tse:X). Numa coleta incompleta
+        // o vínculo não funde: o deputado e o vereador voltam em separado, e o índice anterior aponta as chaves do deputado
+        // para sapl-306. O id publicado fica com o vereador, que já o tem como derivado; o deputado segue com o seu.
+        // O resultado não pode depender da ordem dos perfis.
+        Publicador.Anterior anterior = new Publicador.Anterior(
+                Map.of("camara:152610", "sapl-3509502-306", "tse:X", "sapl-3509502-306"), Set.of("sapl-3509502-306"), Map.of());
+        for (boolean deputadoPrimeiro : new boolean[] {true, false}) {
+            Publicador.Perfil deputado = perfil("cam-152610", "camara:152610", Map.of("2022", "X"));
+            deputado.ids.put("camara", "152610");
+            Publicador.Perfil vereador = perfil("sapl-3509502-306", "sapl:306", Map.of());
+            vereador.ids.put("sapl", "306");
+            List<Publicador.Perfil> perfis = deputadoPrimeiro ? List.of(deputado, vereador) : List.of(vereador, deputado);
+
+            Map<String, String> aliases = Publicador.identificadores(perfis, anterior);
+
+            assertEquals("cam-152610", deputado.id);
+            assertEquals("sapl-3509502-306", vereador.id);
+            assertTrue(aliases.isEmpty());
+            assertTrue(Publicador.sumiram(anterior, Set.of("cam-152610", "sapl-3509502-306"), aliases, Set.of()).isEmpty());
+        }
+    }
+
+    @Test
     void aliasPublicadoContinuaValendo() {
         Publicador.Anterior anterior = new Publicador.Anterior(Map.of("camara:1", "tse-900"), Set.of("tse-900"),
                 Map.of("cam-1", "tse-900"));
