@@ -422,16 +422,16 @@
   font-size: 0.9375rem;
 }
 
+.migalhas li {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2rem;
+}
+
 .migalhas li + li::before {
   content: '›' / '';
   margin-right: 0.5rem;
   color: var(--texto-3);
-}
-
-.migalhas a {
-  display: inline-flex;
-  align-items: center;
-  min-height: 2rem;
 }
 
 .migalhas [aria-current='page'] {

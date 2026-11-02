@@ -1,0 +1,102 @@
+<nav class="migalhas" aria-label="Você está em">
+  <ol>
+    <li><a routerLink="/" [queryParams]="consulta">Políticos</a></li>
+    <li><a [routerLink]="['/politico', parametros().id]">{{ perfil()?.nome ?? parametros().id }}</a></li>
+    <li>
+      <a [routerLink]="['/politico', parametros().id]" [fragment]="'bloco-' + parametros().bloco">{{
+        rotuloCurtoBloco(parametros().bloco, esfera())
+      }}</a>
+    </li>
+    <li aria-current="page">{{ parametros().ano }}</li>
+  </ol>
+</nav>
+
+<h1 class="titulo-pagina">{{ titulo() }}: {{ parametros().ano }}</h1>
+
+@if (arquivos().length > 1) {
+  <nav class="anos anos--solto" aria-label="Anos com registros neste bloco">
+    <p class="anos-titulo">Ano</p>
+    <ul>
+      @for (a of arquivos(); track a.ano) {
+        <li>
+          <a
+            class="chip-link"
+            [routerLink]="['/politico', parametros().id, parametros().bloco, a.ano]"
+            [attr.aria-current]="'' + a.ano === parametros().ano ? 'page' : null"
+          >
+            {{ a.ano }} <small class="numero">{{ inteiro(a.total) }}</small>
+          </a>
+        </li>
+      }
+    </ul>
+  </nav>
+}
+
+@if (erro()) {
+  <div class="caixa-vazia" role="alert">
+    <app-icone nome="alerta" />
+    <h2>Arquivo não encontrado</h2>
+    <p>Não há registros publicados deste bloco neste ano, ou o arquivo não respondeu.</p>
+    <a class="botao botao--primario" [routerLink]="['/politico', parametros().id]">Voltar ao perfil</a>
+  </div>
+} @else if (detalhe(); as d) {
+  <p class="meta-pagina">{{ inteiro(d.registros.length) }} registros. Arquivo gerado em {{ data(d.gerado_em) }}.</p>
+  @if (nota(); as n) {
+    <p class="nota-bloco">{{ n }}</p>
+  }
+
+  <div class="detalhe-ferramentas">
+    <div class="campo">
+      <label for="filtro">Filtrar nesta lista</label>
+      <div class="busca">
+        <app-icone class="icone-busca" nome="busca" />
+        <input
+          #campoFiltro
+          id="filtro"
+          class="controle"
+          type="search"
+          name="filtro"
+          placeholder="Qualquer palavra, número ou data"
+          autocomplete="off"
+          enterkeyhint="search"
+          [value]="filtro()"
+          (input)="filtro.set(valor($event))"
+        />
+        @if (filtro()) {
+          <button type="button" class="busca-limpar" aria-label="Limpar o filtro" (click)="filtro.set(''); campoFiltro.focus()">
+            <app-icone nome="fechar" />
+          </button>
+        }
+      </div>
+    </div>
+    @if (filtro().trim()) {
+      <p class="detalhe-contagem">
+        <strong>{{ inteiro(filtrados().length) }}</strong> de {{ inteiro(d.registros.length) }} registros
+      </p>
+    }
+    <p class="sr-only" role="status">{{ anuncio() }}</p>
+  </div>
+
+  @if (filtrados().length === 0) {
+    <div class="caixa-vazia">
+      <app-icone nome="busca" />
+      <h2>Nenhum registro com esse filtro</h2>
+      <p>Confira a grafia. O filtro ignora acento e maiúscula e procura em todos os campos da lista.</p>
+      <button type="button" class="botao" (click)="filtro.set('')">Limpar o filtro</button>
+    </div>
+  } @else {
+    <app-tabela
+      [bloco]="parametros().bloco"
+      [registros]="filtrados()"
+      [legenda]="titulo() + ' em ' + parametros().ano"
+      [limite]="100"
+    />
+  }
+} @else {
+  <p class="sr-only" role="status">Carregando os registros.</p>
+  <div class="painel detalhe-esqueleto" aria-hidden="true">
+    @for (n of esqueletos; track n) {
+      <span class="esqueleto esqueleto--texto"></span>
+    }
+  </div>
+}

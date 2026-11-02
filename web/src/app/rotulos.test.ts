@@ -12,7 +12,9 @@ import {
   chaveDeBusca,
   moeda,
   data,
+  notaDoBloco,
   situacaoDe,
+  tituloDoBloco,
 } from './rotulos.ts';
 
 test('rotuloCargo retorna nome legível dos cargos municipais e gerais', () => {
@@ -64,6 +66,16 @@ test('situacaoDe separa exercício, posse prevista e fora de exercício (ADR-000
   assert.equal(situacaoDe({ em_exercicio: false, situacao: 'Eleito em 2026; posse prevista em 2027-02-01' }), 'posse');
   assert.equal(situacaoDe({ em_exercicio: false, situacao: 'Mandato encerrado em 2023-01-31' }), 'fora');
   assert.equal(situacaoDe({ em_exercicio: false, situacao: null }), 'fora');
+});
+
+test('título e nota dos atos e das despesas do Executivo dependem da esfera', () => {
+  assert.match(tituloDoBloco('atos_normativos', 'municipal'), /município/);
+  assert.match(tituloDoBloco('atos_normativos', 'federal'), /Executivo federal/);
+  assert.match(tituloDoBloco('despesas_executivo', 'federal'), /Presidência/);
+  assert.match(tituloDoBloco('despesas_executivo', 'municipal'), /município/);
+  assert.match(notaDoBloco('atos_normativos', 'municipal') ?? '', /SAPL/);
+  assert.match(notaDoBloco('atos_normativos', 'federal') ?? '', /não informa quem assinou/);
+  assert.equal(notaDoBloco('votos', 'federal'), null);
 });
 
 test('data formata ISO para dd/mm/aaaa', () => {

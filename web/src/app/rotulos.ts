@@ -109,6 +109,28 @@ export function inteiro(valor: number): string {
   return inteiros.format(valor);
 }
 
+/** O título do bloco muda com a esfera: a fonte dos atos do município é a câmara, não o Senado. */
+export function tituloDoBloco(bloco: string, esfera?: string | null): string {
+  if (bloco === 'atos_normativos' && esfera === 'municipal') {
+    return 'Atos normativos do município no período do mandato';
+  }
+  if (bloco === 'despesas_executivo' && esfera === 'federal') {
+    return 'Cartão de pagamento e viagens da Presidência da República no período do mandato';
+  }
+  return rotuloBloco(bloco);
+}
+
+/** Nota de método do bloco, igual para todos os perfis da mesma esfera. */
+export function notaDoBloco(bloco: string, esfera?: string | null): string | null {
+  if (bloco === 'atos_normativos' && esfera === 'municipal') {
+    return 'Leis, leis complementares e decretos registrados pela câmara municipal no SAPL. A fonte não informa quem assinou cada ato.';
+  }
+  if (bloco === 'despesas_executivo' && esfera === 'federal') {
+    return 'Cartão de pagamento do Governo Federal e viagens realizadas do órgão Presidência da República, somados por mês a partir dos arquivos do Portal da Transparência. Transações sob sigilo entram pelo valor, sem detalhe. A fonte não informa quem autorizou cada gasto.';
+  }
+  return NOTAS[bloco] ?? null;
+}
+
 export function rotuloCurtoBloco(bloco: string, esfera?: string | null): string {
   if (bloco === 'despesas_executivo') {
     return esfera === 'federal' ? 'Cartão e viagens' : 'Despesas da prefeitura';

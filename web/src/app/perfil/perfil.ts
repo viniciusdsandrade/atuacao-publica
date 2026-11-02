@@ -13,14 +13,14 @@ import {
   iniciais,
   inteiro,
   moeda,
-  NOTAS,
-  rotuloBloco,
+  notaDoBloco,
   rotuloCargo,
   rotuloCurtoBloco,
   rotuloLocal,
   SEM_REGISTRO,
   SITUACOES,
   situacaoDe,
+  tituloDoBloco,
 } from '../rotulos';
 import { Proveniencia } from './proveniencia';
 import { Tabela } from './tabela';
@@ -85,7 +85,6 @@ export class Perfil {
   protected readonly iniciais = iniciais;
   protected readonly inteiro = inteiro;
   protected readonly rotuloCargo = rotuloCargo;
-  protected readonly rotuloBloco = rotuloBloco;
   protected readonly rotuloCurtoBloco = rotuloCurtoBloco;
   protected readonly rotuloLocal = rotuloLocal;
   protected readonly data = data;
@@ -168,27 +167,12 @@ export class Perfil {
     this.ativo.set(bloco);
   }
 
-  /** O bloco de atos tem rótulo e nota próprios no município: a fonte é a câmara, não o Senado. */
   protected titulo(bloco: string): string {
-    const esfera = this.perfil()?.esfera;
-    if (bloco === 'atos_normativos' && esfera === 'municipal') {
-      return 'Atos normativos do município no período do mandato';
-    }
-    if (bloco === 'despesas_executivo' && esfera === 'federal') {
-      return 'Cartão de pagamento e viagens da Presidência da República no período do mandato';
-    }
-    return rotuloBloco(bloco);
+    return tituloDoBloco(bloco, this.perfil()?.esfera);
   }
 
   protected nota(bloco: string): string | null {
-    const esfera = this.perfil()?.esfera;
-    if (bloco === 'atos_normativos' && esfera === 'municipal') {
-      return 'Leis, leis complementares e decretos registrados pela câmara municipal no SAPL. A fonte não informa quem assinou cada ato.';
-    }
-    if (bloco === 'despesas_executivo' && esfera === 'federal') {
-      return 'Cartão de pagamento do Governo Federal e viagens realizadas do órgão Presidência da República, somados por mês a partir dos arquivos do Portal da Transparência. Transações sob sigilo entram pelo valor, sem detalhe. A fonte não informa quem autorizou cada gasto.';
-    }
-    return NOTAS[bloco] ?? null;
+    return notaDoBloco(bloco, this.perfil()?.esfera);
   }
 
   protected porTipo(bloco: Bloco): [string, number][] {
