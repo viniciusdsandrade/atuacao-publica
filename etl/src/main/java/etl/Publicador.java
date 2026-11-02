@@ -511,15 +511,36 @@ public final class Publicador {
      */
     static Map<String, String> identificadores(List<Perfil> perfis, Anterior anterior) {
         Set<String> tomados = new HashSet<>();
+        Map<Perfil, String> derivados = new HashMap<>();
+        // Primeiro as chaves das casas (a principal e os ids externos): o id publicado de um perfil é dele.
+        // Só depois as chaves do TSE, que podem apontar para o id de outro perfil da mesma pessoa ainda não fundido.
         for (Perfil perfil : perfis) {
-            String derivado = perfil.id;
-            for (String chave : chaves(perfil)) {
+            derivados.put(perfil, perfil.id);
+            for (String chave : chavesDasCasas(perfil)) {
                 String publicado = anterior.porChave().get(chave);
                 if (publicado != null && !tomados.contains(publicado)) {
                     perfil.id = publicado;
+                    tomados.add(publicado);
                     break;
                 }
             }
+        }
+        for (Perfil perfil : perfis) {
+            if (!perfil.id.equals(derivados.get(perfil)) || tomados.contains(perfil.id)) {
+                continue;
+            }
+            for (String chave : chavesDoTse(perfil)) {
+                String publicado = anterior.porChave().get(chave);
+                if (publicado != null && !tomados.contains(publicado)) {
+                    perfil.id = publicado;
+                    tomados.add(publicado);
+                    break;
+                }
+            }
+        }
+        tomados.clear();
+        for (Perfil perfil : perfis) {
+            String derivado = derivados.get(perfil);
             if (!tomados.add(perfil.id)) {
                 throw new IllegalStateException("dois perfis com o identificador " + perfil.id);
             }
@@ -553,9 +574,20 @@ public final class Publicador {
 
     /** Chaves de busca na publicação anterior: a principal, as das casas e as do TSE, da eleição mais recente para a mais antiga. */
     private static List<String> chaves(Perfil perfil) {
+        List<String> chaves = new ArrayList<>(chavesDasCasas(perfil));
+        chaves.addAll(chavesDoTse(perfil));
+        return chaves;
+    }
+
+    private static List<String> chavesDasCasas(Perfil perfil) {
         List<String> chaves = new ArrayList<>();
         chaves.add(perfil.chaveExterna);
         perfil.ids.forEach((fonte, id) -> chaves.add(fonte + ":" + id));
+        return chaves;
+    }
+
+    private static List<String> chavesDoTse(Perfil perfil) {
+        List<String> chaves = new ArrayList<>();
         new TreeMap<>(perfil.tse).descendingMap().values().forEach(sq -> chaves.add("tse:" + sq));
         return chaves;
     }

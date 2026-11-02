@@ -34,6 +34,24 @@ class PublicadorTest {
     }
 
     @Test
+    void chaveDaCasaVenceChaveDoTseQuandoApontamParaOMesmoIdPublicado() {
+        // Vereador publicado como sapl-306 com a candidatura X; um ex-deputado novo no arquivo tem a mesma candidatura X
+        // (mesma pessoa, ainda não fundida): o id publicado fica com quem tem a chave da casa, e o outro segue com o seu.
+        Publicador.Anterior anterior = new Publicador.Anterior(Map.of("sapl:306", "sapl-3509502-306", "tse:X", "sapl-3509502-306"),
+                Set.of("sapl-3509502-306"), Map.of());
+        Publicador.Perfil deputado = perfil("cam-1", "camara:1", Map.of("2024", "X"));
+        deputado.ids.put("camara", "1");
+        Publicador.Perfil vereador = perfil("sapl-3509502-306", "sapl:306", Map.of("2024", "X"));
+        vereador.ids.put("sapl", "306");
+
+        Map<String, String> aliases = Publicador.identificadores(List.of(deputado, vereador), anterior);
+
+        assertEquals("cam-1", deputado.id);
+        assertEquals("sapl-3509502-306", vereador.id);
+        assertTrue(aliases.isEmpty());
+    }
+
+    @Test
     void aliasPublicadoContinuaValendo() {
         Publicador.Anterior anterior = new Publicador.Anterior(Map.of("camara:1", "tse-900"), Set.of("tse-900"),
                 Map.of("cam-1", "tse-900"));

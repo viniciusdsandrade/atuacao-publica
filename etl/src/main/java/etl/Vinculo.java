@@ -80,6 +80,12 @@ final class Vinculo {
             List<JsonNode> doCpf = porCpf.getOrDefault(cpf, List.of());
             return doCpf.isEmpty() ? doCpf : daPessoa(chaves.get(doCpf.getFirst().get("sq").stringValue()), doCpf.getFirst());
         }
+
+        /** Nome civil com nascimento da pessoa desse CPF, pela primeira candidatura dela; null sem candidatura. */
+        String pessoaDoCpf(String cpf) {
+            List<JsonNode> doCpf = cpf == null ? List.of() : porCpf.getOrDefault(cpf, List.of());
+            return doCpf.isEmpty() ? null : pessoa(chaves.get(doCpf.getFirst().get("sq").stringValue()));
+        }
     }
 
     static String pessoa(Tse.Chave chave) {
@@ -144,11 +150,15 @@ final class Vinculo {
                 }
             }
         }
-        // Uma pessoa, duas casas (deputado que virou senador dentro da cobertura): um perfil só, pelo CPF em memória.
+        // Uma pessoa, duas casas (deputado que virou senador, ou deputado que virou vereador): um perfil só, pelo CPF
+        // em memória ou, quando o TSE mascara o CPF, pelo nome civil com data de nascimento.
         Map<String, Perfil> legisladorPorCpf = new HashMap<>();
+        Map<String, Perfil> legisladorPorPessoa = new HashMap<>();
         List<Perfil> fundidos = new ArrayList<>();
         for (Perfil p : perfis) {
             String cpf = null;
+            Tse.Chave chaveSapl = null;
+            JsonNode candSapl = null;
             if ("camara".equals(p.fonteCli)) {
                 Coleta.Arquivo arq = Coleta.metadados(ctx, "camara", "deputados/" + p.ids.get("camara") + ".json");
                 if (arq != null) {
@@ -177,22 +187,29 @@ final class Vinculo {
                         cand = candPorSaplNomeUrna.get(nomeCompleto);
                     }
                     if (cand != null) {
-                        Tse.Chave chave = chaves.get(cand.get("sq").stringValue());
-                        cpf = chave == null ? null : chave.cpf();
-                        if (cpf == null) {
-                            anexarCandidaturas(p, ligacoes.daPessoa(chave, cand));
-                        }
+                        candSapl = cand;
+                        chaveSapl = chaves.get(cand.get("sq").stringValue());
+                        cpf = chaveSapl == null ? null : chaveSapl.cpf();
                     }
                 }
             }
+            String pessoa = chaveSapl != null ? pessoa(chaveSapl) : ligacoes.pessoaDoCpf(cpf);
+            Perfil alvo = cpf == null ? null : legisladorPorCpf.putIfAbsent(cpf, p);
+            if (alvo == null && pessoa != null) {
+                alvo = legisladorPorPessoa.putIfAbsent(pessoa, p);
+            }
+            if (alvo != null && alvo != p) {
+                fundir(alvo, p);
+                fundidos.add(p);
+                continue;
+            }
+            if (pessoa != null) {
+                legisladorPorPessoa.putIfAbsent(pessoa, p);
+            }
             if (cpf != null) {
-                Perfil alvo = legisladorPorCpf.putIfAbsent(cpf, p);
-                if (alvo != null) {
-                    fundir(alvo, p);
-                    fundidos.add(p);
-                    continue;
-                }
                 anexarCandidaturas(p, ligacoes.doCpf(cpf));
+            } else if (candSapl != null) {
+                anexarCandidaturas(p, ligacoes.daPessoa(chaveSapl, candSapl));
             }
         }
         perfis.removeAll(fundidos);
