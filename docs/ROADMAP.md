@@ -83,7 +83,7 @@ Concluída em 2026-11-02. A interface foi refeita sem mudar dado, rota nem fonte
 | Etapa | Entrega | Estado |
 |---|---|---|
 | Casca | Cabeçalho e rodapé novos, tema claro e escuro, anel de foco com contraste, foco movido ao conteúdo na troca de página, título de aba por perfil, rolagem restaurada ao voltar | concluída |
-| Página inicial | Apresentação do site, busca por palavras, situação e esfera com contagem, filtros no endereço, "Mostrar mais", estados de carga e de erro | concluída |
+| Página inicial | Apresentação do site com números do índice, busca por palavras, situação e esfera com contagem, filtros no endereço, "Mostrar mais", estados de carga e de erro | concluída |
 | Estado das coletas | Página própria (`#/estado`) e resumo na página inicial | concluída |
 | Perfil | Sumário por blocos com o bloco em leitura, endereço por bloco, blocos sem registro mais baixos, tabelas em cartões no celular, despesas por ano, link para o JSON do perfil | concluída |
 | Detalhe anual | Migalhas, troca de ano, filtro em todos os campos e paginação | concluída |

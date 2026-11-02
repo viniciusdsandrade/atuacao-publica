@@ -1,4 +1,5 @@
 <section class="heroi" aria-labelledby="titulo-pagina">
+  <div class="heroi-texto">
   <h1 id="titulo-pagina">Atividade de políticos brasileiros, com fonte e data em cada registro</h1>
   <p class="heroi-lead">
     Votos, despesas, proposições, discursos, candidaturas e atos de parlamentares federais, da Presidência da República,
@@ -26,6 +27,25 @@
       <a routerLink="/estado">Estado das coletas</a>
     }
   </p>
+  </div>
+  @if (numeros(); as n) {
+    <dl class="heroi-numeros">
+      <div>
+        <dt>políticos no arquivo</dt>
+        <dd class="numero">{{ inteiro(n.total) }}</dd>
+      </div>
+      <div>
+        <dt>em exercício</dt>
+        <dd class="numero">{{ inteiro(n.emExercicio) }}</dd>
+      </div>
+      @if (n.fontes) {
+        <div>
+          <dt>fontes de dados</dt>
+          <dd class="numero">{{ inteiro(n.fontes) }}</dd>
+        </div>
+      }
+    </dl>
+  }
 </section>
 
 @if (erro()) {

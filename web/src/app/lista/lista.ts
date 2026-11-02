@@ -238,6 +238,19 @@ export class Lista {
     return [f.esfera, f.cargo, f.uf, f.partido].filter(Boolean).length;
   });
 
+  /** Números do índice para o herói. Contagens simples, iguais para todos. */
+  protected readonly numeros = computed(() => {
+    const i = this.indice();
+    if (!i) {
+      return null;
+    }
+    return {
+      total: i.total,
+      emExercicio: i.politicos.filter((p) => p.em_exercicio).length,
+      fontes: this.execucao()?.fontes.length ?? 0,
+    };
+  });
+
   /** Resumo do estado das coletas, com link para a página de detalhe. */
   protected readonly resumoColetas = computed(() => {
     const e = this.execucao();
