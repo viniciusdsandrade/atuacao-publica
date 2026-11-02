@@ -11,7 +11,7 @@ on:
       fonte:
         description: Fonte a coletar. As demais seguem do cache de dados brutos.
         type: choice
-        options: [todas, camara, senado, tse, executivo, sapl, tcesp, cgu, contrib]
+        options: [todas, camara, senado, tse, executivo, sapl, tcesp, cgu, agenda, contrib]
         default: todas
 
 permissions:
@@ -113,6 +113,14 @@ jobs:
         env:
           ETL_ORCAMENTO_MINUTOS: '22'
         run: java -Xmx4g -jar etl/target/etl.jar fetch cgu
+      - name: fetch agenda
+        # Agenda da Presidência: uma página por dia do mandato; 2022 vem do Internet Archive, a 4 s por chamada.
+        if: env.FONTE == 'todas' || env.FONTE == 'agenda'
+        continue-on-error: true
+        timeout-minutes: 45
+        env:
+          ETL_ORCAMENTO_MINUTOS: '35'
+        run: java -Xmx2g -jar etl/target/etl.jar fetch agenda
       - name: fetch contrib
         # Confere se as URLs de origem e os snapshots dos registros manuais ainda respondem.
         if: env.FONTE == 'todas' || env.FONTE == 'contrib'

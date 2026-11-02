@@ -14,7 +14,9 @@
       "eleicao": { "type": "integer", "minimum": 1990 },
       "inicio": { "$ref": "comum.schema.json#/$defs/data" },
       "fim": { "$ref": "comum.schema.json#/$defs/data" },
-      "texto_oficial": { "type": "string", "minLength": 1, "maxLength": 2000 }
+      "texto_oficial": { "type": "string", "minLength": 1, "maxLength": 2000 },
+      "agenda": { "description": "Endereço base da agenda oficial do mandato, com uma página por dia (ADR-0011).", "$ref": "comum.schema.json#/$defs/url" },
+      "agenda_arquivo": { "description": "Páginas fora do ar: a coleta usa a captura do Internet Archive de cada dia.", "type": "boolean" }
     },
     "unevaluatedProperties": false
   }

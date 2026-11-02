@@ -47,6 +47,8 @@ export const NOTAS: Record<string, string> = {
   despesas_executivo:
     'Valor pago pelo órgão da prefeitura, somado por mês pelo Tribunal de Contas do Estado. Autarquias, fundações e a Câmara ficam fora. A fonte não informa quem autorizou cada pagamento.',
   candidaturas: 'O TSE registra a eleição, não o exercício do cargo.',
+  agenda_oficial:
+    'Compromissos como publicados na página de cada dia da agenda oficial. Dia sem página publicada fica sem registro. Participantes como na fonte.',
   posicionamentos_declarados: 'Registros manuais revisados, com snapshot arquivado da fonte.',
 };
 

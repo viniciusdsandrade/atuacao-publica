@@ -50,6 +50,7 @@ final class Vinculo {
             atos(ctx, perfis);
             despesasDoExecutivoMunicipal(ctx, perfis);
             despesasDoExecutivoFederal(ctx, perfis);
+            agendaPresidencial(ctx, perfis);
             atosMunicipais(ctx, perfis);
         }
         return perfis;
@@ -482,6 +483,44 @@ final class Vinculo {
                     p.bloco("despesas_executivo").add(registro);
                     usarFonte(p, "despesas_executivo", Json.SAIDA.createObjectNode().<ObjectNode>set("fonte_id", a.get("fonte_id"))
                             .<ObjectNode>set("url_origem", a.get("url_origem")).set("capturado_em", a.get("capturado_em")));
+                }
+            }
+        }
+    }
+
+    /** Compromissos da agenda oficial em cada mandato presidencial já iniciado (ADR-0011). */
+    private static void agendaPresidencial(Contexto ctx, List<Perfil> perfis) {
+        Path arquivo = ctx.normalizado().resolve("agenda").resolve("compromissos.json");
+        if (!Files.exists(arquivo)) {
+            return;
+        }
+        JsonNode compromissos = Json.ler(arquivo);
+        String hoje = ctx.hoje().toString();
+        for (Perfil p : perfis) {
+            if (!p.cargos.contains("presidente")) {
+                continue;
+            }
+            for (JsonNode mandato : p.bloco("mandatos")) {
+                String inicio = Json.texto(mandato, "inicio");
+                String fim = Json.texto(mandato, "fim");
+                if (!"presidente".equals(Json.texto(mandato, "cargo")) || inicio == null || inicio.compareTo(hoje) > 0) {
+                    continue;
+                }
+                for (JsonNode c : compromissos) {
+                    String data = Json.texto(c, "data");
+                    if (!"BR".equals(Json.texto(c, "ente")) || data == null || data.compareTo(inicio) < 0
+                            || (fim != null && data.compareTo(fim) >= 0)) {
+                        continue;
+                    }
+                    ObjectNode registro = ((ObjectNode) c).deepCopy();
+                    registro.remove("ente");
+                    if (registro.get("snapshot_url") == null || registro.get("snapshot_url").isNull()) {
+                        registro.remove("snapshot_url");
+                    }
+                    p.bloco("agenda_oficial").add(registro);
+                    usarFonte(p, "agenda_oficial", Json.SAIDA.createObjectNode().<ObjectNode>set("fonte_id", c.get("fonte_id"))
+                            .put("url_origem", Json.texto(c, "url_origem").replaceAll("/[0-9]{4}-[0-9]{2}-[0-9]{2}$", ""))
+                            .set("capturado_em", c.get("capturado_em")));
                 }
             }
         }

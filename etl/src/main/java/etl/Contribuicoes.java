@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import etl.Texto;
 import etl.Publicador.Perfil;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.node.ObjectNode;
@@ -47,8 +48,14 @@ final class Contribuicoes {
                     r.put("rotulo", "T1".equals(nivel) ? ROTULO_T1 : null);
                     perfil.bloco("posicionamentos_declarados").add(proveniencia(r, entrada));
                 }
-                case "agenda_oficial" -> perfil.bloco("agenda_oficial").add(proveniencia(
-                        copiar(entrada, "data", "hora", "texto_oficial", "resumo_factual", "local"), entrada));
+                case "agenda_oficial" -> {
+                    ObjectNode r = proveniencia(copiar(entrada, "data", "hora", "texto_oficial", "resumo_factual", "local"), entrada);
+                    // O mesmo compromisso coletado da página do dia (ADR-0011) tem precedência: dado automático vence registro manual.
+                    boolean repetido = perfil.bloco("agenda_oficial").stream().anyMatch(a -> mesmoCompromisso(a, r));
+                    if (!repetido) {
+                        perfil.bloco("agenda_oficial").add(r);
+                    }
+                }
                 case "link_oficial" -> {
                     ObjectNode r = copiar(entrada, "rotulo");
                     r.set("url", entrada.get("url_origem"));
@@ -110,5 +117,14 @@ final class Contribuicoes {
             r.set(campo, entrada.get(campo));
         }
         return r;
+    }
+
+    /** Mesmo dia e mesmo título literal; a hora só desempata quando os dois registros a informam. */
+    private static boolean mesmoCompromisso(JsonNode a, JsonNode b) {
+        String horaA = Json.texto(a, "hora");
+        String horaB = Json.texto(b, "hora");
+        return java.util.Objects.equals(Json.texto(a, "data"), Json.texto(b, "data"))
+                && java.util.Objects.equals(Texto.normalizarNome(Json.texto(a, "texto_oficial")), Texto.normalizarNome(Json.texto(b, "texto_oficial")))
+                && (horaA == null || horaB == null || horaA.equals(horaB));
     }
 }

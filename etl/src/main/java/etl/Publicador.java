@@ -72,7 +72,7 @@ public final class Publicador {
     private static final Map<String, String> ORIGEM_DO_BLOCO = Map.of("candidaturas", "tse", "atos_normativos", "executivo",
             "despesas_executivo", "tcesp");
     static final int RECENTES = 20;
-    static final List<String> FONTES_CLI = List.of("camara", "senado", "tse", "executivo", "sapl", "tcesp", "cgu", "contrib");
+    static final List<String> FONTES_CLI = List.of("camara", "senado", "tse", "executivo", "sapl", "tcesp", "cgu", "agenda", "contrib");
 
     /** Perfil em construção, antes da validação. */
     static final class Perfil {
@@ -134,8 +134,11 @@ public final class Publicador {
 
         /** Registros manuais (posicionamentos, agenda) não dependem de coleta e nunca ficam desatualizados. */
         String origemDoBloco(String nome) {
-            if (nome.equals("posicionamentos_declarados") || nome.equals("agenda_oficial")) {
+            if (nome.equals("posicionamentos_declarados")) {
                 return null;
+            }
+            if (nome.equals("agenda_oficial")) {
+                return cargos.contains("presidente") ? "agenda" : null;
             }
             if (nome.equals("atos_normativos") && cargos.contains("prefeito") && !cargos.contains("presidente")) {
                 return "sapl";
@@ -418,9 +421,6 @@ public final class Publicador {
             }
         }
         ArrayNode arquivos = Json.SAIDA.createArrayNode();
-        if (bloco.equals("agenda_oficial")) {
-            return arquivos;
-        }
         for (var item : porAno.entrySet()) {
             String caminho = "politicos/" + perfil.id + "/" + bloco + "-" + item.getKey() + ".json.gz";
             ObjectNode detalhe = Json.SAIDA.createObjectNode().put("politico_id", perfil.id).put("tipo", bloco)

@@ -189,16 +189,15 @@
       "unevaluatedProperties": false
     },
     "agenda_oficial": {
+      "description": "Compromisso da agenda oficial: coletado da página do dia (ADR-0011) ou registro manual com snapshot.",
       "type": "object",
-      "allOf": [
-        { "$ref": "comum.schema.json#/$defs/proveniencia_manual" },
-        { "$ref": "#/$defs/texto_ou_resumo" }
-      ],
+      "allOf": [{ "$ref": "comum.schema.json#/$defs/proveniencia" }, { "$ref": "#/$defs/texto_ou_resumo" }],
       "required": ["data"],
       "properties": {
         "data": { "$ref": "comum.schema.json#/$defs/data" },
         "hora": { "anyOf": [{ "type": "string", "pattern": "^[0-2][0-9]:[0-5][0-9]$" }, { "type": "null" }] },
-        "local": { "$ref": "comum.schema.json#/$defs/texto_ou_nulo" }
+        "local": { "$ref": "comum.schema.json#/$defs/texto_ou_nulo" },
+        "participantes": { "type": "array", "items": { "$ref": "comum.schema.json#/$defs/texto" } }
       },
       "unevaluatedProperties": false
     },

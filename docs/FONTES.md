@@ -197,9 +197,11 @@ Os dois arquivos mudam juntos.
 
 ### `planalto-agenda`: agenda do Presidente da República
 
-- URL: `https://www.gov.br/planalto/pt-br/acompanhe-o-planalto/agenda-do-presidente-da-republica`
-- Só HTML, uma página por dia. Não há API.
-- Decisão: a agenda entra por contribuição manual com snapshot. Não há raspagem.
+- URL: `https://www.gov.br/planalto/pt-br/acompanhe-o-planalto/agenda-do-presidente-da-republica`, que redireciona para a pasta do mandato vigente (`agenda-do-presidente-da-republica-lula/agenda-do-presidente-da-republica`).
+- Só HTML, uma página por dia: `{base}/{AAAA-MM-DD}` (200 com agenda; 404 sem agenda publicada). A semana corrente aparece na página principal com `data-day`. Não há API.
+- Estrutura por compromisso: `item-compromisso`, `compromisso-inicio` (`09h30`), `compromisso-fim` opcional, `compromisso-titulo`, `compromisso-participantes` (lista), `compromisso-local` e link `vcal_view`. Igual em 2022 e 2026.
+- Mandato de 2019 a 2023: as páginas saíram do ar; o Internet Archive tem capturas por dia (`web.archive.org/web/{AAAAMMDD}120000id_/{url}`), conferido em 2026-11-02. O archive.org responde 429 a chamadas rápidas: a coleta espera 4 s entre chamadas.
+- Decisão revista pelo ADR-0011: coleta automática da página de cada dia, com o endereço base na regra de mandato. Contribuição manual com snapshot continua aceita.
 
 ### `planalto-legislacao`: legislação no Planalto
 

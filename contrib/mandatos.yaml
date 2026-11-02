@@ -7,6 +7,8 @@
   eleicao: 2018
   inicio: 2019-01-01
   fim: 2023-01-01
+  agenda: https://www.gov.br/planalto/pt-br/acompanhe-o-planalto/agenda-do-presidente-da-republica
+  agenda_arquivo: true
   texto_oficial: "Art. 82. O mandato do Presidente da República é de quatro anos e terá início em primeiro de janeiro do ano seguinte ao da sua eleição."
   fonte_id: planalto-legislacao
   url_origem: https://www.planalto.gov.br/ccivil_03/constituicao/emendas/emc/emc16.htm
@@ -18,6 +20,7 @@
   eleicao: 2022
   inicio: 2023-01-01
   fim: 2027-01-05
+  agenda: https://www.gov.br/planalto/pt-br/acompanhe-o-planalto/agenda-do-presidente-da-republica-lula/agenda-do-presidente-da-republica
   texto_oficial: "Art. 4º O Presidente da República e os Governadores de Estado e do Distrito Federal eleitos em 2022 tomarão posse em 1º de janeiro de 2023, e seus mandatos durarão até a posse de seus sucessores, em 5 e 6 de janeiro de 2027, respectivamente."
   fonte_id: planalto-legislacao
   url_origem: https://www.planalto.gov.br/ccivil_03/constituicao/emendas/emc/emc111.htm
