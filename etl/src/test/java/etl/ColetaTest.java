@@ -52,6 +52,22 @@ class ColetaTest {
     }
 
     @Test
+    void marcadorVazioDeRecursoInexistenteValeComoCache() throws Exception {
+        Contexto ctx = new Contexto(tmp, tmp.resolve("data"), new Http("teste/0", 1), null, Instant.now(), null);
+        Path arquivo = ctx.raw().resolve("teste").resolve("dias").resolve("2026-01-01.html");
+        java.nio.file.Files.createDirectories(arquivo.getParent());
+        java.nio.file.Files.write(arquivo, new byte[0]);
+        Coleta.Arquivo vazio = new Coleta.Arquivo("https://exemplo.invalid/dias/2026-01-01", "raw/teste/dias/2026-01-01.html", "", 0,
+                Instant.now());
+        Json.gravar(arquivo.resolveSibling("2026-01-01.html.meta.json"), vazio, true);
+        Coleta coleta = new Coleta(ctx, "teste", Duration.ZERO);
+        // Dia sem agenda já conhecido: não volta à rede nem conta como falha.
+        assertEquals(vazio, coleta.obterOuVazio("https://exemplo.invalid/dias/2026-01-01", "dias/2026-01-01.html", "text/html",
+                Politica.SE_AUSENTE));
+        assertTrue(coleta.reservasUsadas().isEmpty());
+    }
+
+    @Test
     void semOrcamentoNadaMuda() {
         Contexto ctx = new Contexto(tmp, tmp.resolve("data"), new Http("teste/0", 1), null, Instant.now(), null);
         Coleta coleta = new Coleta(ctx, "teste", null);

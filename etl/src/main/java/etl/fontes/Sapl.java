@@ -752,7 +752,7 @@ public final class Sapl implements Fonte {
 
     /** Listagem anual: ano fechado vem do cache; ano aberto renova uma vez por semana, em rodízio. */
     static Politica politicaAnual(int ano, LocalDate hoje) {
-        return Politica.porAno(ano, hoje) == Politica.SEMPRE ? Politica.SEMANAL : Politica.SE_AUSENTE;
+        return Politica.porAnoSemanal(ano, hoje);
     }
 
     static Integer minimo(Set<Integer> ids) {

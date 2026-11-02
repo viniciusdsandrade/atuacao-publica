@@ -42,7 +42,20 @@ public final class Http {
     private final String userAgent;
     private final Semaphore vagas;
     private final Map<String, Long> proximaPorHost = new HashMap<>();
+    /** Intervalo mínimo maior para hosts que limitam a taxa (web.archive.org). */
+    private final Map<String, Duration> intervaloPorHost = new ConcurrentHashMap<>();
+
+    public void respeitar(String host, Duration intervalo) {
+        intervaloPorHost.put(host, intervalo);
+    }
     private final Map<String, LongAdder> tentativasFalhas = new ConcurrentHashMap<>();
+
+    /** O recurso não existe na fonte (404, ou 403 do Portal da Transparência para arquivo ainda não publicado). */
+    public static final class NaoEncontrado extends IOException {
+        public NaoEncontrado(String mensagem) {
+            super(mensagem);
+        }
+    }
 
     public record Resposta(int status, byte[] corpo) {
         public boolean ok() {
@@ -78,6 +91,9 @@ public final class Http {
     public Baixado baixar(String url, Path destino, String accept) throws IOException, InterruptedException {
         HttpResponse<InputStream> resposta = enviar(requisicao(url, accept, "GET"), HttpResponse.BodyHandlers.ofInputStream());
         try (InputStream corpo = resposta.body()) {
+            if (resposta.statusCode() == 404 || resposta.statusCode() == 403) {
+                throw new NaoEncontrado("HTTP " + resposta.statusCode() + " em " + url);
+            }
             if (resposta.statusCode() < 200 || resposta.statusCode() >= 300) {
                 throw new IOException("HTTP " + resposta.statusCode() + " em " + url);
             }
@@ -189,7 +205,7 @@ public final class Http {
             long agora = System.nanoTime();
             long proxima = proximaPorHost.getOrDefault(host, agora);
             espera = Math.max(0, proxima - agora);
-            proximaPorHost.put(host, Math.max(agora, proxima) + INTERVALO_POR_HOST.toNanos());
+            proximaPorHost.put(host, Math.max(agora, proxima) + intervaloPorHost.getOrDefault(host, INTERVALO_POR_HOST).toNanos());
         }
         if (espera > 0) {
             Thread.sleep(Duration.ofNanos(espera));

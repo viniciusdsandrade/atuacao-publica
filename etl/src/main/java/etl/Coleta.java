@@ -40,6 +40,11 @@ public final class Coleta {
             boolean aberto = ano >= hoje.getYear() || ano == hoje.getYear() - 1 && hoje.getMonthValue() <= 3;
             return aberto ? SEMPRE : SE_AUSENTE;
         }
+
+        /** Como porAno, mas o ano aberto renova uma vez por semana, em rodízio: listagens grandes que mudam pouco. */
+        public static Politica porAnoSemanal(int ano, LocalDate hoje) {
+            return porAno(ano, hoje) == SEMPRE ? SEMANAL : SE_AUSENTE;
+        }
     }
 
     public record Arquivo(String url, String caminho, String sha256, long bytes, Instant capturadoEm) {
@@ -92,7 +97,45 @@ public final class Coleta {
 
     public Arquivo obter(String url, String caminho, String accept, Politica politica)
             throws IOException, InterruptedException {
-        return obter(url, caminho, accept, politica, false);
+        return obter(url, caminho, accept, politica, false, null, false);
+    }
+
+    /** Transforma o download antes de guardar: de um arquivo grande, só a parte útil fica no cache. */
+    public interface Derivacao {
+        void derivar(Path baixado, Path destino) throws IOException;
+    }
+
+    /**
+     * Recurso que pode não existir (página de um dia sem agenda, mês ainda não publicado): 404 e 403 guardam um arquivo
+     * vazio, com bytes 0 no meta, e não contam como falha. O rodízio da política renova a tentativa depois.
+     */
+    public Arquivo obterOuVazio(String url, String caminho, String accept, Politica politica)
+            throws IOException, InterruptedException {
+        Path destino = ctx.raw().resolve(fonte).resolve(caminho);
+        Path meta = lateral(destino);
+        Arquivo emCache = emCache(meta);
+        if (emCache != null && url.equals(emCache.url()) && emCache.bytes() == 0 && politica != Politica.SEMPRE
+                && !(politica == Politica.SEMANAL && vencida(caminho, emCache.capturadoEm(), ctx.agora()))) {
+            doCache.incrementAndGet();
+            arquivos.add(emCache);
+            return emCache;
+        }
+        try {
+            return obter(url, caminho, accept, politica, true, null, true);
+        } catch (Http.NaoEncontrado e) {
+            Files.createDirectories(destino.getParent());
+            Files.write(destino, new byte[0]);
+            Arquivo vazio = new Arquivo(url, ctx.relativo(destino), "", 0, ctx.agora());
+            Json.gravar(meta, vazio, true);
+            arquivos.add(vazio);
+            return vazio;
+        }
+    }
+
+    /** Como obterOpcional, mas guarda o resultado da derivação, não o download. O meta registra a URL e o hash do original. */
+    public Arquivo obterDerivado(String url, String caminho, String accept, Politica politica, Derivacao derivacao)
+            throws IOException, InterruptedException {
+        return obter(url, caminho, accept, politica, true, derivacao, false);
     }
 
     /**
@@ -101,11 +144,11 @@ public final class Coleta {
      */
     public Arquivo obterOpcional(String url, String caminho, String accept, Politica politica)
             throws IOException, InterruptedException {
-        return obter(url, caminho, accept, politica, true);
+        return obter(url, caminho, accept, politica, true, null, false);
     }
 
-    private Arquivo obter(String url, String caminho, String accept, Politica politica, boolean opcional)
-            throws IOException, InterruptedException {
+    private Arquivo obter(String url, String caminho, String accept, Politica politica, boolean opcional, Derivacao derivacao,
+                          boolean propagarNaoEncontrado) throws IOException, InterruptedException {
         Path destino = ctx.raw().resolve(fonte).resolve(caminho);
         Path meta = lateral(destino);
         Arquivo emCache = emCache(meta);
@@ -134,12 +177,38 @@ public final class Coleta {
             throw new IOException(motivo + " antes de " + caminho);
         }
         try {
-            Http.Baixado baixado = ctx.http().baixar(url, destino, accept);
+            Http.Baixado baixado;
+            if (derivacao == null) {
+                baixado = ctx.http().baixar(url, destino, accept);
+            } else {
+                Path temporario = Files.createTempFile(ctx.raw(), "download-", ".tmp");
+                try {
+                    baixado = ctx.http().baixar(url, temporario, accept);
+                    Files.createDirectories(destino.getParent());
+                    derivacao.derivar(baixado.arquivo(), destino);
+                    baixado = new Http.Baixado(destino, baixado.sha256(), baixado.bytes());
+                } finally {
+                    Files.deleteIfExists(temporario);
+                    Files.deleteIfExists(temporario.resolveSibling(temporario.getFileName() + ".gz"));
+                }
+            }
             Arquivo arquivo = new Arquivo(url, ctx.relativo(baixado.arquivo()), baixado.sha256(), baixado.bytes(), ctx.agora());
             Json.gravar(meta, arquivo, true);
             arquivos.add(arquivo);
             baixou();
             return arquivo;
+        } catch (Http.NaoEncontrado e) {
+            // Recurso que pode não existir: quem chamou obterOuVazio trata; os demais seguem o caminho comum de falha.
+            if (propagarNaoEncontrado && emCache == null) {
+                throw e;
+            }
+            if (falhas.merge(grupo, 1, Integer::sum) <= LIMITE_DE_FALHAS) {
+                System.err.println(fonte + ": falha em " + caminho + ": " + e.getMessage());
+            }
+            if (emCache == null && !opcional) {
+                throw e;
+            }
+            return reserva(grupo, emCache, e.getMessage());
         } catch (IOException e) {
             if (falhas.merge(grupo, 1, Integer::sum) <= LIMITE_DE_FALHAS) {
                 System.err.println(fonte + ": falha em " + caminho + ": " + e.getMessage());
