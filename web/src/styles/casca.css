@@ -1,0 +1,202 @@
+/* Casca do site: cabeçalho, conteúdo e rodapé. */
+
+.topo {
+  background: var(--superficie);
+  border-bottom: 1px solid var(--borda);
+}
+
+.topo-interno {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.125rem 1.5rem;
+  max-width: var(--largura);
+  margin: 0 auto;
+  padding: 0.5rem 1rem;
+}
+
+.marca {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.65rem;
+  min-height: 2.75rem;
+  color: var(--texto);
+  font-size: 1.1875rem;
+  font-weight: 750;
+  letter-spacing: -0.012em;
+  text-decoration: none;
+}
+
+.marca:hover {
+  color: var(--destaque);
+}
+
+.marca-logo {
+  width: 2rem;
+  height: 2rem;
+  flex: none;
+}
+
+.marca-logo rect {
+  fill: var(--destaque);
+}
+
+.marca-logo path {
+  stroke: var(--sobre-destaque);
+}
+
+.nav-principal ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.125rem;
+  list-style: none;
+}
+
+.nav-principal a {
+  display: flex;
+  align-items: center;
+  min-height: 2.5rem;
+  padding: 0 0.7rem;
+  border-radius: var(--r-pilula);
+  color: var(--texto-2);
+  font-size: 0.9375rem;
+  font-weight: 550;
+  text-decoration: none;
+  transition: background var(--transicao), color var(--transicao);
+}
+
+.nav-principal a:hover {
+  background: var(--superficie-2);
+  color: var(--texto);
+}
+
+.nav-principal a.ativo {
+  background: var(--destaque-suave);
+  color: var(--destaque);
+  font-weight: 700;
+  box-shadow: inset 0 -2px 0 var(--destaque);
+}
+
+main {
+  max-width: var(--largura);
+  margin: 0 auto;
+  padding: 1.25rem 1rem 3.5rem;
+  outline: none;
+}
+
+.rodape {
+  margin-top: 1rem;
+  border-top: 1px solid var(--borda);
+  background: var(--superficie);
+  color: var(--texto-2);
+  font-size: 0.9375rem;
+}
+
+.rodape-interno {
+  display: grid;
+  gap: 1.75rem;
+  max-width: var(--largura);
+  margin: 0 auto;
+  padding: 2rem 1rem 1rem;
+}
+
+.rodape-marca {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: 0.5rem;
+  color: var(--texto);
+  font-weight: 700;
+}
+
+.rodape-marca .marca-logo {
+  width: 1.5rem;
+  height: 1.5rem;
+}
+
+.rodape-titulo {
+  margin-bottom: 0.5rem;
+  color: var(--texto);
+  font-size: 0.875rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.rodape ul {
+  display: grid;
+  gap: 0.15rem;
+  list-style: none;
+}
+
+.rodape ul a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2rem;
+  color: var(--texto-2);
+}
+
+.rodape ul a:hover {
+  color: var(--destaque);
+}
+
+.rodape-licencas {
+  max-width: var(--largura);
+  margin: 0 auto;
+  padding: 1rem 1rem 2rem;
+  border-top: 1px solid var(--borda);
+  color: var(--texto-3);
+  font-size: 0.875rem;
+}
+
+@media (max-width: 30rem) {
+  .nav-principal a {
+    padding: 0 0.5rem;
+  }
+}
+
+@media (min-width: 48rem) {
+  .topo-interno,
+  .rodape-interno,
+  .rodape-licencas {
+    padding-inline: 1.5rem;
+  }
+
+  main {
+    padding: 2rem 1.5rem 4rem;
+  }
+
+  .nav-principal a {
+    padding: 0 0.9rem;
+    font-size: 1rem;
+  }
+
+  .rodape-interno {
+    grid-template-columns: 1.6fr 1fr 1fr;
+    gap: 2.5rem;
+  }
+}
+
+@media (forced-colors: active) {
+  .nav-principal a.ativo {
+    border: 1px solid CanvasText;
+  }
+
+  .marca-logo rect {
+    fill: CanvasText;
+  }
+
+  .marca-logo path {
+    stroke: Canvas;
+  }
+}
+
+/* Mensagem de carga inicial e aviso sem JavaScript (index.html). */
+.carga-inicial {
+  max-width: 40rem;
+  margin: 4rem auto;
+  padding: 0 1rem;
+  color: var(--texto-2);
+  text-align: center;
+}

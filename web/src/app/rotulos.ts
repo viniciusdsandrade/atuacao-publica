@@ -52,7 +52,69 @@ export const NOTAS: Record<string, string> = {
   posicionamentos_declarados: 'Registros manuais revisados, com snapshot arquivado da fonte.',
 };
 
+/** Rótulos curtos dos blocos para navegação e contagens. O título completo continua em BLOCOS. */
+export const BLOCOS_CURTOS: Record<string, string> = {
+  mandatos: 'Mandatos',
+  participacao_votacoes: 'Participação em votações',
+  votos: 'Votos',
+  despesas: 'Despesas da cota',
+  proposicoes: 'Proposições',
+  discursos: 'Discursos',
+  eventos: 'Eventos',
+  orgaos_e_frentes: 'Órgãos e frentes',
+  candidaturas: 'Candidaturas',
+  posicionamentos_declarados: 'Posicionamentos declarados',
+  agenda_oficial: 'Agenda oficial',
+  atos_normativos: 'Atos normativos',
+  despesas_executivo: 'Despesas do Executivo',
+};
+
 export const SEM_REGISTRO = 'Sem registro na fonte.';
+
+export type Situacao = 'exercicio' | 'posse' | 'fora';
+
+export const SITUACOES: Record<Situacao, string> = {
+  exercicio: 'Em exercício',
+  posse: 'Aguardando posse',
+  fora: 'Fora de exercício',
+};
+
+/** Em exercício, aguardando posse ou fora de exercício (ADR-0006). */
+export function situacaoDe(p: { em_exercicio: boolean; situacao: string | null }): Situacao {
+  if (p.em_exercicio) {
+    return 'exercicio';
+  }
+  return p.situacao?.includes('posse prevista') ? 'posse' : 'fora';
+}
+
+const PARTICULAS = new Set(['de', 'da', 'do', 'das', 'dos', 'e']);
+
+/** Iniciais do primeiro e do último nome, sem partículas: "Luiz Philippe de Orleans e Bragança" vira "LB". */
+export function iniciais(nome: string): string {
+  const partes = nome
+    .trim()
+    .split(/\s+/)
+    .filter((parte) => parte && !PARTICULAS.has(parte.toLowerCase()));
+  if (partes.length === 0) {
+    return '?';
+  }
+  const ultima = partes.length > 1 ? partes[partes.length - 1] : '';
+  return (partes[0].charAt(0) + ultima.charAt(0)).toLocaleUpperCase('pt-BR');
+}
+
+const inteiros = new Intl.NumberFormat('pt-BR');
+
+/** Inteiro com separador de milhar: 1327 vira "1.327". */
+export function inteiro(valor: number): string {
+  return inteiros.format(valor);
+}
+
+export function rotuloCurtoBloco(bloco: string, esfera?: string | null): string {
+  if (bloco === 'despesas_executivo') {
+    return esfera === 'federal' ? 'Cartão e viagens' : 'Despesas da prefeitura';
+  }
+  return BLOCOS_CURTOS[bloco] ?? bloco;
+}
 
 export function rotuloCargo(cargo: string): string {
   return CARGOS[cargo] ?? cargo;

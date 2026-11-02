@@ -14,8 +14,29 @@ export class Dados {
   readonly execucao$: Observable<Execucao> = this.http.get<Execucao>(this.base + '_meta/execucao.json').pipe(shareReplay(1));
   readonly fontes$: Observable<Fonte[]> = this.http.get<Fonte[]>(this.base + 'fontes.json').pipe(shareReplay(1));
 
+  /** Perfis já abertos ficam em memória (os 6 mais recentes): voltar de um detalhe não baixa o perfil de novo. */
+  private readonly perfis = new Map<string, Observable<Perfil>>();
+
   perfil(id: string): Observable<Perfil> {
-    return this.http.get<Perfil>(this.base + 'politicos/' + encodeURIComponent(id) + '.json');
+    let perfil$ = this.perfis.get(id);
+    if (perfil$) {
+      this.perfis.delete(id);
+    } else {
+      perfil$ = this.http.get<Perfil>(this.base + 'politicos/' + encodeURIComponent(id) + '.json').pipe(shareReplay(1));
+      if (this.perfis.size >= 6) {
+        const maisAntigo = this.perfis.keys().next().value;
+        if (maisAntigo !== undefined) {
+          this.perfis.delete(maisAntigo);
+        }
+      }
+    }
+    this.perfis.set(id, perfil$);
+    return perfil$;
+  }
+
+  /** Endereço do JSON publicado de um perfil, para quem quer os dados abertos. */
+  enderecoDoPerfil(id: string): string {
+    return this.base + 'politicos/' + encodeURIComponent(id) + '.json';
   }
 
   /** Detalhe anual vem compactado com gzip (politicos/{id}/{bloco}-{ano}.json.gz). */

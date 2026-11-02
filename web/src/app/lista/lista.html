@@ -1,108 +1,246 @@
-<h1>Políticos</h1>
-<p class="intro">
-  Atividade de parlamentares federais, da Presidência da República, de governadores e do piloto municipal (Campinas/SP), a partir de fontes oficiais.
-  Cada registro traz a fonte e a data de captura. Quem deixa o cargo continua no arquivo, com o histórico do período coberto.
-</p>
+<section class="heroi" aria-labelledby="titulo-pagina">
+  <h1 id="titulo-pagina">Atividade de políticos brasileiros, com fonte e data em cada registro</h1>
+  <p class="heroi-lead">
+    Votos, despesas, proposições, discursos, candidaturas e atos de parlamentares federais, da Presidência da República,
+    de governadores e do piloto municipal (Campinas/SP). Quem deixa o cargo continua no arquivo.
+  </p>
+  <p class="heroi-regras">
+    Sem nota, ranking nem juízo. O que a fonte não publica aparece como “sem registro na fonte”.
+    <a routerLink="/metodologia">Metodologia</a> · <a routerLink="/politica-editorial">Política editorial</a>
+  </p>
+  <p class="heroi-estado">
+    @if (indice(); as i) {
+      <span>Índice gerado em {{ data(i.gerado_em) }}.</span>
+    }
+    @if (resumoColetas(); as r) {
+      <a routerLink="/estado">
+        @if (r.comAviso > 0) {
+          <app-icone nome="alerta" [pequeno]="true" />
+          {{ r.comAviso }} {{ r.comAviso === 1 ? 'fonte com aviso' : 'fontes com aviso' }} nas coletas
+        } @else {
+          <app-icone nome="verificado" [pequeno]="true" />
+          Coletas das {{ r.total }} fontes sem aviso
+        }
+      </a>
+    } @else {
+      <a routerLink="/estado">Estado das coletas</a>
+    }
+  </p>
+</section>
 
-<form class="filtros" role="search" (submit)="$event.preventDefault()">
-  <div class="campo">
-    <label for="busca">Busca</label>
-    <input id="busca" type="search" placeholder="Nome, município, cargo ou partido" autocomplete="off" [value]="busca()" (input)="busca.set(valor($event))" />
+@if (erro()) {
+  <div class="caixa-vazia" role="alert">
+    <app-icone nome="alerta" />
+    <h2>Não foi possível carregar o índice de políticos</h2>
+    <p>O arquivo com os dados não respondeu. Confira a conexão e tente de novo.</p>
+    <button type="button" class="botao botao--primario" (click)="tentarDeNovo()">Tentar de novo</button>
   </div>
-  <div class="campo">
-    <label for="situacao">Situação</label>
-    <select id="situacao" [value]="situacao()" (change)="escolherSituacao($event)">
-      <option value="exercicio">Em exercício</option>
-      <option value="posse">Eleitos aguardando posse</option>
-      <option value="fora">Fora de exercício</option>
-      <option value="">Todos</option>
-    </select>
-  </div>
-  <div class="campo">
-    <label for="esfera">Esfera</label>
-    <select id="esfera" [value]="esfera()" (change)="esfera.set(valor($event))">
-      <option value="">Todas</option>
-      @for (e of esferas(); track e) {
-        <option [value]="e">{{ rotuloEsfera(e) }}</option>
-      }
-    </select>
-  </div>
-  <div class="campo">
-    <label for="cargo">Cargo</label>
-    <select id="cargo" [value]="cargo()" (change)="cargo.set(valor($event))">
-      <option value="">Todos</option>
-      @for (c of cargos(); track c) {
-        <option [value]="c">{{ rotuloCargo(c) }}</option>
-      }
-    </select>
-  </div>
-  <div class="campo">
-    <label for="uf">UF</label>
-    <select id="uf" [value]="uf()" (change)="uf.set(valor($event))">
-      <option value="">Todas</option>
-      @for (u of ufs(); track u) {
-        <option [value]="u">{{ u }}</option>
-      }
-    </select>
-  </div>
-  <div class="campo">
-    <label for="partido">Partido</label>
-    <select id="partido" [value]="partido()" (change)="partido.set(valor($event))">
-      <option value="">Todos</option>
-      @for (p of partidos(); track p) {
-        <option [value]="p">{{ p }}</option>
-      }
-    </select>
-  </div>
-  <button type="button" class="secundario" (click)="limpar()">Limpar filtros</button>
-</form>
+} @else if (indice(); as i) {
+  <form class="painel painel-busca" role="search" aria-label="Buscar e filtrar políticos" (submit)="$event.preventDefault()">
+    <div class="campo">
+      <label for="busca">Buscar por nome, município, cargo ou partido</label>
+      <div class="busca">
+        <app-icone class="icone-busca" nome="busca" />
+        <input
+          #campoBusca
+          id="busca"
+          class="controle"
+          type="search"
+          name="busca"
+          placeholder="Digite para buscar"
+          autocomplete="off"
+          enterkeyhint="search"
+          [value]="filtros().busca"
+          (input)="alterar({ busca: valor($event) })"
+          (blur)="gravarAgora()"
+        />
+        @if (filtros().busca) {
+          <button type="button" class="busca-limpar" aria-label="Limpar a busca" (click)="alterar({ busca: '' }); campoBusca.focus()">
+            <app-icone nome="fechar" />
+          </button>
+        }
+      </div>
+    </div>
 
-@if (indice(); as i) {
-  <p class="contagem" aria-live="polite">{{ resultado().length }} de {{ i.total }} políticos.</p>
-  <ul class="lista">
-    @for (p of resultado(); track p.id) {
-      <li>
-        <a [routerLink]="['/politico', p.id]">
-          <span class="nome">{{ p.nome }}</span>
-          <span class="detalhe">
-            {{ rotuloCargo(p.cargo) }}
-            @if (rotuloLocal(p.esfera, p.ente, p.uf); as local) {
-              · {{ local }}
-            }
-            {{ p.partido ? ' · ' + p.partido : '' }}
-          </span>
-          @if (situacaoDe(p) !== 'exercicio' && p.situacao) {
-            <span class="detalhe">{{ p.situacao }}</span>
+    <div class="filtros-segmentos">
+      <div class="segmentos" role="radiogroup" aria-labelledby="rotulo-situacao">
+        <span id="rotulo-situacao" class="campo-rotulo">Situação</span>
+        <div class="segmentos-lista">
+          @for (s of segmentosSituacao(); track s.valor) {
+            <label class="segmento">
+              <input type="radio" name="situacao" [value]="s.valor" [checked]="filtros().situacao === s.valor" (change)="alterar({ situacao: s.valor })" />
+              <span>{{ s.rotulo }} <small>{{ inteiro(s.total) }}</small></span>
+            </label>
           }
-        </a>
+        </div>
+      </div>
+      <div class="segmentos so-largo" role="radiogroup" aria-labelledby="rotulo-esfera">
+        <span id="rotulo-esfera" class="campo-rotulo">Esfera</span>
+        <div class="segmentos-lista">
+          @for (s of segmentosEsfera(); track s.valor) {
+            <label class="segmento">
+              <input type="radio" name="esfera" [value]="s.valor" [checked]="filtros().esfera === s.valor" (change)="alterar({ esfera: s.valor })" />
+              <span>{{ s.rotulo }} <small>{{ inteiro(s.total) }}</small></span>
+            </label>
+          }
+        </div>
+      </div>
+    </div>
+
+    <div class="filtros-mais">
+      <button
+        type="button"
+        class="botao botao--pequeno botao-filtros"
+        aria-controls="filtros-extras"
+        [attr.aria-expanded]="extrasAbertos()"
+        (click)="extrasAbertos.set(!extrasAbertos())"
+      >
+        <app-icone nome="filtros" /> Mais filtros
+        @if (extrasAtivos() > 0) {
+          <span class="selo selo--partido">{{ extrasAtivos() }}</span>
+        }
+      </button>
+      <div id="filtros-extras" class="filtros-extras" [class.aberto]="extrasAbertos()">
+        <div class="campo so-celular">
+          <label for="esfera">Esfera</label>
+          <div class="selecao">
+            <select id="esfera" class="controle" (change)="alterar({ esfera: valor($event) })">
+              @for (s of segmentosEsfera(); track s.valor) {
+                <option [value]="s.valor" [selected]="s.valor === filtros().esfera">{{ s.rotulo }} ({{ inteiro(s.total) }})</option>
+              }
+            </select>
+          </div>
+        </div>
+        <div class="campo">
+          <label for="cargo">Cargo</label>
+          <div class="selecao">
+            <select id="cargo" class="controle" (change)="alterar({ cargo: valor($event) })">
+              <option value="" [selected]="!filtros().cargo">Todos</option>
+              @for (c of cargos(); track c) {
+                <option [value]="c" [selected]="c === filtros().cargo">{{ rotuloCargo(c) }}</option>
+              }
+            </select>
+          </div>
+        </div>
+        <div class="campo">
+          <label for="uf">UF</label>
+          <div class="selecao">
+            <select id="uf" class="controle" (change)="alterar({ uf: valor($event) })">
+              <option value="" [selected]="!filtros().uf">Todas</option>
+              @for (u of ufs(); track u) {
+                <option [value]="u" [selected]="u === filtros().uf">{{ u }}</option>
+              }
+            </select>
+          </div>
+        </div>
+        <div class="campo">
+          <label for="partido">Partido</label>
+          <div class="selecao">
+            <select id="partido" class="controle" (change)="alterar({ partido: valor($event) })">
+              <option value="" [selected]="!filtros().partido">Todos</option>
+              @for (p of partidos(); track p) {
+                <option [value]="p" [selected]="p === filtros().partido">{{ p }}</option>
+              }
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    @if (ativos().length) {
+      <div class="filtros-ativos" role="group" aria-label="Filtros ativos">
+        @for (a of ativos(); track a.chave) {
+          <button type="button" class="chip" [attr.aria-label]="'Remover filtro: ' + a.rotulo" (click)="remover(a.chave)">
+            {{ a.rotulo }}
+            <app-icone nome="fechar" [pequeno]="true" />
+          </button>
+        }
+        <button type="button" class="botao botao--discreto botao--pequeno" (click)="limpar()">Limpar tudo</button>
+      </div>
+    }
+  </form>
+
+  <section aria-labelledby="titulo-resultados">
+    <h2 id="titulo-resultados" class="resultados-titulo">
+      <strong>{{ inteiro(resultado().length) }}</strong> de {{ inteiro(i.total) }} políticos
+    </h2>
+    <p class="sr-only" role="status">{{ anuncio() }}</p>
+
+    @if (resultado().length === 0) {
+      <div class="caixa-vazia">
+        <app-icone nome="busca" />
+        <h3>Nenhum político com esses filtros</h3>
+        <p>
+          Confira a grafia ou tire algum filtro. A busca ignora acento e maiúscula.
+          @if (filtros().situacao && segmentosSituacao()[3].total > 0) {
+            Há {{ inteiro(segmentosSituacao()[3].total) }} em outras situações.
+          }
+        </p>
+        <div class="mais-acoes">
+          @if (filtros().situacao && segmentosSituacao()[3].total > 0) {
+            <button type="button" class="botao botao--primario" (click)="alterar({ situacao: '' })">Ver em todas as situações</button>
+          }
+          <button type="button" class="botao" (click)="limpar()">Limpar filtros</button>
+        </div>
+      </div>
+    } @else {
+      <ul class="grade-cartoes">
+        @for (c of visiveis(); track c.p.id; let n = $index) {
+          <li [attr.data-i]="n">
+            <a class="cartao" [routerLink]="['/politico', c.p.id]">
+              <span class="avatar" aria-hidden="true">{{ c.iniciais }}</span>
+              <span class="cartao-corpo">
+                <span class="cartao-nome">{{ c.p.nome }}</span>
+                <span class="cartao-cargo">{{ c.cargo }}@if (c.local) { · {{ c.local }} }</span>
+                @if (c.p.partido || c.situacao !== 'exercicio') {
+                  <span class="cartao-rodape">
+                    @if (c.p.partido) {
+                      <span class="selo selo--partido">{{ c.p.partido }}</span>
+                    }
+                    @if (c.situacao === 'posse') {
+                      <span class="selo selo--posse">Aguardando posse</span>
+                    } @else if (c.situacao === 'fora') {
+                      <span class="selo selo--fora">Fora de exercício</span>
+                    }
+                  </span>
+                }
+                @if (c.situacao !== 'exercicio' && c.p.situacao) {
+                  <span class="cartao-situacao" [attr.title]="c.p.situacao">{{ c.p.situacao }}</span>
+                }
+              </span>
+              <app-icone class="cartao-seta" nome="seta-direita" />
+            </a>
+          </li>
+        }
+      </ul>
+      @if (restantes() > 0) {
+        <div class="mais">
+          <p>Exibindo {{ inteiro(visiveis().length) }} de {{ inteiro(resultado().length) }}.</p>
+          <div class="mais-acoes">
+            <button type="button" class="botao" (click)="mostrarMais(false)">Mostrar mais {{ restantes() < lote ? restantes() : lote }}</button>
+            @if (restantes() > lote) {
+              <button type="button" class="botao botao--discreto" (click)="mostrarMais(true)">Mostrar todos</button>
+            }
+          </div>
+        </div>
+      }
+    }
+  </section>
+} @else {
+  <p class="sr-only" role="status">Carregando o índice de políticos.</p>
+  <div class="painel painel-busca" aria-hidden="true">
+    <div class="esqueleto esqueleto--campo"></div>
+    <div class="esqueleto esqueleto--linha"></div>
+  </div>
+  <ul class="grade-cartoes" aria-hidden="true">
+    @for (n of esqueletos; track n) {
+      <li class="cartao cartao--esqueleto">
+        <span class="esqueleto avatar"></span>
+        <span class="cartao-corpo">
+          <span class="esqueleto esqueleto--texto"></span>
+          <span class="esqueleto esqueleto--texto esqueleto--curto"></span>
+        </span>
       </li>
-    } @empty {
-      <li class="vazio">Nenhum político com esses filtros.</li>
     }
   </ul>
-  <p class="atualizacao">Índice gerado em {{ data(i.gerado_em) }}.</p>
-} @else {
-  <p aria-live="polite">Carregando o índice...</p>
-}
-
-@if (execucao(); as e) {
-  <section class="estado-fontes" aria-labelledby="titulo-fontes">
-    <h2 id="titulo-fontes">Estado das coletas</h2>
-    <ul>
-      @for (f of e.fontes; track f.fonte) {
-        <li>
-          <strong>{{ f.fonte }}</strong>:
-          @if (f.status === 'ok') {
-            última coleta em {{ data(f.ultima_coleta_ok) }}
-          } @else if (f.status === 'falha') {
-            <span class="aviso">fonte desatualizada</span> (última coleta válida: {{ data(f.ultima_coleta_ok) }})
-          } @else if (f.status === 'parcial') {
-            <span class="aviso">coleta incompleta</span> em {{ data(f.ultima_coleta_ok) }}: parte dos dados vem de coleta anterior
-          } @else {
-            {{ f.status === 'nao_executada' ? 'sem coleta' : f.status }}
-          }
-        </li>
-      }
-    </ul>
-  </section>
 }

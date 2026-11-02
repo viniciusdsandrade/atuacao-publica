@@ -12,6 +12,7 @@ import {
   chaveDeBusca,
   moeda,
   data,
+  situacaoDe,
 } from './rotulos.ts';
 
 test('rotuloCargo retorna nome legível dos cargos municipais e gerais', () => {
@@ -55,6 +56,14 @@ test('chaveDeBusca normaliza acentuação e caixa', () => {
 test('moeda formata valores em BRL', () => {
   assert.equal(moeda(null), 'Sem registro na fonte.');
   assert.match(moeda(1250.5), /1\.250,50/);
+});
+
+test('situacaoDe separa exercício, posse prevista e fora de exercício (ADR-0006)', () => {
+  assert.equal(situacaoDe({ em_exercicio: true, situacao: 'Exercício' }), 'exercicio');
+  assert.equal(situacaoDe({ em_exercicio: true, situacao: null }), 'exercicio');
+  assert.equal(situacaoDe({ em_exercicio: false, situacao: 'Eleito em 2026; posse prevista em 2027-02-01' }), 'posse');
+  assert.equal(situacaoDe({ em_exercicio: false, situacao: 'Mandato encerrado em 2023-01-31' }), 'fora');
+  assert.equal(situacaoDe({ em_exercicio: false, situacao: null }), 'fora');
 });
 
 test('data formata ISO para dd/mm/aaaa', () => {

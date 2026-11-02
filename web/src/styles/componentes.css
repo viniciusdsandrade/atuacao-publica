@@ -1,0 +1,547 @@
+/* Componentes reutilizados em várias páginas. */
+
+/* Ícones: SVG embutido, traço em currentColor. */
+.icone {
+  width: 1.25rem;
+  height: 1.25rem;
+  flex: none;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.icone--pequeno {
+  width: 1rem;
+  height: 1rem;
+}
+
+/* Botões e links com aparência de botão. */
+.botao {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 2.75rem;
+  padding: 0 1.1rem;
+  border: 1px solid var(--borda-controle);
+  border-radius: var(--r-2);
+  background: var(--superficie);
+  color: var(--texto);
+  font: inherit;
+  font-weight: 600;
+  line-height: 1.2;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background var(--transicao), border-color var(--transicao), color var(--transicao);
+}
+
+.botao:hover {
+  background: var(--superficie-2);
+  text-decoration: none;
+}
+
+.botao--primario {
+  border-color: var(--destaque);
+  background: var(--destaque);
+  color: var(--sobre-destaque);
+}
+
+.botao--primario:hover {
+  border-color: var(--destaque-forte);
+  background: var(--destaque-forte);
+}
+
+.botao--discreto {
+  border-color: transparent;
+  background: transparent;
+  color: var(--destaque);
+}
+
+.botao--discreto:hover {
+  background: var(--destaque-suave);
+}
+
+.botao--pequeno {
+  min-height: 2.5rem;
+  padding: 0 0.85rem;
+  font-size: 0.9375rem;
+}
+
+/* Campos de formulário. A borda do controle tem contraste de pelo menos 3:1 (WCAG 1.4.11). */
+.campo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+  min-width: 0;
+}
+
+.campo > label,
+.campo-rotulo {
+  color: var(--texto-2);
+  font-size: 0.875rem;
+  font-weight: 650;
+}
+
+.controle {
+  width: 100%;
+  min-height: 2.75rem;
+  padding: 0 0.875rem;
+  border: 1px solid var(--borda-controle);
+  border-radius: var(--r-2);
+  background: var(--superficie);
+  color: var(--texto);
+  font: inherit;
+  transition: border-color var(--transicao), box-shadow var(--transicao);
+}
+
+.controle:hover {
+  border-color: var(--texto-2);
+}
+
+.controle::placeholder {
+  color: var(--texto-3);
+  opacity: 1;
+}
+
+.selecao {
+  position: relative;
+}
+
+.selecao select {
+  appearance: none;
+  padding-right: 2.5rem;
+  text-overflow: ellipsis;
+  cursor: pointer;
+}
+
+.selecao::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  right: 1rem;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-right: 2px solid var(--texto-2);
+  border-bottom: 2px solid var(--texto-2);
+  transform: translateY(-70%) rotate(45deg);
+  pointer-events: none;
+}
+
+.busca {
+  position: relative;
+}
+
+.busca .icone-busca {
+  position: absolute;
+  top: 50%;
+  left: 1rem;
+  transform: translateY(-50%);
+  color: var(--texto-3);
+  pointer-events: none;
+}
+
+.busca .controle {
+  min-height: 3.25rem;
+  padding-left: 2.9rem;
+  padding-right: 3rem;
+  font-size: 1.0625rem;
+}
+
+.busca .controle::-webkit-search-cancel-button {
+  appearance: none;
+}
+
+.busca-limpar {
+  position: absolute;
+  top: 50%;
+  right: 0.35rem;
+  display: grid;
+  place-items: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  transform: translateY(-50%);
+  border: 0;
+  border-radius: var(--r-pilula);
+  background: transparent;
+  color: var(--texto-2);
+  cursor: pointer;
+}
+
+.busca-limpar:hover {
+  background: var(--superficie-2);
+  color: var(--texto);
+}
+
+/* Controle segmentado: grupo de botões de opção nativos. O teclado usa as setas. */
+.segmentos {
+  min-width: 0;
+}
+
+.segmentos .campo-rotulo {
+  display: block;
+  margin-bottom: 0.375rem;
+}
+
+.segmentos-lista {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem;
+}
+
+.segmento {
+  position: relative;
+  display: inline-flex;
+}
+
+.segmento input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.segmento span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-height: 2.5rem;
+  padding: 0 0.95rem;
+  border: 1px solid var(--borda-controle);
+  border-radius: var(--r-pilula);
+  background: var(--superficie);
+  color: var(--texto-2);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  transition: background var(--transicao), border-color var(--transicao), color var(--transicao);
+}
+
+.segmento small {
+  color: var(--texto-3);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+
+.segmento input:hover + span {
+  background: var(--superficie-2);
+  color: var(--texto);
+}
+
+.segmento input:checked + span {
+  border-color: var(--destaque);
+  background: var(--destaque);
+  color: var(--sobre-destaque);
+}
+
+.segmento input:checked + span small {
+  color: inherit;
+  opacity: 0.85;
+}
+
+.segmento input:checked + span::before {
+  content: '';
+  width: 0.3rem;
+  height: 0.6rem;
+  margin: -0.15rem 0.1rem 0 0;
+  border: solid currentColor;
+  border-width: 0 2px 2px 0;
+  transform: rotate(40deg);
+}
+
+.segmento input:focus-visible + span {
+  outline: 3px solid var(--foco);
+  outline-offset: 2px;
+}
+
+/* Chips de filtro ativo. */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-height: 2.25rem;
+  padding: 0 0.6rem 0 0.8rem;
+  border: 1px solid var(--borda-controle);
+  border-radius: var(--r-pilula);
+  background: var(--superficie);
+  color: var(--texto);
+  font: inherit;
+  font-size: 0.875rem;
+  cursor: pointer;
+}
+
+.chip:hover {
+  background: var(--superficie-2);
+}
+
+.chip .icone {
+  width: 1rem;
+  height: 1rem;
+  color: var(--texto-2);
+}
+
+/* Selos: situação, partido e avisos. A forma do marcador distingue o estado sem depender de cor. */
+.selo {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.1rem 0.6rem;
+  border: 1px solid var(--borda);
+  border-radius: var(--r-pilula);
+  background: var(--superficie-2);
+  color: var(--texto-2);
+  font-size: 0.8125rem;
+  font-weight: 650;
+  line-height: 1.45;
+  white-space: nowrap;
+}
+
+.selo--ativo,
+.selo--posse,
+.selo--fora {
+  padding-left: 0.5rem;
+}
+
+.selo--ativo::before,
+.selo--posse::before {
+  content: '';
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.selo--ativo {
+  border-color: transparent;
+  background: var(--destaque-suave);
+  color: var(--destaque);
+}
+
+.selo--posse {
+  border-style: dashed;
+  border-color: var(--borda-controle);
+  background: var(--superficie);
+}
+
+.selo--posse::before {
+  background: transparent;
+  box-shadow: inset 0 0 0 2px currentColor;
+}
+
+.selo--fora::before {
+  content: '';
+  width: 0.55rem;
+  height: 2px;
+  background: currentColor;
+}
+
+.selo--aviso {
+  border-color: var(--aviso-borda);
+  background: var(--aviso-fundo);
+  color: var(--aviso);
+  white-space: normal;
+}
+
+.selo--partido {
+  background: var(--superficie);
+  border-color: var(--borda-controle);
+  color: var(--texto);
+}
+
+/* Avatar com iniciais: o site não embute foto de terceiros (política de privacidade do visitante). */
+.avatar {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 50%;
+  background: var(--destaque-suave);
+  color: var(--destaque);
+  font-size: 0.95rem;
+  font-weight: 750;
+  letter-spacing: 0.02em;
+}
+
+.avatar--grande {
+  width: 4.5rem;
+  height: 4.5rem;
+  font-size: 1.5rem;
+}
+
+/* Caixas de nota e de aviso. */
+.callout {
+  display: flex;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--borda);
+  border-radius: var(--r-2);
+  background: var(--superficie-2);
+  color: var(--texto-2);
+  font-size: 0.9375rem;
+}
+
+.callout > p {
+  margin: 0;
+}
+
+.callout .icone {
+  margin-top: 0.1rem;
+  color: var(--texto-3);
+}
+
+.callout--aviso {
+  border-color: var(--aviso-borda);
+  background: var(--aviso-fundo);
+  color: var(--aviso);
+}
+
+.callout--aviso .icone {
+  color: inherit;
+}
+
+/* Painel: superfície com borda e sombra leve. */
+.painel {
+  border: 1px solid var(--borda);
+  border-radius: var(--r-3);
+  background: var(--superficie);
+  box-shadow: var(--sombra-1);
+}
+
+/* Migalhas de pão. */
+.migalhas ol {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.15rem 0.5rem;
+  list-style: none;
+  color: var(--texto-2);
+  font-size: 0.9375rem;
+}
+
+.migalhas li + li::before {
+  content: '›' / '';
+  margin-right: 0.5rem;
+  color: var(--texto-3);
+}
+
+.migalhas a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2rem;
+}
+
+.migalhas [aria-current='page'] {
+  color: var(--texto);
+  font-weight: 650;
+}
+
+/* Detalhes expansíveis: seta própria, alvo de toque confortável. */
+.sanfona > summary {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-height: 2.75rem;
+  list-style: none;
+  cursor: pointer;
+}
+
+.sanfona > summary::-webkit-details-marker {
+  display: none;
+}
+
+.sanfona > summary::after {
+  content: '';
+  flex: none;
+  width: 0.5rem;
+  height: 0.5rem;
+  margin: 0 0.25rem 0.2rem auto;
+  border-right: 2px solid var(--texto-2);
+  border-bottom: 2px solid var(--texto-2);
+  transform: rotate(45deg);
+  transition: transform var(--transicao);
+}
+
+.sanfona[open] > summary::after {
+  margin-bottom: -0.15rem;
+  transform: rotate(-135deg);
+}
+
+/* Carregamento. */
+.esqueleto {
+  border-radius: var(--r-1);
+  background: linear-gradient(90deg, var(--superficie-2), var(--superficie-3), var(--superficie-2));
+  background-size: 200% 100%;
+  animation: brilho 1.6s ease-in-out infinite;
+}
+
+@keyframes brilho {
+  from {
+    background-position: 200% 0;
+  }
+
+  to {
+    background-position: -200% 0;
+  }
+}
+
+/* Estado vazio ou de erro. */
+.caixa-vazia {
+  display: grid;
+  justify-items: center;
+  gap: 0.5rem;
+  padding: 2.5rem 1.25rem;
+  border: 1px dashed var(--borda-controle);
+  border-radius: var(--r-3);
+  color: var(--texto-2);
+  text-align: center;
+}
+
+.caixa-vazia h2,
+.caixa-vazia h3 {
+  color: var(--texto);
+  font-size: 1.125rem;
+}
+
+.caixa-vazia p {
+  max-width: 34rem;
+  margin: 0;
+}
+
+/* "Mostrar mais". */
+.mais {
+  display: grid;
+  justify-items: center;
+  gap: 0.5rem;
+  margin: 1.5rem 0 0;
+  color: var(--texto-2);
+  font-size: 0.9375rem;
+}
+
+.mais p {
+  margin: 0;
+}
+
+.mais-acoes {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+@media (forced-colors: active) {
+  .painel,
+  .callout,
+  .selo,
+  .chip,
+  .segmento span {
+    border: 1px solid CanvasText;
+  }
+
+  .segmento input:checked + span {
+    outline: 2px solid Highlight;
+  }
+}
