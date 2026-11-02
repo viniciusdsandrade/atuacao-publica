@@ -1,24 +1,38 @@
 import { Component, input } from '@angular/core';
 
+import { Icone } from '../icone/icone';
 import { Bloco } from '../modelo';
-import { data } from '../rotulos';
+import { data, inteiro } from '../rotulos';
 
 /** Proveniência de um bloco: fontes usadas, data de captura e aviso de fonte desatualizada. */
 @Component({
   selector: 'app-proveniencia',
+  imports: [Icone],
   template: `
-    <details class="proveniencia">
+    @if (bloco().desatualizado) {
+      <p class="callout callout--aviso" role="note">
+        <app-icone nome="alerta" />
+        <span>
+          <strong>Fonte desatualizada:</strong> a última coleta falhou ou ficou incompleta; parte dos dados pode vir de coleta
+          anterior.
+        </span>
+      </p>
+    }
+    <details class="proveniencia sanfona">
       <summary>
-        Fonte e atualização
-        @if (bloco().atualizado_em) {
-          (captura em {{ data(bloco().atualizado_em) }})
-        }
-        @if (bloco().desatualizado) {
-          <span class="aviso">fonte desatualizada: a última coleta falhou ou ficou incompleta; parte dos dados pode vir de coleta anterior</span>
-        }
+        <app-icone nome="documento" [pequeno]="true" />
+        <span>
+          Fonte e atualização
+          @if (bloco().atualizado_em) {
+            <span class="proveniencia-meta">(captura em {{ data(bloco().atualizado_em) }})</span>
+          }
+        </span>
       </summary>
       @if (bloco().fontes.length) {
-        <ul>
+        <p class="proveniencia-total">
+          {{ inteiro(bloco().fontes.length) }} {{ bloco().fontes.length === 1 ? 'fonte' : 'fontes' }} neste bloco.
+        </p>
+        <ul class="proveniencia-lista">
           @for (f of bloco().fontes; track f.url_origem) {
             <li>
               <code>{{ f.fonte_id }}</code>:
@@ -28,7 +42,7 @@ import { data } from '../rotulos';
           }
         </ul>
       } @else {
-        <p>Registros manuais: cada item traz a própria fonte e o snapshot.</p>
+        <p class="proveniencia-total">Registros manuais: cada item traz a própria fonte e o snapshot.</p>
       }
     </details>
   `,
@@ -36,4 +50,5 @@ import { data } from '../rotulos';
 export class Proveniencia {
   readonly bloco = input.required<Bloco>();
   protected readonly data = data;
+  protected readonly inteiro = inteiro;
 }

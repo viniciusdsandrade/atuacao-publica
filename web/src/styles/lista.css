@@ -45,6 +45,7 @@
 
 .painel-busca {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 1rem;
   margin-bottom: 1.5rem;
   padding: 1rem;
@@ -62,6 +63,7 @@
 
 .filtros-mais {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 0.75rem;
 }
 
@@ -183,25 +185,6 @@
 
 .cartao--esqueleto .avatar {
   background: none;
-}
-
-.esqueleto--campo {
-  height: 3.25rem;
-}
-
-.esqueleto--linha {
-  height: 2.5rem;
-  max-width: 28rem;
-}
-
-.esqueleto--texto {
-  display: block;
-  height: 1rem;
-}
-
-.esqueleto--curto {
-  width: 55%;
-  margin-top: 0.4rem;
 }
 
 @media (min-width: 48rem) {

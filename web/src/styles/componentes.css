@@ -478,6 +478,31 @@
   animation: brilho 1.6s ease-in-out infinite;
 }
 
+.esqueleto--campo {
+  height: 3.25rem;
+}
+
+.esqueleto--linha {
+  height: 2.5rem;
+  max-width: 28rem;
+}
+
+.esqueleto--texto {
+  display: block;
+  height: 1rem;
+}
+
+.esqueleto--curto {
+  width: 55%;
+  margin-top: 0.4rem;
+}
+
+.esqueleto--titulo {
+  display: block;
+  width: min(24rem, 70%);
+  height: 2rem;
+}
+
 @keyframes brilho {
   from {
     background-position: 200% 0;
@@ -500,10 +525,12 @@
   text-align: center;
 }
 
+.caixa-vazia h1,
 .caixa-vazia h2,
 .caixa-vazia h3 {
+  margin: 0;
   color: var(--texto);
-  font-size: 1.125rem;
+  font-size: 1.25rem;
 }
 
 .caixa-vazia p {

@@ -1,186 +1,186 @@
 <div class="tabela-rolagem">
   @switch (bloco()) {
     @case ('mandatos') {
-      <table>
-        <caption>{{ legenda() || 'Mandatos' }}</caption>
-        <thead><tr><th scope="col">Cargo</th><th scope="col">Início</th><th scope="col">Fim</th><th scope="col">Situação</th><th scope="col">Condição</th><th scope="col">Fonte</th></tr></thead>
-        <tbody>
-          @for (r of registros(); track $index) {
-            <tr>
-              <td>{{ rotuloCargo(texto(r['cargo'])) }}{{ rotuloLocal(texto(r['esfera']), texto(r['ente']), texto(r['uf'])) ? ' (' + rotuloLocal(texto(r['esfera']), texto(r['ente']), texto(r['uf'])) + ')' : '' }}</td>
-              <td>{{ data(r['inicio']) }}</td>
-              <td>{{ data(r['fim']) }}</td>
-              <td>{{ texto(r['situacao']) }}</td>
-              <td>{{ texto(r['condicao']) }}</td>
-              <td>
+      <table role="table" data-cols="6">
+        <caption [class.sr-only]="!legenda()">{{ legenda() || 'Mandatos' }}</caption>
+        <thead role="rowgroup"><tr role="row"><th scope="col" role="columnheader">Cargo</th><th scope="col" role="columnheader">Início</th><th scope="col" role="columnheader">Fim</th><th scope="col" role="columnheader">Situação</th><th scope="col" role="columnheader">Condição</th><th scope="col" role="columnheader">Fonte</th></tr></thead>
+        <tbody role="rowgroup">
+          @for (r of visiveis(); track $index) {
+            <tr role="row">
+              <td role="cell" data-label="Cargo"><span class="v">{{ cargoELocal(r) }}</span></td>
+              <td role="cell" data-label="Início"><span class="v">{{ data(r['inicio']) }}</span></td>
+              <td role="cell" data-label="Fim"><span class="v">{{ data(r['fim']) }}</span></td>
+              <td role="cell" data-label="Situação"><span class="v">{{ texto(r['situacao']) }}</span></td>
+              <td role="cell" data-label="Condição"><span class="v">{{ texto(r['condicao']) }}</span></td>
+              <td role="cell" data-label="Fonte"><span class="v">
                 <a [href]="r.url_origem" rel="noopener noreferrer" target="_blank">origem</a>
                 @if (r.snapshot_url) { · <a [href]="r.snapshot_url" rel="noopener noreferrer" target="_blank">snapshot</a> }
-              </td>
+              </span></td>
             </tr>
           }
         </tbody>
       </table>
     }
     @case ('participacao_votacoes') {
-      <table>
-        <caption>{{ legenda() || 'Participação em votações nominais por ano' }}</caption>
-        <thead><tr><th scope="col">Ano</th><th scope="col">Votações nominais</th><th scope="col">Votos registrados</th><th scope="col">Sem registro na lista da fonte</th><th scope="col">Registros por valor da fonte</th></tr></thead>
-        <tbody>
-          @for (r of registros(); track $index) {
-            <tr>
-              <td>{{ r['periodo'] }}</td>
-              <td>{{ r['votacoes_nominais'] }}</td>
-              <td>{{ r['votos_registrados'] }}</td>
-              <td>{{ r['sem_registro'] ?? 'não se aplica' }}</td>
-              <td>{{ porTipo(r['por_tipo']) }}</td>
+      <table role="table" data-cols="5">
+        <caption [class.sr-only]="!legenda()">{{ legenda() || 'Participação em votações nominais por ano' }}</caption>
+        <thead role="rowgroup"><tr role="row"><th scope="col" role="columnheader">Ano</th><th scope="col" role="columnheader">Votações nominais</th><th scope="col" role="columnheader">Votos registrados</th><th scope="col" role="columnheader">Sem registro na lista da fonte</th><th scope="col" role="columnheader">Registros por valor da fonte</th></tr></thead>
+        <tbody role="rowgroup">
+          @for (r of visiveis(); track $index) {
+            <tr role="row">
+              <td role="cell" data-label="Ano"><span class="v">{{ r['periodo'] }}</span></td>
+              <td role="cell" data-label="Votações nominais"><span class="v">{{ r['votacoes_nominais'] }}</span></td>
+              <td role="cell" data-label="Votos registrados"><span class="v">{{ r['votos_registrados'] }}</span></td>
+              <td role="cell" data-label="Sem registro na lista da fonte"><span class="v">{{ r['sem_registro'] ?? 'não se aplica' }}</span></td>
+              <td role="cell" data-label="Registros por valor da fonte"><span class="v">{{ porTipo(r['por_tipo']) }}</span></td>
             </tr>
           }
         </tbody>
       </table>
     }
     @case ('votos') {
-      <table>
-        <caption>{{ legenda() || 'Votos' }}</caption>
-        <thead><tr><th scope="col">Data</th><th scope="col">Proposição</th><th scope="col">Voto</th><th scope="col">Orientação do partido</th><th scope="col">Orientação do governo</th><th scope="col">Registro</th></tr></thead>
-        <tbody>
-          @for (r of registros(); track $index) {
-            <tr>
-              <td>{{ data(r['data']) }}</td>
-              <td>{{ texto(r['proposicao']) }}</td>
-              <td>{{ r['voto'] ?? '(vazio na fonte)' }}</td>
-              <td>{{ texto(r['orientacao_partido']) }}{{ r['orientacao_partido_bancada'] ? ' (' + r['orientacao_partido_bancada'] + ')' : '' }}</td>
-              <td>{{ texto(r['orientacao_governo']) }}</td>
-              <td><a [href]="r.url_origem" rel="noopener noreferrer" target="_blank">votação</a></td>
+      <table role="table" data-cols="6">
+        <caption [class.sr-only]="!legenda()">{{ legenda() || 'Votos' }}</caption>
+        <thead role="rowgroup"><tr role="row"><th scope="col" role="columnheader">Data</th><th scope="col" role="columnheader">Proposição</th><th scope="col" role="columnheader">Voto</th><th scope="col" role="columnheader">Orientação do partido</th><th scope="col" role="columnheader">Orientação do governo</th><th scope="col" role="columnheader">Registro</th></tr></thead>
+        <tbody role="rowgroup">
+          @for (r of visiveis(); track $index) {
+            <tr role="row">
+              <td role="cell" data-label="Data"><span class="v">{{ data(r['data']) }}</span></td>
+              <td role="cell" data-label="Proposição"><span class="v">{{ texto(r['proposicao']) }}</span></td>
+              <td role="cell" data-label="Voto"><span class="v">{{ r['voto'] ?? '(vazio na fonte)' }}</span></td>
+              <td role="cell" data-label="Orientação do partido"><span class="v">{{ texto(r['orientacao_partido']) }}{{ r['orientacao_partido_bancada'] ? ' (' + r['orientacao_partido_bancada'] + ')' : '' }}</span></td>
+              <td role="cell" data-label="Orientação do governo"><span class="v">{{ texto(r['orientacao_governo']) }}</span></td>
+              <td role="cell" data-label="Registro"><span class="v"><a [href]="r.url_origem" rel="noopener noreferrer" target="_blank">votação</a></span></td>
             </tr>
           }
         </tbody>
       </table>
     }
     @case ('despesas') {
-      <table>
-        <caption>{{ legenda() || 'Despesas' }}</caption>
-        <thead><tr><th scope="col">Data</th><th scope="col">Categoria</th><th scope="col">Fornecedor</th><th scope="col">CNPJ</th><th scope="col">Valor</th><th scope="col">Documento</th></tr></thead>
-        <tbody>
-          @for (r of registros(); track $index) {
-            <tr>
-              <td>{{ r['data'] ? data(r['data']) : r['mes'] + '/' + r['ano'] }}</td>
-              <td>{{ texto(r['categoria']) }}</td>
-              <td>{{ texto(r['fornecedor_nome']) }}</td>
-              <td>{{ texto(r['fornecedor_cnpj']) }}</td>
-              <td class="numero">{{ moeda(numero(r['valor'])) }}</td>
-              <td>
+      <table role="table" data-cols="6">
+        <caption [class.sr-only]="!legenda()">{{ legenda() || 'Despesas' }}</caption>
+        <thead role="rowgroup"><tr role="row"><th scope="col" role="columnheader">Data</th><th scope="col" role="columnheader">Categoria</th><th scope="col" role="columnheader">Fornecedor</th><th scope="col" role="columnheader">CNPJ</th><th scope="col" role="columnheader">Valor</th><th scope="col" role="columnheader">Documento</th></tr></thead>
+        <tbody role="rowgroup">
+          @for (r of visiveis(); track $index) {
+            <tr role="row">
+              <td role="cell" data-label="Data"><span class="v">{{ r['data'] ? data(r['data']) : r['mes'] + '/' + r['ano'] }}</span></td>
+              <td role="cell" data-label="Categoria"><span class="v">{{ texto(r['categoria']) }}</span></td>
+              <td role="cell" data-label="Fornecedor"><span class="v">{{ texto(r['fornecedor_nome']) }}</span></td>
+              <td role="cell" data-label="CNPJ"><span class="v">{{ texto(r['fornecedor_cnpj']) }}</span></td>
+              <td class="numero" role="cell" data-label="Valor"><span class="v">{{ moeda(numero(r['valor'])) }}</span></td>
+              <td role="cell" data-label="Documento"><span class="v">
                 @if (url(r['documento_url']); as u) { <a [href]="u" rel="noopener noreferrer" target="_blank">documento</a> } @else { {{ texto(r['documento_numero']) }} }
-              </td>
+              </span></td>
             </tr>
           }
         </tbody>
       </table>
     }
     @case ('proposicoes') {
-      <table>
-        <caption>{{ legenda() || 'Proposições de autoria' }}</caption>
-        <thead><tr><th scope="col">Proposição</th><th scope="col">Apresentação</th><th scope="col">Ementa</th><th scope="col">Situação</th><th scope="col">Temas</th><th scope="col">Texto</th></tr></thead>
-        <tbody>
-          @for (r of registros(); track $index) {
-            <tr>
-              <td><a [href]="r.url_origem" rel="noopener noreferrer" target="_blank">{{ r['identificacao'] }}</a></td>
-              <td>{{ data(r['data_apresentacao']) }}</td>
-              <td>{{ texto(r['ementa']) }}</td>
-              <td>{{ texto(r['situacao']) }}</td>
-              <td>{{ r['temas'] === null ? 'a fonte não informa temas' : lista(r['temas']) }}</td>
-              <td>@if (url(r['url_texto']); as u) { <a [href]="u" rel="noopener noreferrer" target="_blank">inteiro teor</a> } @else { {{ semRegistro }} }</td>
+      <table role="table" data-cols="6">
+        <caption [class.sr-only]="!legenda()">{{ legenda() || 'Proposições de autoria' }}</caption>
+        <thead role="rowgroup"><tr role="row"><th scope="col" role="columnheader">Proposição</th><th scope="col" role="columnheader">Apresentação</th><th scope="col" role="columnheader">Ementa</th><th scope="col" role="columnheader">Situação</th><th scope="col" role="columnheader">Temas</th><th scope="col" role="columnheader">Texto</th></tr></thead>
+        <tbody role="rowgroup">
+          @for (r of visiveis(); track $index) {
+            <tr role="row">
+              <td role="cell" data-label="Proposição"><span class="v"><a [href]="r.url_origem" rel="noopener noreferrer" target="_blank">{{ r['identificacao'] }}</a></span></td>
+              <td role="cell" data-label="Apresentação"><span class="v">{{ data(r['data_apresentacao']) }}</span></td>
+              <td role="cell" data-label="Ementa"><span class="v">{{ texto(r['ementa']) }}</span></td>
+              <td role="cell" data-label="Situação"><span class="v">{{ texto(r['situacao']) }}</span></td>
+              <td role="cell" data-label="Temas"><span class="v">{{ r['temas'] === null ? 'a fonte não informa temas' : lista(r['temas']) }}</span></td>
+              <td role="cell" data-label="Texto"><span class="v">@if (url(r['url_texto']); as u) { <a [href]="u" rel="noopener noreferrer" target="_blank">inteiro teor</a> } @else { {{ semRegistro }} }</span></td>
             </tr>
           }
         </tbody>
       </table>
     }
     @case ('discursos') {
-      <table>
-        <caption>{{ legenda() || 'Discursos' }}</caption>
-        <thead><tr><th scope="col">Data</th><th scope="col">Tipo</th><th scope="col">Resumo oficial</th><th scope="col">Texto</th></tr></thead>
-        <tbody>
-          @for (r of registros(); track $index) {
-            <tr>
-              <td>{{ data(r['data']) }}</td>
-              <td>{{ texto(r['tipo']) }}{{ r['fase'] ? ' · ' + r['fase'] : '' }}</td>
-              <td>{{ texto(r['resumo']) }}</td>
-              <td>
+      <table role="table" data-cols="4">
+        <caption [class.sr-only]="!legenda()">{{ legenda() || 'Discursos' }}</caption>
+        <thead role="rowgroup"><tr role="row"><th scope="col" role="columnheader">Data</th><th scope="col" role="columnheader">Tipo</th><th scope="col" role="columnheader">Resumo oficial</th><th scope="col" role="columnheader">Texto</th></tr></thead>
+        <tbody role="rowgroup">
+          @for (r of visiveis(); track $index) {
+            <tr role="row">
+              <td role="cell" data-label="Data"><span class="v">{{ data(r['data']) }}</span></td>
+              <td role="cell" data-label="Tipo"><span class="v">{{ texto(r['tipo']) }}{{ r['fase'] ? ' · ' + r['fase'] : '' }}</span></td>
+              <td role="cell" data-label="Resumo oficial"><span class="v">{{ texto(r['resumo']) }}</span></td>
+              <td role="cell" data-label="Texto"><span class="v">
                 @if (url(r['transcricao_url']); as u) { <a [href]="u" rel="noopener noreferrer" target="_blank">transcrição</a> } @else { <a [href]="r.url_origem" rel="noopener noreferrer" target="_blank">registro</a> }
-              </td>
+              </span></td>
             </tr>
           }
         </tbody>
       </table>
     }
     @case ('eventos') {
-      <table>
-        <caption>{{ legenda() || 'Eventos com presença registrada' }}</caption>
-        <thead><tr><th scope="col">Data</th><th scope="col">Tipo</th><th scope="col">Órgão</th><th scope="col">Descrição oficial</th><th scope="col">Registro</th></tr></thead>
-        <tbody>
-          @for (r of registros(); track $index) {
-            <tr>
-              <td>{{ data(r['data']) }}</td>
-              <td>{{ texto(r['tipo']) }}</td>
-              <td>{{ texto(r['orgao']) }}</td>
-              <td class="longo">{{ texto(r['titulo']) }}</td>
-              <td><a [href]="r.url_origem" rel="noopener noreferrer" target="_blank">evento</a></td>
+      <table role="table" data-cols="5">
+        <caption [class.sr-only]="!legenda()">{{ legenda() || 'Eventos com presença registrada' }}</caption>
+        <thead role="rowgroup"><tr role="row"><th scope="col" role="columnheader">Data</th><th scope="col" role="columnheader">Tipo</th><th scope="col" role="columnheader">Órgão</th><th scope="col" role="columnheader">Descrição oficial</th><th scope="col" role="columnheader">Registro</th></tr></thead>
+        <tbody role="rowgroup">
+          @for (r of visiveis(); track $index) {
+            <tr role="row">
+              <td role="cell" data-label="Data"><span class="v">{{ data(r['data']) }}</span></td>
+              <td role="cell" data-label="Tipo"><span class="v">{{ texto(r['tipo']) }}</span></td>
+              <td role="cell" data-label="Órgão"><span class="v">{{ texto(r['orgao']) }}</span></td>
+              <td class="longo" role="cell" data-label="Descrição oficial"><span class="v">{{ texto(r['titulo']) }}</span></td>
+              <td role="cell" data-label="Registro"><span class="v"><a [href]="r.url_origem" rel="noopener noreferrer" target="_blank">evento</a></span></td>
             </tr>
           }
         </tbody>
       </table>
     }
     @case ('orgaos_e_frentes') {
-      <table>
-        <caption>{{ legenda() || 'Órgãos, comissões e frentes' }}</caption>
-        <thead><tr><th scope="col">Tipo</th><th scope="col">Nome</th><th scope="col">Papel</th><th scope="col">Início</th><th scope="col">Fim</th></tr></thead>
-        <tbody>
-          @for (r of registros(); track $index) {
-            <tr>
-              <td>{{ r['tipo'] }}</td>
-              <td><a [href]="r.url_origem" rel="noopener noreferrer" target="_blank">{{ r['nome'] }}</a></td>
-              <td>{{ texto(r['papel']) }}</td>
-              <td>{{ data(r['inicio']) }}</td>
-              <td>{{ data(r['fim']) }}</td>
+      <table role="table" data-cols="5">
+        <caption [class.sr-only]="!legenda()">{{ legenda() || 'Órgãos, comissões e frentes' }}</caption>
+        <thead role="rowgroup"><tr role="row"><th scope="col" role="columnheader">Tipo</th><th scope="col" role="columnheader">Nome</th><th scope="col" role="columnheader">Papel</th><th scope="col" role="columnheader">Início</th><th scope="col" role="columnheader">Fim</th></tr></thead>
+        <tbody role="rowgroup">
+          @for (r of visiveis(); track $index) {
+            <tr role="row">
+              <td role="cell" data-label="Tipo"><span class="v">{{ r['tipo'] }}</span></td>
+              <td role="cell" data-label="Nome"><span class="v"><a [href]="r.url_origem" rel="noopener noreferrer" target="_blank">{{ r['nome'] }}</a></span></td>
+              <td role="cell" data-label="Papel"><span class="v">{{ texto(r['papel']) }}</span></td>
+              <td role="cell" data-label="Início"><span class="v">{{ data(r['inicio']) }}</span></td>
+              <td role="cell" data-label="Fim"><span class="v">{{ data(r['fim']) }}</span></td>
             </tr>
           }
         </tbody>
       </table>
     }
     @case ('candidaturas') {
-      <table>
-        <caption>{{ legenda() || 'Candidaturas' }}</caption>
-        <thead><tr><th scope="col">Eleição</th><th scope="col">Cargo</th><th scope="col">Local</th><th scope="col">Partido</th><th scope="col">Situação da candidatura</th><th scope="col">Resultado</th><th scope="col">Bens declarados (total)</th><th scope="col">Plano de governo</th></tr></thead>
-        <tbody>
-          @for (r of registros(); track $index) {
-            <tr>
-              <td>{{ r['eleicao'] }} ({{ r['turno'] }}º turno)</td>
-              <td>{{ r['cargo'] }}</td>
-              <td>{{ localCandidatura(r) }}</td>
-              <td>{{ texto(r['partido']) }}</td>
-              <td>{{ texto(r['situacao_candidatura']) }}</td>
-              <td>{{ texto(r['resultado']) }}</td>
-              <td class="numero">{{ moeda(numero(r['bens_total_declarado'])) }}</td>
-              <td>
+      <table role="table" data-cols="8">
+        <caption [class.sr-only]="!legenda()">{{ legenda() || 'Candidaturas' }}</caption>
+        <thead role="rowgroup"><tr role="row"><th scope="col" role="columnheader">Eleição</th><th scope="col" role="columnheader">Cargo</th><th scope="col" role="columnheader">Local</th><th scope="col" role="columnheader">Partido</th><th scope="col" role="columnheader">Situação da candidatura</th><th scope="col" role="columnheader">Resultado</th><th scope="col" role="columnheader">Bens declarados (total)</th><th scope="col" role="columnheader">Plano de governo</th></tr></thead>
+        <tbody role="rowgroup">
+          @for (r of visiveis(); track $index) {
+            <tr role="row">
+              <td role="cell" data-label="Eleição"><span class="v">{{ r['eleicao'] }} ({{ r['turno'] }}º turno)</span></td>
+              <td role="cell" data-label="Cargo"><span class="v">{{ r['cargo'] }}</span></td>
+              <td role="cell" data-label="Local"><span class="v">{{ localCandidatura(r) }}</span></td>
+              <td role="cell" data-label="Partido"><span class="v">{{ texto(r['partido']) }}</span></td>
+              <td role="cell" data-label="Situação da candidatura"><span class="v">{{ texto(r['situacao_candidatura']) }}</span></td>
+              <td role="cell" data-label="Resultado"><span class="v">{{ texto(r['resultado']) }}</span></td>
+              <td class="numero" role="cell" data-label="Bens declarados (total)"><span class="v">{{ moeda(numero(r['bens_total_declarado'])) }}</span></td>
+              <td role="cell" data-label="Plano de governo"><span class="v">
                 @if (url(r['plano_de_governo_url']); as u) {
                   arquivo <code>{{ r['plano_de_governo_arquivo'] }}</code> no <a [href]="u" rel="noopener noreferrer">pacote oficial do TSE (ZIP)</a>
                 } @else { {{ semRegistro }} }
-              </td>
+              </span></td>
             </tr>
           }
         </tbody>
       </table>
     }
     @case ('atos_normativos') {
-      <table>
-        <caption>{{ legenda() || 'Atos normativos' }}</caption>
-        <thead><tr><th scope="col">Data</th><th scope="col">Tipo</th><th scope="col">Ato</th><th scope="col">Ementa</th></tr></thead>
-        <tbody>
-          @for (r of registros(); track $index) {
-            <tr>
-              <td>{{ data(r['data']) }}</td>
-              <td>{{ r['tipo'] }}</td>
-              <td><a [href]="r.url_origem" rel="noopener noreferrer" target="_blank">{{ texto(r['nome']) }}</a></td>
-              <td>{{ texto(r['ementa']) }}</td>
+      <table role="table" data-cols="4">
+        <caption [class.sr-only]="!legenda()">{{ legenda() || 'Atos normativos' }}</caption>
+        <thead role="rowgroup"><tr role="row"><th scope="col" role="columnheader">Data</th><th scope="col" role="columnheader">Tipo</th><th scope="col" role="columnheader">Ato</th><th scope="col" role="columnheader">Ementa</th></tr></thead>
+        <tbody role="rowgroup">
+          @for (r of visiveis(); track $index) {
+            <tr role="row">
+              <td role="cell" data-label="Data"><span class="v">{{ data(r['data']) }}</span></td>
+              <td role="cell" data-label="Tipo"><span class="v">{{ r['tipo'] }}</span></td>
+              <td role="cell" data-label="Ato"><span class="v"><a [href]="r.url_origem" rel="noopener noreferrer" target="_blank">{{ texto(r['nome']) }}</a></span></td>
+              <td role="cell" data-label="Ementa"><span class="v">{{ texto(r['ementa']) }}</span></td>
             </tr>
           }
         </tbody>
@@ -188,7 +188,7 @@
     }
     @default {
       <ul class="manuais">
-        @for (r of registros(); track $index) {
+        @for (r of visiveis(); track $index) {
           <li>
             <p class="meta">{{ data(r['data']) }}{{ r['hora'] ? ' · ' + r['hora'] : '' }}{{ r['categoria'] ? ' · ' + r['categoria'] : '' }}{{ r['local'] ? ' · ' + r['local'] : '' }}</p>
             @if (r['rotulo']) { <p class="rotulo">{{ r['rotulo'] }}</p> }
@@ -204,3 +204,16 @@
     }
   }
 </div>
+@if (restantes() > 0) {
+  <div class="mais">
+    <p>Exibindo {{ inteiro(visiveis().length) }} de {{ inteiro(registros().length) }} registros.</p>
+    <div class="mais-acoes">
+      <button type="button" class="botao botao--pequeno" (click)="mostrarMais(false)">
+        Mostrar mais {{ restantes() < limite() ? restantes() : limite() }}
+      </button>
+      @if (restantes() > limite()) {
+        <button type="button" class="botao botao--discreto botao--pequeno" (click)="mostrarMais(true)">Mostrar todos</button>
+      }
+    </div>
+  </div>
+}

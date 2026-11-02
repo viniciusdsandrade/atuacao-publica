@@ -1,105 +1,249 @@
 @if (perfil(); as p) {
   <article class="perfil">
-    <header class="cabecalho">
-      <p class="voltar"><a routerLink="/">Voltar à lista</a></p>
-      <h1>{{ p.nome }}</h1>
-      <p class="cargo">
-        {{ rotuloCargo(p.cargo_atual) }}
-        @if (rotuloLocal(p.esfera, p.ente, p.uf); as local) {
-          · {{ local }}
-        }
-        · Partido: {{ p.partido_atual ?? semRegistro }}
-      </p>
-      <p>Situação na fonte: {{ p.situacao ?? semRegistro }}</p>
-      @if (!p.em_exercicio) {
-        <p class="aviso">
-          @if (p.situacao?.includes('posse prevista')) {
-            Ainda não tomou posse. Depois da posse, o perfil passa a mostrar a atividade no cargo.
-          } @else {
-            Não está em exercício. O perfil continua no arquivo, com a atividade do período coberto.
-          }
-        </p>
-      }
-      @if (p.links_oficiais.length || p.foto_url) {
-        <ul class="links">
-          @for (l of p.links_oficiais; track l.url) {
-            <li><a [href]="l.url" rel="noopener noreferrer" target="_blank">{{ l.rotulo }}</a></li>
-          }
-          @if (p.foto_url) {
-            <li><a [href]="p.foto_url" rel="noopener noreferrer" target="_blank">Foto oficial (abre o site da fonte)</a></li>
-          }
-        </ul>
-      }
-      <p class="atualizacao">Perfil gerado em {{ data(p.atualizado_em) }}.</p>
-    </header>
-
-    <nav class="sumario" aria-label="Blocos do perfil">
-      <ul>
-        @for (b of blocos(); track b) {
-          <li><button type="button" class="link" (click)="ir(b)">{{ titulo(b) }}</button></li>
-        }
-      </ul>
+    <nav class="migalhas" aria-label="Você está em">
+      <ol>
+        <li><a routerLink="/" [queryParams]="consulta">Políticos</a></li>
+        <li aria-current="page">{{ p.nome }}</li>
+      </ol>
     </nav>
 
-    @for (b of blocos(); track b) {
-      @let bloco = p.blocos[b];
-      <section class="bloco" [id]="b" tabindex="-1" [attr.aria-labelledby]="'titulo-' + b">
-        <h2 [id]="'titulo-' + b">{{ titulo(b) }}</h2>
-        @if (nota(b); as n) {
-          <p class="nota">{{ n }}</p>
+    <header class="perfil-topo painel">
+      <div class="perfil-identidade">
+        <span class="avatar avatar--grande" aria-hidden="true">{{ iniciais(p.nome) }}</span>
+        <div class="perfil-titulos">
+          <h1>{{ p.nome }}</h1>
+          <p class="perfil-cargo">
+            {{ rotuloCargo(p.cargo_atual) }}
+            @if (rotuloLocal(p.esfera, p.ente, p.uf); as local) {
+              · {{ local }}
+            }
+          </p>
+          <p class="perfil-selos">
+            @switch (situacao()) {
+              @case ('exercicio') {
+                <span class="selo selo--ativo">{{ SITUACOES.exercicio }}</span>
+              }
+              @case ('posse') {
+                <span class="selo selo--posse">{{ SITUACOES.posse }}</span>
+              }
+              @default {
+                <span class="selo selo--fora">{{ SITUACOES.fora }}</span>
+              }
+            }
+            <span class="selo selo--partido">Partido: {{ p.partido_atual ?? 'sem registro na fonte' }}</span>
+          </p>
+        </div>
+      </div>
+
+      @if (!p.em_exercicio) {
+        <p class="callout" role="note">
+          <app-icone nome="info" />
+          <span>
+            @if (p.situacao?.includes('posse prevista')) {
+              Ainda não tomou posse. Depois da posse, o perfil passa a mostrar a atividade no cargo.
+            } @else {
+              Não está em exercício. O perfil continua no arquivo, com a atividade do período coberto.
+            }
+          </span>
+        </p>
+      }
+
+      <ul class="perfil-acoes">
+        @for (l of p.links_oficiais; track $index) {
+          <li>
+            <a class="botao botao--pequeno" [href]="l.url" rel="noopener noreferrer" target="_blank">
+              {{ l.rotulo }}
+              <app-icone nome="externo" [pequeno]="true" />
+              <span class="sr-only">(abre em nova aba)</span>
+            </a>
+          </li>
         }
-        <app-proveniencia [bloco]="bloco" />
-        @if (bloco.total === 0) {
-          <p class="vazio">{{ semRegistro }}</p>
-        } @else {
-          @if (b === 'despesas' || b === 'despesas_executivo') {
-              <p class="destaque">Total no período: {{ moeda(bloco.valor_total) }} em {{ bloco.total }} {{ unidade(b) }}.</p>
-              @for (a of despesasPorAno(bloco); track a.ano) {
-                <details>
-                  <summary>{{ a.ano }}: {{ moeda(a.valor) }} ({{ a.quantidade }} {{ unidade(b) }})</summary>
-                  <div class="tabela-rolagem">
-                    <table>
-                      <caption>Por {{ b === 'despesas' ? 'categoria' : 'órgão' }} em {{ a.ano }}</caption>
-                      <thead><tr><th scope="col">{{ b === 'despesas' ? 'Categoria' : 'Órgão' }}</th><th scope="col">Valor</th><th scope="col">{{ unidade(b) === 'pagamentos' ? 'Pagamentos' : 'Lançamentos' }}</th></tr></thead>
-                      <tbody>
-                        @for (c of categorias(bloco, a.ano); track c.categoria) {
-                          <tr><td>{{ c.categoria }}</td><td class="numero">{{ moeda(c.valor) }}</td><td class="numero">{{ c.quantidade }}</td></tr>
-                        }
-                      </tbody>
-                    </table>
+        @if (p.foto_url) {
+          <li>
+            <a class="botao botao--pequeno" [href]="p.foto_url" rel="noopener noreferrer" target="_blank">
+              Foto oficial (abre o site da fonte)
+              <app-icone nome="externo" [pequeno]="true" />
+            </a>
+          </li>
+        }
+        <li>
+          <a class="botao botao--pequeno botao--discreto" [href]="enderecoJson(p.id)" rel="noopener" target="_blank">
+            <app-icone nome="documento" [pequeno]="true" />
+            Dados abertos deste perfil (JSON)
+            <span class="sr-only">(abre em nova aba)</span>
+          </a>
+        </li>
+      </ul>
+
+      <p class="perfil-meta">
+        <span>Situação na fonte: <strong>{{ p.situacao ?? semRegistro }}</strong></span>
+        <span>Perfil gerado em {{ data(p.atualizado_em) }}.</span>
+      </p>
+    </header>
+
+    <div class="perfil-corpo">
+      <nav class="perfil-nav" aria-label="Blocos do perfil">
+        <p class="perfil-nav-titulo" aria-hidden="true">Neste perfil</p>
+        <ul>
+          @for (b of blocos(); track b) {
+            <li>
+              <a
+                [routerLink]="[]"
+                [fragment]="'bloco-' + b"
+                [attr.aria-current]="ativo() === b ? 'location' : null"
+                (click)="ir(b)"
+              >
+                <span class="perfil-nav-rotulo">{{ rotuloCurtoBloco(b, p.esfera) }}</span>
+                @if (p.blocos[b].total > 0) {
+                  <span class="perfil-nav-total numero">{{ inteiro(p.blocos[b].total) }}</span>
+                } @else {
+                  <span class="perfil-nav-total perfil-nav-total--vazio" aria-hidden="true">–</span>
+                  <span class="sr-only">(sem registro na fonte)</span>
+                }
+              </a>
+            </li>
+          }
+        </ul>
+      </nav>
+
+      <div class="perfil-blocos">
+        @for (b of blocos(); track b) {
+          @let bloco = p.blocos[b];
+          <section
+            class="bloco painel"
+            [class.bloco--vazio]="bloco.total === 0"
+            [id]="'bloco-' + b"
+            tabindex="-1"
+            [attr.aria-labelledby]="'titulo-' + b"
+          >
+            <header class="bloco-topo">
+              <h2 [id]="'titulo-' + b">{{ titulo(b) }}</h2>
+              @if (bloco.total > 0) {
+                <span class="selo bloco-total">{{ inteiro(bloco.total) }} {{ bloco.total === 1 ? 'registro' : 'registros' }}</span>
+              } @else {
+                <p class="vazio">{{ semRegistro }}</p>
+              }
+            </header>
+            @if (nota(b); as n) {
+              <p class="nota-bloco">{{ n }}</p>
+            }
+            @if (bloco.fontes.length || bloco.total > 0) {
+              <app-proveniencia [bloco]="bloco" />
+            }
+
+            @if (bloco.total > 0) {
+              @if (b === 'despesas' || b === 'despesas_executivo') {
+                <dl class="estatisticas">
+                  <div class="estatistica">
+                    <dt>Total no período</dt>
+                    <dd class="numero">{{ moeda(bloco.valor_total) }}</dd>
                   </div>
-                </details>
-              }
-          } @else {
-              @if (porTipo(bloco).length) {
-                <p class="tipos">
-                  Por tipo:
-                  @for (t of porTipo(bloco); track t[0]) {
-                    <span>{{ t[0] }}: {{ t[1] }}</span>
+                  <div class="estatistica">
+                    <dt>{{ unidade(b) === 'pagamentos' ? 'Pagamentos' : 'Lançamentos' }}</dt>
+                    <dd class="numero">{{ inteiro(bloco.total) }}</dd>
+                  </div>
+                  @if (periodo(bloco); as periodoDoBloco) {
+                    <div class="estatistica">
+                      <dt>Anos com registro</dt>
+                      <dd>{{ periodoDoBloco }}</dd>
+                    </div>
                   }
-                </p>
+                </dl>
+                <div class="anos-despesa">
+                  @for (a of despesasPorAno(bloco); track a.ano) {
+                    <details class="ano-despesa sanfona">
+                      <summary>
+                        <span class="ano-despesa-ano">{{ a.ano }}</span>
+                        <span class="ano-despesa-barra" aria-hidden="true">
+                          <span class="ano-despesa-preenchimento" [style.width.%]="a.pct"></span>
+                        </span>
+                        <span class="ano-despesa-valor numero">{{ moeda(a.valor) }}</span>
+                        <span class="ano-despesa-qtd numero">{{ inteiro(a.quantidade) }} {{ unidade(b) }}</span>
+                      </summary>
+                      <div class="tabela-rolagem">
+                        <table role="table">
+                          <caption>Por {{ b === 'despesas' ? 'categoria' : 'órgão' }} em {{ a.ano }}</caption>
+                          <thead role="rowgroup">
+                            <tr role="row">
+                              <th scope="col" role="columnheader">{{ b === 'despesas' ? 'Categoria' : 'Órgão' }}</th>
+                              <th scope="col" role="columnheader">Valor</th>
+                              <th scope="col" role="columnheader">{{ unidade(b) === 'pagamentos' ? 'Pagamentos' : 'Lançamentos' }}</th>
+                            </tr>
+                          </thead>
+                          <tbody role="rowgroup">
+                            @for (c of categorias(bloco, a.ano); track c.categoria) {
+                              <tr role="row">
+                                <td role="cell" [attr.data-label]="b === 'despesas' ? 'Categoria' : 'Órgão'"><span class="v">{{ c.categoria }}</span></td>
+                                <td role="cell" class="numero" data-label="Valor"><span class="v">{{ moeda(c.valor) }}</span></td>
+                                <td role="cell" class="numero" [attr.data-label]="unidade(b) === 'pagamentos' ? 'Pagamentos' : 'Lançamentos'"><span class="v">{{ inteiro(c.quantidade) }}</span></td>
+                              </tr>
+                            }
+                          </tbody>
+                        </table>
+                      </div>
+                    </details>
+                  }
+                </div>
+              } @else {
+                @if (porTipo(bloco).length) {
+                  <div class="tipos">
+                    <p class="tipos-titulo">Por tipo</p>
+                    <ul>
+                      @for (t of porTipo(bloco); track t[0]) {
+                        <li class="selo">{{ t[0] }}: <strong class="numero">{{ inteiro(t[1]) }}</strong></li>
+                      }
+                    </ul>
+                  </div>
+                }
+                @if (bloco.recentes) {
+                  <app-tabela
+                    [bloco]="b"
+                    [registros]="bloco.recentes"
+                    [legenda]="'Mais recentes (' + bloco.recentes.length + ' de ' + bloco.total + ')'"
+                  />
+                } @else if (bloco.registros) {
+                  <app-tabela [bloco]="b" [registros]="bloco.registros" [limite]="30" />
+                }
               }
-              @if (bloco.recentes) {
-                <app-tabela [bloco]="b" [registros]="bloco.recentes"
-                  [legenda]="'Mais recentes (' + bloco.recentes.length + ' de ' + bloco.total + ')'" />
-              } @else if (bloco.registros) {
-                <app-tabela [bloco]="b" [registros]="bloco.registros" />
+              @if (bloco.arquivos?.length) {
+                <nav class="anos" [attr.aria-label]="'Todos os registros por ano: ' + titulo(b)">
+                  <p class="anos-titulo">Todos os registros por ano</p>
+                  <ul>
+                    @for (a of bloco.arquivos; track a.ano) {
+                      <li>
+                        <a class="chip-link" [routerLink]="['/politico', p.id, b, a.ano]">
+                          {{ a.ano }} <small class="numero">{{ inteiro(a.total) }}</small>
+                        </a>
+                      </li>
+                    }
+                  </ul>
+                </nav>
               }
-          }
-          @if (bloco.arquivos?.length) {
-            <p class="arquivos">
-              Todos os registros por ano:
-              @for (a of bloco.arquivos; track a.ano) {
-                <a [routerLink]="['/politico', p.id, b, a.ano]">{{ a.ano }} ({{ a.total }})</a>
-              }
-            </p>
-          }
+            }
+          </section>
         }
-      </section>
-    }
+      </div>
+    </div>
   </article>
 } @else if (erro()) {
-  <p>Perfil não encontrado. <a routerLink="/">Voltar à lista</a>.</p>
+  <div class="caixa-vazia" role="alert">
+    <app-icone nome="alerta" />
+    <h1>Perfil não encontrado</h1>
+    <p>Não há perfil publicado com este identificador, ou o arquivo não respondeu.</p>
+    <a class="botao botao--primario" routerLink="/" [queryParams]="consulta">Voltar à lista</a>
+  </div>
 } @else {
-  <p aria-live="polite">Carregando o perfil...</p>
+  <p class="sr-only" role="status">Carregando o perfil.</p>
+  <div aria-hidden="true">
+    <div class="perfil-topo painel perfil-topo--esqueleto">
+      <span class="esqueleto avatar avatar--grande"></span>
+      <div class="perfil-esqueleto-texto">
+        <span class="esqueleto esqueleto--titulo"></span>
+        <span class="esqueleto esqueleto--texto esqueleto--curto"></span>
+      </div>
+    </div>
+    @for (n of esqueletos; track n) {
+      <div class="painel bloco bloco--esqueleto"><span class="esqueleto esqueleto--texto"></span></div>
+    }
+  </div>
 }

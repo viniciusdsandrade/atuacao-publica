@@ -1,0 +1,233 @@
+/* Tabelas de registros. Abaixo de 44 rem de largura do próprio contêiner, cada linha vira um cartão
+   com o rótulo da coluna em cada célula. Os papéis ARIA mantêm a semântica de tabela. */
+
+.tabela-rolagem {
+  position: relative;
+  max-width: 100%;
+  overflow-x: auto;
+  container-type: inline-size;
+  border: 1px solid var(--borda);
+  border-radius: var(--r-2);
+  background: var(--superficie);
+}
+
+.tabela-rolagem table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 0.9375rem;
+}
+
+.tabela-rolagem caption {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--borda);
+  font-weight: 650;
+  text-align: left;
+}
+
+.tabela-rolagem th {
+  padding: 0.6rem 1rem;
+  border-bottom: 1px solid var(--borda);
+  background: var(--superficie-2);
+  color: var(--texto-2);
+  font-size: 0.8125rem;
+  font-weight: 700;
+  text-align: left;
+  vertical-align: bottom;
+}
+
+.tabela-rolagem td {
+  padding: 0.65rem 1rem;
+  border-bottom: 1px solid var(--borda);
+  vertical-align: top;
+  overflow-wrap: break-word;
+}
+
+.tabela-rolagem tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.tabela-rolagem tbody tr:hover td {
+  background: var(--superficie-2);
+}
+
+.tabela-rolagem td.numero {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.tabela-rolagem td.longo {
+  min-width: 16rem;
+}
+
+@container (max-width: 44rem) {
+  .tabela-rolagem table,
+  .tabela-rolagem thead,
+  .tabela-rolagem tbody,
+  .tabela-rolagem tr,
+  .tabela-rolagem th,
+  .tabela-rolagem td,
+  .tabela-rolagem caption {
+    display: block;
+  }
+
+  .tabela-rolagem thead tr {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+
+  .tabela-rolagem tbody tr {
+    padding: 0.5rem 0;
+    border-bottom: 1px solid var(--borda);
+  }
+
+  .tabela-rolagem tbody tr:last-child {
+    border-bottom: 0;
+  }
+
+  .tabela-rolagem td {
+    display: grid;
+    grid-template-columns: minmax(5.5rem, 36%) minmax(0, 1fr);
+    gap: 0.75rem;
+    padding: 0.3rem 1rem;
+    border-bottom: 0;
+  }
+
+  .tabela-rolagem td::before {
+    content: attr(data-label);
+    color: var(--texto-3);
+    font-size: 0.8125rem;
+    font-weight: 650;
+    line-height: 1.7;
+  }
+
+  .tabela-rolagem td.numero {
+    text-align: left;
+    white-space: normal;
+  }
+
+  .tabela-rolagem td.longo {
+    min-width: 0;
+  }
+
+  .tabela-rolagem tbody tr:hover td {
+    background: none;
+  }
+}
+
+/* Tabela de oito colunas (candidaturas) precisa de mais espaço: empilha antes. */
+@container (max-width: 62rem) {
+  .tabela-rolagem table[data-cols='8'],
+  .tabela-rolagem table[data-cols='8'] thead,
+  .tabela-rolagem table[data-cols='8'] tbody,
+  .tabela-rolagem table[data-cols='8'] tr,
+  .tabela-rolagem table[data-cols='8'] th,
+  .tabela-rolagem table[data-cols='8'] td,
+  .tabela-rolagem table[data-cols='8'] caption {
+    display: block;
+  }
+
+  .tabela-rolagem table[data-cols='8'] thead tr {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+
+  .tabela-rolagem table[data-cols='8'] tbody tr {
+    padding: 0.5rem 0;
+    border-bottom: 1px solid var(--borda);
+  }
+
+  .tabela-rolagem table[data-cols='8'] tbody tr:last-child {
+    border-bottom: 0;
+  }
+
+  .tabela-rolagem table[data-cols='8'] td {
+    display: grid;
+    grid-template-columns: minmax(5.5rem, 36%) minmax(0, 1fr);
+    gap: 0.75rem;
+    padding: 0.3rem 1rem;
+    border-bottom: 0;
+  }
+
+  .tabela-rolagem table[data-cols='8'] td::before {
+    content: attr(data-label);
+    color: var(--texto-3);
+    font-size: 0.8125rem;
+    font-weight: 650;
+    line-height: 1.7;
+  }
+
+  .tabela-rolagem table[data-cols='8'] td.numero {
+    text-align: left;
+    white-space: normal;
+  }
+
+  .tabela-rolagem table[data-cols='8'] td.longo {
+    min-width: 0;
+  }
+
+  .tabela-rolagem table[data-cols='8'] tbody tr:hover td {
+    background: none;
+  }
+}
+
+/* Registros sem coluna fixa (agenda oficial, posicionamentos declarados): lista, sem moldura de tabela. */
+.tabela-rolagem:has(> .manuais) {
+  overflow: visible;
+  border: 0;
+  background: none;
+}
+
+.manuais {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.75rem;
+  list-style: none;
+}
+
+.manuais li {
+  padding: 0.875rem 1rem;
+  border: 1px solid var(--borda);
+  border-left: 3px solid var(--destaque);
+  border-radius: var(--r-2);
+  background: var(--superficie);
+}
+
+.manuais p {
+  margin: 0 0 0.35rem;
+}
+
+.manuais p:last-child {
+  margin-bottom: 0;
+}
+
+.manuais .meta {
+  color: var(--texto-3);
+  font-size: 0.875rem;
+}
+
+.manuais li > .meta:first-child {
+  font-weight: 600;
+}
+
+.manuais .rotulo {
+  font-weight: 650;
+}
+
+.tabela-rolagem + .mais,
+.manuais + .mais {
+  margin-top: 1rem;
+}
+
+@media (forced-colors: active) {
+  .tabela-rolagem:not(:has(> .manuais)),
+  .manuais li {
+    border: 1px solid CanvasText;
+  }
+}
