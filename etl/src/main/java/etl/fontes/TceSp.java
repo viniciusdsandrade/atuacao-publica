@@ -55,14 +55,25 @@ public final class TceSp implements Fonte {
             if (!MUNICIPIOS.containsKey(ente)) {
                 continue;
             }
-            meses.put(ente, meses(LocalDate.parse(Json.texto(regra, "inicio")), LocalDate.parse(Json.texto(regra, "fim")), ctx.hoje()));
+            // Mais de um mandato no mesmo ente (prefeito anterior e atual): os meses se somam, sem repetição.
+            List<YearMonth> doEnte = meses.computeIfAbsent(ente, k -> new ArrayList<>());
+            for (YearMonth mes : meses(LocalDate.parse(Json.texto(regra, "inicio")), LocalDate.parse(Json.texto(regra, "fim")), ctx.hoje())) {
+                if (!doEnte.contains(mes)) {
+                    doEnte.add(mes);
+                }
+            }
         }
+        meses.values().forEach(lista -> lista.sort(null));
         return meses;
     }
 
+    /** Meses do mandato já iniciados, nunca antes do início da cobertura (ADR-0009). */
     static List<YearMonth> meses(LocalDate inicio, LocalDate fim, LocalDate hoje) {
         List<YearMonth> lista = new ArrayList<>();
-        if (hoje.isBefore(inicio)) {
+        if (inicio.isBefore(Camara.INICIO_DA_COBERTURA)) {
+            inicio = Camara.INICIO_DA_COBERTURA;
+        }
+        if (hoje.isBefore(inicio) || !fim.isAfter(inicio)) {
             return lista;
         }
         YearMonth ultimo = YearMonth.from(fim.isBefore(hoje) ? fim.minusDays(1) : hoje);

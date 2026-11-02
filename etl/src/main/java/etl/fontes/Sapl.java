@@ -72,7 +72,7 @@ public final class Sapl implements Fonte {
     }
 
     public record MandatoSapl(String parlamentarId, LocalDate inicio, LocalDate fim, boolean titular,
-                              String tipoAfastamento, String situacao, boolean emExercicio) {
+                              String tipoAfastamento, String situacao, boolean emExercicio, int legislatura) {
     }
 
     /** Sessão plenária: a data de votos, presenças e falas vem daqui. */
@@ -101,20 +101,23 @@ public final class Sapl implements Fonte {
     public void fetch(Contexto ctx, Coleta coleta) throws Exception {
         Coleta.Arquivo arqLeg = coleta.obter(API + "/parlamentares/legislatura/", "legislaturas.json", JSON, Politica.SEMPRE);
         List<Legislatura> legislaturas = legislaturas(Json.ler(Coleta.caminho(ctx, arqLeg)));
-        Legislatura atual = legislaturaVigente(legislaturas, ctx.hoje());
+        List<Legislatura> cobertas = legislaturasCobertas(legislaturas, ctx.hoje());
+        Legislatura atual = cobertas.getLast();
 
-        Coleta.Arquivo arqMandatos = coleta.obter(API + "/parlamentares/mandato/?legislatura=" + atual.id() + "&page_size=" + PAGINA,
-                "mandatos/" + atual.id() + ".json", JSON, Politica.SEMPRE);
-        Coleta.Arquivo arqAtivos = coleta.obter(API + "/parlamentares/parlamentar/?ativo=True&page_size=" + PAGINA,
-                "parlamentares-ativos.json", JSON, Politica.SEMPRE);
-
+        // Mandatos de cada legislatura coberta (ADR-0009): quem exerceu desde o início da cobertura fica no arquivo.
         Set<String> ids = new HashSet<>();
-        for (JsonNode m : resultados(Json.ler(Coleta.caminho(ctx, arqMandatos)))) {
-            String id = extrairId(m, "parlamentar");
-            if (id != null) {
-                ids.add(id);
+        for (Legislatura leg : cobertas) {
+            Coleta.Arquivo arqMandatos = coleta.obter(API + "/parlamentares/mandato/?legislatura=" + leg.id() + "&page_size=" + PAGINA,
+                    "mandatos/" + leg.id() + ".json", JSON, leg == atual ? Politica.SEMPRE : Politica.SEMANAL);
+            for (JsonNode m : resultados(Json.ler(Coleta.caminho(ctx, arqMandatos)))) {
+                String id = extrairId(m, "parlamentar");
+                if (id != null) {
+                    ids.add(id);
+                }
             }
         }
+        Coleta.Arquivo arqAtivos = coleta.obter(API + "/parlamentares/parlamentar/?ativo=True&page_size=" + PAGINA,
+                "parlamentares-ativos.json", JSON, Politica.SEMPRE);
         for (JsonNode a : resultados(Json.ler(Coleta.caminho(ctx, arqAtivos)))) {
             String id = Json.texto(a, "id");
             if (id != null) {
@@ -126,7 +129,7 @@ public final class Sapl implements Fonte {
         // Sessões, itens votados e registros de votação da legislatura vigente: dão data aos votos e às presenças.
         Coleta.Arquivo arqSessoes = coleta.obter(API + "/sessao/sessaoplenaria/", "sessoes.json", JSON, Politica.SEMANAL);
         coleta.obterOpcional(API + "/materia/tipomaterialegislativa/?page_size=" + PAGINA, "tipos-materia.json", JSON, Politica.SEMANAL);
-        Map<Integer, Sessao> sessoes = sessoes(Json.ler(Coleta.caminho(ctx, arqSessoes)), atual);
+        Map<Integer, Sessao> sessoes = sessoes(Json.ler(Coleta.caminho(ctx, arqSessoes)), cobertas);
         List<Sessao> realizadas = realizadas(sessoes, ctx.hoje());
         coleta.contar("sessoes", realizadas.size());
         for (Sessao sessao : realizadas) {
@@ -135,7 +138,7 @@ public final class Sapl implements Fonte {
             paginas(ctx, coleta, API + "/sessao/expedientemateria/?sessao_plenaria=" + sessao.id(), "expedientes/" + sessao.id(), politica);
         }
 
-        List<Integer> anos = anos(atual, ctx.hoje());
+        List<Integer> anos = anos(cobertas, ctx.hoje());
         Map<Integer, Item> ordens = itens(ctx, "ordens", realizadas);
         Map<Integer, Item> expedientes = itens(ctx, "expedientes", realizadas);
         Integer minOrdem = minimo(ordens.keySet());
@@ -197,7 +200,7 @@ public final class Sapl implements Fonte {
             }
         }
 
-        coleta.periodo(new Meta.Periodo(atual.inicio(), ctx.hoje()));
+        coleta.periodo(new Meta.Periodo(inicioDaCobertura(cobertas), ctx.hoje()));
     }
 
     /** Baixa as páginas de uma listagem até a fonte não indicar próxima página. A URL já contém "?". */
@@ -243,12 +246,21 @@ public final class Sapl implements Fonte {
 
         Coleta.Arquivo arqLeg = Coleta.metadados(ctx, "sapl", "legislaturas.json");
         List<Legislatura> legislaturas = legislaturas(Json.ler(Coleta.caminho(ctx, arqLeg)));
-        Legislatura atual = legislaturaVigente(legislaturas, ctx.hoje());
-        List<Integer> anos = anos(atual, ctx.hoje());
+        List<Legislatura> cobertas = legislaturasCobertas(legislaturas, ctx.hoje());
+        List<Integer> anos = anos(cobertas, ctx.hoje());
 
-        Coleta.Arquivo arqMandatos = Coleta.metadados(ctx, "sapl", "mandatos/" + atual.id() + ".json");
-        JsonNode dadosMandatos = arqMandatos == null ? null : Json.ler(Coleta.caminho(ctx, arqMandatos));
-        Map<String, List<MandatoSapl>> porParlamentar = mandatos(dadosMandatos, atual, ctx.hoje());
+        Map<Integer, Coleta.Arquivo> arqMandatos = new LinkedHashMap<>();
+        Map<String, List<MandatoSapl>> porParlamentar = new LinkedHashMap<>();
+        for (Legislatura leg : cobertas) {
+            Coleta.Arquivo arq = Coleta.metadados(ctx, "sapl", "mandatos/" + leg.id() + ".json");
+            if (arq == null) {
+                continue;
+            }
+            arqMandatos.put(leg.id(), arq);
+            mandatos(Json.ler(Coleta.caminho(ctx, arq)), leg, ctx.hoje())
+                    .forEach((id, lista) -> porParlamentar.computeIfAbsent(id, k -> new ArrayList<>()).addAll(lista));
+        }
+        porParlamentar.values().forEach(lista -> lista.sort(Comparator.comparing(MandatoSapl::inicio)));
 
         Coleta.Arquivo arqAtivos = Coleta.metadados(ctx, "sapl", "parlamentares-ativos.json");
         Set<String> ativosIds = new HashSet<>();
@@ -262,7 +274,7 @@ public final class Sapl implements Fonte {
         }
 
         Coleta.Arquivo arqSessoes = Coleta.metadados(ctx, "sapl", "sessoes.json");
-        Map<Integer, Sessao> sessoes = arqSessoes == null ? Map.of() : sessoes(Json.ler(Coleta.caminho(ctx, arqSessoes)), atual);
+        Map<Integer, Sessao> sessoes = arqSessoes == null ? Map.of() : sessoes(Json.ler(Coleta.caminho(ctx, arqSessoes)), cobertas);
         List<Sessao> realizadas = realizadas(sessoes, ctx.hoje());
         Map<Integer, Item> ordens = itens(ctx, "ordens", realizadas);
         Map<Integer, Item> expedientes = itens(ctx, "expedientes", realizadas);
@@ -293,12 +305,14 @@ public final class Sapl implements Fonte {
 
             Coleta.Arquivo arqFil = Coleta.metadados(ctx, "sapl", "filiacoes/" + id + ".json");
             List<Filiacao> filiacoes = arqFil == null ? List.of() : filiacoes(Json.ler(Coleta.caminho(ctx, arqFil)));
-            String partido = partidoEm(filiacoes, ctx.hoje());
 
             List<MandatoSapl> listaMandatos = porParlamentar.getOrDefault(id, List.of());
             boolean emExercicio = listaMandatos.stream().anyMatch(MandatoSapl::emExercicio) || ativosIds.contains(id);
-            String situacao = listaMandatos.isEmpty() ? (emExercicio ? "Exercício" : "Sem registro de exercício")
-                    : listaMandatos.getFirst().situacao();
+            MandatoSapl ultimo = listaMandatos.isEmpty() ? null : listaMandatos.getLast();
+            String situacao = emExercicio ? "Exercício" : (ultimo == null ? "Sem registro de exercício" : ultimo.situacao());
+            // Quem saiu: partido na data em que o último mandato terminou, não a filiação de hoje.
+            LocalDate referencia = emExercicio || ultimo == null || ultimo.fim().isAfter(ctx.hoje()) ? ctx.hoje() : ultimo.fim();
+            String partido = partidoEm(filiacoes, referencia);
 
             List<LinkOficial> links = List.of(new LinkOficial("Página no SAPL", SITE + "/parlamentar/" + id,
                     Prov.de(FONTE_ID, API + "/parlamentares/parlamentar/" + id + "/", arqP)));
@@ -310,13 +324,19 @@ public final class Sapl implements Fonte {
 
             // Mandatos
             List<Mandato> mandatosBloco = new ArrayList<>();
+            List<FonteUsada> fontesDeMandatos = new ArrayList<>();
             for (MandatoSapl ms : listaMandatos) {
+                Coleta.Arquivo arq = arqMandatos.get(ms.legislatura());
                 mandatosBloco.add(new Mandato("vereador", "municipal", IBGE, UF, ms.inicio(), ms.fim(), ms.situacao(),
-                        ms.titular() ? "Titular" : "Suplente", atual.id(), null, null,
-                        Prov.de(FONTE_ID, API + "/parlamentares/mandato/?legislatura=" + atual.id(), arqMandatos)));
+                        ms.titular() ? "Titular" : "Suplente", ms.legislatura(), null, null,
+                        Prov.de(FONTE_ID, API + "/parlamentares/mandato/?legislatura=" + ms.legislatura(), arq)));
+                FonteUsada usada = FonteUsada.de(FONTE_ID, arq);
+                if (!fontesDeMandatos.contains(usada)) {
+                    fontesDeMandatos.add(usada);
+                }
             }
-            if (arqMandatos != null) {
-                fontesDoVereador.put("mandatos", List.of(FonteUsada.de(FONTE_ID, arqMandatos)));
+            if (!fontesDeMandatos.isEmpty()) {
+                fontesDoVereador.put("mandatos", fontesDeMandatos);
             }
 
             // Votos e participação: a data vem do item votado (ordem do dia ou expediente).
@@ -368,7 +388,7 @@ public final class Sapl implements Fonte {
 
         Json.gravar(saida.resolve("pessoas.json"), pessoas);
         System.out.println("sapl: " + pessoas.size() + " vereadores normalizados"
-                + (votosSemData > 0 ? ", " + votosSemData + " votos sem item votado na coleta" : ""));
+                + (votosSemData > 0 ? ", " + votosSemData + " votos de antes da cobertura ou sem item votado, fora" : ""));
     }
 
     /** Presença em sessão plenária da legislatura vigente, até hoje. A fonte lista só presentes. */
@@ -540,11 +560,31 @@ public final class Sapl implements Fonte {
         return pagina == null ? null : Json.texto(pagina.path("pagination").path("links"), "next");
     }
 
-    /** Anos da legislatura vigente até hoje. */
-    static List<Integer> anos(Legislatura leg, LocalDate hoje) {
+    /** Legislaturas que tocam o período coberto: terminam no início da cobertura ou depois, e já começaram. */
+    static List<Legislatura> legislaturasCobertas(List<Legislatura> legislaturas, LocalDate hoje) {
+        List<Legislatura> cobertas = new ArrayList<>();
+        for (Legislatura l : legislaturas) {
+            if (!l.fim().isBefore(Camara.INICIO_DA_COBERTURA) && !l.inicio().isAfter(hoje)) {
+                cobertas.add(l);
+            }
+        }
+        if (cobertas.isEmpty()) {
+            cobertas.add(legislaturaVigente(legislaturas, hoje));
+        }
+        return cobertas;
+    }
+
+    /** Início da cobertura no piloto: o da primeira legislatura coberta, nunca antes de Camara.INICIO_DA_COBERTURA. */
+    static LocalDate inicioDaCobertura(List<Legislatura> cobertas) {
+        LocalDate primeira = cobertas.getFirst().inicio();
+        return primeira.isBefore(Camara.INICIO_DA_COBERTURA) ? Camara.INICIO_DA_COBERTURA : primeira;
+    }
+
+    /** Anos cobertos: do início da cobertura até hoje, dentro das legislaturas cobertas. */
+    static List<Integer> anos(List<Legislatura> cobertas, LocalDate hoje) {
         List<Integer> anos = new ArrayList<>();
-        int fim = Math.min(leg.fim().getYear(), hoje.getYear());
-        for (int ano = leg.inicio().getYear(); ano <= fim; ano++) {
+        int fim = Math.min(cobertas.getLast().fim().getYear(), hoje.getYear());
+        for (int ano = inicioDaCobertura(cobertas).getYear(); ano <= fim; ano++) {
             anos.add(ano);
         }
         return anos;
@@ -569,14 +609,17 @@ public final class Sapl implements Fonte {
         return voto != null && VOTOS_REGISTRADOS.contains(voto);
     }
 
-    /** Sessões plenárias da legislatura. A listagem da fonte ignora paginação e devolve tudo. */
-    static Map<Integer, Sessao> sessoes(JsonNode raiz, Legislatura leg) {
+    /** Sessões plenárias das legislaturas cobertas, desde o início da cobertura. A listagem da fonte ignora paginação e devolve tudo. */
+    static Map<Integer, Sessao> sessoes(JsonNode raiz, List<Legislatura> cobertas) {
+        Set<Integer> numeros = new HashSet<>();
+        cobertas.forEach(l -> numeros.add(l.id()));
+        LocalDate inicio = inicioDaCobertura(cobertas);
         Map<Integer, Sessao> map = new HashMap<>();
         for (JsonNode s : resultados(raiz)) {
             Integer id = Json.inteiro(s, "id");
             Integer legislatura = Json.inteiro(s, "legislatura_numero");
             LocalDate data = data(Json.texto(s, "data_inicio"));
-            if (id == null || data == null || legislatura == null || legislatura != leg.id()) {
+            if (id == null || data == null || legislatura == null || !numeros.contains(legislatura) || data.isBefore(inicio)) {
                 continue;
             }
             map.put(id, new Sessao(id, data, Json.texto(s, "hora_inicio"), primeiro(Json.texto(s, "tipo"), "Plenária"),
@@ -769,7 +812,7 @@ public final class Sapl implements Fonte {
                     : (hoje.isAfter(dataFim) ? "Mandato encerrado em " + dataFim : "Mandato previsto"));
 
             map.computeIfAbsent(pId, k -> new ArrayList<>())
-                    .add(new MandatoSapl(pId, dataInicio, dataFim, titular, tipoAfastamento, situacao, emExercicio));
+                    .add(new MandatoSapl(pId, dataInicio, dataFim, titular, tipoAfastamento, situacao, emExercicio, leg.id()));
         }
         return map;
     }

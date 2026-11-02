@@ -9,7 +9,7 @@
     "allOf": [{ "$ref": "comum.schema.json#/$defs/proveniencia_manual" }],
     "required": ["cargo", "eleicao", "inicio", "fim", "texto_oficial"],
     "properties": {
-      "cargo": { "enum": ["presidente", "governador", "prefeito"] },
+      "cargo": { "enum": ["presidente", "governador", "prefeito", "vice_prefeito"] },
       "ente": { "anyOf": [{ "$ref": "comum.schema.json#/$defs/ente" }, { "type": "null" }] },
       "eleicao": { "type": "integer", "minimum": 1990 },
       "inicio": { "$ref": "comum.schema.json#/$defs/data" },

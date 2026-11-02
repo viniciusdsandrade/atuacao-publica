@@ -32,6 +32,11 @@ class SaplTest {
         assertEquals(2, legs.size());
         assertEquals(19, Sapl.legislaturaVigente(legs, HOJE).id());
         assertEquals(18, Sapl.legislaturaVigente(legs, LocalDate.of(2022, 6, 1)).id());
+        // Desde 2022 (ADR-0009): a 18ª entra pela parte a partir do início da cobertura.
+        List<Sapl.Legislatura> cobertas = Sapl.legislaturasCobertas(legs, HOJE);
+        assertEquals(List.of(18, 19), cobertas.stream().map(Sapl.Legislatura::id).toList());
+        assertEquals(LocalDate.of(2022, 1, 1), Sapl.inicioDaCobertura(cobertas));
+        assertEquals(List.of(2022, 2023, 2024, 2025, 2026), Sapl.anos(cobertas, HOJE));
     }
 
     @Test
@@ -67,6 +72,7 @@ class SaplTest {
                 """);
         Map<String, List<Sapl.MandatoSapl>> map = Sapl.mandatos(json, LEG19, HOJE);
         assertEquals(2, map.size());
+        assertEquals(19, map.get("10").getFirst().legislatura());
 
         Sapl.MandatoSapl titular = map.get("10").getFirst();
         assertTrue(titular.emExercicio());
@@ -122,7 +128,7 @@ class SaplTest {
                   {"id": 2000, "numero": 50, "data_inicio": "2024-12-10", "hora_inicio": "18:00", "tipo": "Ordinária", "legislatura_numero": 18}
                 ]
                 """);
-        Map<Integer, Sapl.Sessao> sessoes = Sapl.sessoes(json, LEG19);
+        Map<Integer, Sapl.Sessao> sessoes = Sapl.sessoes(json, List.of(LEG19));
         assertEquals(1, sessoes.size());
         assertEquals(1, Sapl.realizadas(sessoes, HOJE).size());
         assertEquals(0, Sapl.realizadas(sessoes, LocalDate.of(2024, 12, 31)).size());

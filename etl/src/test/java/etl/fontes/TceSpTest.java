@@ -30,8 +30,38 @@ class TceSpTest {
     @Test
     void mandatoEncerradoParaNoUltimoMesDoMandato() {
         List<YearMonth> meses = TceSp.meses(LocalDate.of(2021, 1, 1), LocalDate.of(2025, 1, 1), HOJE);
+        assertEquals(YearMonth.of(2022, 1), meses.getFirst());
         assertEquals(YearMonth.of(2024, 12), meses.getLast());
+        assertEquals(36, meses.size());
         assertEquals(List.of(), TceSp.meses(LocalDate.of(2029, 1, 1), LocalDate.of(2033, 1, 1), HOJE));
+    }
+
+    @Test
+    void mandatosSeguidosNoMesmoEnteSomamOsMeses(@org.junit.jupiter.api.io.TempDir java.nio.file.Path tmp) throws Exception {
+        java.nio.file.Files.createDirectories(tmp.resolve("contrib"));
+        java.nio.file.Files.writeString(tmp.resolve("contrib").resolve("mandatos.yaml"), """
+                - cargo: prefeito
+                  ente: "3509502"
+                  eleicao: 2024
+                  inicio: 2025-01-01
+                  fim: 2029-01-01
+                - cargo: prefeito
+                  ente: "3509502"
+                  eleicao: 2020
+                  inicio: 2021-01-01
+                  fim: 2025-01-01
+                - cargo: presidente
+                  eleicao: 2022
+                  inicio: 2023-01-01
+                  fim: 2027-01-05
+                """);
+        etl.Contexto ctx = new etl.Contexto(tmp, tmp.resolve("data"), new etl.Http("teste/0", 1), null,
+                Instant.parse("2026-11-01T12:00:00Z"), null);
+        List<YearMonth> meses = TceSp.mesesPorEnte(ctx).get("3509502");
+        assertEquals(YearMonth.of(2022, 1), meses.getFirst());
+        assertEquals(YearMonth.of(2026, 11), meses.getLast());
+        assertEquals(59, meses.size());
+        assertEquals(59, meses.stream().distinct().count());
     }
 
     @Test

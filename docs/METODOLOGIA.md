@@ -5,7 +5,7 @@ As fontes estão descritas em `docs/FONTES.md`.
 
 ## Regras gerais
 
-- **Cobertura temporal.** Começa em 2022-01-01 (ADR-0009, que revisa o ADR-0006): a 56ª legislatura entra pela parte a partir dessa data, e os mandatos executivos em curso nela entram com os atos a partir dela. Só entra quem exerceu mandato a partir dessa data. A cobertura só cresce: quem sai do cargo continua no arquivo. Histórico anterior a 2022 fica fora. No piloto municipal, a cobertura começa na legislatura vigente da câmara (2025-01-01) e no mandato de prefeito iniciado em 2025 (ADR-0007), até a etapa B do ADR-0009.
+- **Cobertura temporal.** Começa em 2022-01-01 (ADR-0009, que revisa o ADR-0006): a 56ª legislatura entra pela parte a partir dessa data, e os mandatos executivos em curso nela entram com os atos a partir dela. Só entra quem exerceu mandato a partir dessa data. A cobertura só cresce: quem sai do cargo continua no arquivo. Histórico anterior a 2022 fica fora. No piloto municipal, a 18ª legislatura da câmara (2021 a 2024) entra pela parte a partir de 2022-01-01, e o mandato de prefeito de 2021 a 2025 entra com as despesas a partir dessa data.
 - **Transição.** As datas de posse vêm dos dados: `contrib/mandatos.yaml` para presidente e governador, e a legislatura da Câmara para deputado e senador. A troca de mandatos não exige mudança de código.
 - **Situação.** Cada perfil diz se a pessoa está em exercício. A situação mostrada é a do papel principal:
   - deputado e senador: a situação informada pela casa legislativa (por exemplo, `Exercício`);
@@ -134,7 +134,7 @@ Não é presença. É a contagem de votos registrados em votações nominais.
 - Planos de governo: só das duas eleições mais recentes (2022 e 2026). Planos de 2018 ficam fora da POC.
 - Quando o ZIP da fonte não traz o arquivo do candidato, o campo fica "sem registro na fonte". Em 2022, 1 dos 28 eleitos para cargo executivo está nessa situação.
 - Vínculo com o perfil: CPF, em memória, para deputados. Nome civil, UF e data de nascimento, em memória, para senadores. O vínculo entre eleições usa CPF. O CPF nunca é gravado.
-- **Piloto municipal.** Eleição de 2024 (`consulta_cand_2024` e `bem_candidato_2024`), filtrada pelo município piloto. O SAPL não publica CPF: o vínculo do vereador com a candidatura usa nome civil e nome de urna normalizados, dentro do município e da eleição.
+- **Piloto municipal.** Eleições de 2020 e 2024 (`consulta_cand` e `bem_candidato`), filtradas pelo município piloto. O SAPL não publica CPF: a candidatura mais recente com o mesmo nome civil ou nome de urna normalizado, dentro do município, serve de ponte; as demais eleições da pessoa vêm pelo CPF dessa candidatura, em memória, como nas outras casas. Planos de governo municipais: só a partir de 2022, como no federal; 2020 fica sem plano.
 
 ## Executivo
 
@@ -143,7 +143,7 @@ Não é presença. É a contagem de votos registrados em votações nominais.
 - **Atos normativos.** Leis, leis complementares, medidas provisórias e decretos de `/legislacao/lista` do Senado, e vetos de `/materia/vetos/{ano}`, publicados no período do mandato. A fonte não informa quem assinou cada ato. O bloco se chama "atos do Poder Executivo federal no período do mandato".
 - **Agenda oficial.** A agenda presidencial existe só em HTML. Ela entra por contribuição manual com snapshot.
 - **Despesas do Executivo municipal (piloto, ADR-0008).** Bloco `despesas_executivo` do prefeito. Fonte: `despesas/{municipio}/{ano}/{mes}` da API do TCE-SP, para cada mês do mandato já iniciado. Entram só os lançamentos do órgão cujo nome começa com "PREFEITURA MUNICIPAL" (administração direta) e do evento `Valor Pago`. O ETL soma por mês e por órgão e conta os pagamentos. Fornecedor, empenho e data de cada lançamento não são publicados. Os 6 meses mais recentes são renovados toda semana; os anteriores vêm do cache. Mês sem resposta da fonte fica sem registro.
-- **Prefeito (piloto).** O perfil vem da candidatura eleita no TSE de 2024. O mandato vem de `contrib/mandatos.yaml` (posse em 2025-01-01 e fim em 2029-01-01, art. 29 da Constituição). A prefeitura não publica dados abertos: atos e agenda entram por contribuição com fonte T0.
+- **Prefeito e vice-prefeito (piloto).** Os perfis vêm das candidaturas eleitas no TSE de 2020 e de 2024. Os mandatos vêm de `contrib/mandatos.yaml` (posse em 1º de janeiro do ano seguinte à eleição e fim na posse do sucessor, art. 29 da Constituição). A prefeitura não publica dados abertos: agenda entra por contribuição com fonte T0.
 
 ## Validação antes de publicar
 

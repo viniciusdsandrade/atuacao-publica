@@ -74,10 +74,10 @@ public final class Tse implements Fonte {
     static final int PRIMEIRA_ELEICAO = 2018;
     /** Presidente e governadores: a cobertura começa nos mandatos iniciados em 2023. */
     static final int PRIMEIRA_ELEICAO_EXECUTIVA = 2022;
-    /** Piloto municipal de Campinas (ADR-0007): mandatos municipais iniciados em 2025. */
-    static final int PRIMEIRA_ELEICAO_MUNICIPAL = 2024;
+    /** Piloto municipal (ADR-0007 e ADR-0009): a eleição de 2020 elegeu quem exerceu de 2021 a 2024. */
+    static final int PRIMEIRA_ELEICAO_MUNICIPAL = 2020;
 
-    /** Eleições cobertas até o ano corrente: gerais (de 4 em 4 anos desde 2018) e municipais (desde 2024). */
+    /** Eleições cobertas até o ano corrente: gerais (de 4 em 4 anos desde 2018) e municipais (desde 2020). */
     static List<Integer> eleicoes(int anoAtual) {
         Set<Integer> anos = new java.util.TreeSet<>();
         for (int ano = PRIMEIRA_ELEICAO; ano <= anoAtual; ano += 4) {
