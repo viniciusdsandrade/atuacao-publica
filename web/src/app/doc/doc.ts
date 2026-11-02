@@ -17,6 +17,7 @@ import { catchError, map, of, startWith, switchMap } from 'rxjs';
 
 import { Dados } from '../dados';
 import { Icone } from '../icone/icone';
+import { manterVisivel } from '../rolagem';
 
 /** Links entre documentos do repositório viram rotas do site. */
 const ROTAS: Record<string, string> = {
@@ -91,8 +92,9 @@ export class Doc {
       afterNextRender(
         () => {
           this.preparar();
+          // O sumário entra na tela na exibição seguinte; só então a página tem a altura final.
           if (fragmento) {
-            document.getElementById(fragmento)?.scrollIntoView();
+            afterNextRender(() => document.getElementById(fragmento)?.scrollIntoView(), { injector: this.injector });
           }
         },
         { injector: this.injector },
@@ -102,7 +104,13 @@ export class Doc {
     effect(() => {
       if (this.ativo()) {
         afterNextRender(
-          () => document.querySelector('.doc-sumario a[aria-current="location"]')?.scrollIntoView({ block: 'nearest' }),
+          () => {
+            const item = document.querySelector<HTMLElement>('.doc-sumario a[aria-current="location"]');
+            const sumario = document.querySelector<HTMLElement>('.doc-sumario');
+            if (item && sumario) {
+              manterVisivel(item, sumario);
+            }
+          },
           { injector: this.injector },
         );
       }

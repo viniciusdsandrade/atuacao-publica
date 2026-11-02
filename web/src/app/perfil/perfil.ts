@@ -22,6 +22,7 @@ import {
   situacaoDe,
   tituloDoBloco,
 } from '../rotulos';
+import { manterVisivel } from '../rolagem';
 import { Proveniencia } from './proveniencia';
 import { Tabela } from './tabela';
 
@@ -119,11 +120,19 @@ export class Perfil {
       );
     });
 
-    // Mantém o item ativo do sumário à vista quando ele é uma faixa que rola de lado.
+    // Mantém o item ativo do sumário à vista (faixa que rola de lado no celular, coluna no computador).
     effect(() => {
       if (this.ativo()) {
         afterNextRender(
-          () => document.querySelector('.perfil-nav a[aria-current="location"]')?.scrollIntoView({ block: 'nearest', inline: 'center' }),
+          () => {
+            const item = document.querySelector<HTMLElement>('.perfil-nav a[aria-current="location"]');
+            const nav = document.querySelector<HTMLElement>('.perfil-nav');
+            const lista = nav?.querySelector<HTMLElement>('ul');
+            if (item && nav && lista) {
+              manterVisivel(item, lista);
+              manterVisivel(item, nav);
+            }
+          },
           { injector: this.injector },
         );
       }

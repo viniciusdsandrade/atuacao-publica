@@ -233,7 +233,16 @@
     gap: 2rem;
   }
 
+  /* O artigo fica na segunda coluna mesmo antes de o sumário existir: ele nasce da leitura do texto,
+     depois da primeira exibição. Sem isso o artigo caía na coluna estreita por um quadro. */
+  .doc-artigo {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
   .doc-sumario {
+    grid-column: 1;
+    grid-row: 1;
     position: sticky;
     top: 1rem;
     max-height: calc(100vh - 2rem);
