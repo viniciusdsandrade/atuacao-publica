@@ -75,7 +75,7 @@ public final class Publicador {
     private static final Map<String, String> ORIGEM_DO_BLOCO = Map.of("candidaturas", "tse", "atos_normativos", "executivo",
             "despesas_executivo", "tcesp");
     static final int RECENTES = 20;
-    static final List<String> FONTES_CLI = List.of("camara", "senado", "tse", "executivo", "sapl", "tcesp", "cgu", "agenda", "contrib", "alesp");
+    static final List<String> FONTES_CLI = List.of("camara", "senado", "tse", "executivo", "sapl", "tcesp", "cgu", "agenda", "contrib", "alesp", "executivosp");
 
     /** Perfil em construção, antes da validação. */
     static final class Perfil {
@@ -141,13 +141,13 @@ public final class Publicador {
                 return null;
             }
             if (nome.equals("agenda_oficial")) {
-                return cargos.contains("presidente") ? "agenda" : null;
+                return cargos.contains("presidente") ? "agenda" : (cargos.contains("governador") ? "executivosp" : null);
             }
             if (nome.equals("atos_normativos") && cargos.contains("prefeito") && !cargos.contains("presidente")) {
                 return "sapl";
             }
-            if (nome.equals("despesas_executivo") && cargos.contains("presidente")) {
-                return "cgu";
+            if (nome.equals("despesas_executivo")) {
+                return cargos.contains("presidente") ? "cgu" : (cargos.contains("governador") ? "executivosp" : "tcesp");
             }
             return ORIGEM_DO_BLOCO.getOrDefault(nome, fonteCli);
         }
@@ -184,6 +184,7 @@ public final class Publicador {
             List<String> erros = ctx.validador().validar("politico", documento);
             String caminho = "politicos/" + perfil.id + ".json";
             if (!erros.isEmpty()) {
+                System.err.println("publish: rejeitado: " + caminho + ": " + String.join("; ", erros));
                 rejeitados.add(new Meta.Rejeitado(caminho, "schema: " + String.join("; ", erros.subList(0, Math.min(3, erros.size())))));
                 continue;
             }
@@ -432,6 +433,7 @@ public final class Publicador {
             item.getValue().forEach(lista::add);
             List<String> erros = ctx.validador().validar("detalhe", detalhe);
             if (!erros.isEmpty()) {
+                System.err.println("publish: rejeitado: " + caminho + ": " + String.join("; ", erros));
                 rejeitados.add(new Meta.Rejeitado(caminho, "schema: " + String.join("; ", erros.subList(0, Math.min(3, erros.size())))));
                 continue;
             }

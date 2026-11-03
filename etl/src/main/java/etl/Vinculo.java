@@ -563,6 +563,9 @@ final class Vinculo {
                     if (registro.get("snapshot_url") == null || registro.get("snapshot_url").isNull()) {
                         registro.remove("snapshot_url");
                     }
+                    if (registro.get("participantes") == null || registro.get("participantes").isNull()) {
+                        registro.remove("participantes");
+                    }
                     p.bloco("agenda_oficial").add(registro);
                     usarFonte(p, "agenda_oficial", Json.SAIDA.createObjectNode().<ObjectNode>set("fonte_id", c.get("fonte_id"))
                             .put("url_origem", Json.texto(c, "url_origem").replaceAll("/[0-9]{4}-[0-9]{2}-[0-9]{2}$", ""))
@@ -755,6 +758,9 @@ final class Vinculo {
                     registro.remove("ente");
                     if (registro.get("snapshot_url") == null || registro.get("snapshot_url").isNull()) {
                         registro.remove("snapshot_url");
+                    }
+                    if (registro.get("participantes") == null || registro.get("participantes").isNull()) {
+                        registro.remove("participantes");
                     }
                     p.bloco("agenda_oficial").add(registro);
                     usarFonte(p, "agenda_oficial", Json.SAIDA.createObjectNode().<ObjectNode>set("fonte_id", c.get("fonte_id"))

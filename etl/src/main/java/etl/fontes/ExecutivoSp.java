@@ -21,6 +21,7 @@ import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamReader;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonUnwrapped;
 
 import etl.Coleta;
@@ -53,6 +54,7 @@ public final class ExecutivoSp implements Fonte {
     // UUID do Cargo de Governador
     public static final String CARGO_GOVERNADOR = "ef4562ac-5970-4647-92ed-bcc38432ed4c";
 
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public record Compromisso(String ente, String data, String hora, String textoOficial, String local,
                               List<String> participantes, String snapshotUrl, @JsonUnwrapped Prov prov) {
     }
@@ -283,7 +285,7 @@ public final class ExecutivoSp implements Fonte {
         }
 
         destino.add(new Compromisso(UF, dataIso, horaFormatada, tituloSanitizado, localSanitizado,
-                participantes.isEmpty() ? null : participantes, null, prov));
+                participantes, null, prov));
     }
 
     public static void processarCsvAgenda(Path caminho, Coleta.Arquivo arq, List<Compromisso> destino) throws Exception {
@@ -331,7 +333,7 @@ public final class ExecutivoSp implements Fonte {
             }
 
             destino.add(new Compromisso(UF, dataIso, horaFormatada, tituloSanitizado, localSanitizado,
-                    participantes.isEmpty() ? null : participantes, null, prov));
+                    participantes, null, prov));
         }
     }
 
