@@ -50,8 +50,8 @@ Estado real de cada fase. Atualizado ao fechar cada fase.
 - O arquivo de candidaturas do TSE de 2024 vem com o CPF mascarado. O vínculo dessa eleição com as demais usa nome civil e data de nascimento, em memória.
 - SAPL do piloto: o filtro de votos por registro de votação admite votos anteriores a 2022, porque os ids de registro não seguem a ordem das sessões. Esses votos ficam fora, e a quantidade aparece na saída do `normalize`.
 - Até 2026-11-02, o bloco de órgãos e frentes saía vazio para deputados e senadores por um erro no nome do campo normalizado. Corrigido.
-- Agenda da Presidência: a primeira carga no CI leva mais de uma execução (cerca de 1.800 páginas, 365 delas no archive.org a 4 s cada). Dias já coletados ficam no cache; dias sem captura no arquivo ficam sem registro.
-- Portal da Transparência: o ZIP anual de viagens respondeu 405 ao runner do GitHub Actions em 2026-11-02 (2024 a 2026), enquanto respondia 200 de outra rede. Sem cache, a coleta tenta de novo a cada execução.
+- Agenda da Presidência: a primeira carga no CI foi concluída em execuções sucessivas com coleta em lotes de 40 dias. Dias já coletados ficam no cache; dias sem captura no arquivo ficam sem registro ou com cópia anterior preservada em caso de timeout. No site, 5.480 compromissos no presidente vigente (2023 a 2026) e 721 no presidente de 2019 a 2023.
+- Portal da Transparência: o ZIP anual de viagens respondeu 405 intermitente ao runner do GitHub Actions em 2026-11-02 (2024 a 2026). Corrigido com repetição automática em caso de 405; viagens de 2024 a 2026 publicadas no site com passagens e diárias.
 - Em 2026-11-02 o `publish` do CI parou com "dois perfis com o identificador sapl-3509502-306": um ex-deputado novo no arquivo era o mesmo vereador já publicado, e o vínculo entre casas não os fundiu, porque o TSE mascara o CPF de 2024. Corrigido em dois pontos. O vínculo passa a usar também nome civil e data de nascimento. E o id publicado só passa a um perfil se não for o id derivado de outro, o que vale mesmo quando a fusão falha.
 - O tema do site segue o sistema. Não há alternância manual.
 - O cabeçalho das tabelas não fica fixo na rolagem.
@@ -74,8 +74,8 @@ Alvo fixado em 2026-11-02: nível federal e município piloto, de 2022-01-01 a 2
 | B | Campinas 2022 a 2024: SAPL com 18ª legislatura, transparência, TSE 2020, prefeito anterior, vice-prefeito, TCE | 4 a 5 h | concluída em 2026-11-02: 50 vereadores, 35.647 votos, 20.253 lançamentos de despesa, prefeito com os mandatos de 2021 e 2025 e 56 meses de despesas, vice-prefeito publicado |
 | C | Atos normativos municipais no prefeito (SAPL) | 2 h | concluída em 2026-11-02: 3.904 normas de 2022 a 2026, 3.902 no período dos mandatos |
 | D | Comissões dos vereadores (SAPL) | 2 h | concluída em 2026-11-02: 1.161 participações em comissão desde 2022 |
-| E | Cartão de pagamento e viagens da Presidência (Portal da Transparência, ZIPs sem chave) | 4 a 5 h | concluída em 2026-11-02: 12 meses no mandato de 2019 a 2023 e 45 no vigente; cartão por unidade gestora, diárias, passagens e outros gastos |
-| F | Agenda da Presidência: validação do padrão por dia e do arquivo de 2022; adaptador só se passar | 1 h, depois 4 a 6 h | concluída em 2026-11-02: 6.209 compromissos em 1.767 dias (372 sem agenda publicada); 723 de 2022 pelo Internet Archive |
+| E | Cartão de pagamento e viagens da Presidência (Portal da Transparência, ZIPs sem chave) | 4 a 5 h | concluída em 2026-11-02: 12 meses no mandato de 2019 a 2023 e 45 no vigente; cartão por unidade gestora, diárias, passagens e outros gastos; viagens de 2024 a 2026 validadas e publicadas no site |
+| F | Agenda da Presidência: validação do padrão por dia e do arquivo de 2022; adaptador só se passar | 1 h, depois 4 a 6 h | concluída em 2026-11-02: 6.201 compromissos no site (5.480 no presidente vigente de 2023 a 2026 e 721 no de 2019 a 2023); 2022 pelo Internet Archive |
 
 Sem fonte publicada, fora do alvo: agenda do prefeito, presença em evento no Senado, verba de gabinete da câmara municipal.
 
