@@ -122,14 +122,15 @@ Verificação de 2026-11-02, com scripts locais (Playwright e axe-core, fora do 
      c. Proteção de dados: descarte estrito de CPFs de fornecedores nas despesas de gabinete e normalização de URLs de fotos com espaços.
      d. Vínculo com candidaturas estaduais do TSE: 10 perfis de outras casas fundidos na mesma pessoa.
      e. Suporte na interface web para filtragem e visualização de deputados estaduais.
-     f. Publicação: 1.468 perfis publicados no total com deploy no GitHub Pages.
+     f. Publicação: 1.479 perfis publicados no total com deploy no GitHub Pages (153 deputados da ALESP sem rejeição).
      g. Proposituras e autoria: ingestão em streaming (StAX em ZIP) de `proposituras.zip` e `documento_autor.zip`, com vínculo por `idAutor` e identificação por natureza (PL, PLC, PEC, etc.).
    - Pendente da ALESP: datação das votações nominais de comissões por pauta/reunião.
 3. Gastos e agenda de governadores a partir dos portais estaduais catalogados em `docs/FONTES.md`:
    - Governo do Estado de São Paulo: iniciado em 2026-11-03 (ADR-0014).
    - Fontes catalogadas e validadas: Plataforma SP-Agendas (`https://spagendas.sp.gov.br`, SGGD) e Portal da Transparência de SP (`https://www.transparencia.sp.gov.br`).
    - Modelo: expansão dos blocos do cargo `governador` em `Publicador.java` para paridade com `presidente` e `prefeito` (`despesas_executivo`, `agenda_oficial`, `atos_normativos`).
-   - Próximo passo: adaptador `ExecutivoSp.java` para ingestão dos compromissos oficiais e despesas agregadas por mês.
+   - Adaptador `ExecutivoSp.java` implementado: ingestão de compromissos da SP-Agendas e despesas orçamentárias estaduais integradas ao perfil do Governador de SP.
+   - Pipeline: passo `fetch executivosp` adicionado ao workflow `dados.yml`.
 4. Gastos do Executivo federal (cartão de pagamento e viagens) pelo Portal da Transparência (concluído no ADR-0010 e ADR-0009).
 
 ### Redes sociais

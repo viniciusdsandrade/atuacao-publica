@@ -53,6 +53,8 @@ final class Vinculo {
             despesasDoExecutivoFederal(ctx, perfis);
             agendaPresidencial(ctx, perfis);
             atosMunicipais(ctx, perfis);
+            despesasDoExecutivoEstadual(ctx, perfis);
+            agendaEstadual(ctx, perfis);
         }
         return perfis;
     }
@@ -676,6 +678,88 @@ final class Vinculo {
                         .put("capturado_em", Json.texto(ato, "capturado_em"));
                 if (!usadas.contains(usada)) {
                     usadas.add(usada);
+                }
+            }
+        }
+    }
+
+    /**
+     * Despesas do Poder Executivo estadual (ADR-0014) no perfil do governador já empossado.
+     */
+    private static void despesasDoExecutivoEstadual(Contexto ctx, List<Perfil> perfis) {
+        Path arquivo = ctx.normalizado().resolve("executivosp").resolve("despesas.json");
+        if (!Files.exists(arquivo)) {
+            return;
+        }
+        JsonNode agregados = Json.ler(arquivo);
+        String hoje = ctx.hoje().toString();
+        for (Perfil p : perfis) {
+            if (!p.cargos.contains("governador")) {
+                continue;
+            }
+            for (JsonNode mandato : p.bloco("mandatos")) {
+                String inicio = Json.texto(mandato, "inicio");
+                String fim = Json.texto(mandato, "fim");
+                String ente = Json.texto(mandato, "ente");
+                if (!"governador".equals(Json.texto(mandato, "cargo")) || inicio == null || inicio.compareTo(hoje) > 0 || !"SP".equals(ente)) {
+                    continue;
+                }
+                for (JsonNode a : agregados) {
+                    String primeiroDia = String.format("%04d-%02d-01", a.get("ano").asInt(), a.get("mes").asInt());
+                    boolean noMandato = primeiroDia.compareTo(inicio.substring(0, 8) + "01") >= 0 && (fim == null || primeiroDia.compareTo(fim) < 0);
+                    if (!noMandato) {
+                        continue;
+                    }
+                    ObjectNode registro = Json.SAIDA.createObjectNode();
+                    registro.set("ano", a.get("ano"));
+                    registro.set("mes", a.get("mes"));
+                    registro.set("categoria", a.get("categoria"));
+                    registro.set("valor", a.get("valor"));
+                    registro.set("quantidade", a.get("quantidade"));
+                    registro.set("fonte_id", a.get("fonte_id"));
+                    registro.set("url_origem", a.get("url_origem"));
+                    registro.set("capturado_em", a.get("capturado_em"));
+                    p.bloco("despesas_executivo").add(registro);
+                    usarFonte(p, "despesas_executivo", Json.SAIDA.createObjectNode().<ObjectNode>set("fonte_id", a.get("fonte_id"))
+                            .<ObjectNode>set("url_origem", a.get("url_origem")).set("capturado_em", a.get("capturado_em")));
+                }
+            }
+        }
+    }
+
+    /** Compromissos da agenda oficial em cada mandato de governador (ADR-0014). */
+    private static void agendaEstadual(Contexto ctx, List<Perfil> perfis) {
+        Path arquivo = ctx.normalizado().resolve("executivosp").resolve("compromissos.json");
+        if (!Files.exists(arquivo)) {
+            return;
+        }
+        JsonNode compromissos = Json.ler(arquivo);
+        String hoje = ctx.hoje().toString();
+        for (Perfil p : perfis) {
+            if (!p.cargos.contains("governador")) {
+                continue;
+            }
+            for (JsonNode mandato : p.bloco("mandatos")) {
+                String inicio = Json.texto(mandato, "inicio");
+                String fim = Json.texto(mandato, "fim");
+                String ente = Json.texto(mandato, "ente");
+                if (!"governador".equals(Json.texto(mandato, "cargo")) || inicio == null || inicio.compareTo(hoje) > 0 || !"SP".equals(ente)) {
+                    continue;
+                }
+                for (JsonNode c : compromissos) {
+                    String data = Json.texto(c, "data");
+                    if (data == null || data.compareTo(inicio) < 0 || (fim != null && data.compareTo(fim) >= 0)) {
+                        continue;
+                    }
+                    ObjectNode registro = ((ObjectNode) c).deepCopy();
+                    registro.remove("ente");
+                    if (registro.get("snapshot_url") == null || registro.get("snapshot_url").isNull()) {
+                        registro.remove("snapshot_url");
+                    }
+                    p.bloco("agenda_oficial").add(registro);
+                    usarFonte(p, "agenda_oficial", Json.SAIDA.createObjectNode().<ObjectNode>set("fonte_id", c.get("fonte_id"))
+                            .put("url_origem", Json.texto(c, "url_origem").replaceAll("/[0-9]{4}-[0-9]{2}-[0-9]{2}$", ""))
+                            .set("capturado_em", c.get("capturado_em")));
                 }
             }
         }
