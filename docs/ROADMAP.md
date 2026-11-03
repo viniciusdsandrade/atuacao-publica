@@ -126,11 +126,12 @@ Verificação de 2026-11-02, com scripts locais (Playwright e axe-core, fora do 
      g. Proposituras e autoria: ingestão em streaming (StAX em ZIP) de `proposituras.zip` e `documento_autor.zip`, com vínculo por `idAutor` e identificação por natureza (PL, PLC, PEC, etc.).
    - Pendente da ALESP: datação das votações nominais de comissões por pauta/reunião.
 3. Gastos e agenda de governadores a partir dos portais estaduais catalogados em `docs/FONTES.md`:
-   - Governo do Estado de São Paulo: iniciado em 2026-11-03 (ADR-0014).
+   - Governo do Estado de São Paulo: concluído em 2026-11-03 (ADR-0014).
    - Fontes catalogadas e validadas: Plataforma SP-Agendas (`https://spagendas.sp.gov.br`, SGGD) e Portal da Transparência de SP (`https://www.transparencia.sp.gov.br`).
    - Modelo: expansão dos blocos do cargo `governador` em `Publicador.java` para paridade com `presidente` e `prefeito` (`despesas_executivo`, `agenda_oficial`, `atos_normativos`).
-   - Adaptador `ExecutivoSp.java` implementado: ingestão de compromissos da SP-Agendas e despesas orçamentárias estaduais integradas ao perfil do Governador de SP.
+   - Adaptador `ExecutivoSp.java` implementado: ingestão de compromissos da SP-Agendas (formato OpenXML/XLSX via StAX em streaming com deduplicação) e despesas orçamentárias estaduais integradas ao perfil do Governador de SP.
    - Pipeline: passo `fetch executivosp` adicionado ao workflow `dados.yml`.
+   - Publicação: perfil do Governador de São Paulo publicado com sucesso no site (deploy GitHub Pages) exibindo a agenda oficial de compromissos públicos.
 4. Gastos do Executivo federal (cartão de pagamento e viagens) pelo Portal da Transparência (concluído no ADR-0010 e ADR-0009).
 
 ### Redes sociais

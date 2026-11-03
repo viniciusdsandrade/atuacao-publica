@@ -135,11 +135,17 @@ public final class ExecutivoSp implements Fonte {
             }
         }
 
-        compromissos.sort(Comparator.comparing(Compromisso::data).thenComparing(Compromisso::hora));
-        Json.gravar(pastaSaida.resolve("compromissos.json"), Json.SAIDA.valueToTree(compromissos));
+        Map<String, Compromisso> unicos = new java.util.LinkedHashMap<>();
+        for (Compromisso c : compromissos) {
+            String chave = c.data() + "|" + c.hora() + "|" + c.textoOficial() + "|" + (c.local() == null ? "" : c.local());
+            unicos.putIfAbsent(chave, c);
+        }
+        List<Compromisso> deduplicados = new ArrayList<>(unicos.values());
+        deduplicados.sort(Comparator.comparing(Compromisso::data).thenComparing(Compromisso::hora));
+        Json.gravar(pastaSaida.resolve("compromissos.json"), Json.SAIDA.valueToTree(deduplicados));
         Json.gravar(pastaSaida.resolve("despesas.json"), Json.SAIDA.valueToTree(despesas));
 
-        System.out.println("executivosp: " + compromissos.size() + " compromissos e " + despesas.size() + " agregados de despesa normalizados");
+        System.out.println("executivosp: " + deduplicados.size() + " compromissos e " + despesas.size() + " agregados de despesa normalizados");
     }
 
     public static void processarArquivoAgenda(Path caminho, Coleta.Arquivo arq, List<Compromisso> destino) throws Exception {

@@ -420,7 +420,7 @@ public final class Publicador {
         Map<Integer, List<JsonNode>> porAno = new TreeMap<>(Comparator.reverseOrder());
         for (JsonNode r : ordenados) {
             Integer ano = ano(r, bloco);
-            if (ano != null) {
+            if (ano != null && ano >= 2000) {
                 porAno.computeIfAbsent(ano, k -> new ArrayList<>()).add(r);
             }
         }
