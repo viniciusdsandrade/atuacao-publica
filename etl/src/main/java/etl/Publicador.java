@@ -143,8 +143,13 @@ public final class Publicador {
             if (nome.equals("agenda_oficial")) {
                 return cargos.contains("presidente") ? "agenda" : (cargos.contains("governador") ? "executivosp" : null);
             }
-            if (nome.equals("atos_normativos") && cargos.contains("prefeito") && !cargos.contains("presidente")) {
-                return "sapl";
+            if (nome.equals("atos_normativos")) {
+                if (cargos.contains("governador")) {
+                    return "executivosp";
+                }
+                if (cargos.contains("prefeito") && !cargos.contains("presidente")) {
+                    return "sapl";
+                }
             }
             if (nome.equals("despesas_executivo")) {
                 return cargos.contains("presidente") ? "cgu" : (cargos.contains("governador") ? "executivosp" : "tcesp");

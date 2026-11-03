@@ -115,8 +115,14 @@ export function tituloDoBloco(bloco: string, esfera?: string | null): string {
   if (bloco === 'atos_normativos' && esfera === 'municipal') {
     return 'Atos normativos do município no período do mandato';
   }
+  if (bloco === 'atos_normativos' && esfera === 'estadual') {
+    return 'Atos normativos do Estado no período do mandato';
+  }
   if (bloco === 'despesas_executivo' && esfera === 'federal') {
     return 'Cartão de pagamento e viagens da Presidência da República no período do mandato';
+  }
+  if (bloco === 'despesas_executivo' && esfera === 'estadual') {
+    return 'Despesas do Poder Executivo estadual no período do mandato';
   }
   return rotuloBloco(bloco);
 }
@@ -126,15 +132,21 @@ export function notaDoBloco(bloco: string, esfera?: string | null): string | nul
   if (bloco === 'atos_normativos' && esfera === 'municipal') {
     return 'Leis, leis complementares e decretos registrados pela câmara municipal no SAPL. A fonte não informa quem assinou cada ato.';
   }
+  if (bloco === 'atos_normativos' && esfera === 'estadual') {
+    return 'Decretos e leis do Poder Executivo estadual registrados no acervo oficial de legislação do Estado de São Paulo. A fonte não informa quem assinou cada ato.';
+  }
   if (bloco === 'despesas_executivo' && esfera === 'federal') {
     return 'Cartão de pagamento do Governo Federal e viagens realizadas do órgão Presidência da República, somados por mês a partir dos arquivos do Portal da Transparência. Transações sob sigilo entram pelo valor, sem detalhe. A fonte não informa quem autorizou cada gasto.';
+  }
+  if (bloco === 'despesas_executivo' && esfera === 'estadual') {
+    return 'Despesas orçamentárias do Gabinete do Governador e secretarias da administração direta, somadas por mês a partir do Portal da Transparência do Estado de São Paulo. A fonte não informa quem autorizou cada gasto.';
   }
   return NOTAS[bloco] ?? null;
 }
 
 export function rotuloCurtoBloco(bloco: string, esfera?: string | null): string {
   if (bloco === 'despesas_executivo') {
-    return esfera === 'federal' ? 'Cartão e viagens' : 'Despesas da prefeitura';
+    return esfera === 'federal' ? 'Cartão e viagens' : (esfera === 'estadual' ? 'Despesas do governo estadual' : 'Despesas da prefeitura');
   }
   return BLOCOS_CURTOS[bloco] ?? bloco;
 }

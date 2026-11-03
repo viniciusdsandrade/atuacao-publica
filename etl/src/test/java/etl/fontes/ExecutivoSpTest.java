@@ -78,4 +78,85 @@ class ExecutivoSpTest {
         // CPF no título deve ser removido pelo Guarda.semCpf
         assertEquals("Audiência com João", c2.textoOficial());
     }
+
+    @Test
+    void processaNormasEstaduaisDoExecutivo() throws Exception {
+        String xml = """
+                <?xml version="1.0" encoding="UTF-8"?>
+                <Normas>
+                  <LegislacaoNorma>
+                    <Data>2023-01-24T00:00:00-02:00</Data>
+                    <Ementa>Atribui, ao Vice-Governador do Estado, a missão especial de coordenar</Ementa>
+                    <IdNorma>206763</IdNorma>
+                    <Numero>67457</Numero>
+                    <IdTipo>3</IdTipo>
+                    <Promulg>E</Promulg>
+                    <URLFicha>http://www.al.sp.gov.br/norma/206763</URLFicha>
+                  </LegislacaoNorma>
+                  <LegislacaoNorma>
+                    <Data>2024-05-28T00:00:00-03:00</Data>
+                    <Ementa>Institui o Programa Escola Cívico-Militar 123.456.789-01</Ementa>
+                    <IdNorma>210100</IdNorma>
+                    <Numero>1398</Numero>
+                    <IdTipo>2</IdTipo>
+                    <Promulg>E</Promulg>
+                    <URLFicha>http://www.al.sp.gov.br/norma/210100</URLFicha>
+                  </LegislacaoNorma>
+                  <LegislacaoNorma>
+                    <Data>2025-03-12T00:00:00-03:00</Data>
+                    <Ementa>Estabelece procedimento para serviços de entrega</Ementa>
+                    <IdNorma>211200</IdNorma>
+                    <Numero>18105</Numero>
+                    <IdTipo>9</IdTipo>
+                    <Promulg>E</Promulg>
+                    <URLFicha>http://www.al.sp.gov.br/norma/211200</URLFicha>
+                  </LegislacaoNorma>
+                  <LegislacaoNorma>
+                    <!-- Norma legislativa da Alesp: Promulg L deve ser ignorada -->
+                    <Data>2023-03-06T00:00:00-03:00</Data>
+                    <Ementa>Resolução da Alesp</Ementa>
+                    <IdNorma>207000</IdNorma>
+                    <Numero>935</Numero>
+                    <IdTipo>19</IdTipo>
+                    <Promulg>L</Promulg>
+                  </LegislacaoNorma>
+                  <LegislacaoNorma>
+                    <!-- Norma anterior a 2022: deve ser ignorada -->
+                    <Data>2020-05-10T00:00:00-03:00</Data>
+                    <Ementa>Decreto antigo</Ementa>
+                    <IdNorma>100000</IdNorma>
+                    <Numero>55000</Numero>
+                    <IdTipo>3</IdTipo>
+                    <Promulg>E</Promulg>
+                  </LegislacaoNorma>
+                </Normas>
+                """;
+        Coleta.Arquivo arq = new Coleta.Arquivo("https://www.al.sp.gov.br", "legislacao_normas.zip", "hash", 100, Instant.now());
+        List<ExecutivoSp.Ato> lista = new ArrayList<>();
+        try (var in = new java.io.ByteArrayInputStream(xml.getBytes(java.nio.charset.StandardCharsets.UTF_8))) {
+            ExecutivoSp.processarNormasEstaduaisXml(in, arq, lista);
+        }
+
+        assertEquals(3, lista.size());
+
+        ExecutivoSp.Ato dec = lista.stream().filter(a -> "DEC".equals(a.tipo())).findFirst().orElseThrow();
+        assertEquals("SP", dec.ente());
+        assertEquals("67457", dec.numero());
+        assertEquals("2023-01-24", dec.data());
+        assertEquals("Decreto nº 67457", dec.nome());
+        assertEquals("sp-dec-67457", dec.idFonte());
+        assertEquals("http://www.al.sp.gov.br/norma/206763", dec.prov().urlOrigem());
+
+        ExecutivoSp.Ato lcp = lista.stream().filter(a -> "LCP".equals(a.tipo())).findFirst().orElseThrow();
+        assertEquals("1398", lcp.numero());
+        assertEquals("2024-05-28", lcp.data());
+        assertEquals("Lei Complementar nº 1398", lcp.nome());
+        // CPF sanitizado da ementa
+        assertEquals("Institui o Programa Escola Cívico-Militar", lcp.ementa());
+
+        ExecutivoSp.Ato lei = lista.stream().filter(a -> "LEI".equals(a.tipo())).findFirst().orElseThrow();
+        assertEquals("18105", lei.numero());
+        assertEquals("2025-03-12", lei.data());
+        assertEquals("Lei nº 18105", lei.nome());
+    }
 }

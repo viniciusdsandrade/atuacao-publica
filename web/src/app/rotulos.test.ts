@@ -71,11 +71,15 @@ test('situacaoDe separa exercício, posse prevista e fora de exercício (ADR-000
 
 test('título e nota dos atos e das despesas do Executivo dependem da esfera', () => {
   assert.match(tituloDoBloco('atos_normativos', 'municipal'), /município/);
+  assert.match(tituloDoBloco('atos_normativos', 'estadual'), /Estado/);
   assert.match(tituloDoBloco('atos_normativos', 'federal'), /Executivo federal/);
   assert.match(tituloDoBloco('despesas_executivo', 'federal'), /Presidência/);
+  assert.match(tituloDoBloco('despesas_executivo', 'estadual'), /estadual/);
   assert.match(tituloDoBloco('despesas_executivo', 'municipal'), /município/);
   assert.match(notaDoBloco('atos_normativos', 'municipal') ?? '', /SAPL/);
+  assert.match(notaDoBloco('atos_normativos', 'estadual') ?? '', /São Paulo/);
   assert.match(notaDoBloco('atos_normativos', 'federal') ?? '', /não informa quem assinou/);
+  assert.match(notaDoBloco('despesas_executivo', 'estadual') ?? '', /Gabinete do Governador/);
   assert.equal(notaDoBloco('votos', 'federal'), null);
 });
 

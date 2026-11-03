@@ -44,9 +44,11 @@ public final class ExecutivoSp implements Fonte {
 
     public static final String FONTE_AGENDAS = "sp-agendas";
     public static final String FONTE_TRANSPARENCIA = "sp-transparencia";
+    public static final String FONTE_LEGISLACAO = "sp-legislacao";
 
     public static final String URL_AGENDAS = "https://spagendas.sp.gov.br";
     public static final String URL_TRANSPARENCIA = "https://www.transparencia.sp.gov.br";
+    public static final String URL_LEGISLACAO = "https://www.al.sp.gov.br/repositorioDados/legislacao/legislacao_normas.zip";
     public static final String UF = "SP";
 
     // UUID do Gabinete do Governador na plataforma SP-Agendas
@@ -61,6 +63,10 @@ public final class ExecutivoSp implements Fonte {
 
     public record Agregado(String ente, int ano, int mes, String orgao, String categoria, BigDecimal valor,
                            int quantidade, @JsonUnwrapped Prov prov) {
+    }
+
+    public record Ato(String ente, String idFonte, String tipo, String numero, String data,
+                      String nome, String ementa, @JsonUnwrapped Prov prov) {
     }
 
     @Override
@@ -79,6 +85,9 @@ public final class ExecutivoSp implements Fonte {
                 "orgaos-secretarias.json", "application/json", Politica.SEMANAL);
         coleta.obter(URL_AGENDAS + "/Home/GetCargosPorOrgao?orgaoId=" + ORGAO_GABINETE_GOVERNADOR,
                 "cargos-gabinete.json", "application/json", Politica.SEMANAL);
+
+        // Atos normativos e decretos do Estado de São Paulo
+        coleta.obter(URL_LEGISLACAO, "legislacao_normas.zip", "application/zip", Politica.SEMANAL);
 
         // Exportação de compromissos por ano na plataforma SP-Agendas (formato XLSX com parâmetros em dd/MM/yyyy)
         for (int ano = anoInicio; ano <= anoAtual; ano++) {
@@ -106,6 +115,7 @@ public final class ExecutivoSp implements Fonte {
 
         List<Compromisso> compromissos = new ArrayList<>();
         List<Agregado> despesas = new ArrayList<>();
+        List<Ato> atos = new ArrayList<>();
 
         if (Files.exists(pastaRaw)) {
             // Processa compromissos da agenda oficial
@@ -133,6 +143,12 @@ public final class ExecutivoSp implements Fonte {
                             n.path("valor").decimalValue(), n.path("quantidade").asInt(), prov));
                 }
             }
+
+            // Processa atos normativos estaduais se existirem
+            Coleta.Arquivo arqNormas = Coleta.metadados(ctx, "executivosp", "legislacao_normas.zip");
+            if (arqNormas != null && Files.exists(Coleta.caminho(ctx, arqNormas))) {
+                processarNormasEstaduais(Coleta.caminho(ctx, arqNormas), arqNormas, atos);
+            }
         }
 
         Map<String, Compromisso> unicos = new java.util.LinkedHashMap<>();
@@ -144,8 +160,9 @@ public final class ExecutivoSp implements Fonte {
         deduplicados.sort(Comparator.comparing(Compromisso::data).thenComparing(Compromisso::hora));
         Json.gravar(pastaSaida.resolve("compromissos.json"), Json.SAIDA.valueToTree(deduplicados));
         Json.gravar(pastaSaida.resolve("despesas.json"), Json.SAIDA.valueToTree(despesas));
+        Json.gravar(pastaSaida.resolve("atos.json"), Json.SAIDA.valueToTree(atos));
 
-        System.out.println("executivosp: " + deduplicados.size() + " compromissos e " + despesas.size() + " agregados de despesa normalizados");
+        System.out.println("executivosp: " + deduplicados.size() + " compromissos, " + despesas.size() + " agregados de despesa e " + atos.size() + " atos normalizados");
     }
 
     public static void processarArquivoAgenda(Path caminho, Coleta.Arquivo arq, List<Compromisso> destino) throws Exception {
@@ -387,5 +404,75 @@ public final class ExecutivoSp implements Fonte {
             return String.format("%02d:%02d", h, min);
         }
         return "09:00";
+    }
+
+    public static void processarNormasEstaduais(Path caminhoZip, Coleta.Arquivo arq, List<Ato> destino) throws Exception {
+        try (ZipFile zip = new ZipFile(caminhoZip.toFile())) {
+            ZipEntry entry = zip.getEntry("legislacao_normas.xml");
+            if (entry == null) {
+                return;
+            }
+            try (InputStream in = zip.getInputStream(entry)) {
+                processarNormasEstaduaisXml(in, arq, destino);
+            }
+        }
+        destino.sort(Comparator.comparing(Ato::data).reversed().thenComparing(Ato::idFonte));
+    }
+
+    public static void processarNormasEstaduaisXml(InputStream in, Coleta.Arquivo arq, List<Ato> destino) throws Exception {
+        XMLInputFactory factory = XMLInputFactory.newInstance();
+        factory.setProperty(XMLInputFactory.IS_SUPPORTING_EXTERNAL_ENTITIES, Boolean.FALSE);
+        factory.setProperty(XMLInputFactory.SUPPORT_DTD, Boolean.FALSE);
+
+        XMLStreamReader reader = factory.createXMLStreamReader(in, "UTF-8");
+        while (reader.hasNext()) {
+            int event = reader.next();
+            if (event == XMLStreamConstants.START_ELEMENT && "LegislacaoNorma".equals(reader.getLocalName())) {
+                String dataStr = null, ementaRaw = null, idNorma = null, numero = null, idTipo = null, promulg = null, urlFicha = null;
+                while (reader.hasNext()) {
+                    int sub = reader.next();
+                    if (sub == XMLStreamConstants.START_ELEMENT) {
+                        String tag = reader.getLocalName();
+                        String text = reader.getElementText();
+                        if ("Data".equals(tag)) dataStr = text;
+                        else if ("Ementa".equals(tag)) ementaRaw = text;
+                        else if ("IdNorma".equals(tag)) idNorma = text;
+                        else if ("Numero".equals(tag)) numero = text;
+                        else if ("IdTipo".equals(tag)) idTipo = text;
+                        else if ("Promulg".equals(tag)) promulg = text;
+                        else if ("URLFicha".equals(tag)) urlFicha = text;
+                    } else if (sub == XMLStreamConstants.END_ELEMENT && "LegislacaoNorma".equals(reader.getLocalName())) {
+                        break;
+                    }
+                }
+
+                if (dataStr != null && dataStr.length() >= 10 && "E".equalsIgnoreCase(promulg)) {
+                    String data = dataStr.substring(0, 10);
+                    if (data.compareTo("2022-01-01") >= 0) {
+                        String tipo = switch (idTipo != null ? idTipo.strip() : "") {
+                            case "3" -> "DEC";
+                            case "9" -> "LEI";
+                            case "2" -> "LCP";
+                            default -> null;
+                        };
+                        if (tipo != null) {
+                            String rotuloTipo = switch (tipo) {
+                                case "DEC" -> "Decreto nº ";
+                                case "LEI" -> "Lei nº ";
+                                case "LCP" -> "Lei Complementar nº ";
+                                default -> "Norma nº ";
+                            };
+                            String numLimpo = numero != null ? numero.strip() : null;
+                            String nome = numLimpo != null ? rotuloTipo + numLimpo : rotuloTipo + (idNorma != null ? idNorma.strip() : "");
+                            String idFonte = "sp-" + tipo.toLowerCase() + "-" + (numLimpo != null ? numLimpo : idNorma);
+                            String ementa = Guarda.semCpf(ementaRaw);
+                            String urlOrigem = urlFicha != null && !urlFicha.isBlank() ? urlFicha.strip() : URL_LEGISLACAO;
+                            Prov prov = Prov.de(FONTE_LEGISLACAO, urlOrigem, arq);
+                            destino.add(new Ato(UF, idFonte, tipo, numLimpo, data, nome, ementa, prov));
+                        }
+                    }
+                }
+            }
+        }
     }
 }

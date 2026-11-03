@@ -55,6 +55,7 @@ final class Vinculo {
             atosMunicipais(ctx, perfis);
             despesasDoExecutivoEstadual(ctx, perfis);
             agendaEstadual(ctx, perfis);
+            atosEstadual(ctx, perfis);
         }
         return perfis;
     }
@@ -766,6 +767,40 @@ final class Vinculo {
                     usarFonte(p, "agenda_oficial", Json.SAIDA.createObjectNode().<ObjectNode>set("fonte_id", c.get("fonte_id"))
                             .put("url_origem", Json.texto(c, "url_origem").replaceAll("/[0-9]{4}-[0-9]{2}-[0-9]{2}$", ""))
                             .set("capturado_em", c.get("capturado_em")));
+                }
+            }
+        }
+    }
+
+    /** Atos normativos e decretos do Poder Executivo estadual (ADR-0014) no perfil do governador. */
+    private static void atosEstadual(Contexto ctx, List<Perfil> perfis) {
+        Path arquivo = ctx.normalizado().resolve("executivosp").resolve("atos.json");
+        if (!Files.exists(arquivo)) {
+            return;
+        }
+        JsonNode atos = Json.ler(arquivo);
+        String hoje = ctx.hoje().toString();
+        for (Perfil p : perfis) {
+            if (!p.cargos.contains("governador")) {
+                continue;
+            }
+            for (JsonNode mandato : p.bloco("mandatos")) {
+                String inicio = Json.texto(mandato, "inicio");
+                String fim = Json.texto(mandato, "fim");
+                String ente = Json.texto(mandato, "ente");
+                if (!"governador".equals(Json.texto(mandato, "cargo")) || inicio == null || inicio.compareTo(hoje) > 0 || !"SP".equals(ente)) {
+                    continue;
+                }
+                for (JsonNode ato : atos) {
+                    String data = Json.texto(ato, "data");
+                    if (data == null || data.compareTo(inicio) < 0 || (fim != null && data.compareTo(fim) >= 0)) {
+                        continue;
+                    }
+                    ObjectNode registro = ((ObjectNode) ato).deepCopy();
+                    registro.remove("ente");
+                    p.bloco("atos_normativos").add(registro);
+                    usarFonte(p, "atos_normativos", Json.SAIDA.createObjectNode().<ObjectNode>set("fonte_id", ato.get("fonte_id"))
+                            .<ObjectNode>set("url_origem", ato.get("url_origem")).set("capturado_em", ato.get("capturado_em")));
                 }
             }
         }
