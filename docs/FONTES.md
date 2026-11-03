@@ -396,6 +396,62 @@ Em 2024, o município (`SG_UE` 62910) tem 1 prefeito, 1 vice-prefeito e 33 verea
 - Não há registro estruturado de exercício ou licença do prefeito.
 - Despesas do gabinete do prefeito e diárias do Executivo não estão abertas. Pedido por LAI sugerido.
 
+## Assembleia Legislativa do Estado de São Paulo (ALESP)
+
+Poder Legislativo do Estado de São Paulo (ADR-0013).
+Validação em 2026-11-03, com o User-Agent do projeto.
+Nenhum servidor bloqueou o cliente.
+
+| id | Fonte | Nível | Formato | Autenticação | Status | Validado em |
+|---|---|---|---|---|---|---|
+| `alesp-deputados` | ALESP, portal de parlamentares e API REST | T0 | JSON e XML | nenhuma | validado | 2026-11-03 |
+| `alesp-despesas` | ALESP, despesas de gabinete | T0 | XML | nenhuma | validado com limitação | 2026-11-03 |
+| `alesp-comissoes` | ALESP, comissões e membros | T0 | XML | nenhuma | validado | 2026-11-03 |
+| `alesp-comissoes-votacoes` | ALESP, votações em comissões permanentes | T0 | XML | nenhuma | validado | 2026-11-03 |
+| `alesp-proposituras` | ALESP, proposituras e autores | T0 | XML em ZIP | nenhuma | validado | 2026-11-03 |
+| `alesp-sessoes` | ALESP, sessões plenárias e pautas | T0 | JSON e PDF | nenhuma | validado com limitação | 2026-11-03 |
+
+### `alesp-deputados`: parlamentares da ALESP
+
+- URL base da API REST: `https://legis-api-portal-prd.al.sp.gov.br/`
+- Repositório de dados abertos: `https://www.al.sp.gov.br/repositorioDados/deputados/deputados.xml`
+- Endpoints validados com resposta 200:
+  - `/parlamentar-portal/todos`: lista todos os parlamentares históricos com `idParlamentar`, `nuMatricula`, `txNomeParlamentar`, `txFoto`, `isEmExercicio` e `listaLegislaturas` (153 deputados na 19ª e 20ª legislaturas).
+  - `/parlamentar-portal/detalhes/{matricula}`: detalhes biográficos, partido, áreas de atuação e base eleitoral.
+  - `/lista-presenca-parlamentar/{matricula}/{mes}/{ano}`: presenças em plenário por mês e ano.
+  - `deputados.xml`: catálogo consolidado dos 94 deputados ativos no momento.
+- Identificador no projeto: `alesp-{matricula}` (ADR-0013).
+- Dados descartados na ingestão: telefone, sala e e-mail institucional do gabinete.
+
+### `alesp-despesas`: despesas com verba de gabinete
+
+- URL base: `https://www.al.sp.gov.br/repositorioDados/deputados/despesas_gabinetes.xml`
+- Arquivo único consolidado com cerca de 171 MB, cobrindo despesas mensais de todos os deputados desde 2015.
+- Campos do XML: `Ano`, `Matricula`, `Mes`, `Valor`, `CNPJ`, `Deputado`, `Tipo`, `Fornecedor`.
+- Limitações e privacidade de dados:
+  - O campo `CNPJ` contém números de 14 dígitos (CNPJ de pessoa jurídica) e de 11 dígitos (CPF de pessoa física).
+  - O ETL aplica `Texto.cnpj` (mantendo apenas 14 dígitos) e `Guarda.semCpf`, descartando qualquer CPF de fornecedor.
+  - Valores são processados em streaming via leitor StAX para não sobrecarregar a memória heap.
+
+### `alesp-comissoes` e `alesp-comissoes-votacoes`: comissões permanentes
+
+- URLs base:
+  - `https://www.al.sp.gov.br/repositorioDados/processo_legislativo/comissoes.xml`
+  - `https://www.al.sp.gov.br/repositorioDados/processo_legislativo/comissoes_membros.xml`
+  - `https://www.al.sp.gov.br/repositorioDados/processo_legislativo/comissoes_permanentes_votacoes.xml` (cerca de 67 MB)
+- Votações nominais estruturadas em comissão: campo `TipoVoto` com parecer favorável, contrário ou em separado.
+
+### `alesp-proposituras` e `alesp-sessoes`: proposituras e plenário
+
+- URLs base:
+  - `https://www.al.sp.gov.br/repositorioDados/processo_legislativo/proposituras.zip`
+  - `https://www.al.sp.gov.br/repositorioDados/processo_legislativo/documento_autor.zip`
+  - `https://legis-api-portal-prd.al.sp.gov.br/votacao/{ano}`
+  - `https://legis-api-portal-prd.al.sp.gov.br/sessoes-plenarias/`
+- Limitações:
+  - Matérias votadas em plenário estão abertas em JSON, mas os votos nominais individuais dos deputados em plenário são publicados em PDF do painel eletrônico (`urlArquivoPrincipal`).
+  - O projeto não realiza parsing de PDF do painel nesta fase, priorizando dados primários estruturados.
+
 ## Fora da política de fontes
 
 Imprensa, blogs, agregadores sem metodologia, redes sociais de terceiros, mensagens, vídeos não oficiais, Wikipedia e rankings de terceiros.

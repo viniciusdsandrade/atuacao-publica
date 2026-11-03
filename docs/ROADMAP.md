@@ -112,9 +112,18 @@ Verificação de 2026-11-02, com scripts locais (Playwright e axe-core, fora do 
    - Despesas do Executivo municipal no perfil do prefeito, pelo TCE-SP (ADR-0008): concluído em 2026-11-01. Valor pago pela administração direta, somado por mês, de 2025-01 a 2026-08 (defasagem da fonte).
    - Pipeline agendado: passos `fetch sapl` e `fetch tcesp` no workflow `dados`, com cursor próprio em `_meta/`. Metodologia, fontes e README cobrem o nível municipal.
    - Pendente: a primeira carga pública depende da ativação pelo mantenedor. Atos e agenda do prefeito seguem por contribuição com fonte T0.
-2. Assembleias legislativas e governos estaduais: um adaptador por estado. O portal de dados abertos da ALESP (`https://www.al.sp.gov.br/dados-abertos/`) tem catálogo em HTML, ainda não validado.
+2. Assembleias legislativas e governos estaduais: um adaptador por estado.
+   - ALESP (São Paulo): iniciada em 2026-11-03 (ADR-0013).
+   - Levantamento e validação das fontes concluídos em `docs/FONTES.md`: API REST de processo legislativo (`https://legis-api-portal-prd.al.sp.gov.br`) e repositório de dados abertos em XML (`https://www.al.sp.gov.br/repositorioDados/`).
+   - Modelo: adição do cargo `deputado_estadual`, identificador `alesp-{matricula}` e chave `alesp` em `ids_externos`.
+   - Entregas planejadas:
+     a. Schemas e modelo de dados (`deputado_estadual` e `alesp`).
+     b. Adaptador `Alesp.java`: coleta com cache e normalização em streaming (StAX) de deputados, mandatos, despesas e comissões.
+     c. Proteção de dados: descarte estrito de CPFs de fornecedores nas despesas de gabinete.
+     d. Vínculo com candidaturas estaduais do TSE (2018, 2022 e 2026).
+     e. Suporte na interface web para filtragem e visualização de deputados estaduais.
 3. Gastos e agenda de governadores a partir dos portais estaduais catalogados em `docs/FONTES.md`.
-4. Gastos do Executivo federal (cartão de pagamento e viagens) pelo Portal da Transparência.
+4. Gastos do Executivo federal (cartão de pagamento e viagens) pelo Portal da Transparência (concluído no ADR-0010 e ADR-0009).
 
 ### Redes sociais
 

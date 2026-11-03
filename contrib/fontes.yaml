@@ -1249,3 +1249,93 @@
   limitacoes: "Arquivo do estado inteiro (1,96 GiB em 2025). Sem arquivo de 2026. Conferir o mascaramento de CPF antes de ingerir."
   status: validado com limitação
   validado_em: 2026-10-31
+
+- id: alesp-deputados
+  nome: Assembleia Legislativa do Estado de São Paulo, deputados e mandatos
+  orgao: Assembleia Legislativa do Estado de São Paulo
+  esfera: estadual
+  ente: SP
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://legis-api-portal-prd.al.sp.gov.br/parlamentar-portal/
+  formato: JSON e XML
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "A API REST /parlamentar-portal lista parlamentares de todas as legislaturas. deputados.xml traz apenas os em exercício."
+  status: validado
+  validado_em: 2026-11-03
+
+- id: alesp-despesas
+  nome: Assembleia Legislativa do Estado de São Paulo, despesas com verba de gabinete
+  orgao: Assembleia Legislativa do Estado de São Paulo
+  esfera: estadual
+  ente: SP
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://www.al.sp.gov.br/repositorioDados/deputados/despesas_gabinetes.xml
+  formato: XML
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Arquivo único de ~171 MB cobrindo desde 2015. Traz CNPJ e CPF de fornecedores; o ETL descarta CPFs na ingestão."
+  status: validado com limitação
+  validado_em: 2026-11-03
+
+- id: alesp-comissoes
+  nome: Assembleia Legislativa do Estado de São Paulo, comissões e membros
+  orgao: Assembleia Legislativa do Estado de São Paulo
+  esfera: estadual
+  ente: SP
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://www.al.sp.gov.br/repositorioDados/processo_legislativo/comissoes
+  formato: XML
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "comissoes_membros.xml e comissoes.xml registram histórico de composição e papéis."
+  status: validado
+  validado_em: 2026-11-03
+
+- id: alesp-comissoes-votacoes
+  nome: Assembleia Legislativa do Estado de São Paulo, votações em comissões permanentes
+  orgao: Assembleia Legislativa do Estado de São Paulo
+  esfera: estadual
+  ente: SP
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://www.al.sp.gov.br/repositorioDados/processo_legislativo/comissoes_permanentes_votacoes.xml
+  formato: XML
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Votações nominais estruturadas em comissões permanentes. Votações de plenário vêm em PDF."
+  status: validado
+  validado_em: 2026-11-03
+
+- id: alesp-proposituras
+  nome: Assembleia Legislativa do Estado de São Paulo, proposituras e autores
+  orgao: Assembleia Legislativa do Estado de São Paulo
+  esfera: estadual
+  ente: SP
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://www.al.sp.gov.br/repositorioDados/processo_legislativo/
+  formato: XML em ZIP
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "proposituras.zip e documento_autor.zip com atualização diária."
+  status: validado
+  validado_em: 2026-11-03
+
+- id: alesp-sessoes
+  nome: Assembleia Legislativa do Estado de São Paulo, sessões plenárias e pautas
+  orgao: Assembleia Legislativa do Estado de São Paulo
+  esfera: estadual
+  ente: SP
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://legis-api-portal-prd.al.sp.gov.br/sessoes-plenarias/
+  formato: JSON e PDF
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Sessões plenárias e matérias votadas em JSON; votos nominais individuais em plenário apenas em PDF do painel."
+  status: validado com limitação
+  validado_em: 2026-11-03
