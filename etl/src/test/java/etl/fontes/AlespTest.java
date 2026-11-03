@@ -40,7 +40,10 @@ class AlespTest {
         XMLStreamReader reader = factory.createXMLStreamReader(new StringReader(xml));
         reader.next(); // START_ELEMENT <despesa>
 
-        Despesa d = Alesp.lerDespesa(reader, PROV);
+        Alesp.DespesaComMatricula dm = Alesp.lerDespesa(reader, PROV);
+        assertNotNull(dm);
+        assertEquals("300607", dm.matricula());
+        Despesa d = dm.despesa();
         assertNotNull(d);
         assertEquals(2023, d.ano());
         assertEquals(5, d.mes());
@@ -69,7 +72,10 @@ class AlespTest {
         XMLStreamReader reader = factory.createXMLStreamReader(new StringReader(xml));
         reader.next();
 
-        Despesa d = Alesp.lerDespesa(reader, PROV);
+        Alesp.DespesaComMatricula dm = Alesp.lerDespesa(reader, PROV);
+        assertNotNull(dm);
+        assertEquals("300607", dm.matricula());
+        Despesa d = dm.despesa();
         assertNotNull(d);
         // CPF no CNPJ vira null
         assertNull(d.fornecedorCnpj(), "CPF de 11 dígitos deve virar null");
@@ -97,7 +103,7 @@ class AlespTest {
         XMLStreamReader reader = factory.createXMLStreamReader(new StringReader(xml));
         reader.next();
 
-        Despesa d = Alesp.lerDespesa(reader, PROV);
-        assertNull(d, "Despesas anteriores a 2022 devem ser descartadas");
+        Alesp.DespesaComMatricula dm = Alesp.lerDespesa(reader, PROV);
+        assertNull(dm, "Despesas anteriores a 2022 devem ser descartadas");
     }
 }

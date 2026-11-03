@@ -177,9 +177,9 @@ public final class Alesp implements Fonte {
             String fotoUrl = null;
             JsonNode bio = det.path("biografia");
             if (bio.hasNonNull("txFotoGrande")) {
-                fotoUrl = urlAbsoluta(bio.get("txFotoGrande").stringValue());
+                fotoUrl = urlAbsoluta(Json.texto(bio, "txFotoGrande"));
             } else if (p.hasNonNull("txFoto")) {
-                fotoUrl = urlAbsoluta(p.get("txFoto").stringValue());
+                fotoUrl = urlAbsoluta(Json.texto(p, "txFoto"));
             }
 
             Prov provDep = Prov.de(FONTE_DEPUTADOS, API + "/parlamentar-portal/detalhes/" + matricula,
@@ -268,6 +268,9 @@ public final class Alesp implements Fonte {
         ac.mandatos.sort(Comparator.comparing(Mandato::inicio));
     }
 
+    public record DespesaComMatricula(String matricula, Despesa despesa) {
+    }
+
     static void processarDespesas(Contexto ctx, Map<String, Acumulado> acumulados) throws Exception {
         Coleta.Arquivo arqDesp = Coleta.metadados(ctx, "alesp", "despesas_gabinetes.xml");
         if (arqDesp == null) {
@@ -290,11 +293,11 @@ public final class Alesp implements Fonte {
             while (reader.hasNext()) {
                 int event = reader.next();
                 if (event == XMLStreamConstants.START_ELEMENT && "despesa".equals(reader.getLocalName())) {
-                    Despesa d = lerDespesa(reader, prov);
-                    if (d != null) {
-                        String mat = readerProperty(reader, "matriculaTemp");
-                        Acumulado ac = acumulados.get(mat);
+                    DespesaComMatricula dm = lerDespesa(reader, prov);
+                    if (dm != null) {
+                        Acumulado ac = acumulados.get(dm.matricula());
                         if (ac != null) {
+                            Despesa d = dm.despesa();
                             String chave = d.ano() + "|" + d.mes() + "|" + d.categoria() + "|" + d.valor() + "|" + d.fornecedorNome();
                             if (ac.chavesDespesa.add(chave)) {
                                 ac.despesas.add(d);
@@ -311,7 +314,7 @@ public final class Alesp implements Fonte {
         }
     }
 
-    public static Despesa lerDespesa(XMLStreamReader reader, Prov prov) throws Exception {
+    public static DespesaComMatricula lerDespesa(XMLStreamReader reader, Prov prov) throws Exception {
         String anoStr = null, mat = null, mesStr = null, valorStr = null, cnpjRaw = null, tipo = null, fornRaw = null;
         while (reader.hasNext()) {
             int event = reader.next();
@@ -353,22 +356,9 @@ public final class Alesp implements Fonte {
         String fornecedor = Guarda.semCpf(fornRaw);
         LocalDate data = LocalDate.of(ano, mes, 1);
 
-        // Guarda a matrícula no reader para associação
-        readerPropertySet(reader, "matriculaTemp", mat.strip());
-
-        return new Despesa(data, ano, mes, primeiro(tipo, "sem categoria na fonte"),
+        Despesa d = new Despesa(data, ano, mes, primeiro(tipo, "sem categoria na fonte"),
                 fornecedor, cnpj, valor, null, null, prov);
-    }
-
-    private static final Map<XMLStreamReader, Map<String, String>> READER_PROPS = new HashMap<>();
-
-    private static void readerPropertySet(XMLStreamReader reader, String key, String val) {
-        READER_PROPS.computeIfAbsent(reader, k -> new HashMap<>()).put(key, val);
-    }
-
-    private static String readerProperty(XMLStreamReader reader, String key) {
-        Map<String, String> m = READER_PROPS.get(reader);
-        return m != null ? m.get(key) : null;
+        return new DespesaComMatricula(mat.strip(), d);
     }
 
     static void processarColegiados(Contexto ctx, Map<String, Acumulado> acumulados) throws Exception {
@@ -386,11 +376,9 @@ public final class Alesp implements Fonte {
 
         JsonNode lista = Json.ler(caminho);
         for (JsonNode item : lista) {
-            String mat = null;
-            if (item.hasNonNull("nuMatriculaParlamentar")) {
-                mat = item.get("nuMatriculaParlamentar").stringValue();
-            } else if (item.path("parlamentar").hasNonNull("nuMatricula")) {
-                mat = item.path("parlamentar").get("nuMatricula").stringValue();
+            String mat = Json.texto(item, "nuMatriculaParlamentar");
+            if (mat == null) {
+                mat = Json.texto(item.path("parlamentar"), "nuMatricula");
             }
             if (mat == null) {
                 continue;
@@ -401,7 +389,7 @@ public final class Alesp implements Fonte {
             }
 
             String nomeColegiado = item.hasNonNull("colegiado")
-                    ? (item.get("colegiado").isObject() ? Json.texto(item.path("colegiado"), "nome") : item.get("colegiado").stringValue())
+                    ? (item.get("colegiado").isObject() ? Json.texto(item.path("colegiado"), "nome") : Json.texto(item, "colegiado"))
                     : null;
             if (nomeColegiado == null || nomeColegiado.isBlank()) {
                 continue;

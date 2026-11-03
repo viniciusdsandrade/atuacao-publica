@@ -201,19 +201,23 @@ final class Vinculo {
                     }
                 }
             } else if ("alesp".equals(p.fonteCli)) {
+                String nomeParl = Texto.normalizarNome(p.nome);
                 Coleta.Arquivo arq = Coleta.metadados(ctx, "alesp", "detalhes/" + p.ids.get("alesp") + ".json");
-                if (arq != null) {
+                if (arq != null && Files.exists(Coleta.caminho(ctx, arq))) {
                     JsonNode det = Json.ler(Coleta.caminho(ctx, arq));
-                    String nomeParl = Texto.normalizarNome(Json.texto(det, "txNomeParlamentar"));
-                    JsonNode cand = candPorAlespNomeUrna.get(nomeParl);
-                    if (cand == null) {
-                        cand = candPorAlespNomeCivil.get(nomeParl);
+                    String deDet = Texto.normalizarNome(Json.texto(det, "txNomeParlamentar"));
+                    if (deDet != null) {
+                        nomeParl = deDet;
                     }
-                    if (cand != null) {
-                        candSapl = cand;
-                        chaveSapl = chaves.get(cand.get("sq").stringValue());
-                        cpf = chaveSapl == null ? null : chaveSapl.cpf();
-                    }
+                }
+                JsonNode cand = candPorAlespNomeUrna.get(nomeParl);
+                if (cand == null) {
+                    cand = candPorAlespNomeCivil.get(nomeParl);
+                }
+                if (cand != null) {
+                    candSapl = cand;
+                    chaveSapl = chaves.get(cand.get("sq").stringValue());
+                    cpf = chaveSapl == null ? null : chaveSapl.cpf();
                 }
             }
             String pessoa = chaveSapl != null ? pessoa(chaveSapl) : ligacoes.pessoaDoCpf(cpf);
