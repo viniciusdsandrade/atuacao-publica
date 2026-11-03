@@ -43,7 +43,7 @@
       "pattern": "^[a-z]{2,10}(-[0-9A-Za-z]{1,32}){1,2}$"
     },
     "esfera": { "enum": ["federal", "estadual", "municipal"] },
-    "cargo": { "enum": ["presidente", "governador", "deputado_federal", "senador", "prefeito", "vice_prefeito", "vereador"] },
+    "cargo": { "enum": ["presidente", "governador", "deputado_federal", "senador", "deputado_estadual", "prefeito", "vice_prefeito", "vereador"] },
     "uf": {
       "enum": ["AC", "AL", "AM", "AP", "BA", "CE", "DF", "ES", "GO", "MA", "MG", "MS", "MT", "PA", "PB", "PE", "PI", "PR", "RJ", "RN", "RO", "RR", "RS", "SC", "SE", "SP", "TO"]
     },

@@ -1,0 +1,58 @@
+{
+  "id": "alesp-300607",
+  "nome": "Deputado Estadual Exemplo",
+  "cargo_atual": "deputado_estadual",
+  "esfera": "estadual",
+  "ente": "SP",
+  "uf": "SP",
+  "partido_atual": "PARTIDO",
+  "situacao": "Exercício",
+  "em_exercicio": true,
+  "foto_url": "https://www.al.sp.gov.br/repositorio/deputado/foto/300607.jpg",
+  "ids_externos": {
+    "alesp": "300607",
+    "tse": {
+      "2022": "250001888888"
+    }
+  },
+  "links_oficiais": [
+    {
+      "rotulo": "Página na ALESP",
+      "url": "https://www.al.sp.gov.br/deputado/?matricula=300607",
+      "fonte_id": "alesp-deputados",
+      "url_origem": "https://legis-api-portal-prd.al.sp.gov.br/parlamentar-portal/detalhes/300607",
+      "capturado_em": "2026-11-03T03:00:00Z"
+    }
+  ],
+  "atualizado_em": "2026-11-03T03:10:00Z",
+  "blocos": {
+    "mandatos": {
+      "fontes": [
+        {
+          "fonte_id": "alesp-deputados",
+          "url_origem": "https://legis-api-portal-prd.al.sp.gov.br/parlamentar-portal/todos",
+          "capturado_em": "2026-11-03T03:00:00Z"
+        }
+      ],
+      "atualizado_em": "2026-11-03T03:00:00Z",
+      "desatualizado": false,
+      "total": 1,
+      "registros": [
+        {
+          "cargo": "deputado_estadual",
+          "esfera": "estadual",
+          "ente": "SP",
+          "uf": "SP",
+          "inicio": "2023-03-15",
+          "fim": "2027-01-31",
+          "situacao": "Exercício",
+          "condicao": "Titular",
+          "legislatura": 20,
+          "fonte_id": "alesp-deputados",
+          "url_origem": "https://legis-api-portal-prd.al.sp.gov.br/parlamentar-portal/todos",
+          "capturado_em": "2026-11-03T03:00:00Z"
+        }
+      ]
+    }
+  }
+}
