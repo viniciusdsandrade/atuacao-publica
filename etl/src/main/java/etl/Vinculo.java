@@ -27,6 +27,7 @@ final class Vinculo {
         List<Perfil> perfis = new ArrayList<>();
         perfis.addAll(legisladores(ctx, "camara", "cam", "camara"));
         perfis.addAll(legisladores(ctx, "senado", "sen", "senado"));
+        perfis.addAll(legisladores(ctx, "alesp", "alesp", "alesp"));
         perfis.addAll(legisladores(ctx, "sapl", "sapl-" + Sapl.IBGE, "sapl"));
         List<JsonNode> candidaturas = Tse.linhas(ctx);
         if (!candidaturas.isEmpty()) {
@@ -136,6 +137,8 @@ final class Vinculo {
         Map<String, String> cpfPorSenadoChave = new HashMap<>();
         Map<String, JsonNode> candPorSaplNomeCivil = new HashMap<>();
         Map<String, JsonNode> candPorSaplNomeUrna = new HashMap<>();
+        Map<String, JsonNode> candPorAlespNomeCivil = new HashMap<>();
+        Map<String, JsonNode> candPorAlespNomeUrna = new HashMap<>();
         for (JsonNode c : candidaturas) {
             Tse.Chave chave = chaves.get(c.get("sq").stringValue());
             if (chave != null) {
@@ -146,6 +149,11 @@ final class Vinculo {
                     candPorSaplNomeCivil.merge(chave.nomeCivil(), c, Vinculo::maisRecente);
                     if (c.hasNonNull("nome_urna")) {
                         candPorSaplNomeUrna.merge(Texto.normalizarNome(c.get("nome_urna").stringValue()), c, Vinculo::maisRecente);
+                    }
+                } else if ("DEPUTADO ESTADUAL".equals(chave.cargo()) && "SP".equals(chave.uf())) {
+                    candPorAlespNomeCivil.merge(chave.nomeCivil(), c, Vinculo::maisRecente);
+                    if (c.hasNonNull("nome_urna")) {
+                        candPorAlespNomeUrna.merge(Texto.normalizarNome(c.get("nome_urna").stringValue()), c, Vinculo::maisRecente);
                     }
                 }
             }
@@ -185,6 +193,21 @@ final class Vinculo {
                     }
                     if (cand == null) {
                         cand = candPorSaplNomeUrna.get(nomeCompleto);
+                    }
+                    if (cand != null) {
+                        candSapl = cand;
+                        chaveSapl = chaves.get(cand.get("sq").stringValue());
+                        cpf = chaveSapl == null ? null : chaveSapl.cpf();
+                    }
+                }
+            } else if ("alesp".equals(p.fonteCli)) {
+                Coleta.Arquivo arq = Coleta.metadados(ctx, "alesp", "detalhes/" + p.ids.get("alesp") + ".json");
+                if (arq != null) {
+                    JsonNode det = Json.ler(Coleta.caminho(ctx, arq));
+                    String nomeParl = Texto.normalizarNome(Json.texto(det, "txNomeParlamentar"));
+                    JsonNode cand = candPorAlespNomeUrna.get(nomeParl);
+                    if (cand == null) {
+                        cand = candPorAlespNomeCivil.get(nomeParl);
                     }
                     if (cand != null) {
                         candSapl = cand;

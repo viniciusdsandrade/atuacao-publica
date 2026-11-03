@@ -32,6 +32,8 @@ public final class Publicador {
                     "discursos", "eventos", "orgaos_e_frentes", "candidaturas", "posicionamentos_declarados"),
             "senador", List.of("mandatos", "participacao_votacoes", "votos", "despesas", "proposicoes",
                     "discursos", "eventos", "orgaos_e_frentes", "candidaturas", "posicionamentos_declarados"),
+            "deputado_estadual", List.of("mandatos", "participacao_votacoes", "votos", "despesas", "proposicoes",
+                    "discursos", "eventos", "orgaos_e_frentes", "candidaturas", "posicionamentos_declarados"),
             "vereador", List.of("mandatos", "participacao_votacoes", "votos", "despesas", "proposicoes",
                     "discursos", "eventos", "orgaos_e_frentes", "candidaturas", "posicionamentos_declarados"),
             "presidente", List.of("mandatos", "candidaturas", "despesas_executivo", "atos_normativos", "agenda_oficial",
@@ -72,7 +74,7 @@ public final class Publicador {
     private static final Map<String, String> ORIGEM_DO_BLOCO = Map.of("candidaturas", "tse", "atos_normativos", "executivo",
             "despesas_executivo", "tcesp");
     static final int RECENTES = 20;
-    static final List<String> FONTES_CLI = List.of("camara", "senado", "tse", "executivo", "sapl", "tcesp", "cgu", "agenda", "contrib");
+    static final List<String> FONTES_CLI = List.of("camara", "senado", "tse", "executivo", "sapl", "tcesp", "cgu", "agenda", "contrib", "alesp");
 
     /** Perfil em construção, antes da validação. */
     static final class Perfil {
@@ -494,6 +496,12 @@ public final class Publicador {
             }
             if (externos.hasNonNull("senado")) {
                 porChave.put("senado:" + externos.get("senado").stringValue(), id);
+            }
+            if (externos.hasNonNull("alesp")) {
+                porChave.put("alesp:" + externos.get("alesp").stringValue(), id);
+            }
+            if (externos.hasNonNull("sapl")) {
+                porChave.put("sapl:" + externos.get("sapl").stringValue(), id);
             }
             for (var tse : externos.path("tse").properties()) {
                 porChave.put("tse:" + tse.getValue().stringValue(), id);
