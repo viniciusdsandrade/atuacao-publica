@@ -1076,12 +1076,27 @@
   categoria: transparencia
   nivel_confianca: T0
   url_base: https://www.transparencia.sp.gov.br/
-  formato: HTML
+  formato: HTML e CSV
   autenticacao: nenhuma
   licenca: null
-  limitacoes: null
+  limitacoes: "Despesas orçamentárias mensais e relatórios contábeis."
   status: validado
-  validado_em: 2026-10-30
+  validado_em: 2026-11-03
+
+- id: sp-agendas
+  nome: Plataforma SP-Agendas, compromissos públicos do Governo de São Paulo
+  orgao: Secretaria de Gestão e Governo Digital (SP)
+  esfera: estadual
+  ente: SP
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://spagendas.sp.gov.br/
+  formato: JSON e HTML
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Compromissos oficiais diários das autoridades do Executivo paulista (Decreto 69.475)."
+  status: validado
+  validado_em: 2026-11-03
 
 - id: to-diario-oficial
   nome: Diário Oficial do Estado do Tocantins

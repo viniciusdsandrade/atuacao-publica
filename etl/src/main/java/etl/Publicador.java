@@ -38,7 +38,8 @@ public final class Publicador {
                     "discursos", "eventos", "orgaos_e_frentes", "candidaturas", "posicionamentos_declarados"),
             "presidente", List.of("mandatos", "candidaturas", "despesas_executivo", "atos_normativos", "agenda_oficial",
                     "posicionamentos_declarados"),
-            "governador", List.of("mandatos", "candidaturas", "posicionamentos_declarados"),
+            "governador", List.of("mandatos", "candidaturas", "despesas_executivo", "atos_normativos", "agenda_oficial",
+                    "posicionamentos_declarados"),
             "prefeito", List.of("mandatos", "candidaturas", "despesas_executivo", "atos_normativos", "agenda_oficial",
                     "posicionamentos_declarados"),
             "vice_prefeito", List.of("mandatos", "candidaturas", "posicionamentos_declarados"));

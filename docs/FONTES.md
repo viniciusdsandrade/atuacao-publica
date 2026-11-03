@@ -452,6 +452,33 @@ Nenhum servidor bloqueou o cliente.
   - Matérias votadas em plenário estão abertas em JSON, mas os votos nominais individuais dos deputados em plenário são publicados em PDF do painel eletrônico (`urlArquivoPrincipal`).
   - O projeto não realiza parsing de PDF do painel nesta fase, priorizando dados primários estruturados.
 
+## Governo do Estado de São Paulo (Executivo Estadual)
+
+Poder Executivo do Estado de São Paulo (ADR-0014).
+Validação em 2026-11-03, com o User-Agent do projeto.
+Nenhum servidor bloqueou o cliente.
+
+| id | Fonte | Nível | Formato | Autenticação | Status | Validado em |
+|---|---|---|---|---|---|---|
+| `sp-agendas` | Plataforma SP-Agendas (SGGD) | T0 | JSON e HTML | nenhuma | validado | 2026-11-03 |
+| `sp-transparencia` | Portal da Transparência do Estado de São Paulo | T0 | CSV e JSON | nenhuma | validado | 2026-11-03 |
+| `sp-diario-oficial` | Diário Oficial do Estado de São Paulo | T0 | HTML e PDF | nenhuma | validado | 2026-11-03 |
+
+### `sp-agendas`: agenda oficial do Governador de São Paulo
+
+- URL base: `https://spagendas.sp.gov.br/`
+- Regulamentação: Decreto Estadual nº 69.475, sistema eletrônico de integridade e transparência da Secretaria de Gestão e Governo Digital (SGGD).
+- Endpoints validados com resposta 200 via HTTP/2:
+  - `/Home/GetOrgaosPorNaturezaJuridica?naturezaJuridicaId=...`: lista de órgãos públicos do estado (`40e96b34-9c5c-436c-82bd-e79d9f080697` = Gabinete do Governador).
+  - `/Home/GetCargosPorOrgao?orgaoId=...`: cargos por órgão (`ef4562ac-5970-4647-92ed-bcc38432ed4c` = Governador).
+  - `/Home/Exportar?usuarioId=...&dataInicial=...&dataFinal=...`: exportação de compromissos públicos com data, horário, título e local.
+
+### `sp-transparencia`: despesas do Executivo Estadual
+
+- URL base: `https://www.transparencia.sp.gov.br/Despesas`
+- Consulta e exportação mensal por órgão e elemento econômico (`/Despesas/ExportarCsv`).
+- Metodologia de agregação: despesas consolidadas por mês e categoria no perfil do Governador (ADR-0014), sem lançamentos individuais de pessoas físicas.
+
 ## Fora da política de fontes
 
 Imprensa, blogs, agregadores sem metodologia, redes sociais de terceiros, mensagens, vídeos não oficiais, Wikipedia e rankings de terceiros.
