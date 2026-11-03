@@ -123,7 +123,8 @@ Verificação de 2026-11-02, com scripts locais (Playwright e axe-core, fora do 
      d. Vínculo com candidaturas estaduais do TSE: 10 perfis de outras casas fundidos na mesma pessoa.
      e. Suporte na interface web para filtragem e visualização de deputados estaduais.
      f. Publicação: 1.468 perfis publicados no total com deploy no GitHub Pages.
-   - Pendente da ALESP: proposituras (`proposituras.zip` e `documento_autor.zip`) e datação das votações nominais de comissões por pauta/reunião.
+     g. Proposituras e autoria: ingestão em streaming (StAX em ZIP) de `proposituras.zip` e `documento_autor.zip`, com vínculo por `idAutor` e identificação por natureza (PL, PLC, PEC, etc.).
+   - Pendente da ALESP: datação das votações nominais de comissões por pauta/reunião.
 3. Gastos e agenda de governadores a partir dos portais estaduais catalogados em `docs/FONTES.md`.
 4. Gastos do Executivo federal (cartão de pagamento e viagens) pelo Portal da Transparência (concluído no ADR-0010 e ADR-0009).
 

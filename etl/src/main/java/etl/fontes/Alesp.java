@@ -16,6 +16,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamReader;
@@ -36,6 +38,7 @@ import etl.Registros.Mandato;
 import etl.Registros.OrgaoOuFrente;
 import etl.Registros.Participacao;
 import etl.Registros.Pessoa;
+import etl.Registros.Proposicao;
 import etl.Registros.Prov;
 import etl.Registros.Voto;
 import etl.Texto;
@@ -51,6 +54,7 @@ public final class Alesp implements Fonte {
     public static final String FONTE_DESPESAS = "alesp-despesas";
     public static final String FONTE_COMISSOES = "alesp-comissoes";
     public static final String FONTE_COMISSOES_VOTACOES = "alesp-comissoes-votacoes";
+    public static final String FONTE_PROPOSITURAS = "alesp-proposituras";
 
     public static final String UF = "SP";
     public static final String API = "https://legis-api-portal-prd.al.sp.gov.br";
@@ -82,6 +86,8 @@ public final class Alesp implements Fonte {
         coleta.obter(API + "/colegiado-ocupacao/todos", "colegiado-ocupacoes.json", "application/json", Politica.SEMANAL);
         coleta.obter(REPO + "/processo_legislativo/comissoes_permanentes_votacoes.xml",
                 "comissoes_permanentes_votacoes.xml", "application/xml", Politica.SEMANAL);
+        coleta.obter(REPO + "/processo_legislativo/proposituras.zip", "proposituras.zip", "application/zip", Politica.SEMANAL);
+        coleta.obter(REPO + "/processo_legislativo/documento_autor.zip", "documento_autor.zip", "application/zip", Politica.SEMANAL);
 
         Coleta.Arquivo arqTodos = Coleta.metadados(ctx, "alesp", "parlamentares-todos.json");
         if (arqTodos != null) {
@@ -115,7 +121,7 @@ public final class Alesp implements Fonte {
     }
 
     public record Blocos(List<Mandato> mandatos, List<Participacao> participacaoVotacoes, List<Voto> votos,
-                         List<Despesa> despesas,
+                         List<Despesa> despesas, List<Proposicao> proposicoes,
                          @JsonProperty("orgaos_e_frentes") List<OrgaoOuFrente> orgaosEFrentes,
                          Map<String, List<FonteUsada>> fontes) {
     }
@@ -126,6 +132,7 @@ public final class Alesp implements Fonte {
         final Set<String> chavesDespesa = new HashSet<>();
         final List<OrgaoOuFrente> orgaos = new ArrayList<>();
         final List<Voto> votos = new ArrayList<>();
+        final List<Proposicao> proposicoes = new ArrayList<>();
         final Map<String, int[]> participacao = new TreeMap<>();
         final Map<String, List<FonteUsada>> fontes = new LinkedHashMap<>();
     }
@@ -147,6 +154,7 @@ public final class Alesp implements Fonte {
         JsonNode listaTodos = Json.ler(Coleta.caminho(ctx, arqTodos));
         Map<String, Acumulado> acumulados = new LinkedHashMap<>();
         Map<Integer, String> matriculaPorIdParlamentar = new HashMap<>();
+        Map<Integer, String> matriculaPorIdAutor = new HashMap<>();
         List<Pessoa> pessoas = new ArrayList<>();
 
         for (JsonNode p : listaTodos) {
@@ -168,6 +176,11 @@ public final class Alesp implements Fonte {
             Coleta.Arquivo arqDet = Coleta.metadados(ctx, "alesp", "detalhes/" + matricula + ".json");
             JsonNode det = (arqDet != null && Files.exists(Coleta.caminho(ctx, arqDet)))
                     ? Json.ler(Coleta.caminho(ctx, arqDet)) : p;
+
+            int idAutor = det.path("idAutor").asInt(0);
+            if (idAutor > 0) {
+                matriculaPorIdAutor.put(idAutor, matricula);
+            }
 
             String nome = primeiro(Json.texto(det, "txNomeParlamentar"), Json.texto(p, "txNomeParlamentar"));
             String partido = primeiro(Json.texto(det, "txPartido"), Json.texto(p, "txPartido"));
@@ -205,6 +218,9 @@ public final class Alesp implements Fonte {
         // Votações nominais em comissões em streaming
         processarVotacoes(ctx, acumulados, matriculaPorIdParlamentar);
 
+        // Proposições e autoria em streaming
+        processarProposicoes(ctx, acumulados, matriculaPorIdAutor);
+
         // Gravação
         Path saida = ctx.normalizado().resolve("alesp");
         Path pastaBlocos = saida.resolve("blocos");
@@ -218,7 +234,7 @@ public final class Alesp implements Fonte {
                     ac.fontes.getOrDefault("votos", List.of()).isEmpty() ? null
                             : new Prov(FONTE_COMISSOES_VOTACOES, REPO + "/processo_legislativo/comissoes_permanentes_votacoes.xml",
                             ctx.agora()));
-            Blocos blocos = new Blocos(ac.mandatos, part, ac.votos, ac.despesas, ac.orgaos, ac.fontes);
+            Blocos blocos = new Blocos(ac.mandatos, part, ac.votos, ac.despesas, ac.proposicoes, ac.orgaos, ac.fontes);
             Json.gravar(pastaBlocos.resolve(matricula + ".json"), Json.SAIDA.valueToTree(blocos));
         }
 
@@ -507,6 +523,156 @@ public final class Alesp implements Fonte {
             lista.add(new Participacao(ano, total, votou, total - votou, Map.of(), prov));
         });
         return lista;
+    }
+
+    public record TipoNatureza(String nome, String sigla) {
+    }
+
+    public static TipoNatureza natureza(String idNat) {
+        if (idNat == null) return new TipoNatureza("Proposição", "PROP");
+        return switch (idNat.strip()) {
+            case "1" -> new TipoNatureza("Projeto de Lei", "PL");
+            case "2" -> new TipoNatureza("Projeto de Lei Complementar", "PLC");
+            case "3" -> new TipoNatureza("Projeto de Resolução", "PR");
+            case "4" -> new TipoNatureza("Projeto de Decreto Legislativo", "PDL");
+            case "5" -> new TipoNatureza("Proposta de Emenda Constitucional", "PEC");
+            case "6" -> new TipoNatureza("Moção", "MOC");
+            case "7" -> new TipoNatureza("Requerimento de Congratulações", "RCN");
+            case "8" -> new TipoNatureza("Requerimento de Informação", "RIC");
+            case "9" -> new TipoNatureza("Indicação", "IND");
+            case "1000000003" -> new TipoNatureza("Requerimento de Comissão", "REQ");
+            default -> new TipoNatureza("Proposição", "PROP");
+        };
+    }
+
+    static void processarProposicoes(Contexto ctx, Map<String, Acumulado> acumulados,
+                                     Map<Integer, String> matriculaPorIdAutor) throws Exception {
+        Coleta.Arquivo arqAutores = Coleta.metadados(ctx, "alesp", "documento_autor.zip");
+        Coleta.Arquivo arqProps = Coleta.metadados(ctx, "alesp", "proposituras.zip");
+        if (arqAutores == null || arqProps == null) {
+            return;
+        }
+        Path camAutores = Coleta.caminho(ctx, arqAutores);
+        Path camProps = Coleta.caminho(ctx, arqProps);
+        if (!Files.exists(camAutores) || !Files.exists(camProps)) {
+            return;
+        }
+
+        XMLInputFactory factory = XMLInputFactory.newInstance();
+        factory.setProperty(XMLInputFactory.IS_SUPPORTING_EXTERNAL_ENTITIES, Boolean.FALSE);
+        factory.setProperty(XMLInputFactory.SUPPORT_DTD, Boolean.FALSE);
+
+        Map<String, List<String>> matriculasPorDocumento = new HashMap<>();
+
+        // 1. Ler documento_autor.xml em streaming do zip
+        try (ZipInputStream zis = new ZipInputStream(Files.newInputStream(camAutores))) {
+            ZipEntry entry;
+            while ((entry = zis.getNextEntry()) != null) {
+                if ("documento_autor.xml".equalsIgnoreCase(entry.getName())) {
+                    XMLStreamReader reader = factory.createXMLStreamReader(zis, "UTF-8");
+                    while (reader.hasNext()) {
+                        int event = reader.next();
+                        if (event == XMLStreamConstants.START_ELEMENT && "DocumentoAutor".equals(reader.getLocalName())) {
+                            String idAutorStr = null, idDoc = null;
+                            while (reader.hasNext()) {
+                                int sub = reader.next();
+                                if (sub == XMLStreamConstants.START_ELEMENT) {
+                                    String tag = reader.getLocalName();
+                                    String text = reader.getElementText();
+                                    if ("IdAutor".equals(tag)) idAutorStr = text;
+                                    else if ("IdDocumento".equals(tag)) idDoc = text;
+                                } else if (sub == XMLStreamConstants.END_ELEMENT && "DocumentoAutor".equals(reader.getLocalName())) {
+                                    break;
+                                }
+                            }
+                            if (idAutorStr != null && idDoc != null) {
+                                try {
+                                    int idAut = Integer.parseInt(idAutorStr.strip());
+                                    String mat = matriculaPorIdAutor.get(idAut);
+                                    if (mat != null) {
+                                        matriculasPorDocumento.computeIfAbsent(idDoc.strip(), k -> new ArrayList<>()).add(mat);
+                                    }
+                                } catch (NumberFormatException ignored) {
+                                }
+                            }
+                        }
+                    }
+                    break;
+                }
+            }
+        }
+
+        if (matriculasPorDocumento.isEmpty()) {
+            return;
+        }
+
+        Prov prov = Prov.de(FONTE_PROPOSITURAS, REPO + "/processo_legislativo/proposituras.zip", arqProps);
+        FonteUsada fonteUsada = FonteUsada.de(FONTE_PROPOSITURAS, arqProps);
+
+        // 2. Ler proposituras.xml em streaming do zip
+        try (ZipInputStream zis = new ZipInputStream(Files.newInputStream(camProps))) {
+            ZipEntry entry;
+            while ((entry = zis.getNextEntry()) != null) {
+                if ("proposituras.xml".equalsIgnoreCase(entry.getName())) {
+                    XMLStreamReader reader = factory.createXMLStreamReader(zis, "UTF-8");
+                    while (reader.hasNext()) {
+                        int event = reader.next();
+                        if (event == XMLStreamConstants.START_ELEMENT && "propositura".equals(reader.getLocalName())) {
+                            String anoStr = null, idDoc = null, idNat = null, nroStr = null, ementaRaw = null, dtPub = null;
+                            while (reader.hasNext()) {
+                                int sub = reader.next();
+                                if (sub == XMLStreamConstants.START_ELEMENT) {
+                                    String tag = reader.getLocalName();
+                                    String text = reader.getElementText();
+                                    if ("AnoLegislativo".equals(tag)) anoStr = text;
+                                    else if ("IdDocumento".equals(tag)) idDoc = text;
+                                    else if ("IdNatureza".equals(tag)) idNat = text;
+                                    else if ("NroLegislativo".equals(tag)) nroStr = text;
+                                    else if ("Ementa".equals(tag)) ementaRaw = text;
+                                    else if ("DtPublicacao".equals(tag)) dtPub = text;
+                                } else if (sub == XMLStreamConstants.END_ELEMENT && "propositura".equals(reader.getLocalName())) {
+                                    break;
+                                }
+                            }
+
+                            if (idDoc != null && anoStr != null) {
+                                try {
+                                    int ano = Integer.parseInt(anoStr.strip());
+                                    if (ano >= 2022) {
+                                        List<String> mats = matriculasPorDocumento.get(idDoc.strip());
+                                        if (mats != null && !mats.isEmpty()) {
+                                            Integer nro = nroStr == null || nroStr.isBlank() ? null : Integer.parseInt(nroStr.strip());
+                                            TipoNatureza nat = natureza(idNat);
+                                            String ident = nro != null ? (nat.sigla() + " " + nro + "/" + ano) : (nat.nome() + " " + idDoc.strip());
+                                            String ementa = Guarda.semCpf(ementaRaw);
+                                            String dataApresentacao = (dtPub != null && dtPub.length() >= 10) ? dtPub.substring(0, 10) : null;
+                                            String urlTexto = SITE + "/propositura/" + idDoc.strip();
+
+                                            Proposicao prop = new Proposicao(idDoc.strip(), nat.nome(), nro, ano, ident,
+                                                    ementa, "Apresentada", null, dataApresentacao, null, true, urlTexto, prov);
+
+                                            for (String mat : mats) {
+                                                Acumulado ac = acumulados.get(mat);
+                                                if (ac != null) {
+                                                    ac.proposicoes.add(prop);
+                                                    ac.fontes.computeIfAbsent("proposicoes", k -> new ArrayList<>()).add(fonteUsada);
+                                                }
+                                            }
+                                        }
+                                    }
+                                } catch (NumberFormatException ignored) {
+                                }
+                            }
+                        }
+                    }
+                    break;
+                }
+            }
+        }
+
+        for (Acumulado ac : acumulados.values()) {
+            ac.proposicoes.sort(Comparator.comparing(Proposicao::dataApresentacao, Comparator.nullsLast(Comparator.reverseOrder())));
+        }
     }
 
     private static String primeiro(String... valores) {

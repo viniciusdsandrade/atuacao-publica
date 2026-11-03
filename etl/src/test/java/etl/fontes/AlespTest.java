@@ -116,4 +116,23 @@ class AlespTest {
         assertNull(Alesp.urlAbsoluta("   "));
         assertNull(Alesp.urlAbsoluta(null));
     }
+
+    @Test
+    void mapeiaNaturezasDeProposicaoCorretamente() {
+        var pl = Alesp.natureza("1");
+        assertEquals("Projeto de Lei", pl.nome());
+        assertEquals("PL", pl.sigla());
+
+        var plc = Alesp.natureza("2");
+        assertEquals("Projeto de Lei Complementar", plc.nome());
+        assertEquals("PLC", plc.sigla());
+
+        var ind = Alesp.natureza("9");
+        assertEquals("Indicação", ind.nome());
+        assertEquals("IND", ind.sigla());
+
+        var desconhecida = Alesp.natureza("999");
+        assertEquals("Proposição", desconhecida.nome());
+        assertEquals("PROP", desconhecida.sigla());
+    }
 }
