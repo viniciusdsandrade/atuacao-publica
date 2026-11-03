@@ -225,14 +225,15 @@ public final class Alesp implements Fonte {
         System.out.println("alesp: " + pessoas.size() + " deputados estaduais normalizados");
     }
 
-    private static String urlAbsoluta(String caminho) {
+    static String urlAbsoluta(String caminho) {
         if (caminho == null || caminho.isBlank()) {
             return null;
         }
-        if (caminho.startsWith("http://") || caminho.startsWith("https://")) {
-            return caminho;
+        String normalizado = caminho.strip().replace(" ", "%20");
+        if (normalizado.startsWith("http://") || normalizado.startsWith("https://")) {
+            return normalizado;
         }
-        return SITE + (caminho.startsWith("/") ? "" : "/") + caminho;
+        return SITE + (normalizado.startsWith("/") ? "" : "/") + normalizado;
     }
 
     private static void montarMandatos(JsonNode det, Acumulado ac, Prov prov) {
@@ -463,13 +464,18 @@ public final class Alesp implements Fonte {
                             if (mat != null) {
                                 Acumulado ac = acumulados.get(mat);
                                 if (ac != null) {
-                                    String votoPadrao = converterTipoVoto(tipoVoto, votoTexto);
-                                    String votacaoId = "comissao-" + idReuniao + "-" + idDoc;
-                                    Voto v = new Voto(votacaoId, null, "Comissão Permanente",
-                                            "Documento " + idDoc, votoTexto != null ? votoTexto.strip() : null,
-                                            votoPadrao, null, null, null, null, prov);
-                                    ac.votos.add(v);
-                                    ac.fontes.computeIfAbsent("votos", k -> new ArrayList<>()).add(fonteUsada);
+                                    // Schema exige data ISO válida. A fonte comissoes_permanentes_votacoes.xml não
+                                    // traz data; votos só são integrados quando a data for associada.
+                                    String data = null;
+                                    if (data != null) {
+                                        String votoPadrao = converterTipoVoto(tipoVoto, votoTexto);
+                                        String votacaoId = "comissao-" + idReuniao + "-" + idDoc;
+                                        Voto v = new Voto(votacaoId, data, "Comissão Permanente",
+                                                "Documento " + idDoc, votoTexto != null ? votoTexto.strip() : null,
+                                                votoPadrao, null, null, null, null, prov);
+                                        ac.votos.add(v);
+                                        ac.fontes.computeIfAbsent("votos", k -> new ArrayList<>()).add(fonteUsada);
+                                    }
                                 }
                             }
                         } catch (NumberFormatException ignored) {

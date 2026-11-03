@@ -106,4 +106,14 @@ class AlespTest {
         Alesp.DespesaComMatricula dm = Alesp.lerDespesa(reader, PROV);
         assertNull(dm, "Despesas anteriores a 2022 devem ser descartadas");
     }
+
+    @Test
+    void urlAbsolutaNormalizaEspacosEmBranco() {
+        assertEquals("https://www.al.sp.gov.br/biografia/fotos/download/Aldo%20Demarchi.png",
+                Alesp.urlAbsoluta("/biografia/fotos/download/Aldo Demarchi.png"));
+        assertEquals("https://exemplo.org/foto%20teste.jpg",
+                Alesp.urlAbsoluta("https://exemplo.org/foto teste.jpg"));
+        assertNull(Alesp.urlAbsoluta("   "));
+        assertNull(Alesp.urlAbsoluta(null));
+    }
 }
