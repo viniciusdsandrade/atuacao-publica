@@ -148,7 +148,8 @@ public final class Http {
             try {
                 HttpResponse<T> resposta = cliente.send(requisicao, leitor);
                 int status = resposta.statusCode();
-                if (status == 429 || status >= 500) {
+                // 405 intermitente do Portal da Transparência para o mesmo GET que responde 200 em seguida: vale nova tentativa.
+                if (status == 429 || status == 405 || status >= 500) {
                     ultimaFalha = new IOException("HTTP " + status + " em " + requisicao.uri());
                     retryAfter = resposta.headers().firstValue("Retry-After").orElse(null);
                     anotar("HTTP " + status);
