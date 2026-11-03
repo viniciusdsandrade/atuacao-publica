@@ -4,7 +4,8 @@
 .tabela-rolagem {
   position: relative;
   max-width: 100%;
-  overflow-x: auto;
+  max-height: min(72vh, 48rem);
+  overflow: auto;
   container-type: inline-size;
   border: 1px solid var(--borda);
   border-radius: var(--r-2);
@@ -21,11 +22,15 @@
 .tabela-rolagem caption {
   padding: 0.75rem 1rem;
   border-bottom: 1px solid var(--borda);
+  background: var(--superficie);
   font-weight: 650;
   text-align: left;
 }
 
 .tabela-rolagem th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
   padding: 0.6rem 1rem;
   border-bottom: 1px solid var(--borda);
   background: var(--superficie-2);
@@ -34,6 +39,7 @@
   font-weight: 700;
   text-align: left;
   vertical-align: bottom;
+  box-shadow: 0 1px 0 var(--borda);
 }
 
 .tabela-rolagem td {
@@ -61,6 +67,11 @@
 }
 
 @container (max-width: 44rem) {
+  .tabela-rolagem {
+    max-height: none;
+    overflow-y: visible;
+  }
+
   .tabela-rolagem table,
   .tabela-rolagem thead,
   .tabela-rolagem tbody,
@@ -126,6 +137,11 @@
 
 /* Tabela de oito colunas (candidaturas) precisa de mais espaço: empilha antes. */
 @container (max-width: 62rem) {
+  .tabela-rolagem:has(table[data-cols='8']) {
+    max-height: none;
+    overflow-y: visible;
+  }
+
   .tabela-rolagem table[data-cols='8'],
   .tabela-rolagem table[data-cols='8'] thead,
   .tabela-rolagem table[data-cols='8'] tbody,
@@ -190,6 +206,7 @@
 
 /* Registros sem coluna fixa (agenda oficial, posicionamentos declarados): lista, sem moldura de tabela. */
 .tabela-rolagem:has(> .manuais) {
+  max-height: none;
   overflow: visible;
   border: 0;
   background: none;

@@ -58,6 +58,16 @@
     box-shadow: none;
   }
 
+  .tabela-rolagem {
+    max-height: none !important;
+    overflow: visible !important;
+  }
+
+  .tabela-rolagem th {
+    position: static !important;
+    box-shadow: none !important;
+  }
+
   .heroi {
     background: none;
   }
