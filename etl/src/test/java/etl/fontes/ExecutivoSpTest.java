@@ -32,7 +32,19 @@ class ExecutivoSpTest {
         assertEquals("09:30", ExecutivoSp.formatarHora("9:30"));
         assertEquals("14:15", ExecutivoSp.formatarHora("14h15"));
         assertEquals("08:00", ExecutivoSp.formatarHora("8h00"));
+        assertEquals("11:00", ExecutivoSp.formatarHora("11h00 - 11h30"));
+        assertEquals("15:30", ExecutivoSp.formatarHora("15h30 - 16h00"));
+        assertEquals("09:00", ExecutivoSp.formatarHora("Dia inteiro"));
         assertEquals("09:00", ExecutivoSp.formatarHora(null));
+    }
+
+    @Test
+    void converteColunaParaIndiceCorretamente() {
+        assertEquals(0, ExecutivoSp.colunaParaIndice("A1"));
+        assertEquals(1, ExecutivoSp.colunaParaIndice("B12"));
+        assertEquals(25, ExecutivoSp.colunaParaIndice("Z5"));
+        assertEquals(26, ExecutivoSp.colunaParaIndice("AA1"));
+        assertEquals(-1, ExecutivoSp.colunaParaIndice(null));
     }
 
     @Test
@@ -47,7 +59,7 @@ class ExecutivoSpTest {
 
         Coleta.Arquivo arq = new Coleta.Arquivo("https://spagendas.sp.gov.br", csv.toString(), "hash", 100, Instant.now());
         List<ExecutivoSp.Compromisso> lista = new ArrayList<>();
-        ExecutivoSp.processarCsvAgenda(csv, arq, lista);
+        ExecutivoSp.processarArquivoAgenda(csv, arq, lista);
 
         assertEquals(2, lista.size());
 

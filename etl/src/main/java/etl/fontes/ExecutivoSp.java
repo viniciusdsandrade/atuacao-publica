@@ -1,15 +1,25 @@
 package etl.fontes;
 
+import java.io.InputStream;
 import java.math.BigDecimal;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDate;
 import java.time.YearMonth;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
+import javax.xml.stream.XMLInputFactory;
+import javax.xml.stream.XMLStreamConstants;
+import javax.xml.stream.XMLStreamReader;
 
 import com.fasterxml.jackson.annotation.JsonUnwrapped;
 
@@ -68,13 +78,19 @@ public final class ExecutivoSp implements Fonte {
         coleta.obter(URL_AGENDAS + "/Home/GetCargosPorOrgao?orgaoId=" + ORGAO_GABINETE_GOVERNADOR,
                 "cargos-gabinete.json", "application/json", Politica.SEMANAL);
 
-        // Exportação de compromissos por ano para o Gabinete do Governador
+        // Exportação de compromissos por ano na plataforma SP-Agendas (formato XLSX com parâmetros em dd/MM/yyyy)
         for (int ano = anoInicio; ano <= anoAtual; ano++) {
             Politica politica = Politica.porAno(ano, ctx.hoje());
-            String inicioAno = ano + "-01-01";
-            String fimAno = (ano == anoAtual) ? ctx.hoje().toString() : ano + "-12-31";
-            coleta.obter(URL_AGENDAS + "/Home/Exportar?orgaoId=" + ORGAO_GABINETE_GOVERNADOR + "&dataInicial=" + inicioAno + "&dataFinal=" + fimAno,
-                    "agendas/compromissos-" + ano + ".csv", "text/csv", politica);
+            String inicioAno = "01/01/" + ano;
+            String fimAno = (ano == anoAtual)
+                    ? String.format("%02d/%02d/%04d", ctx.hoje().getDayOfMonth(), ctx.hoje().getMonthValue(), ctx.hoje().getYear())
+                    : "31/12/" + ano;
+            String url = URL_AGENDAS + "/Home/Exportar?dataInicial="
+                    + URLEncoder.encode(inicioAno, StandardCharsets.UTF_8)
+                    + "&dataFinal="
+                    + URLEncoder.encode(fimAno, StandardCharsets.UTF_8);
+            coleta.obter(url, "agendas/compromissos-" + ano + ".xlsx",
+                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", politica);
         }
 
         coleta.periodo(new Meta.Periodo(LocalDate.of(anoInicio, 1, 1), ctx.hoje()));
@@ -93,9 +109,14 @@ public final class ExecutivoSp implements Fonte {
             // Processa compromissos da agenda oficial
             int anoAtual = ctx.hoje().getYear();
             for (int ano = 2023; ano <= anoAtual; ano++) {
-                Coleta.Arquivo arq = Coleta.metadados(ctx, "executivosp", "agendas/compromissos-" + ano + ".csv");
-                if (arq != null && Files.exists(Coleta.caminho(ctx, arq))) {
-                    processarCsvAgenda(Coleta.caminho(ctx, arq), arq, compromissos);
+                Coleta.Arquivo arqXlsx = Coleta.metadados(ctx, "executivosp", "agendas/compromissos-" + ano + ".xlsx");
+                if (arqXlsx != null && Files.exists(Coleta.caminho(ctx, arqXlsx))) {
+                    processarArquivoAgenda(Coleta.caminho(ctx, arqXlsx), arqXlsx, compromissos);
+                } else {
+                    Coleta.Arquivo arqCsv = Coleta.metadados(ctx, "executivosp", "agendas/compromissos-" + ano + ".csv");
+                    if (arqCsv != null && Files.exists(Coleta.caminho(ctx, arqCsv))) {
+                        processarArquivoAgenda(Coleta.caminho(ctx, arqCsv), arqCsv, compromissos);
+                    }
                 }
             }
 
@@ -119,8 +140,159 @@ public final class ExecutivoSp implements Fonte {
         System.out.println("executivosp: " + compromissos.size() + " compromissos e " + despesas.size() + " agregados de despesa normalizados");
     }
 
+    public static void processarArquivoAgenda(Path caminho, Coleta.Arquivo arq, List<Compromisso> destino) throws Exception {
+        byte[] cabecalho = new byte[4];
+        try (InputStream in = Files.newInputStream(caminho)) {
+            int lidos = in.read(cabecalho);
+            if (lidos >= 2 && cabecalho[0] == 'P' && cabecalho[1] == 'K') {
+                processarXlsxAgenda(caminho, arq, destino);
+                return;
+            }
+        }
+        processarCsvAgenda(caminho, arq, destino);
+    }
+
+    public static void processarXlsxAgenda(Path caminho, Coleta.Arquivo arq, List<Compromisso> destino) throws Exception {
+        List<String> sharedStrings = new ArrayList<>();
+        Prov prov = Prov.de(FONTE_AGENDAS, URL_AGENDAS, arq);
+
+        try (ZipFile zip = new ZipFile(caminho.toFile())) {
+            ZipEntry sstEntry = zip.getEntry("xl/sharedStrings.xml");
+            if (sstEntry != null) {
+                XMLInputFactory factory = XMLInputFactory.newDefaultFactory();
+                try (InputStream in = zip.getInputStream(sstEntry)) {
+                    XMLStreamReader reader = factory.createXMLStreamReader(in);
+                    StringBuilder text = new StringBuilder();
+                    boolean inT = false;
+                    while (reader.hasNext()) {
+                        int event = reader.next();
+                        if (event == XMLStreamConstants.START_ELEMENT) {
+                            if ("t".equals(reader.getLocalName())) {
+                                inT = true;
+                            } else if ("si".equals(reader.getLocalName())) {
+                                text.setLength(0);
+                            }
+                        } else if (event == XMLStreamConstants.CHARACTERS && inT) {
+                            text.append(reader.getText());
+                        } else if (event == XMLStreamConstants.END_ELEMENT) {
+                            if ("t".equals(reader.getLocalName())) {
+                                inT = false;
+                            } else if ("si".equals(reader.getLocalName())) {
+                                sharedStrings.add(text.toString());
+                            }
+                        }
+                    }
+                }
+            }
+
+            ZipEntry sheetEntry = zip.getEntry("xl/worksheets/sheet1.xml");
+            if (sheetEntry != null) {
+                XMLInputFactory factory = XMLInputFactory.newDefaultFactory();
+                try (InputStream in = zip.getInputStream(sheetEntry)) {
+                    XMLStreamReader reader = factory.createXMLStreamReader(in);
+                    Map<Integer, String> currentRow = null;
+                    String currentCellType = null;
+                    int currentCellCol = -1;
+                    StringBuilder cellValue = new StringBuilder();
+                    boolean inV = false;
+                    boolean isHeader = true;
+
+                    while (reader.hasNext()) {
+                        int event = reader.next();
+                        if (event == XMLStreamConstants.START_ELEMENT) {
+                            String name = reader.getLocalName();
+                            if ("row".equals(name)) {
+                                currentRow = new HashMap<>();
+                            } else if ("c".equals(name)) {
+                                String ref = reader.getAttributeValue(null, "r");
+                                currentCellCol = colunaParaIndice(ref);
+                                currentCellType = reader.getAttributeValue(null, "t");
+                                cellValue.setLength(0);
+                            } else if ("v".equals(name)) {
+                                inV = true;
+                            }
+                        } else if (event == XMLStreamConstants.CHARACTERS && inV) {
+                            cellValue.append(reader.getText());
+                        } else if (event == XMLStreamConstants.END_ELEMENT) {
+                            String name = reader.getLocalName();
+                            if ("v".equals(name)) {
+                                inV = false;
+                            } else if ("c".equals(name)) {
+                                String val = cellValue.toString();
+                                if ("s".equals(currentCellType) && !val.isEmpty()) {
+                                    try {
+                                        int idx = Integer.parseInt(val);
+                                        val = idx < sharedStrings.size() ? sharedStrings.get(idx) : val;
+                                    } catch (NumberFormatException ignored) {
+                                    }
+                                }
+                                if (currentRow != null && currentCellCol >= 0) {
+                                    currentRow.put(currentCellCol, val);
+                                }
+                            } else if ("row".equals(name)) {
+                                if (currentRow != null) {
+                                    if (isHeader) {
+                                        isHeader = false;
+                                    } else {
+                                        processarLinhaXlsx(currentRow, prov, destino);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private static void processarLinhaXlsx(Map<Integer, String> r, Prov prov, List<Compromisso> destino) {
+        String autoridade = r.getOrDefault(0, "").strip();
+        String orgao = r.getOrDefault(1, "").strip();
+        String tipoObr = r.getOrDefault(3, "").strip();
+        String tipoNaoObr = r.getOrDefault(4, "").strip();
+        String assunto = r.getOrDefault(5, "").strip();
+        if (assunto.isBlank()) {
+            assunto = (tipoObr + " " + tipoNaoObr).strip();
+        }
+        String dataRaw = r.getOrDefault(6, "").strip();
+        String horaRaw = r.getOrDefault(7, "").strip();
+        String localRaw = r.getOrDefault(8, "").strip();
+        String partRaw = r.getOrDefault(12, "").strip();
+
+        boolean isGabinete = orgao.toUpperCase().contains("GABINETE DO GOVERNADOR");
+        boolean isGovernador = assunto.toUpperCase().contains("GOVERNADOR") || autoridade.toUpperCase().contains("GOVERNADOR");
+        if (!isGabinete && !isGovernador) {
+            return;
+        }
+
+        String dataIso = formatarDataIso(dataRaw);
+        if (dataIso == null) {
+            return;
+        }
+        String horaFormatada = formatarHora(horaRaw);
+        String tituloSanitizado = Guarda.semCpf(assunto);
+        String localSanitizado = localRaw.isBlank() ? null : Guarda.semCpf(localRaw);
+        List<String> participantes = new ArrayList<>();
+        if (!partRaw.isBlank()) {
+            for (String p : partRaw.split(",")) {
+                String part = p.strip();
+                if (!part.isBlank()) {
+                    participantes.add(Guarda.semCpf(part));
+                }
+            }
+        }
+
+        destino.add(new Compromisso(UF, dataIso, horaFormatada, tituloSanitizado, localSanitizado,
+                participantes.isEmpty() ? null : participantes, null, prov));
+    }
+
     public static void processarCsvAgenda(Path caminho, Coleta.Arquivo arq, List<Compromisso> destino) throws Exception {
-        List<String> linhas = Files.readAllLines(caminho);
+        List<String> linhas;
+        try {
+            linhas = Files.readAllLines(caminho, StandardCharsets.UTF_8);
+        } catch (Exception e) {
+            linhas = Files.readAllLines(caminho, StandardCharsets.ISO_8859_1);
+        }
         if (linhas.isEmpty()) {
             return;
         }
@@ -163,6 +335,24 @@ public final class ExecutivoSp implements Fonte {
         }
     }
 
+    static int colunaParaIndice(String ref) {
+        if (ref == null) {
+            return -1;
+        }
+        int col = 0;
+        for (int i = 0; i < ref.length(); i++) {
+            char ch = ref.charAt(i);
+            if (ch >= 'A' && ch <= 'Z') {
+                col = col * 26 + (ch - 'A' + 1);
+            } else if (ch >= 'a' && ch <= 'z') {
+                col = col * 26 + (ch - 'a' + 1);
+            } else {
+                break;
+            }
+        }
+        return col - 1;
+    }
+
     public static String formatarDataIso(String texto) {
         if (texto == null || texto.isBlank()) {
             return null;
@@ -182,14 +372,11 @@ public final class ExecutivoSp implements Fonte {
         if (texto == null || texto.isBlank()) {
             return "09:00";
         }
-        texto = texto.strip();
-        if (texto.matches("^\\d{1,2}:\\d{2}$")) {
-            return texto.length() == 4 ? "0" + texto : texto;
-        }
-        if (texto.matches("^\\d{1,2}h\\d{2}$")) {
-            String[] p = texto.split("h");
-            String h = p[0].length() == 1 ? "0" + p[0] : p[0];
-            return h + ":" + p[1];
+        Matcher m = Pattern.compile("(\\d{1,2})[h:](\\d{2})").matcher(texto.strip());
+        if (m.find()) {
+            int h = Integer.parseInt(m.group(1));
+            int min = Integer.parseInt(m.group(2));
+            return String.format("%02d:%02d", h, min);
         }
         return "09:00";
     }
