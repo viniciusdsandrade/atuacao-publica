@@ -53,8 +53,6 @@ Estado real de cada fase. Atualizado ao fechar cada fase.
 - Agenda da Presidência: a primeira carga no CI foi concluída em execuções sucessivas com coleta em lotes de 40 dias. Dias já coletados ficam no cache; dias sem captura no arquivo ficam sem registro ou com cópia anterior preservada em caso de timeout. No site, 5.480 compromissos no presidente vigente (2023 a 2026) e 721 no presidente de 2019 a 2023.
 - Portal da Transparência: o ZIP anual de viagens respondeu 405 intermitente ao runner do GitHub Actions em 2026-11-02 (2024 a 2026). Corrigido com repetição automática em caso de 405; viagens de 2024 a 2026 publicadas no site com passagens e diárias.
 - Em 2026-11-02 o `publish` do CI parou com "dois perfis com o identificador sapl-3509502-306": um ex-deputado novo no arquivo era o mesmo vereador já publicado, e o vínculo entre casas não os fundiu, porque o TSE mascara o CPF de 2024. Corrigido em dois pontos. O vínculo passa a usar também nome civil e data de nascimento. E o id publicado só passa a um perfil se não for o id derivado de outro, o que vale mesmo quando a fusão falha.
-- O tema do site segue o sistema. Não há alternância manual.
-- O cabeçalho das tabelas não fica fixo na rolagem.
 - A lista da página inicial exibe 48 cartões por vez. A busca do navegador (Ctrl+F) só acha o que está na tela. Use a busca do site.
 - Não validado: leitor de tela real (VoiceOver, NVDA, TalkBack) e aparelhos móveis físicos. A auditoria de acessibilidade foi automatizada e por teclado.
 - A auditoria de interface roda em scripts locais. Ela não está no CI.
@@ -85,11 +83,11 @@ Concluída em 2026-11-02. A interface foi refeita sem mudar dado, rota nem fonte
 
 | Etapa | Entrega | Estado |
 |---|---|---|
-| Casca | Cabeçalho e rodapé novos, tema claro e escuro, anel de foco com contraste, foco movido ao conteúdo na troca de página, título de aba por perfil, rolagem restaurada ao voltar | concluída |
+| Casca | Cabeçalho e rodapé novos, alternância manual de tema (Auto, Claro e Escuro) com persistência em storage, anel de foco com contraste, foco movido ao conteúdo na troca de página, título de aba por perfil, rolagem restaurada ao voltar | concluída |
 | Página inicial | Apresentação do site com números do índice, busca por palavras, situação e esfera com contagem, filtros no endereço, "Mostrar mais", estados de carga e de erro | concluída |
 | Estado das coletas | Página própria (`#/estado`) e resumo na página inicial | concluída |
-| Perfil | Sumário por blocos com o bloco em leitura, endereço por bloco, blocos sem registro mais baixos, tabelas em cartões no celular, despesas por ano, link para o JSON do perfil | concluída |
-| Detalhe anual | Migalhas, troca de ano, filtro em todos os campos e paginação | concluída |
+| Perfil | Sumário por blocos com o bloco em leitura, endereço por bloco, blocos sem registro mais baixos, cabeçalho fixo nas tabelas (sticky header), tabelas em cartões no celular, despesas por ano, link para o JSON do perfil | concluída |
+| Detalhe anual | Migalhas, troca de ano, filtro em todos os campos, paginação e cabeçalho fixo nas tabelas | concluída |
 | Documentos | Tipografia de leitura, sumário por seção, links externos em outra aba, tabelas e código rolantes por teclado | concluída |
 | Impressão | Perfil e documentos em preto sobre branco, com o endereço de cada fonte | concluída |
 

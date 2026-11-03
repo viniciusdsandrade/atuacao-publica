@@ -39,8 +39,10 @@
   --transicao: 140ms ease;
 }
 
+/* Tema escuro por preferência do sistema (quando não forçado para claro) */
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-tema='claro']) {
+    color-scheme: dark;
     --fundo: #0e1216;
     --superficie: #151a20;
     --superficie-2: #1c232b;
@@ -62,6 +64,56 @@
     --sombra-1: 0 1px 2px rgb(0 0 0 / 0.4);
     --sombra-2: 0 8px 24px rgb(0 0 0 / 0.5);
   }
+}
+
+/* Tema escuro forçado manualmente */
+:root[data-tema='escuro'] {
+  color-scheme: dark;
+  --fundo: #0e1216;
+  --superficie: #151a20;
+  --superficie-2: #1c232b;
+  --superficie-3: #252e38;
+  --texto: #e7ebf0;
+  --texto-2: #b6c0cb;
+  --texto-3: #9aa6b3;
+  --borda: #2a333d;
+  --borda-controle: #728090;
+  --destaque: #8ab4e8;
+  --destaque-forte: #b3d0f5;
+  --destaque-suave: #1b2c42;
+  --sobre-destaque: #0e1216;
+  --aviso: #f0b45b;
+  --aviso-fundo: #2b2113;
+  --aviso-borda: #6b5128;
+  --foco: #8ab4f8;
+  --barra: #3d5c82;
+  --sombra-1: 0 1px 2px rgb(0 0 0 / 0.4);
+  --sombra-2: 0 8px 24px rgb(0 0 0 / 0.5);
+}
+
+/* Tema claro forçado manualmente (sobrepõe dark mode do sistema) */
+:root[data-tema='claro'] {
+  color-scheme: light;
+  --fundo: #f4f6f8;
+  --superficie: #ffffff;
+  --superficie-2: #eef1f5;
+  --superficie-3: #e4e9ef;
+  --texto: #141a21;
+  --texto-2: #424e5c;
+  --texto-3: #566170;
+  --borda: #d5dbe3;
+  --borda-controle: #727f8e;
+  --destaque: #1f4e79;
+  --destaque-forte: #163b5d;
+  --destaque-suave: #e3edf8;
+  --sobre-destaque: #ffffff;
+  --aviso: #7a4100;
+  --aviso-fundo: #fff4e0;
+  --aviso-borda: #e3b867;
+  --foco: #0a58ca;
+  --barra: #9db8d6;
+  --sombra-1: 0 1px 2px rgb(15 23 32 / 0.06), 0 1px 1px rgb(15 23 32 / 0.04);
+  --sombra-2: 0 8px 24px rgb(15 23 32 / 0.1);
 }
 
 *,

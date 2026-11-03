@@ -1,9 +1,20 @@
-import { Component, ElementRef, Injector, afterNextRender, inject, viewChild } from '@angular/core';
+import { Component, ElementRef, Injector, afterNextRender, inject, signal, viewChild } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { filter, map, startWith } from 'rxjs';
 
+import { Icone } from './icone/icone';
 import { Marca } from './marca';
+import {
+  Tema,
+  aplicarTemaNoDocumento,
+  iconeTema,
+  lerTemaSalvo,
+  proximoTema,
+  rotuloCurtoTema,
+  rotuloTema,
+  salvarTema,
+} from './tema';
 
 /** Caminho da rota sem parâmetros de consulta nem fragmento. */
 function caminhoDe(url: string): string {
@@ -12,7 +23,7 @@ function caminhoDe(url: string): string {
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, Marca],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, Marca, Icone],
   templateUrl: './app.html',
 })
 export class App {
@@ -20,6 +31,8 @@ export class App {
   private readonly injector = inject(Injector);
   private readonly conteudo = viewChild.required<ElementRef<HTMLElement>>('conteudo');
   private caminhoAnterior: string | null = null;
+
+  protected readonly tema = signal<Tema>(lerTemaSalvo());
 
   private readonly caminho = toSignal(
     this.router.events.pipe(
@@ -39,7 +52,28 @@ export class App {
     return this.naLista() || this.caminho().startsWith('/politico');
   }
 
+  protected alternarTema(): void {
+    const proximo = proximoTema(this.tema());
+    this.tema.set(proximo);
+    salvarTema(proximo);
+    aplicarTemaNoDocumento(proximo);
+  }
+
+  protected iconeTema(): 'sistema' | 'sol' | 'lua' {
+    return iconeTema(this.tema());
+  }
+
+  protected rotuloCurtoTema(): string {
+    return rotuloCurtoTema(this.tema());
+  }
+
+  protected rotuloTema(): string {
+    return rotuloTema(this.tema());
+  }
+
   constructor() {
+    aplicarTemaNoDocumento(this.tema());
+
     // Troca de página move o foco ao conteúdo, como um carregamento novo faria.
     // Mudar só filtro, fragmento ou carga inicial não mexe no foco.
     this.router.events

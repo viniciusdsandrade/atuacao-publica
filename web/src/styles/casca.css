@@ -78,6 +78,46 @@
   box-shadow: inset 0 -2px 0 var(--destaque);
 }
 
+.topo-acoes {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.botao-tema {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  min-height: 2.5rem;
+  padding: 0 0.75rem;
+  border: 1px solid var(--borda);
+  border-radius: var(--r-pilula);
+  background: var(--superficie);
+  color: var(--texto-2);
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background var(--transicao), border-color var(--transicao), color var(--transicao);
+}
+
+.botao-tema:hover {
+  background: var(--superficie-2);
+  color: var(--texto);
+  border-color: var(--borda-controle);
+}
+
+@media (max-width: 36rem) {
+  .botao-tema-texto {
+    display: none;
+  }
+
+  .botao-tema {
+    padding: 0 0.6rem;
+  }
+}
+
 main {
   max-width: var(--largura);
   margin: 0 auto;
@@ -179,7 +219,8 @@ main {
 }
 
 @media (forced-colors: active) {
-  .nav-principal a.ativo {
+  .nav-principal a.ativo,
+  .botao-tema {
     border: 1px solid CanvasText;
   }
 

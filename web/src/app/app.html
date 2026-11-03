@@ -5,16 +5,28 @@
       <app-marca />
       <span>Atuação Pública</span>
     </a>
-    <nav class="nav-principal" aria-label="Principal">
-      <ul>
-        <li>
-          <a routerLink="/" [class.ativo]="naSecaoPoliticos()" [attr.aria-current]="naLista() ? 'page' : null">Políticos</a>
-        </li>
-        <li><a routerLink="/metodologia" routerLinkActive="ativo" ariaCurrentWhenActive="page">Metodologia</a></li>
-        <li><a routerLink="/fontes" routerLinkActive="ativo" ariaCurrentWhenActive="page">Fontes</a></li>
-        <li><a routerLink="/contribuir" routerLinkActive="ativo" ariaCurrentWhenActive="page">Contribuir</a></li>
-      </ul>
-    </nav>
+    <div class="topo-acoes">
+      <nav class="nav-principal" aria-label="Principal">
+        <ul>
+          <li>
+            <a routerLink="/" [class.ativo]="naSecaoPoliticos()" [attr.aria-current]="naLista() ? 'page' : null">Políticos</a>
+          </li>
+          <li><a routerLink="/metodologia" routerLinkActive="ativo" ariaCurrentWhenActive="page">Metodologia</a></li>
+          <li><a routerLink="/fontes" routerLinkActive="ativo" ariaCurrentWhenActive="page">Fontes</a></li>
+          <li><a routerLink="/contribuir" routerLinkActive="ativo" ariaCurrentWhenActive="page">Contribuir</a></li>
+        </ul>
+      </nav>
+      <button
+        type="button"
+        class="botao-tema"
+        [attr.aria-label]="rotuloTema()"
+        [title]="rotuloTema()"
+        (click)="alternarTema()"
+      >
+        <app-icone [nome]="iconeTema()" />
+        <span class="botao-tema-texto">{{ rotuloCurtoTema() }}</span>
+      </button>
+    </div>
   </div>
 </header>
 <main id="conteudo" #conteudo tabindex="-1">
