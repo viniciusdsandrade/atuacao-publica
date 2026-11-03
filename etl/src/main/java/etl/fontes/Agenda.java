@@ -35,6 +35,8 @@ public final class Agenda implements Fonte {
     static final String ENTE = "BR";
     /** Dias dos últimos 14 dias renovam a cada execução; os demais vêm do cache. */
     static final int DIAS_DE_REVISAO = 14;
+    /** Dias por lote em paralelo: o orçamento de tempo é conferido entre lotes, não só em cada chamada. */
+    static final int LOTE = 40;
     private static final DateTimeFormatter COMPACTA = DateTimeFormatter.ofPattern("yyyyMMdd");
 
     private static final Pattern ITEM = Pattern.compile("class=\"item-compromisso-wrapper\"");
@@ -113,14 +115,18 @@ public final class Agenda implements Fonte {
                 dias++;
                 primeiro = primeiro == null || dia.isBefore(primeiro) ? dia : primeiro;
             }
-            // Os dias vão em paralelo, limitados pela concorrência do cliente HTTP; o intervalo por host serializa o archive.org.
-            List<String> falhas = Camara.paraCadaDeputado(ids, id -> {
-                LocalDate dia = LocalDate.parse(id);
-                String url = regra.arquivo() ? urlNoArquivo(regra, dia) : urlDoDia(regra, dia);
-                coleta.obterOuVazio(url, "dias/" + dia + ".html", "text/html", politica(dia, ctx.hoje()));
-            });
-            for (String falha : falhas) {
-                coleta.falhaParcial("dias", falha);
+            // Dias em lotes paralelos, limitados pela concorrência do cliente HTTP. Um lote de cada vez: esgotado o orçamento
+            // de tempo, os lotes seguintes vêm do cache em vez de ficarem na fila do intervalo por host do archive.org.
+            for (int de = 0; de < ids.size(); de += LOTE) {
+                List<String> lote = ids.subList(de, Math.min(ids.size(), de + LOTE));
+                List<String> falhas = Camara.paraCadaDeputado(lote, id -> {
+                    LocalDate dia = LocalDate.parse(id);
+                    String url = regra.arquivo() ? urlNoArquivo(regra, dia) : urlDoDia(regra, dia);
+                    coleta.obterOuVazio(url, "dias/" + dia + ".html", "text/html", politica(dia, ctx.hoje()));
+                });
+                for (String falha : falhas) {
+                    coleta.falhaParcial("dias", falha);
+                }
             }
         }
         coleta.contar("dias", dias);

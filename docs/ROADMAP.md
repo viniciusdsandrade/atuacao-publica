@@ -50,6 +50,8 @@ Estado real de cada fase. Atualizado ao fechar cada fase.
 - O arquivo de candidaturas do TSE de 2024 vem com o CPF mascarado. O vínculo dessa eleição com as demais usa nome civil e data de nascimento, em memória.
 - SAPL do piloto: o filtro de votos por registro de votação admite votos anteriores a 2022, porque os ids de registro não seguem a ordem das sessões. Esses votos ficam fora, e a quantidade aparece na saída do `normalize`.
 - Até 2026-11-02, o bloco de órgãos e frentes saía vazio para deputados e senadores por um erro no nome do campo normalizado. Corrigido.
+- Agenda da Presidência: a primeira carga no CI leva mais de uma execução (cerca de 1.800 páginas, 365 delas no archive.org a 4 s cada). Dias já coletados ficam no cache; dias sem captura no arquivo ficam sem registro.
+- Portal da Transparência: o ZIP anual de viagens respondeu 405 ao runner do GitHub Actions em 2026-11-02 (2024 a 2026), enquanto respondia 200 de outra rede. Sem cache, a coleta tenta de novo a cada execução.
 - Em 2026-11-02 o `publish` do CI parou com "dois perfis com o identificador sapl-3509502-306". Uma pessoa presente na Câmara e no SAPL não foi fundida no CI (9 fusões, contra 10 no ambiente local), e o id publicado antes passou para o perfil da Câmara, que não é o dono dele. Corrigido: o id publicado só passa a um perfil se não for o id derivado de outro. A causa da diferença de fusão entre o CI e o ambiente local não foi investigada.
 - O tema do site segue o sistema. Não há alternância manual.
 - O cabeçalho das tabelas não fica fixo na rolagem.
