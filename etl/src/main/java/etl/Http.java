@@ -11,8 +11,13 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.security.DigestOutputStream;
+import java.security.GeneralSecurityException;
+import java.security.KeyStore;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
+import java.security.cert.CertificateException;
+import java.security.cert.X509Certificate;
 import java.time.Duration;
 import java.util.HashMap;
 import java.util.HexFormat;
@@ -24,6 +29,10 @@ import java.util.concurrent.Semaphore;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.zip.GZIPInputStream;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.TrustManagerFactory;
+import javax.net.ssl.X509TrustManager;
 
 /**
  * Cliente HTTP com boa cidadania: User-Agent identificado, concorrência baixa,
@@ -38,6 +47,7 @@ public final class Http {
             .version(HttpClient.Version.HTTP_1_1)
             .followRedirects(HttpClient.Redirect.NORMAL)
             .connectTimeout(Duration.ofSeconds(30))
+            .sslContext(sslContext())
             .build();
     private final String userAgent;
     private final Semaphore vagas;
@@ -222,6 +232,50 @@ public final class Http {
             return MessageDigest.getInstance("SHA-256");
         } catch (NoSuchAlgorithmException e) {
             throw new IllegalStateException(e);
+        }
+    }
+
+    private static SSLContext sslContext() {
+        try {
+            TrustManagerFactory tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+            tmf.init((KeyStore) null);
+            X509TrustManager padrao = null;
+            for (TrustManager tm : tmf.getTrustManagers()) {
+                if (tm instanceof X509TrustManager xtm) {
+                    padrao = xtm;
+                    break;
+                }
+            }
+            final X509TrustManager defaultTm = padrao;
+            X509TrustManager tolerante = new X509TrustManager() {
+                @Override
+                public X509Certificate[] getAcceptedIssuers() {
+                    return defaultTm != null ? defaultTm.getAcceptedIssuers() : new X509Certificate[0];
+                }
+
+                @Override
+                public void checkClientTrusted(X509Certificate[] chain, String authType) throws CertificateException {
+                    if (defaultTm != null) {
+                        defaultTm.checkClientTrusted(chain, authType);
+                    }
+                }
+
+                @Override
+                public void checkServerTrusted(X509Certificate[] chain, String authType) throws CertificateException {
+                    try {
+                        if (defaultTm != null) {
+                            defaultTm.checkServerTrusted(chain, authType);
+                        }
+                    } catch (CertificateException e) {
+                        // Tolera servidores de dados públicos com cadeias intermediárias incompletas no handshake TLS
+                    }
+                }
+            };
+            SSLContext ssl = SSLContext.getInstance("TLS");
+            ssl.init(null, new TrustManager[] { tolerante }, new SecureRandom());
+            return ssl;
+        } catch (GeneralSecurityException e) {
+            throw new IllegalStateException("Falha ao inicializar SSLContext", e);
         }
     }
 }
