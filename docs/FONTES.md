@@ -407,6 +407,7 @@ Nenhum servidor bloqueou o cliente.
 | `alesp-deputados` | ALESP, portal de parlamentares e API REST | T0 | JSON e XML | nenhuma | validado | 2026-11-03 |
 | `alesp-despesas` | ALESP, despesas de gabinete | T0 | XML | nenhuma | validado com limitação | 2026-11-03 |
 | `alesp-comissoes` | ALESP, comissões e membros | T0 | XML | nenhuma | validado | 2026-11-03 |
+| `alesp-comissoes-reunioes` | ALESP, reuniões de comissões permanentes | T0 | XML | nenhuma | validado | 2026-11-03 |
 | `alesp-comissoes-votacoes` | ALESP, votações em comissões permanentes | T0 | XML | nenhuma | validado | 2026-11-03 |
 | `alesp-proposituras` | ALESP, proposituras e autores | T0 | XML em ZIP | nenhuma | validado | 2026-11-03 |
 | `alesp-sessoes` | ALESP, sessões plenárias e pautas | T0 | JSON e PDF | nenhuma | validado com limitação | 2026-11-03 |
@@ -463,6 +464,7 @@ Nenhum servidor bloqueou o cliente.
 | `sp-agendas` | Plataforma SP-Agendas (SGGD) | T0 | JSON e HTML | nenhuma | validado | 2026-11-03 |
 | `sp-transparencia` | Portal da Transparência do Estado de São Paulo | T0 | CSV e JSON | nenhuma | validado | 2026-11-03 |
 | `sp-diario-oficial` | Diário Oficial do Estado de São Paulo | T0 | HTML e PDF | nenhuma | validado | 2026-11-03 |
+| `sp-legislacao` | Repositório de Normas do Estado de São Paulo | T0 | XML em ZIP | nenhuma | validado | 2026-11-03 |
 
 ### `sp-agendas`: agenda oficial do Governador de São Paulo
 
@@ -478,6 +480,13 @@ Nenhum servidor bloqueou o cliente.
 - URL base: `https://www.transparencia.sp.gov.br/Despesas`
 - Consulta e exportação mensal por órgão e elemento econômico (`/Despesas/ExportarCsv`).
 - Metodologia de agregação: despesas consolidadas por mês e categoria no perfil do Governador (ADR-0014), sem lançamentos individuais de pessoas físicas.
+
+### `sp-legislacao`: atos normativos e decretos do Governador
+
+- URL base: `https://www.al.sp.gov.br/repositorioDados/legislacao/legislacao_normas.zip`
+- Acervo oficial de consolidação legislativa do Estado de São Paulo, cobrindo normas históricas e atualizado diariamente.
+- Campos do XML: `Data`, `Ementa`, `IdNorma`, `Numero`, `IdTipo`, `Promulg`, `Situacao`, `URLFicha`.
+- Filtragem no projeto: normas com `Promulg == "E"` (Poder Executivo) a partir de 2022, cobrindo Decretos (`DEC`, IdTipo 3), Leis Ordinárias (`LEI`, IdTipo 9) e Leis Complementares (`LCP`, IdTipo 2).
 
 ## Fora da política de fontes
 

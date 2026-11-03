@@ -135,4 +135,32 @@ class AlespTest {
         assertEquals("Proposição", desconhecida.nome());
         assertEquals("PROP", desconhecida.sigla());
     }
+
+    @Test
+    void carregaDatasReunioesCorretamente(@org.junit.jupiter.api.io.TempDir java.nio.file.Path tempDir) throws Exception {
+        etl.Contexto ctx = new etl.Contexto(tempDir, tempDir.resolve("data"), null, null, Instant.now(), null);
+        java.nio.file.Path rawAlesp = ctx.raw().resolve("alesp");
+        java.nio.file.Files.createDirectories(rawAlesp);
+        java.nio.file.Path xmlPath = rawAlesp.resolve("comissoes_permanentes_reunioes.xml");
+        String xml = """
+                <?xml version="1.0" encoding="UTF-8"?>
+                <ComissoesReunioes>
+                  <ReuniaoComissao>
+                    <IdReuniao>1000006027</IdReuniao>
+                    <Data>2024-02-28T00:00:00-03:00</Data>
+                  </ReuniaoComissao>
+                  <ReuniaoComissao>
+                    <IdReuniao>10894</IdReuniao>
+                    <Data>2012-10-30T00:00:00-02:00</Data>
+                  </ReuniaoComissao>
+                </ComissoesReunioes>
+                """;
+        java.nio.file.Files.writeString(xmlPath, xml);
+        var arq = new etl.Coleta.Arquivo("https://www.al.sp.gov.br", "raw/alesp/comissoes_permanentes_reunioes.xml", "hash", xml.length(), Instant.now());
+        etl.Json.gravar(rawAlesp.resolve("comissoes_permanentes_reunioes.xml.meta.json"), arq, true);
+
+        var datas = Alesp.carregarDatasReunioes(ctx);
+        assertEquals("2024-02-28", datas.get("1000006027"));
+        assertEquals("2012-10-30", datas.get("10894"));
+    }
 }

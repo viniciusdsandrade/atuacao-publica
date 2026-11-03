@@ -53,6 +53,7 @@ public final class Alesp implements Fonte {
     public static final String FONTE_DEPUTADOS = "alesp-deputados";
     public static final String FONTE_DESPESAS = "alesp-despesas";
     public static final String FONTE_COMISSOES = "alesp-comissoes";
+    public static final String FONTE_COMISSOES_REUNIOES = "alesp-comissoes-reunioes";
     public static final String FONTE_COMISSOES_VOTACOES = "alesp-comissoes-votacoes";
     public static final String FONTE_PROPOSITURAS = "alesp-proposituras";
 
@@ -84,6 +85,8 @@ public final class Alesp implements Fonte {
         coleta.obter(REPO + "/deputados/deputados.xml", "deputados.xml", "application/xml", Politica.SEMANAL);
         coleta.obter(REPO + "/deputados/despesas_gabinetes.xml", "despesas_gabinetes.xml", "application/xml", Politica.SEMANAL);
         coleta.obter(API + "/colegiado-ocupacao/todos", "colegiado-ocupacoes.json", "application/json", Politica.SEMANAL);
+        coleta.obter(REPO + "/processo_legislativo/comissoes_permanentes_reunioes.xml",
+                "comissoes_permanentes_reunioes.xml", "application/xml", Politica.SEMANAL);
         coleta.obter(REPO + "/processo_legislativo/comissoes_permanentes_votacoes.xml",
                 "comissoes_permanentes_votacoes.xml", "application/xml", Politica.SEMANAL);
         coleta.obter(REPO + "/processo_legislativo/proposituras.zip", "proposituras.zip", "application/zip", Politica.SEMANAL);
@@ -444,6 +447,8 @@ public final class Alesp implements Fonte {
             return;
         }
 
+        Map<String, String> dataPorIdReuniao = carregarDatasReunioes(ctx);
+
         Prov prov = Prov.de(FONTE_COMISSOES_VOTACOES,
                 REPO + "/processo_legislativo/comissoes_permanentes_votacoes.xml", arqVot);
         FonteUsada fonteUsada = FonteUsada.de(FONTE_COMISSOES_VOTACOES, arqVot);
@@ -480,17 +485,21 @@ public final class Alesp implements Fonte {
                             if (mat != null) {
                                 Acumulado ac = acumulados.get(mat);
                                 if (ac != null) {
-                                    // Schema exige data ISO válida. A fonte comissoes_permanentes_votacoes.xml não
-                                    // traz data; votos só são integrados quando a data for associada.
-                                    String data = null;
-                                    if (data != null) {
+                                    String data = idReuniao != null ? dataPorIdReuniao.get(idReuniao.strip()) : null;
+                                    if (data != null && data.compareTo("2022-01-01") >= 0) {
                                         String votoPadrao = converterTipoVoto(tipoVoto, votoTexto);
-                                        String votacaoId = "comissao-" + idReuniao + "-" + idDoc;
+                                        String votacaoId = "comissao-" + idReuniao.strip() + "-" + (idDoc != null ? idDoc.strip() : "0");
                                         Voto v = new Voto(votacaoId, data, "Comissão Permanente",
-                                                "Documento " + idDoc, votoTexto != null ? votoTexto.strip() : null,
+                                                "Documento " + (idDoc != null ? idDoc.strip() : "s/n"),
+                                                votoTexto != null && !votoTexto.isBlank() ? votoTexto.strip() : null,
                                                 votoPadrao, null, null, null, null, prov);
                                         ac.votos.add(v);
                                         ac.fontes.computeIfAbsent("votos", k -> new ArrayList<>()).add(fonteUsada);
+
+                                        String ano = data.substring(0, 4);
+                                        int[] cont = ac.participacao.computeIfAbsent(ano, k -> new int[2]);
+                                        cont[0]++;
+                                        cont[1]++;
                                     }
                                 }
                             }
@@ -500,6 +509,52 @@ public final class Alesp implements Fonte {
                 }
             }
         }
+
+        for (Acumulado ac : acumulados.values()) {
+            ac.votos.sort(Comparator.comparing(Voto::data).reversed());
+        }
+    }
+
+    static Map<String, String> carregarDatasReunioes(Contexto ctx) {
+        Map<String, String> datas = new HashMap<>();
+        Coleta.Arquivo arqReunioes = Coleta.metadados(ctx, "alesp", "comissoes_permanentes_reunioes.xml");
+        if (arqReunioes == null) {
+            return datas;
+        }
+        Path caminho = Coleta.caminho(ctx, arqReunioes);
+        if (!Files.exists(caminho)) {
+            return datas;
+        }
+        XMLInputFactory factory = XMLInputFactory.newInstance();
+        factory.setProperty(XMLInputFactory.IS_SUPPORTING_EXTERNAL_ENTITIES, Boolean.FALSE);
+        factory.setProperty(XMLInputFactory.SUPPORT_DTD, Boolean.FALSE);
+        try (InputStream in = Files.newInputStream(caminho)) {
+            XMLStreamReader reader = factory.createXMLStreamReader(in, "UTF-8");
+            while (reader.hasNext()) {
+                int event = reader.next();
+                if (event == XMLStreamConstants.START_ELEMENT && "ReuniaoComissao".equals(reader.getLocalName())) {
+                    String idReuniao = null;
+                    String dataStr = null;
+                    while (reader.hasNext()) {
+                        int sub = reader.next();
+                        if (sub == XMLStreamConstants.START_ELEMENT) {
+                            String tag = reader.getLocalName();
+                            String text = reader.getElementText();
+                            if ("IdReuniao".equals(tag)) idReuniao = text;
+                            else if ("Data".equals(tag)) dataStr = text;
+                        } else if (sub == XMLStreamConstants.END_ELEMENT && "ReuniaoComissao".equals(reader.getLocalName())) {
+                            break;
+                        }
+                    }
+                    if (idReuniao != null && dataStr != null && dataStr.length() >= 10) {
+                        datas.put(idReuniao.strip(), dataStr.substring(0, 10));
+                    }
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("alesp: erro ao ler comissoes_permanentes_reunioes.xml: " + e.getMessage());
+        }
+        return datas;
     }
 
     private static String converterTipoVoto(String tipo, String texto) {
@@ -522,6 +577,7 @@ public final class Alesp implements Fonte {
             int votou = valores[1];
             lista.add(new Participacao(ano, total, votou, total - votou, Map.of(), prov));
         });
+        lista.sort(Comparator.comparing(Participacao::periodo).reversed());
         return lista;
     }
 
