@@ -156,7 +156,15 @@ Verificação de 2026-11-02, com scripts locais (Playwright e axe-core, fora do 
    - Executivo estadual do Paraná: Governador Ratinho Junior coberto pelo arquivo histórico via candidaturas do TSE (2018 e 2022) e portais estaduais catalogados.
    - Pipeline e workflow: registro de `alep` em `Main.java`, `Publicador.java`, `Vinculo.java` e passo `fetch alep` no workflow `.github/workflows/dados.yml`.
    - Publicação: 54 deputados estaduais da ALEP normalizados e publicados sem nenhuma rejeição de schema; total de 122 registros do Paraná (54 estaduais, 42 federais, 4 senadores e o Governador) integrados ao catálogo nacional de 1.486 perfis.
-7. Quarto estado da federação: avaliação técnica e planejamento para Bahia (ALBA via ALBALegis) ou Rio de Janeiro (ALERJ).
+7. ALBA e Governo da Bahia (quarto estado da federação, ADR-0017): concluído em 2026-11-04.
+   - Fontes catalogadas e validadas em `docs/FONTES.md`: portal institucional aberto da ALBA (`https://www.al.ba.gov.br`), endpoint de deputados em exercício (`/deputados/deputados-estaduais`), perfis biográficos individuais (`/deputados/deputado-estadual/{id}`), comissões permanentes e temporárias (`/comissoes/composicao` e `/comissoes/composicao/{id}`), fotos oficiais no repositório (`/fserver/:imagensAlbanet:...`) e portais estaduais de transparência (`ba-transparencia`) e diário oficial (`ba-diario-oficial`).
+   - Modelo e identificador: identificador canônico `alba-{id}` (numérico oficial) e chave `alba` em `ids_externos` de `schemas/politico.schema.json`.
+   - Adaptador `Alba.java` implementado e coberto por testes unitários (`AlbaTest.java`): ingestão e parsing dos cards oficiais de deputados, fotos oficiais, perfis biográficos com extração de nome civil e data de nascimento, e composições de comissões com presidente, vice-presidente, titulares e suplentes.
+   - Vínculo com o TSE: inclusão de `BA` em `UFS_ESTADUAIS` de `Tse.java` (+2.199 candidaturas estaduais indexadas); 63 dos 63 deputados estaduais da ALBA (100% de cobertura) vinculados deterministicamente às suas candidaturas das eleições de 2018, 2022 e 2026.
+   - Executivo estadual da Bahia: Governador Jerônimo Rodrigues coberto pelo arquivo histórico via candidaturas do TSE (2022) e portais estaduais catalogados.
+   - Pipeline e workflow: registro de `alba` em `Main.java`, `Publicador.java`, `Vinculo.java` e passo `fetch alba` no workflow `.github/workflows/dados.yml`.
+   - Publicação: 63 deputados estaduais da ALBA normalizados e publicados sem nenhuma rejeição de schema; total de 132 registros da Bahia (63 estaduais, 65 federais, 3 senadores e o Governador) integrados ao catálogo nacional de 1.547 perfis.
+8. Quinto estado da federação: avaliação técnica e planejamento para Rio de Janeiro (ALERJ) ou Rio Grande do Sul (ALRS).
 
 ### Redes sociais
 
