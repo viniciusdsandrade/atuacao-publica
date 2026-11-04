@@ -57,6 +57,9 @@ Estado real de cada fase. Atualizado ao fechar cada fase.
 - Não validado: leitor de tela real (VoiceOver, NVDA, TalkBack) e aparelhos móveis físicos. A auditoria de acessibilidade foi automatizada e por teclado.
 - A auditoria de interface roda em scripts locais. Ela não está no CI.
 - O site só vai ao ar pelo workflow `dados` (agendado ou manual). Mudança só de interface espera a próxima execução.
+- A API de dados abertos da ALMG (`dadosabertos.almg.gov.br`) descarta conexões SYN de datacenters estrangeiros (geo-blocking/firewall de rede nos runners do GitHub Actions/Azure nos EUA). O download completo inicial foi executado em ambiente nacional e mantido no cache incremental; o step `fetch almg` usa `continue-on-error: true`.
+- A API da ALMG restringe certos recursos como `/proposicoes/pesquisa` (`Access Denied`). Deputados, comissões e verbas indenizatórias são abertos e funcionam via API v2.
+
 
 ## Ativação pendente (decisão do mantenedor)
 
@@ -132,15 +135,17 @@ Verificação de 2026-11-02, com scripts locais (Playwright e axe-core, fora do 
    - Adaptador `ExecutivoSp.java` implementado: ingestão de compromissos da SP-Agendas (formato OpenXML/XLSX via StAX em streaming com deduplicação), despesas orçamentárias estaduais e atos normativos (decretos e leis estaduais promulgadas pelo Executivo) integrados ao perfil do Governador de SP.
    - Pipeline: passo `fetch executivosp` adicionado ao workflow `dados.yml`.
    - Publicação: perfil do Governador de São Paulo publicado com sucesso no site (deploy GitHub Pages) exibindo agenda oficial, despesas e atos normativos.
-4. ALMG e Governo de Minas Gerais (segundo estado da federação, ADR-0015):
+4. ALMG e Governo de Minas Gerais (segundo estado da federação, ADR-0015): concluído em 2026-11-03.
    - Fontes catalogadas e validadas: API REST v2 de dados abertos da ALMG (`https://dadosabertos.almg.gov.br/api/v2/`), portal oficial e fotos dos parlamentares (`almg-deputados`, `almg-deputados-detalhes`, `almg-despesas`, `almg-portal`).
    - Modelo e identificador: identificador canônico `almg-{id}` e chave `almg` em `ids_externos` de `schemas/politico.schema.json`.
    - Adaptador `Almg.java` implementado e coberto por testes unitários (`AlmgTest.java`): pesquisa de deputados da 19ª e 20ª legislaturas, detalhes biográficos, participações em comissões e verbas indenizatórias mensais de 2022 a 2026.
-   - Vínculo com o TSE: vinculação determinística por nome civil completo (`nomeServidor`) e data de nascimento em memória, integrando candidaturas de 2018, 2022 e 2026.
-   - Proteção estrita de privacidade: retenção exclusiva de CNPJs de fornecedores (14 dígitos), descarte de CPFs de prestadores pessoas físicas e blindagem de dados de gabinetes.
-   - Executivo estadual de MG: Governador Romeu Zema integrado via TSE e catálogo oficial de portais estaduais (`mg-transparencia` e `mg-diario-oficial`).
+   - Vínculo com o TSE: vinculação determinística por nome civil completo (`nomeServidor`) e data de nascimento em memória, integrando candidaturas de 2018, 2022 e 2026. 10 perfis de outras casas fundidos na mesma pessoa.
+   - Proteção estrita de privacidade: retenção exclusiva de CNPJs de fornecedores (14 dígitos), descarte de CPFs de prestadores pessoas físicas, remoção de CPF embutido na razão social de MEIs com `Guarda.semCpf` e blindagem de dados de gabinetes.
+   - Executivo estadual de MG: Governador Romeu Zema integrado via TSE e catálogo oficial de portais estaduais (`mg-transparencia` e `mg-diario-oficial`), com mandatos de 2019-2023 (eleição 2018) e 2023-2027 (eleição 2022) no arquivo histórico.
    - Pipeline e workflow: registro de `almg` no ponto de entrada CLI (`Main.java`), publicador, vínculo e passo `fetch almg` em `.github/workflows/dados.yml`.
+   - Publicação: 110 deputados estaduais da ALMG normalizados e publicados sem nenhuma rejeição de schema; total de 214 registros de Minas Gerais integrados (110 estaduais, 94 federais, 9 senadores e o Governador).
 5. Gastos do Executivo federal (cartão de pagamento e viagens) pelo Portal da Transparência (concluído no ADR-0010 e ADR-0009).
+6. Terceiro estado da federação: avaliação técnica e planejamento para o Paraná (ALEP, via API de webservices públicos) ou Bahia (ALBA, via API REST do ALBALegis).
 
 ### Redes sociais
 
