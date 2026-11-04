@@ -28,6 +28,7 @@ final class Vinculo {
         perfis.addAll(legisladores(ctx, "camara", "cam", "camara"));
         perfis.addAll(legisladores(ctx, "senado", "sen", "senado"));
         perfis.addAll(legisladores(ctx, "alesp", "alesp", "alesp"));
+        perfis.addAll(legisladores(ctx, "almg", "almg", "almg"));
         perfis.addAll(legisladores(ctx, "sapl", "sapl-" + Sapl.IBGE, "sapl"));
         List<JsonNode> candidaturas = Tse.linhas(ctx);
         if (!candidaturas.isEmpty()) {
@@ -142,6 +143,9 @@ final class Vinculo {
         Map<String, JsonNode> candPorSaplNomeUrna = new HashMap<>();
         Map<String, JsonNode> candPorAlespNomeCivil = new HashMap<>();
         Map<String, JsonNode> candPorAlespNomeUrna = new HashMap<>();
+        Map<String, JsonNode> candPorAlmgNomeCivil = new HashMap<>();
+        Map<String, JsonNode> candPorAlmgNomeUrna = new HashMap<>();
+        Map<String, String> cpfPorAlmgChave = new HashMap<>();
         for (JsonNode c : candidaturas) {
             Tse.Chave chave = chaves.get(c.get("sq").stringValue());
             if (chave != null) {
@@ -157,6 +161,14 @@ final class Vinculo {
                     candPorAlespNomeCivil.merge(chave.nomeCivil(), c, Vinculo::maisRecente);
                     if (c.hasNonNull("nome_urna")) {
                         candPorAlespNomeUrna.merge(Texto.normalizarNome(c.get("nome_urna").stringValue()), c, Vinculo::maisRecente);
+                    }
+                } else if ("DEPUTADO ESTADUAL".equals(chave.cargo()) && "MG".equals(chave.uf())) {
+                    candPorAlmgNomeCivil.merge(chave.nomeCivil(), c, Vinculo::maisRecente);
+                    if (c.hasNonNull("nome_urna")) {
+                        candPorAlmgNomeUrna.merge(Texto.normalizarNome(c.get("nome_urna").stringValue()), c, Vinculo::maisRecente);
+                    }
+                    if (chave.cpf() != null) {
+                        cpfPorAlmgChave.put(chave.nomeCivil() + "|" + chave.nascimento(), chave.cpf());
                     }
                 }
             }
@@ -221,6 +233,37 @@ final class Vinculo {
                     candSapl = cand;
                     chaveSapl = chaves.get(cand.get("sq").stringValue());
                     cpf = chaveSapl == null ? null : chaveSapl.cpf();
+                }
+            } else if ("almg".equals(p.fonteCli)) {
+                String nomeParl = Texto.normalizarNome(p.nome);
+                String nomeServidor = null;
+                String dataNasc = null;
+                Coleta.Arquivo arq = Coleta.metadados(ctx, "almg", "deputados/" + p.ids.get("almg") + ".json");
+                if (arq != null && Files.exists(Coleta.caminho(ctx, arq))) {
+                    JsonNode det = Json.ler(Coleta.caminho(ctx, arq)).path("deputado");
+                    String deDet = Texto.normalizarNome(Json.texto(det, "nome"));
+                    if (deDet != null) {
+                        nomeParl = deDet;
+                    }
+                    nomeServidor = Texto.normalizarNome(Json.texto(det, "nomeServidor"));
+                    dataNasc = etl.fontes.Almg.normalizarDataIso(Json.texto(det, "dataNascimento"));
+                }
+                if (nomeServidor != null && dataNasc != null) {
+                    cpf = cpfPorAlmgChave.get(nomeServidor + "|" + dataNasc);
+                }
+                JsonNode cand = null;
+                if (nomeServidor != null) {
+                    cand = candPorAlmgNomeCivil.get(nomeServidor);
+                }
+                if (cand == null) {
+                    cand = candPorAlmgNomeUrna.get(nomeParl);
+                }
+                if (cand != null) {
+                    candSapl = cand;
+                    chaveSapl = chaves.get(cand.get("sq").stringValue());
+                    if (cpf == null && chaveSapl != null) {
+                        cpf = chaveSapl.cpf();
+                    }
                 }
             }
             String pessoa = chaveSapl != null ? pessoa(chaveSapl) : ligacoes.pessoaDoCpf(cpf);

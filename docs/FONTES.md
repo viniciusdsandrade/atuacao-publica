@@ -488,6 +488,43 @@ Nenhum servidor bloqueou o cliente.
 - Campos do XML: `Data`, `Ementa`, `IdNorma`, `Numero`, `IdTipo`, `Promulg`, `Situacao`, `URLFicha`.
 - Filtragem no projeto: normas com `Promulg == "E"` (Poder Executivo) a partir de 2022, cobrindo Decretos (`DEC`, IdTipo 3), Leis Ordinárias (`LEI`, IdTipo 9) e Leis Complementares (`LCP`, IdTipo 2).
 
+## Assembleia Legislativa do Estado de Minas Gerais (ALMG)
+
+Poder Legislativo do Estado de Minas Gerais (ADR-0015).
+Validação em 2026-11-03 com o User-Agent do projeto.
+Licença Creative Commons Atribuição 4.0 Internacional.
+
+| id | Fonte | Nível | Formato | Autenticação | Status | Validado em |
+|---|---|---|---|---|---|---|
+| `almg-deputados` | ALMG, deputados e legislaturas | T0 | JSON | nenhuma | validado | 2026-11-03 |
+| `almg-deputados-detalhes` | ALMG, biografia e comissões | T0 | JSON | nenhuma | validado | 2026-11-03 |
+| `almg-despesas` | ALMG, verbas indenizatórias | T0 | JSON | nenhuma | validado | 2026-11-03 |
+| `almg-portal` | ALMG, portal oficial e fotos | T0 | HTML e JPG | nenhuma | validado | 2026-11-03 |
+
+### `almg-deputados`: catálogo e legislaturas
+
+- URL base: `https://dadosabertos.almg.gov.br/api/v2/legislaturas/`
+- Endpoints validados com resposta 200:
+  - `/pesquisa_deputados?leg=19&formato=json`: 79 parlamentares que exerceram mandato na 19ª legislatura (2019-2023).
+  - `/pesquisa_deputados?leg=20&formato=json`: 86 parlamentares que exerceram mandato na 20ª legislatura (2023-2027).
+- Identificador canônico no projeto: `almg-{id}`.
+
+### `almg-deputados-detalhes`: perfil biográfico e comissões
+
+- URL base: `https://dadosabertos.almg.gov.br/api/v2/deputados/`
+- Endpoints validados:
+  - `/{id}?formato=json`: dados biográficos completos com `nome`, `nomeServidor` (nome civil), `dataNascimento`, `naturalidadeMunicipio`, `naturalidadeUf` e histórico de legislaturas. Permite vínculo determinístico com o repositório do TSE.
+  - `/{id}/participacoes_comissoes?formato=json`: órgãos e comissões permanentes e especiais com cargo (`Presidente`, `Vice-Presidente`, `Efetivo`, `Suplente`) e datas de vigência.
+- Fotos oficiais: `https://www.almg.gov.br/export/sites/portal/a-assembleia/deputados/fotos/{id}.jpg`.
+
+### `almg-despesas`: verbas indenizatórias parlamentares
+
+- URL base: `https://dadosabertos.almg.gov.br/api/v2/prestacao_contas/verbas_indenizatorias/`
+- Endpoints validados:
+  - `/deputados/{id}/datas?formato=json`: meses de competência fechados.
+  - `/deputados/{id}/{ano}/{mes}?formato=json`: prestações de contas individuais com data de emissão, tipo de despesa, valor reembolsado, nome do emitente, documento fiscal e CPF/CNPJ.
+- Proteção de privacidade: o ETL retém apenas CNPJ válido de 14 dígitos e descarta sequências de 11 dígitos referentes a CPFs de pessoas físicas.
+
 ## Fora da política de fontes
 
 Imprensa, blogs, agregadores sem metodologia, redes sociais de terceiros, mensagens, vídeos não oficiais, Wikipedia e rankings de terceiros.

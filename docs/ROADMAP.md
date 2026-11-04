@@ -132,7 +132,15 @@ Verificação de 2026-11-02, com scripts locais (Playwright e axe-core, fora do 
    - Adaptador `ExecutivoSp.java` implementado: ingestão de compromissos da SP-Agendas (formato OpenXML/XLSX via StAX em streaming com deduplicação), despesas orçamentárias estaduais e atos normativos (decretos e leis estaduais promulgadas pelo Executivo) integrados ao perfil do Governador de SP.
    - Pipeline: passo `fetch executivosp` adicionado ao workflow `dados.yml`.
    - Publicação: perfil do Governador de São Paulo publicado com sucesso no site (deploy GitHub Pages) exibindo agenda oficial, despesas e atos normativos.
-4. Gastos do Executivo federal (cartão de pagamento e viagens) pelo Portal da Transparência (concluído no ADR-0010 e ADR-0009).
+4. ALMG e Governo de Minas Gerais (segundo estado da federação, ADR-0015):
+   - Fontes catalogadas e validadas: API REST v2 de dados abertos da ALMG (`https://dadosabertos.almg.gov.br/api/v2/`), portal oficial e fotos dos parlamentares (`almg-deputados`, `almg-deputados-detalhes`, `almg-despesas`, `almg-portal`).
+   - Modelo e identificador: identificador canônico `almg-{id}` e chave `almg` em `ids_externos` de `schemas/politico.schema.json`.
+   - Adaptador `Almg.java` implementado e coberto por testes unitários (`AlmgTest.java`): pesquisa de deputados da 19ª e 20ª legislaturas, detalhes biográficos, participações em comissões e verbas indenizatórias mensais de 2022 a 2026.
+   - Vínculo com o TSE: vinculação determinística por nome civil completo (`nomeServidor`) e data de nascimento em memória, integrando candidaturas de 2018, 2022 e 2026.
+   - Proteção estrita de privacidade: retenção exclusiva de CNPJs de fornecedores (14 dígitos), descarte de CPFs de prestadores pessoas físicas e blindagem de dados de gabinetes.
+   - Executivo estadual de MG: Governador Romeu Zema integrado via TSE e catálogo oficial de portais estaduais (`mg-transparencia` e `mg-diario-oficial`).
+   - Pipeline e workflow: registro de `almg` no ponto de entrada CLI (`Main.java`), publicador, vínculo e passo `fetch almg` em `.github/workflows/dados.yml`.
+5. Gastos do Executivo federal (cartão de pagamento e viagens) pelo Portal da Transparência (concluído no ADR-0010 e ADR-0009).
 
 ### Redes sociais
 

@@ -1354,3 +1354,64 @@
   limitacoes: "Sessões plenárias e matérias votadas em JSON; votos nominais individuais em plenário apenas em PDF do painel."
   status: validado com limitação
   validado_em: 2026-11-03
+
+- id: almg-deputados
+  nome: Assembleia Legislativa do Estado de Minas Gerais, deputados e legislaturas
+  orgao: Assembleia Legislativa do Estado de Minas Gerais
+  esfera: estadual
+  ente: MG
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://dadosabertos.almg.gov.br/api/v2/legislaturas/
+  formato: JSON
+  autenticacao: nenhuma
+  licenca: Creative Commons Atribuição 4.0 Internacional
+  limitacoes: "API REST v2 oficial com lista de deputados por legislatura e histórico."
+  status: validado
+  validado_em: 2026-11-03
+
+- id: almg-deputados-detalhes
+  nome: Assembleia Legislativa do Estado de Minas Gerais, biografia e comissões de deputados
+  orgao: Assembleia Legislativa do Estado de Minas Gerais
+  esfera: estadual
+  ente: MG
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://dadosabertos.almg.gov.br/api/v2/deputados/
+  formato: JSON
+  autenticacao: nenhuma
+  licenca: Creative Commons Atribuição 4.0 Internacional
+  limitacoes: "Detalhes biográficos com nome civil, data de nascimento, filiações e comissões."
+  status: validado
+  validado_em: 2026-11-03
+
+- id: almg-despesas
+  nome: Assembleia Legislativa do Estado de Minas Gerais, verbas indenizatórias
+  orgao: Assembleia Legislativa do Estado de Minas Gerais
+  esfera: estadual
+  ente: MG
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://dadosabertos.almg.gov.br/api/v2/prestacao_contas/verbas_indenizatorias/
+  formato: JSON
+  autenticacao: nenhuma
+  licenca: Creative Commons Atribuição 4.0 Internacional
+  limitacoes: "Prestação de contas mensal por parlamentar com detalhe de comprovantes e fornecedores."
+  status: validado
+  validado_em: 2026-11-03
+
+- id: almg-portal
+  nome: Assembleia Legislativa do Estado de Minas Gerais, portal institucional e fotos
+  orgao: Assembleia Legislativa do Estado de Minas Gerais
+  esfera: estadual
+  ente: MG
+  categoria: primeira_parte
+  nivel_confianca: T0
+  url_base: https://www.almg.gov.br/
+  formato: HTML e JPG
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Portal institucional oficial e fotos dos deputados."
+  status: validado
+  validado_em: 2026-11-03
+
