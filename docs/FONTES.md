@@ -525,6 +525,38 @@ Licença Creative Commons Atribuição 4.0 Internacional.
   - `/deputados/{id}/{ano}/{mes}?formato=json`: prestações de contas individuais com data de emissão, tipo de despesa, valor reembolsado, nome do emitente, documento fiscal e CPF/CNPJ.
 - Proteção de privacidade: o ETL retém apenas CNPJ válido de 14 dígitos e descarta sequências de 11 dígitos referentes a CPFs de pessoas físicas.
 
+## Assembleia Legislativa do Estado do Paraná (ALEP)
+
+Poder Legislativo do Estado do Paraná (ADR-0016).
+Validação em 2026-11-03 com o User-Agent do projeto.
+
+| id | Fonte | Nível | Formato | Autenticação | Status | Validado em |
+|---|---|---|---|---|---|---|
+| `alep-deputados` | ALEP, deputados estaduais | T0 | HTML | nenhuma | validado | 2026-11-03 |
+| `alep-deputados-detalhes` | ALEP, perfis individuais e biografias | T0 | HTML | nenhuma | validado | 2026-11-03 |
+| `alep-comissoes` | ALEP, comissões permanentes e temporárias | T0 | HTML | nenhuma | validado | 2026-11-03 |
+| `alep-transparencia` | ALEP, portal da transparência | T0 | HTML e XLSX | nenhuma | validado | 2026-11-03 |
+| `alep-portal` | ALEP, portal institucional e fotos | T0 | HTML e JPG | nenhuma | validado | 2026-11-03 |
+
+### `alep-deputados`: catálogo e legislaturas
+
+- URL base: `https://www.assembleia.pr.leg.br/deputados/conheca`
+- 54 deputados estaduais em exercício na 20ª legislatura (2023–2027), com slug, nome parlamentar, partido e foto institucional oficial.
+- Identificador canônico no projeto: `alep-{slug}`.
+
+### `alep-deputados-detalhes`: perfil biográfico e comissões
+
+- URL base: `https://www.assembleia.pr.leg.br/deputados/perfil/`
+- Trajetória pública, dados biográficos, temas de atuação e histórico de atuação.
+- Comissões parlamentares: `https://www.assembleia.pr.leg.br/atividade-parlamentar/comissoes-permanentes-e-temporarias`, com composição de membros efetivos e presidências.
+- Fotografias oficiais: hospedadas em `https://storage2.assembleia.pr.leg.br/img/`.
+
+### `alep-transparencia`: execução orçamentária e despesas
+
+- URL base: `https://transparencia.assembleia.pr.leg.br/`
+- Demonstrativos consolidados de despesas orçamentárias e pagamentos em `https://storage2.assembleia.pr.leg.br/file/public-media/transparencia/despesas/consolidados/`.
+
+
 ## Fora da política de fontes
 
 Imprensa, blogs, agregadores sem metodologia, redes sociais de terceiros, mensagens, vídeos não oficiais, Wikipedia e rankings de terceiros.

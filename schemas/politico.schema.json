@@ -49,6 +49,7 @@
         "senado": { "type": "string", "pattern": "^[0-9]+$" },
         "alesp": { "type": "string", "pattern": "^[0-9]+$" },
         "almg": { "type": "string", "pattern": "^[0-9]+$" },
+        "alep": { "type": "string", "pattern": "^[a-z0-9-]+$" },
         "sapl": { "type": "string", "pattern": "^[0-9]+$" },
         "tse": {
           "description": "SQ_CANDIDATO por ano de eleição.",

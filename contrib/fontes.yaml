@@ -1415,3 +1415,78 @@
   status: validado
   validado_em: 2026-11-03
 
+- id: alep-deputados
+  nome: Assembleia Legislativa do Estado do Paraná, deputados estaduais
+  orgao: Assembleia Legislativa do Estado do Paraná
+  esfera: estadual
+  ente: PR
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://www.assembleia.pr.leg.br/deputados/conheca
+  formato: HTML
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Lista oficial de deputados estaduais em exercício na 20ª legislatura."
+  status: validado
+  validado_em: 2026-11-03
+
+- id: alep-deputados-detalhes
+  nome: Assembleia Legislativa do Estado do Paraná, perfis individuais e biografias
+  orgao: Assembleia Legislativa do Estado do Paraná
+  esfera: estadual
+  ente: PR
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://www.assembleia.pr.leg.br/deputados/perfil/
+  formato: HTML
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Páginas biográficas de deputados e contatos de gabinete."
+  status: validado
+  validado_em: 2026-11-03
+
+- id: alep-comissoes
+  nome: Assembleia Legislativa do Estado do Paraná, comissões permanentes e temporárias
+  orgao: Assembleia Legislativa do Estado do Paraná
+  esfera: estadual
+  ente: PR
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://www.assembleia.pr.leg.br/atividade-parlamentar/comissoes-permanentes-e-temporarias
+  formato: HTML
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Composição de comissões, membros titulares e presidências."
+  status: validado
+  validado_em: 2026-11-03
+
+- id: alep-transparencia
+  nome: Assembleia Legislativa do Estado do Paraná, portal da transparência
+  orgao: Assembleia Legislativa do Estado do Paraná
+  esfera: estadual
+  ente: PR
+  categoria: transparencia
+  nivel_confianca: T0
+  url_base: https://transparencia.assembleia.pr.leg.br/
+  formato: HTML e XLSX
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Demonstrativos de execução orçamentária e despesas consolidadas."
+  status: validado
+  validado_em: 2026-11-03
+
+- id: alep-portal
+  nome: Assembleia Legislativa do Estado do Paraná, portal institucional e fotos
+  orgao: Assembleia Legislativa do Estado do Paraná
+  esfera: estadual
+  ente: PR
+  categoria: primeira_parte
+  nivel_confianca: T0
+  url_base: https://www.assembleia.pr.leg.br/
+  formato: HTML e JPG
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Portal institucional oficial e fotos de parlamentares hospedadas em storage2."
+  status: validado
+  validado_em: 2026-11-03
+
