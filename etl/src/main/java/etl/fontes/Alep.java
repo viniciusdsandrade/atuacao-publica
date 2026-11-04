@@ -1,0 +1,276 @@
+package etl.fontes;
+
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import tools.jackson.databind.JsonNode;
+
+import etl.Coleta;
+import etl.Coleta.Politica;
+import etl.Contexto;
+import etl.Fonte;
+import etl.Json;
+import etl.Registros.FonteUsada;
+import etl.Registros.LinkOficial;
+import etl.Registros.Mandato;
+import etl.Registros.OrgaoOuFrente;
+import etl.Registros.Pessoa;
+import etl.Registros.Prov;
+import etl.Texto;
+
+/**
+ * Adaptador da Assembleia Legislativa do Estado do Paraná (ALEP) (ADR-0016).
+ * Coleta os 54 deputados estaduais em exercício na 20ª legislatura (2023–2027),
+ * dados biográficos individuais e composição de comissões permanentes e temporárias.
+ */
+public final class Alep implements Fonte {
+
+    public static final String FONTE_DEPUTADOS = "alep-deputados";
+    public static final String FONTE_DETALHES = "alep-deputados-detalhes";
+    public static final String FONTE_COMISSOES = "alep-comissoes";
+    public static final String FONTE_PORTAL = "alep-portal";
+
+    public static final String SITE = "https://www.assembleia.pr.leg.br";
+    public static final String UF = "PR";
+
+    public static final LocalDate INICIO_LEG_20 = LocalDate.of(2023, 2, 1);
+    public static final LocalDate FIM_LEG_20 = LocalDate.of(2027, 1, 31);
+    public static final int LEGISLATURA_20 = 20;
+
+    public static final LocalDate INICIO_LEG_19 = LocalDate.of(2019, 2, 1);
+    public static final LocalDate FIM_LEG_19 = LocalDate.of(2023, 1, 31);
+    public static final int LEGISLATURA_19 = 19;
+
+    private static final Pattern CARD_PATTERN = Pattern.compile(
+            "href=[\"']https://www\\.assembleia\\.pr\\.leg\\.br/deputados/perfil/([a-z0-9-]+)[\"'].*?" +
+                    "<img\\s+src=[\"'](https://storage2\\.assembleia\\.pr\\.leg\\.br/[^\"]+)[\"'].*?" +
+                    "<h3[^>]*>\\s*([^<]+)\\s*</h3>.*?" +
+                    "<p[^>]*class=[\"'][^\"]*italic[^\"]*[\"']>\\s*([^<]+)\\s*</p>",
+            Pattern.DOTALL);
+
+    private static final Pattern COMISSAO_ACCORDION_PATTERN = Pattern.compile(
+            "<span[^>]*class=[\"'][^\"]*uppercase[^\"]*[\"']>\\s*([^<]+?)\\s*</span>.*?" +
+                    "(<div\\s+x-show=\"openAccordion === [^>]+>.*?)(?=<button|\\Z)",
+            Pattern.DOTALL);
+
+    private static final Pattern MEMBRO_COMISSAO_PATTERN = Pattern.compile(
+            "href=[\"']https://www\\.assembleia\\.pr\\.leg\\.br/deputados/perfil/([a-z0-9-]+)[\"'].*?" +
+                    "<h3[^>]*>\\s*([^<]+)\\s*</h3>(?:.*?<p[^>]*class=[\"'][^\"]*dd-14[^\"]*[\"']>\\s*([^<]+)\\s*</p>)?",
+            Pattern.DOTALL);
+
+    private static final Set<String> PREPOSICOES = Set.of("de", "da", "do", "das", "dos", "e");
+
+    @Override
+    public String nome() {
+        return "alep";
+    }
+
+    public record DeputadoBruto(String slug, String nome, String partido, String fotoUrl) {
+    }
+
+    @Override
+    public void fetch(Contexto ctx, Coleta coleta) throws Exception {
+        // Baixa a página principal com a listagem de todos os deputados
+        coleta.obter(SITE + "/deputados/conheca", "deputados/conheca.html", "text/html", Politica.SEMANAL);
+
+        // Extrai a lista de deputados e baixa os perfis individuais
+        List<DeputadoBruto> deputados = extrairDeputados(ctx);
+        for (DeputadoBruto dep : deputados) {
+            coleta.obterOuVazio(SITE + "/deputados/perfil/" + dep.slug(),
+                    "perfil/" + dep.slug() + ".html", "text/html", Politica.SEMANAL);
+        }
+
+        // Baixa a página de comissões permanentes e temporárias
+        coleta.obterOuVazio(SITE + "/atividade-parlamentar/comissoes-permanentes-e-temporarias",
+                "comissoes.html", "text/html", Politica.SEMANAL);
+    }
+
+    @Override
+    public void normalize(Contexto ctx) throws Exception {
+        List<DeputadoBruto> deputados = extrairDeputados(ctx);
+        if (deputados.isEmpty()) {
+            System.out.println("alep: nenhum deputado identificado para normalização");
+            return;
+        }
+
+        Coleta.Arquivo arqConheca = Coleta.metadados(ctx, "alep", "deputados/conheca.html");
+        Prov provConheca = Prov.de(FONTE_DEPUTADOS, SITE + "/deputados/conheca", arqConheca);
+
+        Coleta.Arquivo arqComissoes = Coleta.metadados(ctx, "alep", "comissoes.html");
+        Map<String, List<OrgaoOuFrente>> comissoesPorSlug = extrairComissoes(ctx, arqComissoes);
+
+        List<Pessoa> pessoas = new ArrayList<>();
+        Map<String, Acumulado> acumulados = new LinkedHashMap<>();
+
+        for (DeputadoBruto dep : deputados) {
+            String slug = dep.slug();
+            Acumulado ac = new Acumulado();
+            acumulados.put(slug, ac);
+
+            Coleta.Arquivo arqPerfil = Coleta.metadados(ctx, "alep", "perfil/" + slug + ".html");
+            Prov provPerfil = Prov.de(FONTE_DETALHES, SITE + "/deputados/perfil/" + slug,
+                    arqPerfil != null && arqPerfil.bytes() > 0 ? arqPerfil : arqConheca);
+
+            String nomeFormatado = formatarNome(dep.nome());
+            String fotoUrl = dep.fotoUrl();
+
+            List<LinkOficial> links = List.of(
+                    new LinkOficial("Página na ALEP", SITE + "/deputados/perfil/" + slug, provPerfil)
+            );
+
+            pessoas.add(new Pessoa("alep", slug, nomeFormatado, "deputado_estadual", "estadual", UF, UF,
+                    dep.partido(), fotoUrl, "em exercício", true, links));
+
+            // Mandato da 20ª legislatura
+            ac.mandatos.add(new Mandato("deputado_estadual", "estadual", UF, UF, INICIO_LEG_20, FIM_LEG_20,
+                    "em exercício", "Efetivo", LEGISLATURA_20, 2022, null, provPerfil));
+            ac.fontes.computeIfAbsent("mandatos", k -> new ArrayList<>())
+                    .add(FonteUsada.de(FONTE_DEPUTADOS, arqConheca));
+
+            // Comissões
+            List<OrgaoOuFrente> comissoes = comissoesPorSlug.getOrDefault(slug, List.of());
+            if (!comissoes.isEmpty()) {
+                ac.orgaos.addAll(comissoes);
+                if (arqComissoes != null) {
+                    ac.fontes.computeIfAbsent("orgaos_e_frentes", k -> new ArrayList<>())
+                            .add(FonteUsada.de(FONTE_COMISSOES, arqComissoes));
+                }
+            }
+        }
+
+        // Ordenar pessoas por nome
+        pessoas.sort(Comparator.comparing(Pessoa::nome));
+
+        // Gravação
+        Path saida = ctx.normalizado().resolve("alep");
+        Path pastaBlocos = saida.resolve("blocos");
+        Files.createDirectories(pastaBlocos);
+        Json.gravar(saida.resolve("pessoas.json"), Json.SAIDA.valueToTree(pessoas));
+
+        for (var e : acumulados.entrySet()) {
+            String slug = e.getKey();
+            Acumulado ac = e.getValue();
+            var blocosNode = Json.SAIDA.createObjectNode();
+            blocosNode.set("mandatos", Json.SAIDA.valueToTree(ac.mandatos));
+            blocosNode.set("orgaos_e_frentes", Json.SAIDA.valueToTree(ac.orgaos));
+            blocosNode.set("despesas", Json.SAIDA.createArrayNode());
+            blocosNode.set("fontes", Json.SAIDA.valueToTree(ac.fontes));
+            Json.gravar(pastaBlocos.resolve(slug + ".json"), blocosNode);
+        }
+
+        System.out.println("alep: " + pessoas.size() + " deputados estaduais normalizados");
+    }
+
+    public static List<DeputadoBruto> extrairDeputados(Contexto ctx) {
+        Coleta.Arquivo arq = Coleta.metadados(ctx, "alep", "deputados/conheca.html");
+        if (arq == null || !Files.exists(Coleta.caminho(ctx, arq))) {
+            return List.of();
+        }
+        try {
+            String html = Files.readString(Coleta.caminho(ctx, arq));
+            return extrairDeputadosDoHtml(html);
+        } catch (Exception e) {
+            System.err.println("alep: erro ao ler deputados/conheca.html: " + e.getMessage());
+            return List.of();
+        }
+    }
+
+    public static List<DeputadoBruto> extrairDeputadosDoHtml(String html) {
+        if (html == null || html.isBlank()) {
+            return List.of();
+        }
+        List<DeputadoBruto> lista = new ArrayList<>();
+        Set<String> vistos = new HashSet<>();
+        Matcher m = CARD_PATTERN.matcher(html);
+        while (m.find()) {
+            String slug = m.group(1).trim();
+            if (vistos.add(slug)) {
+                String fotoUrl = m.group(2).trim();
+                String nome = Texto.semEntidades(m.group(3).trim());
+                String partido = m.group(4).trim();
+                lista.add(new DeputadoBruto(slug, nome, partido, fotoUrl));
+            }
+        }
+        return lista;
+    }
+
+    public static Map<String, List<OrgaoOuFrente>> extrairComissoes(Contexto ctx, Coleta.Arquivo arqComissoes) {
+        if (arqComissoes == null || !Files.exists(Coleta.caminho(ctx, arqComissoes))) {
+            return Map.of();
+        }
+        try {
+            String html = Files.readString(Coleta.caminho(ctx, arqComissoes));
+            return extrairComissoesDoHtml(html, arqComissoes);
+        } catch (Exception e) {
+            System.err.println("alep: erro ao ler comissoes.html: " + e.getMessage());
+            return Map.of();
+        }
+    }
+
+    public static Map<String, List<OrgaoOuFrente>> extrairComissoesDoHtml(String html, Coleta.Arquivo arq) {
+        if (html == null || html.isBlank()) {
+            return Map.of();
+        }
+        Map<String, List<OrgaoOuFrente>> mapa = new HashMap<>();
+        Prov prov = Prov.de(FONTE_COMISSOES, SITE + "/atividade-parlamentar/comissoes-permanentes-e-temporarias", arq);
+
+        Matcher mComissao = COMISSAO_ACCORDION_PATTERN.matcher(html);
+        while (mComissao.find()) {
+            String nomeComissao = Texto.semEntidades(mComissao.group(1).trim());
+            String conteudo = mComissao.group(2);
+
+            Matcher mMembro = MEMBRO_COMISSAO_PATTERN.matcher(conteudo);
+            while (mMembro.find()) {
+                String slug = mMembro.group(1).trim();
+                String papelExtra = mMembro.group(3);
+                String papel = "Membro";
+                if (papelExtra != null && !papelExtra.isBlank()) {
+                    papel = papelExtra.trim();
+                }
+                var orgao = new OrgaoOuFrente("comissao", nomeComissao, null, papel, INICIO_LEG_20, null, prov);
+                mapa.computeIfAbsent(slug, k -> new ArrayList<>()).add(orgao);
+            }
+        }
+        return mapa;
+    }
+
+    public static String formatarNome(String nome) {
+        if (nome == null || nome.isBlank()) {
+            return nome;
+        }
+        String[] partes = nome.trim().toLowerCase(Locale.ROOT).split("\\s+");
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < partes.length; i++) {
+            String p = partes[i];
+            if (p.isEmpty()) continue;
+            if (i > 0 && PREPOSICOES.contains(p)) {
+                sb.append(p);
+            } else {
+                sb.append(Character.toUpperCase(p.charAt(0))).append(p.substring(1));
+            }
+            if (i < partes.length - 1) {
+                sb.append(" ");
+            }
+        }
+        return sb.toString();
+    }
+
+    private static final class Acumulado {
+        final List<Mandato> mandatos = new ArrayList<>();
+        final List<OrgaoOuFrente> orgaos = new ArrayList<>();
+        final Map<String, List<FonteUsada>> fontes = new LinkedHashMap<>();
+    }
+}
