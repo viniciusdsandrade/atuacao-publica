@@ -557,6 +557,32 @@ Validação em 2026-11-03 com o User-Agent do projeto.
 - Demonstrativos consolidados de despesas orçamentárias e pagamentos em `https://storage2.assembleia.pr.leg.br/file/public-media/transparencia/despesas/consolidados/`.
 
 
+## Fontes da Bahia (ALBA & Governo do Estado)
+
+### `alba-deputados`: parlamentares em exercício
+
+- URL base: `https://www.al.ba.gov.br/deputados/deputados-estaduais`
+- 63 deputados estaduais em exercício na 20ª legislatura (2023–2027), com ID numérico, nome parlamentar, partido e foto oficial.
+- Identificador canônico no projeto: `alba-{id}` (ex.: `alba-910629`).
+
+### `alba-deputados-detalhes`: perfil biográfico e histórico
+
+- URL base: `https://www.al.ba.gov.br/deputados/deputado-estadual/`
+- Nome civil completo oficial, data de nascimento, naturalidade, formação educacional, mandatos eletivos anteriores, filiação partidária e histórico parlamentar.
+- Dados de gabinete e contato descartados na ingestão por regra estrita de privacidade.
+
+### `alba-comissoes`: comissões permanentes e temporárias
+
+- URL base: `https://www.al.ba.gov.br/comissoes/composicao`
+- Composição detalhada por comissão (`/comissoes/composicao/{id}`), identificando Presidente, Vice-Presidente, Membros Titulares e Membros Suplentes.
+
+### `ba-transparencia` e `ba-diario-oficial`: Executivo estadual
+
+- Transparência orçamentária: `https://www.transparencia.ba.gov.br/`
+- Diário Oficial: `https://dool.egba.ba.gov.br/`
+- Mandato do Governador Jerônimo Rodrigues integrado ao modelo e ao arquivo histórico via candidaturas do TSE.
+
+
 ## Fora da política de fontes
 
 Imprensa, blogs, agregadores sem metodologia, redes sociais de terceiros, mensagens, vídeos não oficiais, Wikipedia e rankings de terceiros.

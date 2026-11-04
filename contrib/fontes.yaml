@@ -1490,3 +1490,63 @@
   status: validado
   validado_em: 2026-11-03
 
+- id: alba-deputados
+  nome: Assembleia Legislativa do Estado da Bahia, deputados estaduais
+  orgao: Assembleia Legislativa do Estado da Bahia
+  esfera: estadual
+  ente: BA
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://www.al.ba.gov.br/deputados/deputados-estaduais
+  formato: HTML
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Lista oficial de deputados estaduais em exercício na 20ª legislatura."
+  status: validado
+  validado_em: 2026-11-04
+
+- id: alba-deputados-detalhes
+  nome: Assembleia Legislativa do Estado da Bahia, perfis individuais e biografias
+  orgao: Assembleia Legislativa do Estado da Bahia
+  esfera: estadual
+  ente: BA
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://www.al.ba.gov.br/deputados/deputado-estadual/
+  formato: HTML
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Páginas biográficas de deputados com nome civil e histórico parlamentar."
+  status: validado
+  validado_em: 2026-11-04
+
+- id: alba-comissoes
+  nome: Assembleia Legislativa do Estado da Bahia, comissões permanentes e temporárias
+  orgao: Assembleia Legislativa do Estado da Bahia
+  esfera: estadual
+  ente: BA
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://www.al.ba.gov.br/comissoes/composicao
+  formato: HTML
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Composição das comissões, membros titulares, suplentes, presidência e vice."
+  status: validado
+  validado_em: 2026-11-04
+
+- id: alba-portal
+  nome: Assembleia Legislativa do Estado da Bahia, portal institucional e fotos
+  orgao: Assembleia Legislativa do Estado da Bahia
+  esfera: estadual
+  ente: BA
+  categoria: primeira_parte
+  nivel_confianca: T0
+  url_base: https://www.al.ba.gov.br/
+  formato: HTML e JPG
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Portal institucional oficial e fotos de parlamentares hospedadas no repositório de imagens."
+  status: validado
+  validado_em: 2026-11-04
+
