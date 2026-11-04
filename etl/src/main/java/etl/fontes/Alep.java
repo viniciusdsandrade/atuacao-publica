@@ -61,15 +61,12 @@ public final class Alep implements Fonte {
                     "<p[^>]*class=[\"'][^\"]*italic[^\"]*[\"']>\\s*([^<]+)\\s*</p>",
             Pattern.DOTALL);
 
-    private static final Pattern COMISSAO_ACCORDION_PATTERN = Pattern.compile(
-            "<span[^>]*class=[\"'][^\"]*uppercase[^\"]*[\"']>\\s*([^<]+?)\\s*</span>.*?" +
-                    "(<div\\s+x-show=\"openAccordion === [^>]+>.*?)(?=<button|\\Z)",
+    private static final Pattern BOTAO_TITULO_PATTERN = Pattern.compile("<span[^>]*>\\s*([^<]+)\\s*</span>");
+    private static final Pattern LINK_MEMBRO_PATTERN = Pattern.compile(
+            "href=[\"']https://www\\.assembleia\\.pr\\.leg\\.br/deputados/perfil/([a-z0-9-]+)[\"'](.*?)(?=href=[\"']https://www\\.assembleia\\.pr\\.leg\\.br/deputados/perfil/|</a>|$)",
             Pattern.DOTALL);
-
-    private static final Pattern MEMBRO_COMISSAO_PATTERN = Pattern.compile(
-            "href=[\"']https://www\\.assembleia\\.pr\\.leg\\.br/deputados/perfil/([a-z0-9-]+)[\"'].*?" +
-                    "<h3[^>]*>\\s*([^<]+)\\s*</h3>(?:.*?<p[^>]*class=[\"'][^\"]*dd-14[^\"]*[\"']>\\s*([^<]+)\\s*</p>)?",
-            Pattern.DOTALL);
+    private static final Pattern PAPEL_BADGE_PATTERN = Pattern.compile("rounded-t-lg\\s+bg-[a-z0-9-]+\">\\s*([^<]+)\\s*</p>");
+    private static final Pattern PAPEL_DD14_PATTERN = Pattern.compile("class=[\"'][^\"]*dd-14[^\"]*[\"'][^>]*>\\s*([^<]+)\\s*</p>");
 
     private static final Set<String> PREPOSICOES = Set.of("de", "da", "do", "das", "dos", "e");
 
@@ -180,7 +177,7 @@ public final class Alep implements Fonte {
             return List.of();
         }
         try {
-            String html = Files.readString(Coleta.caminho(ctx, arq));
+            String html = Texto.lerArquivo(Coleta.caminho(ctx, arq));
             return extrairDeputadosDoHtml(html);
         } catch (Exception e) {
             System.err.println("alep: erro ao ler deputados/conheca.html: " + e.getMessage());
@@ -212,7 +209,7 @@ public final class Alep implements Fonte {
             return Map.of();
         }
         try {
-            String html = Files.readString(Coleta.caminho(ctx, arqComissoes));
+            String html = Texto.lerArquivo(Coleta.caminho(ctx, arqComissoes));
             return extrairComissoesDoHtml(html, arqComissoes);
         } catch (Exception e) {
             System.err.println("alep: erro ao ler comissoes.html: " + e.getMessage());
@@ -227,18 +224,26 @@ public final class Alep implements Fonte {
         Map<String, List<OrgaoOuFrente>> mapa = new HashMap<>();
         Prov prov = Prov.de(FONTE_COMISSOES, SITE + "/atividade-parlamentar/comissoes-permanentes-e-temporarias", arq);
 
-        Matcher mComissao = COMISSAO_ACCORDION_PATTERN.matcher(html);
-        while (mComissao.find()) {
-            String nomeComissao = Texto.semEntidades(mComissao.group(1).trim());
-            String conteudo = mComissao.group(2);
-
-            Matcher mMembro = MEMBRO_COMISSAO_PATTERN.matcher(conteudo);
+        String[] blocos = html.split("(?=<div class=[\"'][^\"']*border-gray-200|<button)");
+        for (String bloco : blocos) {
+            Matcher mTitulo = BOTAO_TITULO_PATTERN.matcher(bloco);
+            if (!mTitulo.find()) {
+                continue;
+            }
+            String nomeComissao = Texto.semEntidades(mTitulo.group(1).trim());
+            Matcher mMembro = LINK_MEMBRO_PATTERN.matcher(bloco);
             while (mMembro.find()) {
                 String slug = mMembro.group(1).trim();
-                String papelExtra = mMembro.group(3);
+                String corpo = mMembro.group(2);
                 String papel = "Membro";
-                if (papelExtra != null && !papelExtra.isBlank()) {
-                    papel = papelExtra.trim();
+                Matcher mDd14 = PAPEL_DD14_PATTERN.matcher(corpo);
+                if (mDd14.find()) {
+                    papel = Texto.semEntidades(mDd14.group(1).trim());
+                } else {
+                    Matcher mBadge = PAPEL_BADGE_PATTERN.matcher(corpo);
+                    if (mBadge.find()) {
+                        papel = Texto.semEntidades(mBadge.group(1).trim());
+                    }
                 }
                 var orgao = new OrgaoOuFrente("comissao", nomeComissao, null, papel, INICIO_LEG_20, null, prov);
                 mapa.computeIfAbsent(slug, k -> new ArrayList<>()).add(orgao);

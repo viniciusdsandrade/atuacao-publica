@@ -40,7 +40,7 @@
     "politico_id": {
       "description": "Prefixo da fonte do primeiro identificador oficial e o identificador (ADR-0002, ADR-0007).",
       "type": "string",
-      "pattern": "^[a-z]{2,10}(-[0-9A-Za-z]{1,32}){1,2}$"
+      "pattern": "^[a-z]{2,10}(-[0-9A-Za-z]{1,32}){1,6}$"
     },
     "esfera": { "enum": ["federal", "estadual", "municipal"] },
     "cargo": { "enum": ["presidente", "governador", "deputado_federal", "senador", "deputado_estadual", "prefeito", "vice_prefeito", "vereador"] },

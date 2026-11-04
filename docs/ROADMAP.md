@@ -145,7 +145,18 @@ Verificação de 2026-11-02, com scripts locais (Playwright e axe-core, fora do 
    - Pipeline e workflow: registro de `almg` no ponto de entrada CLI (`Main.java`), publicador, vínculo e passo `fetch almg` em `.github/workflows/dados.yml`.
    - Publicação: 110 deputados estaduais da ALMG normalizados e publicados sem nenhuma rejeição de schema; total de 214 registros de Minas Gerais integrados (110 estaduais, 94 federais, 9 senadores e o Governador).
 5. Gastos do Executivo federal (cartão de pagamento e viagens) pelo Portal da Transparência (concluído no ADR-0010 e ADR-0009).
-6. Terceiro estado da federação: avaliação técnica e planejamento para o Paraná (ALEP, via API de webservices públicos) ou Bahia (ALBA, via API REST do ALBALegis).
+6. ALEP e Governo do Paraná (terceiro estado da federação, ADR-0016): concluído em 2026-11-03.
+   - Fontes catalogadas e validadas em `docs/FONTES.md`: portal oficial e CDN da ALEP (`https://www.assembleia.pr.leg.br` e `https://storage2.assembleia.pr.leg.br`), endpoints de deputados em exercício (`/deputados/conheca`), perfis individuais (`/deputados/perfil/{slug}`), comissões permanentes e temporárias (`/atividade-parlamentar/comissoes-permanentes-e-temporarias`) e portais estaduais de transparência (`pr-transparencia`) e diário oficial (`pr-dioe`).
+   - Modelo e identificador: identificador canônico `alep-{slug}` e chave `alep` em `ids_externos` de `schemas/politico.schema.json`. Atualização de `politico_id` em `schemas/comum.schema.json` para suporte a slugs nominais compostos de até seis partes hifenizadas.
+   - Leitura transparente de compressão: utilitário `Texto.lerArquivo` com suporte a arquivos compactados em `.gz` pelo mecanismo de cache HTTP.
+   - Adaptador `Alep.java` implementado e coberto por testes unitários (`AlepTest.java`): ingestão e parsing dos cards oficiais de deputados, fotos em alta resolução, perfis individuais e accordions de comissões.
+   - Comissões parlamentares: 457 vínculos de comissões permanentes e temporárias extraídos com papéis parlamentares (Presidente, Vice-Presidente, Membro, Suplente, Secretários).
+   - Vínculo com o TSE: atualização de `Tse.java` para indexar candidaturas de deputados estaduais das UFs cobertas (SP, MG, PR); 51 dos 54 deputados da ALEP vinculados deterministicamente às suas candidaturas das eleições de 2018, 2022 e 2026.
+   - Fusão entre casas legislativas: 13 perfis fundidos no catálogo nacional, unificando parlamentares com passagens pela Câmara Federal e ALEP (ex.: Ney Leprevost `cam-204384`, com alias automático `alep-ney-leprevost`).
+   - Executivo estadual do Paraná: Governador Ratinho Junior coberto pelo arquivo histórico via candidaturas do TSE (2018 e 2022) e portais estaduais catalogados.
+   - Pipeline e workflow: registro de `alep` em `Main.java`, `Publicador.java`, `Vinculo.java` e passo `fetch alep` no workflow `.github/workflows/dados.yml`.
+   - Publicação: 54 deputados estaduais da ALEP normalizados e publicados sem nenhuma rejeição de schema; total de 122 registros do Paraná (54 estaduais, 42 federais, 4 senadores e o Governador) integrados ao catálogo nacional de 1.486 perfis.
+7. Quarto estado da federação: avaliação técnica e planejamento para Bahia (ALBA via ALBALegis) ou Rio de Janeiro (ALERJ).
 
 ### Redes sociais
 

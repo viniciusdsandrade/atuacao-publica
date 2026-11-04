@@ -28,7 +28,7 @@ public final class Contrib implements Fonte {
     }
 
     private static final Pattern CAMINHO = Pattern.compile(
-            "^(federal|estadual|municipal)/(presidente|governador|deputado_federal|senador|deputado_estadual|prefeito|vice_prefeito|vereador)/([a-z]{2,10}-[0-9A-Za-z]{1,32})/"
+            "^(federal|estadual|municipal)/(presidente|governador|deputado_federal|senador|deputado_estadual|prefeito|vice_prefeito|vereador)/([a-z]{2,10}(?:-[0-9A-Za-z]{1,32}){1,6})/"
                     + "(posicionamento_declarado|agenda_oficial|link_oficial|mandato)\\.yaml$");
 
     /** Nível de fonte aceito por tipo de registro. T2 nunca entra direto: o registro aponta para a fonte T0. */

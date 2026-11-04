@@ -100,4 +100,14 @@ public final class Texto {
     public static String vazioParaNulo(String texto) {
         return texto == null || texto.isBlank() ? null : texto.strip();
     }
+
+    /** Lê arquivo de texto UTF-8, descompactando se terminar com .gz. */
+    public static String lerArquivo(java.nio.file.Path arquivo) throws java.io.IOException {
+        if (arquivo.getFileName().toString().endsWith(".gz")) {
+            try (var in = new java.util.zip.GZIPInputStream(java.nio.file.Files.newInputStream(arquivo), 1 << 16)) {
+                return new String(in.readAllBytes(), java.nio.charset.StandardCharsets.UTF_8);
+            }
+        }
+        return java.nio.file.Files.readString(arquivo);
+    }
 }
