@@ -16,6 +16,17 @@
   capturado_em: 2026-11-02T18:40:00Z
   contribuidor: viniciusdsandrade
 
+- cargo: governador
+  eleicao: 2018
+  inicio: 2019-01-01
+  fim: 2023-01-01
+  texto_oficial: "Art. 28. A eleição do Governador e do Vice-Governador de Estado, para mandato de 4 (quatro) anos, realizar-se-á no primeiro domingo de outubro, em primeiro turno, e no último domingo de outubro, em segundo turno, se houver, do ano anterior ao do término do mandato de seus antecessores, e a posse ocorrerá em 1º de janeiro do ano subsequente, observado, quanto ao mais, o disposto no art. 77 desta Constituição."
+  fonte_id: planalto-legislacao
+  url_origem: https://www.planalto.gov.br/ccivil_03/constituicao/constituicao.htm
+  snapshot_url: https://web.archive.org/web/20261023091924/https://www.planalto.gov.br/ccivil_03/constituicao/constituicao.htm
+  capturado_em: 2026-10-30T02:55:00Z
+  contribuidor: viniciusdsandrade
+
 - cargo: presidente
   eleicao: 2022
   inicio: 2023-01-01
