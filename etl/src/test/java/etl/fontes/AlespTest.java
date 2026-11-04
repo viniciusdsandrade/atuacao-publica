@@ -163,4 +163,28 @@ class AlespTest {
         assertEquals("2024-02-28", datas.get("1000006027"));
         assertEquals("2012-10-30", datas.get("10894"));
     }
+
+    @Test
+    void carregaIndicesDeputadosXmlCorretamente(@org.junit.jupiter.api.io.TempDir java.nio.file.Path tempDir) throws Exception {
+        java.nio.file.Path xmlPath = tempDir.resolve("deputados.xml");
+        String xml = """
+                <?xml version="1.0" encoding="UTF-8"?>
+                <Deputados>
+                  <Deputado>
+                    <IdDeputado>1139</IdDeputado>
+                    <IdSPL>1000000335</IdSPL>
+                    <Matricula>300607</Matricula>
+                    <NomeParlamentar>Agente Federal Danilo Balas</NomeParlamentar>
+                  </Deputado>
+                </Deputados>
+                """;
+        java.nio.file.Files.writeString(xmlPath, xml);
+        java.util.Map<Integer, String> porId = new java.util.HashMap<>();
+        java.util.Map<String, String> porNome = new java.util.HashMap<>();
+        Alesp.carregarIndicesDeputadosXml(xmlPath, porId, porNome);
+
+        assertEquals("300607", porId.get(1139));
+        assertEquals("300607", porId.get(1000000335));
+        assertEquals("300607", porNome.get("AGENTE FEDERAL DANILO BALAS"));
+    }
 }

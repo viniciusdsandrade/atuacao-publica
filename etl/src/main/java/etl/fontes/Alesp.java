@@ -157,6 +157,7 @@ public final class Alesp implements Fonte {
         JsonNode listaTodos = Json.ler(Coleta.caminho(ctx, arqTodos));
         Map<String, Acumulado> acumulados = new LinkedHashMap<>();
         Map<Integer, String> matriculaPorIdParlamentar = new HashMap<>();
+        Map<String, String> matriculaPorNome = new HashMap<>();
         Map<Integer, String> matriculaPorIdAutor = new HashMap<>();
         List<Pessoa> pessoas = new ArrayList<>();
 
@@ -172,6 +173,14 @@ public final class Alesp implements Fonte {
             if (idParl != null) {
                 matriculaPorIdParlamentar.put(idParl, matricula);
             }
+            String nomeP = Json.texto(p, "txNomeParlamentar");
+            if (nomeP != null && !nomeP.isBlank()) {
+                matriculaPorNome.put(Texto.normalizarNome(nomeP), matricula);
+            }
+            String nomePlen = Json.texto(p, "txNomePlenario");
+            if (nomePlen != null && !nomePlen.isBlank()) {
+                matriculaPorNome.put(Texto.normalizarNome(nomePlen), matricula);
+            }
 
             Acumulado ac = new Acumulado();
             acumulados.put(matricula, ac);
@@ -183,6 +192,10 @@ public final class Alesp implements Fonte {
             int idAutor = det.path("idAutor").asInt(0);
             if (idAutor > 0) {
                 matriculaPorIdAutor.put(idAutor, matricula);
+            }
+            String detNome = Json.texto(det, "txNomeParlamentar");
+            if (detNome != null && !detNome.isBlank()) {
+                matriculaPorNome.put(Texto.normalizarNome(detNome), matricula);
             }
 
             String nome = primeiro(Json.texto(det, "txNomeParlamentar"), Json.texto(p, "txNomeParlamentar"));
@@ -212,6 +225,12 @@ public final class Alesp implements Fonte {
             ac.fontes.computeIfAbsent("mandatos", k -> new ArrayList<>()).add(FonteUsada.de(FONTE_DEPUTADOS, arqTodos));
         }
 
+        // Índices legados e nomes de deputados.xml
+        Coleta.Arquivo arqDepXml = Coleta.metadados(ctx, "alesp", "deputados.xml");
+        if (arqDepXml != null && Files.exists(Coleta.caminho(ctx, arqDepXml))) {
+            carregarIndicesDeputadosXml(Coleta.caminho(ctx, arqDepXml), matriculaPorIdParlamentar, matriculaPorNome);
+        }
+
         // Despesas de gabinete em streaming
         processarDespesas(ctx, acumulados);
 
@@ -219,7 +238,7 @@ public final class Alesp implements Fonte {
         processarColegiados(ctx, acumulados);
 
         // Votações nominais em comissões em streaming
-        processarVotacoes(ctx, acumulados, matriculaPorIdParlamentar);
+        processarVotacoes(ctx, acumulados, matriculaPorIdParlamentar, matriculaPorNome);
 
         // Proposições e autoria em streaming
         processarProposicoes(ctx, acumulados, matriculaPorIdAutor);
@@ -437,7 +456,8 @@ public final class Alesp implements Fonte {
     }
 
     static void processarVotacoes(Contexto ctx, Map<String, Acumulado> acumulados,
-                                 Map<Integer, String> matriculaPorIdParlamentar) throws Exception {
+                                 Map<Integer, String> matriculaPorIdParlamentar,
+                                 Map<String, String> matriculaPorNome) throws Exception {
         Coleta.Arquivo arqVot = Coleta.metadados(ctx, "alesp", "comissoes_permanentes_votacoes.xml");
         if (arqVot == null) {
             return;
@@ -462,7 +482,7 @@ public final class Alesp implements Fonte {
             while (reader.hasNext()) {
                 int event = reader.next();
                 if (event == XMLStreamConstants.START_ELEMENT && "ReuniaoComissaoVotacao".equals(reader.getLocalName())) {
-                    String votoTexto = null, tipoVoto = null, idDepStr = null, idDoc = null, idReuniao = null;
+                    String votoTexto = null, tipoVoto = null, idDepStr = null, idDoc = null, idReuniao = null, nomeDep = null;
                     while (reader.hasNext()) {
                         int sub = reader.next();
                         if (sub == XMLStreamConstants.START_ELEMENT) {
@@ -471,6 +491,7 @@ public final class Alesp implements Fonte {
                             if ("Voto".equals(tag)) votoTexto = text;
                             else if ("TipoVoto".equals(tag)) tipoVoto = text;
                             else if ("IdDeputado".equals(tag)) idDepStr = text;
+                            else if ("Deputado".equals(tag)) nomeDep = text;
                             else if ("IdDocumento".equals(tag)) idDoc = text;
                             else if ("IdReuniao".equals(tag)) idReuniao = text;
                         } else if (sub == XMLStreamConstants.END_ELEMENT && "ReuniaoComissaoVotacao".equals(reader.getLocalName())) {
@@ -478,32 +499,36 @@ public final class Alesp implements Fonte {
                         }
                     }
 
+                    String mat = null;
                     if (idDepStr != null) {
                         try {
-                            int idDep = Integer.parseInt(idDepStr.strip());
-                            String mat = matriculaPorIdParlamentar.get(idDep);
-                            if (mat != null) {
-                                Acumulado ac = acumulados.get(mat);
-                                if (ac != null) {
-                                    String data = idReuniao != null ? dataPorIdReuniao.get(idReuniao.strip()) : null;
-                                    if (data != null && data.compareTo("2022-01-01") >= 0) {
-                                        String votoPadrao = converterTipoVoto(tipoVoto, votoTexto);
-                                        String votacaoId = "comissao-" + idReuniao.strip() + "-" + (idDoc != null ? idDoc.strip() : "0");
-                                        Voto v = new Voto(votacaoId, data, "Comissão Permanente",
-                                                "Documento " + (idDoc != null ? idDoc.strip() : "s/n"),
-                                                votoTexto != null && !votoTexto.isBlank() ? votoTexto.strip() : null,
-                                                votoPadrao, null, null, null, null, prov);
-                                        ac.votos.add(v);
-                                        ac.fontes.computeIfAbsent("votos", k -> new ArrayList<>()).add(fonteUsada);
-
-                                        String ano = data.substring(0, 4);
-                                        int[] cont = ac.participacao.computeIfAbsent(ano, k -> new int[2]);
-                                        cont[0]++;
-                                        cont[1]++;
-                                    }
-                                }
-                            }
+                            mat = matriculaPorIdParlamentar.get(Integer.parseInt(idDepStr.strip()));
                         } catch (NumberFormatException ignored) {
+                        }
+                    }
+                    if (mat == null && nomeDep != null && !nomeDep.isBlank()) {
+                        mat = matriculaPorNome.get(Texto.normalizarNome(nomeDep));
+                    }
+
+                    if (mat != null) {
+                        Acumulado ac = acumulados.get(mat);
+                        if (ac != null) {
+                            String data = idReuniao != null ? dataPorIdReuniao.get(idReuniao.strip()) : null;
+                            if (data != null && data.compareTo("2022-01-01") >= 0) {
+                                String votoPadrao = converterTipoVoto(tipoVoto, votoTexto);
+                                String votacaoId = "comissao-" + idReuniao.strip() + "-" + (idDoc != null ? idDoc.strip() : "0");
+                                Voto v = new Voto(votacaoId, data, "Comissão Permanente",
+                                        "Documento " + (idDoc != null ? idDoc.strip() : "s/n"),
+                                        votoTexto != null && !votoTexto.isBlank() ? votoTexto.strip() : null,
+                                        votoPadrao, null, null, null, null, prov);
+                                ac.votos.add(v);
+                                ac.fontes.computeIfAbsent("votos", k -> new ArrayList<>()).add(fonteUsada);
+
+                                String ano = data.substring(0, 4);
+                                int[] cont = ac.participacao.computeIfAbsent(ano, k -> new int[2]);
+                                cont[0]++;
+                                cont[1]++;
+                            }
                         }
                     }
                 }
@@ -512,6 +537,48 @@ public final class Alesp implements Fonte {
 
         for (Acumulado ac : acumulados.values()) {
             ac.votos.sort(Comparator.comparing(Voto::data).reversed());
+        }
+    }
+
+    static void carregarIndicesDeputadosXml(Path caminho, Map<Integer, String> porId, Map<String, String> porNome) {
+        XMLInputFactory factory = XMLInputFactory.newInstance();
+        factory.setProperty(XMLInputFactory.IS_SUPPORTING_EXTERNAL_ENTITIES, Boolean.FALSE);
+        factory.setProperty(XMLInputFactory.SUPPORT_DTD, Boolean.FALSE);
+        try (InputStream in = Files.newInputStream(caminho)) {
+            XMLStreamReader reader = factory.createXMLStreamReader(in, "UTF-8");
+            while (reader.hasNext()) {
+                int event = reader.next();
+                if (event == XMLStreamConstants.START_ELEMENT && "Deputado".equals(reader.getLocalName())) {
+                    String idDepStr = null, idSplStr = null, matStr = null, nome = null;
+                    while (reader.hasNext()) {
+                        int sub = reader.next();
+                        if (sub == XMLStreamConstants.START_ELEMENT) {
+                            String tag = reader.getLocalName();
+                            String text = reader.getElementText();
+                            if ("IdDeputado".equals(tag)) idDepStr = text;
+                            else if ("IdSPL".equals(tag)) idSplStr = text;
+                            else if ("Matricula".equals(tag)) matStr = text;
+                            else if ("NomeParlamentar".equals(tag)) nome = text;
+                        } else if (sub == XMLStreamConstants.END_ELEMENT && "Deputado".equals(reader.getLocalName())) {
+                            break;
+                        }
+                    }
+                    if (matStr != null && !matStr.isBlank()) {
+                        String mat = matStr.strip();
+                        if (idDepStr != null) {
+                            try { porId.put(Integer.parseInt(idDepStr.strip()), mat); } catch (NumberFormatException ignored) {}
+                        }
+                        if (idSplStr != null) {
+                            try { porId.put(Integer.parseInt(idSplStr.strip()), mat); } catch (NumberFormatException ignored) {}
+                        }
+                        if (nome != null && !nome.isBlank()) {
+                            porNome.put(Texto.normalizarNome(nome), mat);
+                        }
+                    }
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("alesp: erro ao ler deputados.xml: " + e.getMessage());
         }
     }
 
