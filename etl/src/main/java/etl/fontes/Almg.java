@@ -73,6 +73,9 @@ public final class Almg implements Fonte {
         return "almg";
     }
 
+    record DeputadoBasico(int id, String nome, String partido, boolean temDetalhe, int codSituacao, int legislatura) {
+    }
+
     @Override
     public void fetch(Contexto ctx, Coleta coleta) throws Exception {
         // Baixa a pesquisa de deputados das legislaturas 19 e 20
@@ -81,23 +84,26 @@ public final class Almg implements Fonte {
         coleta.obter(API + "/legislaturas/pesquisa_deputados?leg=" + LEGISLATURA_20 + "&formato=json",
                 "pesquisa-leg-20.json", "application/json", Politica.SEMANAL);
 
-        Set<Integer> idsDeputados = extrairIdsDeputados(ctx);
-        for (int id : idsDeputados) {
-            // Detalhes biográficos
-            coleta.obter(API + "/deputados/" + id + "?formato=json",
-                    "deputados/" + id + ".json", "application/json", Politica.SEMANAL);
+        Map<Integer, DeputadoBasico> deputados = extrairDeputadosBasicos(ctx);
+        for (DeputadoBasico dep : deputados.values()) {
+            int id = dep.id();
+            // Detalhes biográficos (só se temDetalhe for verdadeiro)
+            if (dep.temDetalhe()) {
+                coleta.obterOuVazio(API + "/deputados/" + id + "?formato=json",
+                        "deputados/" + id + ".json", "application/json", Politica.SEMANAL);
+            }
 
             // Participação em comissões
-            coleta.obter(API + "/deputados/" + id + "/participacoes_comissoes?formato=json",
+            coleta.obterOuVazio(API + "/deputados/" + id + "/participacoes_comissoes?formato=json",
                     "comissoes/" + id + ".json", "application/json", Politica.SEMANAL);
 
             // Datas de fechamento de verbas indenizatórias
-            coleta.obter(API + "/prestacao_contas/verbas_indenizatorias/deputados/" + id + "/datas?formato=json",
+            coleta.obterOuVazio(API + "/prestacao_contas/verbas_indenizatorias/deputados/" + id + "/datas?formato=json",
                     "verbas/" + id + "-datas.json", "application/json", Politica.SEMANAL);
 
             // Coleta meses de verba indenizatória dentro da cobertura (2022 a 2026)
             Coleta.Arquivo arqDatas = Coleta.metadados(ctx, "almg", "verbas/" + id + "-datas.json");
-            if (arqDatas != null && Files.exists(Coleta.caminho(ctx, arqDatas))) {
+            if (arqDatas != null && Files.exists(Coleta.caminho(ctx, arqDatas)) && arqDatas.bytes() > 0) {
                 JsonNode raizDatas = Json.ler(Coleta.caminho(ctx, arqDatas));
                 JsonNode listaFechamento = raizDatas.path("listaFechamentoVerba");
                 if (listaFechamento.isArray()) {
@@ -108,7 +114,7 @@ public final class Almg implements Fonte {
                             int mes = Integer.parseInt(dataRef.substring(5, 7));
                             if (ano >= 2022 && ano <= 2026) {
                                 String mesFormatado = String.format("%02d", mes);
-                                coleta.obter(API + "/prestacao_contas/verbas_indenizatorias/deputados/" + id + "/" + ano + "/" + mesFormatado + "?formato=json",
+                                coleta.obterOuVazio(API + "/prestacao_contas/verbas_indenizatorias/deputados/" + id + "/" + ano + "/" + mesFormatado + "?formato=json",
                                         "verbas/" + id + "-" + ano + "-" + mesFormatado + ".json", "application/json", Politica.porAnoSemanal(ano, ctx.hoje()));
                             }
                         }
@@ -126,8 +132,8 @@ public final class Almg implements Fonte {
             return;
         }
 
-        Set<Integer> ids = extrairIdsDeputados(ctx);
-        if (ids.isEmpty()) {
+        Map<Integer, DeputadoBasico> deputados = extrairDeputadosBasicos(ctx);
+        if (deputados.isEmpty()) {
             System.out.println("almg: nenhum deputado identificado para normalização");
             return;
         }
@@ -139,25 +145,26 @@ public final class Almg implements Fonte {
         Coleta.Arquivo arqLeg19 = Coleta.metadados(ctx, "almg", "pesquisa-leg-19.json");
         Coleta.Arquivo arqBase = arqLeg20 != null ? arqLeg20 : arqLeg19;
 
-        for (int id : ids) {
+        for (DeputadoBasico dep : deputados.values()) {
+            int id = dep.id();
             String idStr = String.valueOf(id);
             Acumulado ac = new Acumulado();
             acumulados.put(idStr, ac);
 
             Coleta.Arquivo arqDet = Coleta.metadados(ctx, "almg", "deputados/" + id + ".json");
             JsonNode det = null;
-            if (arqDet != null && Files.exists(Coleta.caminho(ctx, arqDet))) {
+            if (arqDet != null && Files.exists(Coleta.caminho(ctx, arqDet)) && arqDet.bytes() > 0) {
                 det = Json.ler(Coleta.caminho(ctx, arqDet)).path("deputado");
             }
 
-            String nome = det != null && det.hasNonNull("nome") ? det.get("nome").asText() : "Deputado " + id;
-            String partido = det != null && det.hasNonNull("partido") ? det.get("partido").asText() : null;
-            int codSituacao = det != null && det.hasNonNull("codigoSituacao") ? det.get("codigoSituacao").asInt() : 0;
+            String nome = det != null && det.hasNonNull("nome") ? det.get("nome").asText() : dep.nome();
+            String partido = det != null && det.hasNonNull("partido") ? det.get("partido").asText() : dep.partido();
+            int codSituacao = det != null && det.hasNonNull("codigoSituacao") ? det.get("codigoSituacao").asInt() : dep.codSituacao();
             boolean emExercicio = codSituacao == 1;
             String situacao = emExercicio ? "em exercício" : (det != null && det.hasNonNull("situacao") ? det.get("situacao").asText().toLowerCase() : "mandato encerrado");
 
             String fotoUrl = SITE + "/export/sites/portal/a-assembleia/deputados/fotos/" + id + ".jpg";
-            Prov provDep = Prov.de(FONTE_DEPUTADOS, API + "/deputados/" + id, arqDet != null ? arqDet : arqBase);
+            Prov provDep = Prov.de(FONTE_DEPUTADOS, API + "/deputados/" + id, arqDet != null && arqDet.bytes() > 0 ? arqDet : arqBase);
 
             List<LinkOficial> links = List.of(
                     new LinkOficial("Página na ALMG", SITE + "/deputados/conheca-os-deputados/deputado?idDeputado=" + id, provDep)
@@ -167,8 +174,8 @@ public final class Almg implements Fonte {
                     partido, fotoUrl, situacao, emExercicio, links));
 
             // Mandatos
-            montarMandatos(id, det, ac, provDep);
-            ac.fontes.computeIfAbsent("mandatos", k -> new ArrayList<>()).add(FonteUsada.de(FONTE_DEPUTADOS, arqDet != null ? arqDet : arqBase));
+            montarMandatos(id, dep, det, ac, provDep);
+            ac.fontes.computeIfAbsent("mandatos", k -> new ArrayList<>()).add(FonteUsada.de(FONTE_DEPUTADOS, arqDet != null && arqDet.bytes() > 0 ? arqDet : arqBase));
 
             // Comissões
             processarComissoes(ctx, id, ac);
@@ -196,21 +203,27 @@ public final class Almg implements Fonte {
         System.out.println("almg: " + pessoas.size() + " deputados estaduais normalizados");
     }
 
-    private Set<Integer> extrairIdsDeputados(Contexto ctx) {
-        Set<Integer> ids = new HashSet<>();
+    private Map<Integer, DeputadoBasico> extrairDeputadosBasicos(Contexto ctx) {
+        Map<Integer, DeputadoBasico> map = new LinkedHashMap<>();
         for (String arqNome : List.of("pesquisa-leg-20.json", "pesquisa-leg-19.json")) {
             Coleta.Arquivo arq = Coleta.metadados(ctx, "almg", arqNome);
-            if (arq != null && Files.exists(Coleta.caminho(ctx, arq))) {
+            if (arq != null && Files.exists(Coleta.caminho(ctx, arq)) && arq.bytes() > 0) {
                 try {
                     JsonNode raiz = Json.ler(Coleta.caminho(ctx, arq));
                     JsonNode resultado = raiz.path("listaResultadoPesquisaDeputado");
                     if (resultado.isArray()) {
                         for (JsonNode bloco : resultado) {
+                            int codSit = bloco.path("codSituacao").asInt(0);
+                            int numLeg = bloco.path("numLegislatura").asInt(20);
                             JsonNode lista = bloco.path("lista");
                             if (lista.isArray()) {
                                 for (JsonNode d : lista) {
                                     if (d.hasNonNull("id")) {
-                                        ids.add(d.get("id").asInt());
+                                        int id = d.get("id").asInt();
+                                        String nome = d.path("nome").asText("Deputado " + id);
+                                        String partido = d.path("partido").asText(null);
+                                        boolean temDetalhe = d.path("temDetalhe").asBoolean(true);
+                                        map.putIfAbsent(id, new DeputadoBasico(id, nome, partido, temDetalhe, codSit, numLeg));
                                     }
                                 }
                             }
@@ -221,42 +234,48 @@ public final class Almg implements Fonte {
                 }
             }
         }
-        return ids;
+        return map;
     }
 
-    private void montarMandatos(int id, JsonNode det, Acumulado ac, Prov provDep) {
-        if (det == null || !det.hasNonNull("legislaturas")) {
-            return;
-        }
-        JsonNode legList = det.path("legislaturas");
-        if (!legList.isArray()) {
-            return;
-        }
-        for (JsonNode leg : legList) {
-            int numLeg = leg.path("numeroLegislatura").asInt();
-            if (numLeg != LEGISLATURA_19 && numLeg != LEGISLATURA_20) {
-                continue;
+    private void montarMandatos(int id, DeputadoBasico dep, JsonNode det, Acumulado ac, Prov provDep) {
+        if (det != null && det.hasNonNull("legislaturas") && det.path("legislaturas").isArray()) {
+            JsonNode legList = det.path("legislaturas");
+            for (JsonNode leg : legList) {
+                int numLeg = leg.path("numeroLegislatura").asInt();
+                if (numLeg != LEGISLATURA_19 && numLeg != LEGISLATURA_20) {
+                    continue;
+                }
+                LocalDate padraoInicio = numLeg == LEGISLATURA_19 ? INICIO_LEG_19 : INICIO_LEG_20;
+                LocalDate padraoFim = numLeg == LEGISLATURA_19 ? FIM_LEG_19 : FIM_LEG_20;
+
+                String iniStr = extrairData(leg.path("inicioLegislatura"));
+                LocalDate inicio = iniStr != null ? parseDataOu(iniStr, padraoInicio) : padraoInicio;
+
+                String fimStr = extrairData(leg.path("terminoLegislatura"));
+                LocalDate fim = fimStr != null ? parseDataOu(fimStr, padraoFim) : padraoFim;
+
+                String condicao = leg.path("tipoMandato").asText(null);
+                String situacao = "mandato encerrado";
+                if (numLeg == LEGISLATURA_20) {
+                    int codSit = det.path("codigoSituacao").asInt(0);
+                    situacao = codSit == 1 ? "em exercício" : det.path("situacao").asText("mandato encerrado").toLowerCase();
+                }
+
+                int eleicao = numLeg == LEGISLATURA_19 ? 2018 : 2022;
+
+                ac.mandatos.add(new Mandato("deputado_estadual", "estadual", UF, UF, inicio, fim,
+                        situacao, condicao, numLeg, eleicao, null, provDep));
             }
-            LocalDate padraoInicio = numLeg == LEGISLATURA_19 ? INICIO_LEG_19 : INICIO_LEG_20;
-            LocalDate padraoFim = numLeg == LEGISLATURA_19 ? FIM_LEG_19 : FIM_LEG_20;
-
-            String iniStr = extrairData(leg.path("inicioLegislatura"));
-            LocalDate inicio = iniStr != null ? parseDataOu(iniStr, padraoInicio) : padraoInicio;
-
-            String fimStr = extrairData(leg.path("terminoLegislatura"));
-            LocalDate fim = fimStr != null ? parseDataOu(fimStr, padraoFim) : padraoFim;
-
-            String condicao = leg.path("tipoMandato").asText(null);
-            String situacao = "mandato encerrado";
-            if (numLeg == LEGISLATURA_20) {
-                int codSit = det.path("codigoSituacao").asInt(0);
-                situacao = codSit == 1 ? "em exercício" : det.path("situacao").asText("mandato encerrado").toLowerCase();
-            }
-
+        }
+        if (ac.mandatos.isEmpty()) {
+            // Mandato sintetizado a partir da pesquisa
+            int numLeg = dep.legislatura();
+            LocalDate inicio = numLeg == LEGISLATURA_19 ? INICIO_LEG_19 : INICIO_LEG_20;
+            LocalDate fim = numLeg == LEGISLATURA_19 ? FIM_LEG_19 : FIM_LEG_20;
+            String situacao = dep.codSituacao() == 1 ? "em exercício" : "mandato encerrado";
             int eleicao = numLeg == LEGISLATURA_19 ? 2018 : 2022;
-
             ac.mandatos.add(new Mandato("deputado_estadual", "estadual", UF, UF, inicio, fim,
-                    situacao, condicao, numLeg, eleicao, null, provDep));
+                    situacao, "Efetivo", numLeg, eleicao, null, provDep));
         }
     }
 
