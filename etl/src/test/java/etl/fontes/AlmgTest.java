@@ -145,7 +145,7 @@ class AlmgTest {
                           "dataEmissao": { "$": "2024-05-20" },
                           "cpfCnpj": "12345678901",
                           "valorDespesa": 500.00,
-                          "nomeEmitente": "Joao Prestador",
+                          "nomeEmitente": "Joao Prestador 12345678901",
                           "descDocumento": "REC-01"
                         }
                       ]
@@ -186,6 +186,7 @@ class AlmgTest {
         // Órgãos
         JsonNode orgaos = blocos.path("orgaos_e_frentes");
         assertEquals(1, orgaos.size());
+        assertEquals("comissao", orgaos.get(0).path("tipo").asText());
         assertEquals("Constituição e Justiça", orgaos.get(0).path("nome").asText());
         assertEquals("Vice-Presidente", orgaos.get(0).path("papel").asText());
 
@@ -198,9 +199,10 @@ class AlmgTest {
         assertEquals("18189993000157", d1.path("fornecedor_cnpj").asText());
         assertEquals(210.06, d1.path("valor").asDouble());
 
-        // Segunda com CPF descartado (nulo)
+        // Segunda com CPF descartado (nulo) e nome de MEI sem CPF
         JsonNode d2 = despesas.get(1);
         assertTrue(d2.path("fornecedor_cnpj").isNull(), "CPF de 11 dígitos deve virar null");
+        assertEquals("Joao Prestador", d2.path("fornecedor_nome").asText());
         assertEquals(500.0, d2.path("valor").asDouble());
     }
 

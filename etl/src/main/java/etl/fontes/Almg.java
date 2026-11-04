@@ -313,9 +313,7 @@ public final class Almg implements Fonte {
                     continue;
                 }
 
-                String tipoComissao = comissao.path("tipoComissao").path("descricao").asText("Comissão");
-
-                ac.orgaos.add(new OrgaoOuFrente(tipoComissao, nomeComissao, null, papel, inicio, fim, provComissao));
+                ac.orgaos.add(new OrgaoOuFrente("comissao", nomeComissao, null, papel, inicio, fim, provComissao));
             }
             if (!ac.orgaos.isEmpty()) {
                 ac.fontes.computeIfAbsent("orgaos_e_frentes", k -> new ArrayList<>())
@@ -369,7 +367,7 @@ public final class Almg implements Fonte {
                                 continue;
                             }
 
-                            String emitente = item.path("nomeEmitente").asText(null);
+                            String emitente = Guarda.semCpf(item.path("nomeEmitente").asText(null));
                             String cpfCnpjRaw = item.path("cpfCnpj").asText(null);
                             String cnpjCpf = Texto.cnpj(cpfCnpjRaw); // retém apenas CNPJ válido de 14 dígitos
 
