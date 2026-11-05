@@ -5,9 +5,11 @@ import java.nio.file.Path;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -20,6 +22,7 @@ import etl.Json;
 import etl.Registros.FonteUsada;
 import etl.Registros.LinkOficial;
 import etl.Registros.Mandato;
+import etl.Registros.OrgaoOuFrente;
 import etl.Registros.Pessoa;
 import etl.Registros.Prov;
 import etl.Texto;
@@ -51,6 +54,32 @@ public final class Alece implements Fonte {
     private static final Pattern PARTIDO_PATTERN = Pattern.compile(
             "class=\"deputado_card--partido[^\"]*\">\\s*([^<]+)\\s*</p>");
 
+    public static final List<String> COMISSOES_SLUGS = List.of(
+            "agropecuaria",
+            "ciencia-tecnologia-e-educacao-superior",
+            "constituicao-justica-e-redacao",
+            "cultura-e-esportes",
+            "defesa-do-consumidor",
+            "defesa-e-direitos-da-mulher",
+            "defesa-social",
+            "desenvolvimento-regional-recursos-hidricos-minas-e-pesca",
+            "direitos-humanos-e-cidadania",
+            "educacao-basica",
+            "fiscalizacao-e-controle",
+            "industria-desenvolvimento-economico-e-comercio",
+            "da-infancia-e-adolescencia",
+            "juventude",
+            "orcamento-financas-e-tributacao",
+            "previdencia-social-e-saude",
+            "protecao-social-e-combate-a-fome",
+            "trabalho-administracao-e-servico-publico",
+            "turismo-e-servicos",
+            "viacao-transporte-desenvolvimento-urbano"
+    );
+
+    public static final Pattern TITULO_COMISSAO_PATTERN = Pattern.compile(
+            "<h1[^>]*>Composição\\s*-\\s*([^<]+)</h1>", Pattern.CASE_INSENSITIVE);
+
     private static final Set<String> PREPOSICOES = Set.of("de", "da", "do", "das", "dos", "del", "e");
 
     @Override
@@ -70,6 +99,11 @@ public final class Alece implements Fonte {
         for (DeputadoBruto d : deputados) {
             String urlPerfil = SITE + "/deputados/" + d.slug();
             coleta.obterOuVazio(urlPerfil, "perfis/" + d.slug() + ".html", "text/html", Politica.SEMANAL);
+        }
+
+        for (String comSlug : COMISSOES_SLUGS) {
+            String url = SITE + "/comissoes-permanentes/" + comSlug + "/composicao";
+            coleta.obterOuVazio(url, "comissoes/" + comSlug + ".html", "text/html", Politica.SEMANAL);
         }
     }
 
@@ -92,6 +126,7 @@ public final class Alece implements Fonte {
         }
 
         List<Pessoa> pessoas = new ArrayList<>();
+        Map<String, List<OrgaoOuFrente>> comissoesPorSlug = extrairComissoes(ctx);
 
         for (DeputadoBruto d : deputados) {
             String slug = d.slug();
@@ -122,9 +157,14 @@ public final class Alece implements Fonte {
                 fontes.add(new FonteUsada(FONTE_DETALHES, urlPerfil, arqPerfil.capturadoEm()));
             }
 
+            List<OrgaoOuFrente> orgaos = comissoesPorSlug.getOrDefault(slug, List.of());
+            if (!orgaos.isEmpty()) {
+                fontes.add(new FonteUsada(FONTE_DETALHES, SITE + "/comissoes-permanentes", arqDeputados != null ? arqDeputados.capturadoEm() : null));
+            }
+
             var blocosNode = Json.SAIDA.createObjectNode();
             blocosNode.set("mandatos", Json.SAIDA.valueToTree(mandatos));
-            blocosNode.set("orgaos_e_frentes", Json.SAIDA.createArrayNode());
+            blocosNode.set("orgaos_e_frentes", Json.SAIDA.valueToTree(orgaos));
             blocosNode.set("despesas", Json.SAIDA.createArrayNode());
             blocosNode.set("fontes", Json.SAIDA.valueToTree(fontes));
             Json.gravar(pastaBlocos.resolve(slug + ".json"), blocosNode);
@@ -132,6 +172,77 @@ public final class Alece implements Fonte {
 
         Json.gravar(ctx.normalizado().resolve("alece/pessoas.json"), Json.SAIDA.valueToTree(pessoas));
         System.out.println("alece: " + pessoas.size() + " deputados estaduais normalizados");
+    }
+
+    public static Map<String, List<OrgaoOuFrente>> extrairComissoes(Contexto ctx) {
+        Map<String, List<OrgaoOuFrente>> mapa = new HashMap<>();
+        for (String comSlug : COMISSOES_SLUGS) {
+            Coleta.Arquivo arq = Coleta.metadados(ctx, "alece", "comissoes/" + comSlug + ".html");
+            if (arq == null || !Files.exists(Coleta.caminho(ctx, arq))) {
+                continue;
+            }
+            try {
+                String html = Texto.lerArquivo(Coleta.caminho(ctx, arq));
+                String url = SITE + "/comissoes-permanentes/" + comSlug + "/composicao";
+                Prov prov = Prov.de(FONTE_DETALHES, url, arq);
+                Map<String, List<OrgaoOuFrente>> doHtml = extrairComissoesDoHtml(html, comSlug, prov);
+                for (var entry : doHtml.entrySet()) {
+                    mapa.computeIfAbsent(entry.getKey(), k -> new ArrayList<>()).addAll(entry.getValue());
+                }
+            } catch (Exception e) {
+                System.err.println("alece: erro ao ler comissao " + comSlug + ": " + e.getMessage());
+            }
+        }
+        return mapa;
+    }
+
+    public static Map<String, List<OrgaoOuFrente>> extrairComissoesDoHtml(String html, String comSlug, Prov prov) {
+        if (html == null || html.isBlank()) {
+            return Map.of();
+        }
+        String nomeComissao = "Comissão";
+        Matcher mTitulo = TITULO_COMISSAO_PATTERN.matcher(html);
+        if (mTitulo.find()) {
+            nomeComissao = "Comissão de " + Texto.semEntidades(mTitulo.group(1).trim());
+        }
+
+        Matcher mTable = Pattern.compile("<table>(.*?)</table>", Pattern.DOTALL).matcher(html);
+        if (!mTable.find()) {
+            return Map.of();
+        }
+        String table = mTable.group(1);
+        String[] sections = Pattern.compile("<span[^>]*><strong>(PRESIDENTE|VICE-PRESIDENTE|MEMBROS?)</strong></span>", Pattern.CASE_INSENSITIVE).split(table);
+        Matcher mHeaders = Pattern.compile("<span[^>]*><strong>(PRESIDENTE|VICE-PRESIDENTE|MEMBROS?)</strong></span>", Pattern.CASE_INSENSITIVE).matcher(table);
+
+        List<String> headerList = new ArrayList<>();
+        while (mHeaders.find()) {
+            headerList.add(mHeaders.group(1).toUpperCase(Locale.ROOT));
+        }
+
+        Map<String, List<OrgaoOuFrente>> resultado = new HashMap<>();
+        for (int i = 0; i < headerList.size() && i + 1 < sections.length; i++) {
+            String secHeader = headerList.get(i);
+            String content = sections[i + 1];
+            String[] cells = Pattern.compile("<td[^>]*>").split(content);
+            for (String cell : cells) {
+                Matcher mDep = Pattern.compile("href=\"https://www\\.al\\.ce\\.gov\\.br/deputados/([a-z0-9-]+)\"").matcher(cell);
+                if (mDep.find()) {
+                    String slug = mDep.group(1).trim();
+                    boolean isSuplente = cell.contains("Suplente");
+                    String papel;
+                    if (secHeader.contains("PRESIDENTE") && !secHeader.contains("VICE")) {
+                        papel = isSuplente ? "Presidente (Suplente)" : "Presidente (Titular)";
+                    } else if (secHeader.contains("VICE")) {
+                        papel = isSuplente ? "Vice-Presidente (Suplente)" : "Vice-Presidente (Titular)";
+                    } else {
+                        papel = isSuplente ? "Suplente" : "Membro";
+                    }
+                    resultado.computeIfAbsent(slug, k -> new ArrayList<>())
+                            .add(new OrgaoOuFrente("comissao", nomeComissao, null, papel, INICIO_LEG_31, null, prov));
+                }
+            }
+        }
+        return resultado;
     }
 
     public static List<DeputadoBruto> extrairDeputados(Contexto ctx) {

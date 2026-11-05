@@ -645,8 +645,9 @@ Validação em 2026-11-03 com o User-Agent do projeto.
 
 ### `alece-deputados-detalhes`: perfil biográfico e atuação
 
-- URL base: `https://www.al.ce.gov.br/deputados/`
+- URL base: `https://www.al.ce.gov.br/deputados/` e `https://www.al.ce.gov.br/comissoes-permanentes/{slug}/composicao`
 - Biografia parlamentar detalhada contendo nome civil, data e município de nascimento, e histórico político.
+- Comissões permanentes: 20 órgãos temáticos com presidente, vice-presidente, titulares e suplentes populando `orgaos_e_frentes`.
 - Dados de gabinete, telefones e e-mails institucionais descartados na ingestão por regra estrita de privacidade.
 
 ### `alece-portal`: portal institucional e fotos

@@ -9,6 +9,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -16,6 +17,8 @@ import org.junit.jupiter.api.io.TempDir;
 import etl.Coleta;
 import etl.Contexto;
 import etl.Json;
+import etl.Registros.OrgaoOuFrente;
+import etl.Registros.Prov;
 import tools.jackson.databind.JsonNode;
 
 class AleceTest {
@@ -143,6 +146,77 @@ class AleceTest {
         assertEquals("2023-02-01", m1.get("inicio").stringValue());
         assertEquals("2027-01-31", m1.get("fim").stringValue());
         assertEquals(31, m1.get("legislatura").asInt());
+    }
+
+    @Test
+    void extraiComissoesDeFragmentoHtml() {
+        String html = """
+                <h1>Composição - Agropecuária</h1>
+                <table>
+                    <tbody>
+                        <tr>
+                            <td>&nbsp;</td>
+                            <td colspan="2"><p><span><strong>PRESIDENTE</strong></span></p></td>
+                            <td>&nbsp;</td>
+                        </tr>
+                        <tr>
+                            <td>&nbsp;</td>
+                            <td>
+                                <p><span><strong>Titular:</strong></span></p>
+                                <a href="https://www.al.ce.gov.br/deputados/missias-dias">Missias Dias, PT</a>
+                            </td>
+                            <td>
+                                <p><span><strong>Suplente:</strong></span></p>
+                                <a href="https://www.al.ce.gov.br/deputados/bruno-pedrosa">Bruno Pedrosa, PT</a>
+                            </td>
+                            <td>&nbsp;</td>
+                        </tr>
+                        <tr>
+                            <td>&nbsp;</td>
+                            <td colspan="2"><p><span><strong>VICE-PRESIDENTE</strong></span></p></td>
+                            <td>&nbsp;</td>
+                        </tr>
+                        <tr>
+                            <td>&nbsp;</td>
+                            <td>
+                                <p><span><strong>Titular:</strong></span></p>
+                                <a href="https://www.al.ce.gov.br/deputados/agenor-neto">Agenor Neto, MDB</a>
+                            </td>
+                            <td>&nbsp;</td>
+                            <td>&nbsp;</td>
+                        </tr>
+                        <tr>
+                            <td>&nbsp;</td>
+                            <td colspan="2"><p><span><strong>MEMBROS</strong></span></p></td>
+                            <td>&nbsp;</td>
+                        </tr>
+                        <tr>
+                            <td>&nbsp;</td>
+                            <td>
+                                <p><span><strong>Titular:</strong></span></p>
+                                <a href="https://www.al.ce.gov.br/deputados/salmito">Salmito, PSB</a>
+                            </td>
+                            <td>
+                                <p><span><strong>Suplente:</strong></span></p>
+                                <a href="https://www.al.ce.gov.br/deputados/simao-pedro">Simão Pedro, PSD</a>
+                            </td>
+                            <td>&nbsp;</td>
+                        </tr>
+                    </tbody>
+                </table>
+                """;
+
+        Prov prov = new Prov("alece-deputados-detalhes", "https://www.al.ce.gov.br/comissoes-permanentes/agropecuaria/composicao", Instant.parse("2026-11-05T12:00:00Z"));
+        Map<String, List<OrgaoOuFrente>> resultado = Alece.extrairComissoesDoHtml(html, "agropecuaria", prov);
+
+        assertEquals(5, resultado.size());
+        assertEquals("Presidente (Titular)", resultado.get("missias-dias").get(0).papel());
+        assertEquals("Presidente (Suplente)", resultado.get("bruno-pedrosa").get(0).papel());
+        assertEquals("Vice-Presidente (Titular)", resultado.get("agenor-neto").get(0).papel());
+        assertEquals("Membro", resultado.get("salmito").get(0).papel());
+        assertEquals("Suplente", resultado.get("simao-pedro").get(0).papel());
+        assertEquals("Comissão de Agropecuária", resultado.get("missias-dias").get(0).nome());
+        assertEquals("comissao", resultado.get("missias-dias").get(0).tipo());
     }
 
     private static void gravarMetadado(Path pastaFonte, String relativo, String url) throws IOException {
