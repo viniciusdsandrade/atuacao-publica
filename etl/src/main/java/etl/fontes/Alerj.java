@@ -192,7 +192,7 @@ public final class Alerj implements Fonte {
         while (m.find()) {
             String id = m.group(1).trim();
             if (vistos.add(id)) {
-                String foto = m.group(2).trim();
+                String foto = m.group(2).trim().replace(" ", "%20");
                 String fotoUrl = foto.startsWith("/") ? SITE + foto : foto;
                 String nome = Texto.semEntidades(m.group(4).trim());
                 String partido = Texto.semEntidades(m.group(3).trim());

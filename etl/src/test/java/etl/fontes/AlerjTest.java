@@ -57,11 +57,21 @@ class AlerjTest {
                         </div>
                         <span></span>
                     </div>
+                    <div class="controle_deputado">
+                        <div class="imagem">
+                            <a href="/Deputados/PerfilDeputado/417?Legislatura=20"><img src="/Uploads/PerfilDeputado/Imagem/chico 3 . 4.jpeg" alt="CHICO MACHADO"></a>
+                        </div>
+                        <div class="descricao">
+                            <div class="partido">SOLIDARIEDADE</div>
+                            <div class="nome"><a href="/Deputados/PerfilDeputado/417?Legislatura=20">CHICO MACHADO</a></div>
+                        </div>
+                        <span></span>
+                    </div>
                 </div>
                 """;
 
         List<Alerj.DeputadoBruto> deputados = Alerj.extrairDeputadosDoHtml(html);
-        assertEquals(2, deputados.size());
+        assertEquals(3, deputados.size());
 
         Alerj.DeputadoBruto d1 = deputados.get(0);
         assertEquals("505", d1.id());
@@ -73,6 +83,12 @@ class AlerjTest {
         assertEquals("420", d2.id());
         assertEquals("ALEXANDRE KNOPLOCH", d2.nome());
         assertEquals("PL", d2.partido());
+        assertEquals("https://www.alerj.rj.gov.br/Uploads/PerfilDeputado/Imagem/28012026_1149073x4.jpeg", d2.fotoUrl());
+
+        Alerj.DeputadoBruto d3 = deputados.get(2);
+        assertEquals("417", d3.id());
+        assertEquals("CHICO MACHADO", d3.nome());
+        assertEquals("https://www.alerj.rj.gov.br/Uploads/PerfilDeputado/Imagem/chico%203%20.%204.jpeg", d3.fotoUrl());
         assertEquals("https://www.alerj.rj.gov.br/Uploads/PerfilDeputado/Imagem/28012026_1149073x4.jpeg", d2.fotoUrl());
     }
 
