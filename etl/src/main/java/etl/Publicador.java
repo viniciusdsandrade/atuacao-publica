@@ -75,7 +75,7 @@ public final class Publicador {
     private static final Map<String, String> ORIGEM_DO_BLOCO = Map.of("candidaturas", "tse", "atos_normativos", "executivo",
             "despesas_executivo", "tcesp");
     static final int RECENTES = 20;
-    static final List<String> FONTES_CLI = List.of("camara", "senado", "tse", "executivo", "sapl", "tcesp", "cgu", "agenda", "contrib", "alesp", "executivosp", "almg", "alep", "alba", "alerj");
+    static final List<String> FONTES_CLI = List.of("camara", "senado", "tse", "executivo", "sapl", "tcesp", "cgu", "agenda", "contrib", "alesp", "executivosp", "almg", "alep", "alba", "alerj", "alrs");
 
     /** Perfil em construção, antes da validação. */
     static final class Perfil {
@@ -519,6 +519,9 @@ public final class Publicador {
             }
             if (externos.hasNonNull("alerj")) {
                 porChave.put("alerj:" + externos.get("alerj").stringValue(), id);
+            }
+            if (externos.hasNonNull("alrs")) {
+                porChave.put("alrs:" + externos.get("alrs").stringValue(), id);
             }
             if (externos.hasNonNull("sapl")) {
                 porChave.put("sapl:" + externos.get("sapl").stringValue(), id);
