@@ -11,7 +11,7 @@ on:
       fonte:
         description: Fonte a coletar. As demais seguem do cache de dados brutos.
         type: choice
-        options: [todas, camara, senado, tse, executivo, sapl, tcesp, cgu, agenda, contrib, alesp, executivosp, almg, alep, alba, alerj, alrs]
+        options: [todas, camara, senado, tse, executivo, sapl, tcesp, cgu, agenda, contrib, alesp, executivosp, almg, alep, alba, alerj, alrs, alece]
         default: todas
 
 permissions:
@@ -177,6 +177,14 @@ jobs:
         env:
           ETL_ORCAMENTO_MINUTOS: '15'
         run: java -Xmx2g -jar etl/target/etl.jar fetch alrs
+      - name: fetch alece
+        # Assembleia Legislativa do Estado do Ceará: deputados em exercício e perfis.
+        if: env.FONTE == 'todas' || env.FONTE == 'alece'
+        continue-on-error: true
+        timeout-minutes: 20
+        env:
+          ETL_ORCAMENTO_MINUTOS: '15'
+        run: java -Xmx2g -jar etl/target/etl.jar fetch alece
       - name: fetch contrib
         # Confere se as URLs de origem e os snapshots dos registros manuais ainda respondem.
         if: env.FONTE == 'todas' || env.FONTE == 'contrib'
