@@ -609,6 +609,32 @@ Validação em 2026-11-03 com o User-Agent do projeto.
 - Mandato do Governador Cláudio Castro integrado ao modelo e ao arquivo histórico via candidaturas do TSE.
 
 
+## Fontes do Rio Grande do Sul (ALRS & Governo do Estado)
+
+### `alrs-deputados`: parlamentares em exercício
+
+- URL base: `https://ww4.al.rs.gov.br:5000/listarDestaqueDeputados`
+- 55 deputados estaduais em exercício na 56ª legislatura (2023–2027), com ID numérico oficial (`idDeputado`), nome parlamentar, partido e foto oficial.
+- Identificador canônico no projeto: `alrs-{id}` (ex.: `alrs-2144`).
+
+### `alrs-deputados-detalhes`: perfil biográfico e comissões
+
+- URL base: `https://ww4.al.rs.gov.br/deputados/`
+- Páginas institucionais dos deputados estaduais e comissões parlamentares integradas (`/deputados/{id}/comissoes`).
+- Dados de gabinete, telefones e e-mails institucionais descartados na ingestão por regra estrita de privacidade.
+
+### `alrs-portal`: portal institucional e fotos
+
+- URL base: `https://ww4.al.rs.gov.br/`
+- Repositório de fotos oficiais dos parlamentares em alta resolução hospedadas em `https://ww2.al.rs.gov.br/filerepository/fotografias/`.
+
+### `rs-transparencia` e `rs-diario-oficial`: Executivo estadual
+
+- Transparência orçamentária: `https://www.transparencia.rs.gov.br/` e `https://transparencia.al.rs.gov.br/`
+- Diário Oficial: `https://www.diariooficial.rs.gov.br/`
+- Mandato do Governador Eduardo Leite integrado ao modelo e ao arquivo histórico via candidaturas do TSE.
+
+
 ## Fora da política de fontes
 
 Imprensa, blogs, agregadores sem metodologia, redes sociais de terceiros, mensagens, vídeos não oficiais, Wikipedia e rankings de terceiros.

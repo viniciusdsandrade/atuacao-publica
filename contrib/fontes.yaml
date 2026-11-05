@@ -1595,3 +1595,49 @@
   status: validado
   validado_em: 2026-11-05
 
+- id: alrs-deputados
+  nome: Assembleia Legislativa do Estado do Rio Grande do Sul, deputados estaduais
+  orgao: Assembleia Legislativa do Estado do Rio Grande do Sul
+  esfera: estadual
+  ente: RS
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://ww4.al.rs.gov.br:5000/listarDestaqueDeputados
+  formato: JSON
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "API oficial em JSON listando os 55 deputados estaduais em exercício na 56ª legislatura."
+  status: validado
+  validado_em: 2026-11-05
+
+- id: alrs-deputados-detalhes
+  nome: Assembleia Legislativa do Estado do Rio Grande do Sul, páginas parlamentares e comissões
+  orgao: Assembleia Legislativa do Estado do Rio Grande do Sul
+  esfera: estadual
+  ente: RS
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://ww4.al.rs.gov.br/deputados/
+  formato: HTML
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Páginas institucionais dos deputados estaduais e comissões parlamentares."
+  status: validado
+  validado_em: 2026-11-05
+
+- id: alrs-portal
+  nome: Assembleia Legislativa do Estado do Rio Grande do Sul, portal institucional e fotos
+  orgao: Assembleia Legislativa do Estado do Rio Grande do Sul
+  esfera: estadual
+  ente: RS
+  categoria: primeira_parte
+  nivel_confianca: T0
+  url_base: https://ww4.al.rs.gov.br/
+  formato: HTML e JPG
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Portal institucional e repositório oficial de fotografias em alta resolução."
+  status: validado
+  validado_em: 2026-11-05
+
+
