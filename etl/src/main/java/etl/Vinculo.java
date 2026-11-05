@@ -37,6 +37,7 @@ final class Vinculo {
         perfis.addAll(legisladores(ctx, "alerj", "alerj", "alerj"));
         perfis.addAll(legisladores(ctx, "alrs", "alrs", "alrs"));
         perfis.addAll(legisladores(ctx, "alece", "alece", "alece"));
+        perfis.addAll(legisladores(ctx, "alesc", "alesc", "alesc"));
         perfis.addAll(legisladores(ctx, "sapl", "sapl-" + Sapl.IBGE, "sapl"));
         List<JsonNode> candidaturas = Tse.linhas(ctx);
         if (!candidaturas.isEmpty()) {
@@ -119,7 +120,7 @@ final class Vinculo {
         return set;
     }
 
-    private static final Pattern TITULO_PATTERN = Pattern.compile("^(?:DR\\.|DRA\\.|PROF\\.|PROFESSOR\\.|PROFESSORA\\.|DELEGADO\\.|DELEGADA\\.|CAPITAO\\.|PASTOR\\.|DR|DRA|PROF|PROFESSOR|PROFESSORA)\\s+", Pattern.CASE_INSENSITIVE);
+    private static final Pattern TITULO_PATTERN = Pattern.compile("^(?:PADRE|DR\\.|DRA\\.|PROF\\.|PROFESSOR\\.|PROFESSORA\\.|DELEGADO\\.|DELEGADA\\.|CAPITAO\\.|PASTOR\\.|DR|DRA|PROF|PROFESSOR|PROFESSORA)\\s+", Pattern.CASE_INSENSITIVE);
 
     private static String limparTitulo(String nome) {
         if (nome == null || nome.isBlank()) {
@@ -191,6 +192,9 @@ final class Vinculo {
         Map<String, JsonNode> candPorAleceNomeCivil = new HashMap<>();
         Map<String, JsonNode> candPorAleceNomeUrna = new HashMap<>();
         Map<String, String> cpfPorAleceChave = new HashMap<>();
+        Map<String, JsonNode> candPorAlescNomeCivil = new HashMap<>();
+        Map<String, JsonNode> candPorAlescNomeUrna = new HashMap<>();
+        Map<String, String> cpfPorAlescChave = new HashMap<>();
         for (JsonNode c : candidaturas) {
             Tse.Chave chave = chaves.get(c.get("sq").stringValue());
             if (chave != null) {
@@ -254,6 +258,14 @@ final class Vinculo {
                     }
                     if (chave.cpf() != null) {
                         cpfPorAleceChave.put(chave.nomeCivil() + "|" + chave.nascimento(), chave.cpf());
+                    }
+                } else if ("DEPUTADO ESTADUAL".equals(chave.cargo()) && "SC".equals(chave.uf())) {
+                    candPorAlescNomeCivil.merge(chave.nomeCivil(), c, Vinculo::maisRecente);
+                    if (c.hasNonNull("nome_urna")) {
+                        candPorAlescNomeUrna.merge(Texto.normalizarNome(c.get("nome_urna").stringValue()), c, Vinculo::maisRecente);
+                    }
+                    if (chave.cpf() != null) {
+                        cpfPorAlescChave.put(chave.nomeCivil() + "|" + chave.nascimento(), chave.cpf());
                     }
                 }
             }
@@ -526,6 +538,62 @@ final class Vinculo {
                 if (cand == null && !nomeLimpo.equals(nomeNorm)) {
                     Set<String> palavras = palavras(nomeLimpo);
                     for (var entry : candPorAleceNomeCivil.entrySet()) {
+                        if (palavras(entry.getKey()).containsAll(palavras)) {
+                            cand = entry.getValue();
+                            break;
+                        }
+                    }
+                }
+                if (cand != null) {
+                    candSapl = cand;
+                    chaveSapl = chaves.get(cand.get("sq").stringValue());
+                    if (cpf == null && chaveSapl != null) {
+                        cpf = chaveSapl.cpf();
+                    }
+                }
+            } else if ("alesc".equals(p.fonteCli)) {
+                String nomeNorm = Texto.normalizarNome(p.nome);
+                String nomeLimpo = Texto.normalizarNome(limparTitulo(p.nome));
+                JsonNode cand = candPorAlescNomeUrna.get(nomeNorm);
+                if (cand == null) {
+                    cand = candPorAlescNomeCivil.get(nomeNorm);
+                }
+                if (cand == null && !nomeLimpo.equals(nomeNorm)) {
+                    cand = candPorAlescNomeUrna.get(nomeLimpo);
+                    if (cand == null) {
+                        cand = candPorAlescNomeCivil.get(nomeLimpo);
+                    }
+                }
+                if (cand == null) {
+                    Set<String> palavras = palavras(nomeNorm);
+                    for (var entry : candPorAlescNomeUrna.entrySet()) {
+                        if (palavras(entry.getKey()).containsAll(palavras)) {
+                            cand = entry.getValue();
+                            break;
+                        }
+                    }
+                }
+                if (cand == null) {
+                    Set<String> palavras = palavras(nomeNorm);
+                    for (var entry : candPorAlescNomeCivil.entrySet()) {
+                        if (palavras(entry.getKey()).containsAll(palavras)) {
+                            cand = entry.getValue();
+                            break;
+                        }
+                    }
+                }
+                if (cand == null && !nomeLimpo.equals(nomeNorm)) {
+                    Set<String> palavras = palavras(nomeLimpo);
+                    for (var entry : candPorAlescNomeUrna.entrySet()) {
+                        if (palavras(entry.getKey()).containsAll(palavras)) {
+                            cand = entry.getValue();
+                            break;
+                        }
+                    }
+                }
+                if (cand == null && !nomeLimpo.equals(nomeNorm)) {
+                    Set<String> palavras = palavras(nomeLimpo);
+                    for (var entry : candPorAlescNomeCivil.entrySet()) {
                         if (palavras(entry.getKey()).containsAll(palavras)) {
                             cand = entry.getValue();
                             break;

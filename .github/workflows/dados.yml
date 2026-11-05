@@ -11,7 +11,7 @@ on:
       fonte:
         description: Fonte a coletar. As demais seguem do cache de dados brutos.
         type: choice
-        options: [todas, camara, senado, tse, executivo, sapl, tcesp, cgu, agenda, contrib, alesp, executivosp, almg, alep, alba, alerj, alrs, alece]
+        options: [todas, camara, senado, tse, executivo, sapl, tcesp, cgu, agenda, contrib, alesp, executivosp, almg, alep, alba, alerj, alrs, alece, alesc]
         default: todas
 
 permissions:
@@ -185,6 +185,14 @@ jobs:
         env:
           ETL_ORCAMENTO_MINUTOS: '15'
         run: java -Xmx2g -jar etl/target/etl.jar fetch alece
+      - name: fetch alesc
+        # Assembleia Legislativa do Estado de Santa Catarina: deputados em exercício, comissões e perfis.
+        if: env.FONTE == 'todas' || env.FONTE == 'alesc'
+        continue-on-error: true
+        timeout-minutes: 20
+        env:
+          ETL_ORCAMENTO_MINUTOS: '15'
+        run: java -Xmx2g -jar etl/target/etl.jar fetch alesc
       - name: fetch contrib
         # Confere se as URLs de origem e os snapshots dos registros manuais ainda respondem.
         if: env.FONTE == 'todas' || env.FONTE == 'contrib'

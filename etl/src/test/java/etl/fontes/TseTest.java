@@ -24,6 +24,7 @@ class TseTest {
         assertTrue(Tse.cargoValido(Map.of("DS_CARGO", "DEPUTADO ESTADUAL", "SG_UF", "RJ")));
         assertTrue(Tse.cargoValido(Map.of("DS_CARGO", "DEPUTADO ESTADUAL", "SG_UF", "RS")));
         assertTrue(Tse.cargoValido(Map.of("DS_CARGO", "DEPUTADO ESTADUAL", "SG_UF", "CE")));
+        assertTrue(Tse.cargoValido(Map.of("DS_CARGO", "DEPUTADO ESTADUAL", "SG_UF", "SC")));
         assertTrue(Tse.cargoValido(Map.of("DS_CARGO", "DEPUTADO ESTADUAL", "SG_UF", "PR")));
         assertTrue(Tse.cargoValido(Map.of("DS_CARGO", "DEPUTADO ESTADUAL", "SG_UF", "SP")));
         assertTrue(Tse.cargoValido(Map.of("DS_CARGO", "DEPUTADO ESTADUAL", "SG_UF", "MG")));
