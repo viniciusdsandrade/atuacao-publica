@@ -1685,5 +1685,51 @@
   status: validado
   validado_em: 2026-11-05
 
+- id: alesc-deputados
+  nome: Assembleia Legislativa do Estado de Santa Catarina, deputados estaduais
+  orgao: Assembleia Legislativa do Estado de Santa Catarina
+  esfera: estadual
+  ente: SC
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://www.alesc.sc.gov.br/deputados/
+  formato: HTML
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Listagem oficial de deputados estaduais em exercício na 20ª legislatura."
+  status: validado
+  validado_em: 2026-11-05
+
+- id: alesc-deputados-detalhes
+  nome: Assembleia Legislativa do Estado de Santa Catarina, páginas parlamentares e biografias
+  orgao: Assembleia Legislativa do Estado de Santa Catarina
+  esfera: estadual
+  ente: SC
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://www.alesc.sc.gov.br/deputado/alex-brasil/
+  formato: HTML
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Páginas biográficas de deputados com dados de nascimento e histórico parlamentar."
+  status: validado
+  validado_em: 2026-11-05
+
+- id: alesc-portal
+  nome: Assembleia Legislativa do Estado de Santa Catarina, portal institucional e fotos
+  orgao: Assembleia Legislativa do Estado de Santa Catarina
+  esfera: estadual
+  ente: SC
+  categoria: primeira_parte
+  nivel_confianca: T0
+  url_base: https://www.alesc.sc.gov.br/
+  formato: HTML e JPG
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Portal institucional e repositório de fotografias oficiais dos parlamentares."
+  status: validado
+  validado_em: 2026-11-05
+
+
 
 

@@ -186,7 +186,15 @@ Verificação de 2026-11-02, com scripts locais (Playwright e axe-core, fora do 
     - Vínculo com o TSE: inclusão de `CE` em `UFS_ESTADUAIS` de `Tse.java` (+1.500 candidaturas estaduais indexadas); 52 deputados com identificador canônico `alece-{slug}` e 2 deputados fundidos com mandatos federais/senado mantendo redirecionamento de alias.
     - Executivo estadual do Ceará: Governador Elmano de Freitas coberto pelo arquivo histórico via candidaturas do TSE e portais estaduais catalogados.
     - Pipeline e workflow: registro de `alece` em `Main.java`, `Publicador.java`, `Vinculo.java` e passo `fetch alece` no workflow `.github/workflows/dados.yml`.
-11. Oitavo estado da federação: avaliação técnica e planejamento para Santa Catarina (ALESC) ou Goiás (ALEGO).
+11. ALESC e Governo do Estado de Santa Catarina (oitavo estado da federação, ADR-0021): concluído em 2026-11-05.
+    - Fontes catalogadas e validadas em `docs/FONTES.md`: portal institucional aberto da ALESC (`https://www.alesc.sc.gov.br`), endpoint de deputados em exercício (`/deputados/`), perfis biográficos individuais (`/deputado/{slug}/`), comissões permanentes e temporárias (`https://portalelegis.alesc.sc.gov.br/comissoes-permanentes`), fotos oficiais em alta resolução e portais estaduais de transparência (`sc-transparencia`) e diário oficial (`sc-diario-oficial`).
+    - Modelo e identificador: identificador canônico `alesc-{slug}` (slug textual oficial) e chave `alesc` em `ids_externos` de `schemas/politico.schema.json`.
+    - Adaptador `Alesc.java` implementado e coberto por testes unitários (`AlescTest.java`): ingestão e parsing dos 40 deputados estaduais em exercício na 20ª Legislatura (2023–2027), fotos oficiais em resolução original, extração de biografias, comissões permanentes e minimização estrita de dados de contato.
+    - Vínculo com o TSE: inclusão de `SC` em `UFS_ESTADUAIS` de `Tse.java` (+1.100 candidaturas estaduais indexadas); 100% dos deputados estaduais da ALESC vinculados deterministicamente às suas candidaturas das eleições de 2018, 2022 e 2026 (incluindo normalização de títulos religiosos como "Padre Pedro Baldissera").
+    - Executivo estadual de Santa Catarina: Governador Jorginho Mello coberto pelo arquivo histórico via candidaturas do TSE e portais estaduais catalogados.
+    - Cobertura regional: consolidação de 100% de cobertura dos estados da Região Sul do Brasil (PR, RS, SC).
+    - Pipeline e workflow: registro de `alesc` em `Main.java`, `Publicador.java`, `Vinculo.java` e passo `fetch alesc` no workflow `.github/workflows/dados.yml`.
+12. Nono estado da federação: avaliação técnica e planejamento para Goiás (ALEGO — Região Centro-Oeste) ou Pernambuco (ALEPE — Região Nordeste).
 
 ### Redes sociais
 

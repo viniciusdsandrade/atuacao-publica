@@ -54,6 +54,7 @@
         "alerj": { "type": "string", "pattern": "^[0-9]+$" },
         "alrs": { "type": "string", "pattern": "^[0-9]+$" },
         "alece": { "type": "string", "pattern": "^[a-z0-9-]+$" },
+        "alesc": { "type": "string", "pattern": "^[a-z0-9-]+$" },
         "sapl": { "type": "string", "pattern": "^[0-9]+$" },
         "tse": {
           "description": "SQ_CANDIDATO por ano de eleição.",

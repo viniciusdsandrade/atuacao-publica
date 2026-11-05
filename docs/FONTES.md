@@ -661,6 +661,33 @@ Validação em 2026-11-03 com o User-Agent do projeto.
 - Mandato do Governador Elmano de Freitas integrado ao modelo e ao arquivo histórico via candidaturas do TSE.
 
 
+## Fontes de Santa Catarina (ALESC & Governo do Estado)
+
+### `alesc-deputados`: parlamentares em exercício
+
+- URL base: `https://www.alesc.sc.gov.br/deputados/`
+- 40 deputados estaduais em exercício na 20ª legislatura (2023–2027), com slug textual oficial, nome parlamentar, partido e foto oficial.
+- Identificador canônico no projeto: `alesc-{slug}` (ex.: `alesc-alex-brasil`, `alesc-altair-silva`).
+
+### `alesc-deputados-detalhes`: perfil biográfico e comissões
+
+- URL base: `https://www.alesc.sc.gov.br/deputado/` e `https://portalelegis.alesc.sc.gov.br/comissoes-permanentes`
+- Biografia parlamentar contendo dados de nascimento, formação educacional e atuação parlamentar.
+- Comissões permanentes e temporárias com identificação de Presidente, Vice-Presidente e Membros via Portal e-Legis.
+- Dados de gabinete, telefones e e-mails institucionais descartados na ingestão por regra estrita de privacidade.
+
+### `alesc-portal`: portal institucional e fotos
+
+- URL base: `https://www.alesc.sc.gov.br/`
+- Repositório de fotos oficiais dos parlamentares em alta resolução hospedadas no portal institucional.
+
+### `sc-transparencia` e `sc-diario-oficial`: Executivo estadual
+
+- Transparência orçamentária: `https://www.transparencia.sc.gov.br/`
+- Diário Oficial: `https://portal.doe.sea.sc.gov.br/`
+- Mandato do Governador Jorginho Mello integrado ao modelo e ao arquivo histórico via candidaturas do TSE.
+
+
 ## Fora da política de fontes
 
 Imprensa, blogs, agregadores sem metodologia, redes sociais de terceiros, mensagens, vídeos não oficiais, Wikipedia e rankings de terceiros.
