@@ -16,6 +16,8 @@ import org.junit.jupiter.api.io.TempDir;
 import etl.Coleta;
 import etl.Contexto;
 import etl.Json;
+import etl.Registros.OrgaoOuFrente;
+import etl.Registros.Prov;
 import tools.jackson.databind.JsonNode;
 
 class AlrsTest {
@@ -137,6 +139,52 @@ class AlrsTest {
         assertEquals("2023-02-01", m1.get("inicio").stringValue());
         assertEquals("2027-01-31", m1.get("fim").stringValue());
         assertEquals(56, m1.get("legislatura").asInt());
+    }
+
+    @Test
+    void extraiComissoesDeFragmentoHtml() {
+        String html = """
+                <div class="bloco-teste">
+                    <script type="application/json" data-drupal-selector="drupal-settings-json">
+                    {
+                      "alergs_deputados": {
+                        "comissoes": [
+                          {
+                            "idComissao": 3,
+                            "tipoComissao": "Comissões Permanentes",
+                            "nomeComissao": "Comissão de Agricultura, Pecuária, Pesca e Cooperativismo",
+                            "situacaoComissao": "NAO"
+                          },
+                          {
+                            "idComissao": 501,
+                            "tipoComissao": "Comissões Especiais",
+                            "nomeComissao": "Comissão Especial da Apicultura",
+                            "situacaoComissao": "SIM"
+                          }
+                        ]
+                      }
+                    }
+                    </script>
+                </div>
+                """;
+
+        Prov prov = new Prov("alrs-deputados-detalhes", "https://ww4.al.rs.gov.br/deputados/13/comissoes", Instant.parse("2026-11-05T12:00:00Z"));
+        List<OrgaoOuFrente> comissoes = Alrs.extrairComissoesDoHtml(html, prov);
+        assertEquals(2, comissoes.size());
+
+        OrgaoOuFrente c1 = comissoes.get(0);
+        assertEquals("comissao", c1.tipo());
+        assertEquals("Comissão de Agricultura, Pecuária, Pesca e Cooperativismo", c1.nome());
+        assertEquals("Membro", c1.papel());
+        assertEquals(Alrs.INICIO_LEG_56, c1.inicio());
+        assertEquals(null, c1.fim());
+
+        OrgaoOuFrente c2 = comissoes.get(1);
+        assertEquals("comissao", c2.tipo());
+        assertEquals("Comissão Especial da Apicultura", c2.nome());
+        assertEquals("Membro", c2.papel());
+        assertEquals(Alrs.INICIO_LEG_56, c2.inicio());
+        assertEquals(Alrs.FIM_LEG_56, c2.fim());
     }
 
     private static void gravarMetadado(Path pastaFonte, String relativo, String url) throws IOException {

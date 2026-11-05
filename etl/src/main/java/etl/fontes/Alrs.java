@@ -10,6 +10,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import tools.jackson.databind.JsonNode;
 
@@ -21,6 +23,7 @@ import etl.Json;
 import etl.Registros.FonteUsada;
 import etl.Registros.LinkOficial;
 import etl.Registros.Mandato;
+import etl.Registros.OrgaoOuFrente;
 import etl.Registros.Pessoa;
 import etl.Registros.Prov;
 import etl.Texto;
@@ -44,6 +47,9 @@ public final class Alrs implements Fonte {
     public static final LocalDate FIM_LEG_56 = LocalDate.of(2027, 1, 31);
     public static final int LEGISLATURA_56 = 56;
 
+    public static final Pattern DRUPAL_SETTINGS_PATTERN = Pattern.compile(
+            "data-drupal-selector=\"drupal-settings-json\">\\s*(\\{.*?\\})\\s*</script>", Pattern.DOTALL);
+
     private static final Set<String> PREPOSICOES = Set.of("de", "da", "do", "das", "dos", "del", "e");
 
     @Override
@@ -63,6 +69,8 @@ public final class Alrs implements Fonte {
         for (DeputadoBruto d : deputados) {
             String urlPerfil = SITE + "/deputados/" + d.id();
             coleta.obterOuVazio(urlPerfil, "perfis/" + d.id() + ".html", "text/html", Politica.SEMANAL);
+            String urlComissoes = SITE + "/deputados/" + d.id() + "/comissoes";
+            coleta.obterOuVazio(urlComissoes, "comissoes/" + d.id() + ".html", "text/html", Politica.SEMANAL);
         }
     }
 
@@ -109,15 +117,31 @@ public final class Alrs implements Fonte {
                     partido, fotoUrl, "Em exercício", true, links);
             pessoas.add(pessoa);
 
+            String urlComissoes = SITE + "/deputados/" + id + "/comissoes";
+            Coleta.Arquivo arqComissoes = Coleta.metadados(ctx, nome(), "comissoes/" + id + ".html");
+            List<OrgaoOuFrente> orgaos = List.of();
+            if (arqComissoes != null && Files.exists(Coleta.caminho(ctx, arqComissoes))) {
+                try {
+                    String htmlComissoes = Texto.lerArquivo(Coleta.caminho(ctx, arqComissoes));
+                    Prov provComissoes = Prov.de(FONTE_DETALHES, urlComissoes, arqComissoes);
+                    orgaos = extrairComissoesDoHtml(htmlComissoes, provComissoes);
+                } catch (Exception e) {
+                    System.err.println("alrs: erro ao ler comissoes do deputado " + id + ": " + e.getMessage());
+                }
+            }
+
             List<FonteUsada> fontes = new ArrayList<>();
             fontes.add(new FonteUsada(FONTE_DEPUTADOS, API_DEPUTADOS, arqDeputados != null ? arqDeputados.capturadoEm() : null));
             if (arqPerfil != null) {
                 fontes.add(new FonteUsada(FONTE_DETALHES, urlPerfil, arqPerfil.capturadoEm()));
             }
+            if (!orgaos.isEmpty() && arqComissoes != null) {
+                fontes.add(new FonteUsada(FONTE_DETALHES, urlComissoes, arqComissoes.capturadoEm()));
+            }
 
             var blocosNode = Json.SAIDA.createObjectNode();
             blocosNode.set("mandatos", Json.SAIDA.valueToTree(mandatos));
-            blocosNode.set("orgaos_e_frentes", Json.SAIDA.createArrayNode());
+            blocosNode.set("orgaos_e_frentes", Json.SAIDA.valueToTree(orgaos));
             blocosNode.set("despesas", Json.SAIDA.createArrayNode());
             blocosNode.set("fontes", Json.SAIDA.valueToTree(fontes));
             Json.gravar(pastaBlocos.resolve(id + ".json"), blocosNode);
@@ -125,6 +149,37 @@ public final class Alrs implements Fonte {
 
         Json.gravar(ctx.normalizado().resolve("alrs/pessoas.json"), Json.SAIDA.valueToTree(pessoas));
         System.out.println("alrs: " + pessoas.size() + " deputados estaduais normalizados");
+    }
+
+    public static List<OrgaoOuFrente> extrairComissoesDoHtml(String html, Prov prov) {
+        if (html == null || html.isBlank()) {
+            return List.of();
+        }
+        Matcher m = DRUPAL_SETTINGS_PATTERN.matcher(html);
+        if (!m.find()) {
+            return List.of();
+        }
+        try {
+            JsonNode root = Json.SAIDA.readTree(m.group(1));
+            JsonNode comissoes = root.path("alergs_deputados").path("comissoes");
+            if (!comissoes.isArray()) {
+                return List.of();
+            }
+            List<OrgaoOuFrente> lista = new ArrayList<>();
+            for (JsonNode c : comissoes) {
+                String nome = c.path("nomeComissao").asText("").trim();
+                if (nome.isEmpty()) continue;
+                String tipoStr = c.path("tipoComissao").asText("").toLowerCase(Locale.ROOT);
+                String tipo = tipoStr.contains("frente") ? "frente" : (tipoStr.contains("orgao") ? "orgao" : "comissao");
+                String papel = "Membro";
+                LocalDate inicio = INICIO_LEG_56;
+                LocalDate fim = "SIM".equalsIgnoreCase(c.path("situacaoComissao").asText()) ? FIM_LEG_56 : null;
+                lista.add(new OrgaoOuFrente(tipo, nome, null, papel, inicio, fim, prov));
+            }
+            return lista;
+        } catch (Exception e) {
+            return List.of();
+        }
     }
 
     public static List<DeputadoBruto> extrairDeputados(Contexto ctx) {
