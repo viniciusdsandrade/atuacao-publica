@@ -635,6 +635,32 @@ Validação em 2026-11-03 com o User-Agent do projeto.
 - Mandato do Governador Eduardo Leite integrado ao modelo e ao arquivo histórico via candidaturas do TSE.
 
 
+## Fontes do Ceará (ALECE & Governo do Estado)
+
+### `alece-deputados`: parlamentares em exercício
+
+- URL base: `https://www.al.ce.gov.br/deputados`
+- Deputados estaduais da 31ª legislatura (2023–2027), com slug textual oficial, nome parlamentar, partido e foto oficial.
+- Identificador canônico no projeto: `alece-{slug}` (ex.: `alece-agenor-neto`).
+
+### `alece-deputados-detalhes`: perfil biográfico e atuação
+
+- URL base: `https://www.al.ce.gov.br/deputados/`
+- Biografia parlamentar detalhada contendo nome civil, data e município de nascimento, e histórico político.
+- Dados de gabinete, telefones e e-mails institucionais descartados na ingestão por regra estrita de privacidade.
+
+### `alece-portal`: portal institucional e fotos
+
+- URL base: `https://www.al.ce.gov.br/`
+- Repositório de fotos oficiais dos parlamentares hospedadas em `https://www.al.ce.gov.br/image/`.
+
+### `ce-transparencia` e `ce-diario-oficial`: Executivo estadual
+
+- Transparência orçamentária: `https://transparencia.ce.gov.br/`
+- Diário Oficial: `https://www.doe.seplag.ce.gov.br/`
+- Mandato do Governador Elmano de Freitas integrado ao modelo e ao arquivo histórico via candidaturas do TSE.
+
+
 ## Fora da política de fontes
 
 Imprensa, blogs, agregadores sem metodologia, redes sociais de terceiros, mensagens, vídeos não oficiais, Wikipedia e rankings de terceiros.

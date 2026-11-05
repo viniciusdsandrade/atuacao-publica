@@ -1640,4 +1640,50 @@
   status: validado
   validado_em: 2026-11-05
 
+- id: alece-deputados
+  nome: Assembleia Legislativa do Estado do Ceará, deputados estaduais
+  orgao: Assembleia Legislativa do Estado do Ceará
+  esfera: estadual
+  ente: CE
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://www.al.ce.gov.br/deputados
+  formato: HTML
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Listagem oficial de deputados estaduais em exercício na 31ª legislatura."
+  status: validado
+  validado_em: 2026-11-05
+
+- id: alece-deputados-detalhes
+  nome: Assembleia Legislativa do Estado do Ceará, páginas parlamentares e biografias
+  orgao: Assembleia Legislativa do Estado do Ceará
+  esfera: estadual
+  ente: CE
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://www.al.ce.gov.br/deputados/agenor-neto
+  formato: HTML
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Páginas biográficas de deputados com histórico partidário e trajetória parlamentar."
+  status: validado
+  validado_em: 2026-11-05
+
+- id: alece-portal
+  nome: Assembleia Legislativa do Estado do Ceará, portal institucional e fotos
+  orgao: Assembleia Legislativa do Estado do Ceará
+  esfera: estadual
+  ente: CE
+  categoria: primeira_parte
+  nivel_confianca: T0
+  url_base: https://www.al.ce.gov.br/
+  formato: HTML e JPG
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Portal institucional e repositório de fotografias oficiais em /image/."
+  status: validado
+  validado_em: 2026-11-05
+
+
 

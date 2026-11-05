@@ -172,14 +172,21 @@ Verificação de 2026-11-02, com scripts locais (Playwright e axe-core, fora do 
    - Executivo estadual do Rio de Janeiro: Governador Cláudio Castro coberto pelo arquivo histórico via candidaturas do TSE (2018 e 2022) e portais estaduais catalogados.
    - Pipeline e workflow: registro de `alerj` em `Main.java`, `Publicador.java`, `Vinculo.java` e passo `fetch alerj` no workflow `.github/workflows/dados.yml`.
    - Publicação: 70 deputados estaduais da ALERJ normalizados e publicados sem nenhuma rejeição de schema.
-9. ALRS e Governo do Rio Grande do Sul (sexto estado da federação, ADR-0019): em andamento em 2026-11-05.
+9. ALRS e Governo do Rio Grande do Sul (sexto estado da federação, ADR-0019): concluído em 2026-11-05.
    - Fontes catalogadas e validadas em `docs/FONTES.md`: portal institucional aberto da ALRS (`https://www.al.rs.gov.br` e `https://ww4.al.rs.gov.br`), API em JSON de deputados em exercício (`https://ww4.al.rs.gov.br:5000/listarDestaqueDeputados`), páginas parlamentares individuais e comissões (`/deputados/{id}` e `/deputados/{id}/comissoes`), fotos oficiais no repositório (`https://ww2.al.rs.gov.br/filerepository/fotografias/...`) e portais estaduais de transparência (`rs-transparencia`) e diário oficial (`rs-diario-oficial`).
    - Modelo e identificador: identificador canônico `alrs-{id}` (numérico oficial) e chave `alrs` em `ids_externos` de `schemas/politico.schema.json`.
    - Adaptador `Alrs.java` implementado e coberto por testes unitários (`AlrsTest.java`): ingestão e parsing dos 55 deputados estaduais em exercício na 56ª Legislatura (2023–2027), fotos oficiais em alta resolução, higienização de títulos e minimização de dados de contato.
-   - Vínculo com o TSE: inclusão de `RS` em `UFS_ESTADUAIS` de `Tse.java` (+3.100 candidaturas estaduais indexadas) e casamento determinístico com as eleições de 2018, 2022 e 2026.
+   - Vínculo com o TSE: inclusão de `RS` em `UFS_ESTADUAIS` de `Tse.java` (+3.200 candidaturas estaduais indexadas); 50 deputados estaduais com ID canônico `alrs-{id}` e 5 deputados com alias automático `alrs-xxx -> tse-yyy` mantendo estabilidade histórica.
    - Executivo estadual do Rio Grande do Sul: Governador Eduardo Leite coberto pelo arquivo histórico via candidaturas do TSE e portais estaduais catalogados.
-   - Pipeline e workflow: registro de `alrs` em `Main.java`, `Publicador.java`, `Vinculo.java` e passo `fetch alrs` no workflow `.github/workflows/dados.yml`.
-10. Sétimo estado da federação: avaliação técnica e planejamento para Ceará (ALECE) ou Santa Catarina (ALESC).
+   - Limitação documentada: a API em JSON da ALRS na porta `:5000` requer conectividade direta que sofre restrição de saída (connect timeout) em runners de cloud internacional (Azure `eastus`); a coleta local e testes operam normalmente.
+10. ALECE e Governo do Estado do Ceará (sétimo estado da federação, ADR-0020): concluído em 2026-11-05.
+    - Fontes catalogadas e validadas em `docs/FONTES.md`: portal institucional aberto da ALECE (`https://www.al.ce.gov.br`), endpoint de deputados em exercício (`/deputados`), perfis biográficos individuais (`/deputados/{slug}`), fotos oficiais no repositório (`/image/...`) e portais estaduais de transparência (`ce-transparencia`) e diário oficial (`ce-diario-oficial`).
+    - Modelo e identificador: identificador canônico `alece-{slug}` (slug textual oficial) e chave `alece` em `ids_externos` de `schemas/politico.schema.json`.
+    - Adaptador `Alece.java` implementado e coberto por testes unitários (`AleceTest.java`): ingestão e parsing dos 54 deputados estaduais em exercício na 31ª Legislatura (2023–2027), fotos oficiais, extração de biografias e minimização de dados de contato.
+    - Vínculo com o TSE: inclusão de `CE` em `UFS_ESTADUAIS` de `Tse.java` (+1.500 candidaturas estaduais indexadas); 52 deputados com identificador canônico `alece-{slug}` e 2 deputados fundidos com mandatos federais/senado mantendo redirecionamento de alias.
+    - Executivo estadual do Ceará: Governador Elmano de Freitas coberto pelo arquivo histórico via candidaturas do TSE e portais estaduais catalogados.
+    - Pipeline e workflow: registro de `alece` em `Main.java`, `Publicador.java`, `Vinculo.java` e passo `fetch alece` no workflow `.github/workflows/dados.yml`.
+11. Oitavo estado da federação: avaliação técnica e planejamento para Santa Catarina (ALESC) ou Goiás (ALEGO).
 
 ### Redes sociais
 
