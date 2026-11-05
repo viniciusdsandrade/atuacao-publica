@@ -164,7 +164,15 @@ Verificação de 2026-11-02, com scripts locais (Playwright e axe-core, fora do 
    - Executivo estadual da Bahia: Governador Jerônimo Rodrigues coberto pelo arquivo histórico via candidaturas do TSE (2022) e portais estaduais catalogados.
    - Pipeline e workflow: registro de `alba` em `Main.java`, `Publicador.java`, `Vinculo.java` e passo `fetch alba` no workflow `.github/workflows/dados.yml`.
    - Publicação: 63 deputados estaduais da ALBA normalizados e publicados sem nenhuma rejeição de schema; total de 132 registros da Bahia (63 estaduais, 65 federais, 3 senadores e o Governador) integrados ao catálogo nacional de 1.547 perfis.
-8. Quinto estado da federação: avaliação técnica e planejamento para Rio de Janeiro (ALERJ) ou Rio Grande do Sul (ALRS).
+8. ALERJ e Governo do Rio de Janeiro (quinto estado da federação, ADR-0018): concluído em 2026-11-05.
+   - Fontes catalogadas e validadas em `docs/FONTES.md`: portal institucional aberto da ALERJ (`https://www.alerj.rj.gov.br`), endpoint de deputados em exercício (`/Deputados/QuemSao`), perfis individuais e atuação (`/Deputados/PerfilDeputado/{id}?Legislatura=20`), fotos oficiais no repositório (`/Uploads/PerfilDeputado/Imagem/...`) e portais estaduais de transparência (`rj-transparencia`) e diário oficial (`rj-diario-oficial`).
+   - Modelo e identificador: identificador canônico `alerj-{id}` (numérico oficial) e chave `alerj` em `ids_externos` de `schemas/politico.schema.json`.
+   - Adaptador `Alerj.java` implementado e coberto por testes unitários (`AlerjTest.java`): ingestão e parsing dos cards oficiais de deputados, fotos oficiais, extração de posse formal e biografias oficiais.
+   - Vínculo com o TSE: inclusão de `RJ` em `UFS_ESTADUAIS` de `Tse.java` (+2.785 candidaturas estaduais indexadas); 70 dos 70 deputados estaduais da ALERJ (100% de cobertura) vinculados deterministicamente às suas candidaturas das eleições de 2018, 2022 e 2026.
+   - Executivo estadual do Rio de Janeiro: Governador Cláudio Castro coberto pelo arquivo histórico via candidaturas do TSE (2018 e 2022) e portais estaduais catalogados.
+   - Pipeline e workflow: registro de `alerj` em `Main.java`, `Publicador.java`, `Vinculo.java` e passo `fetch alerj` no workflow `.github/workflows/dados.yml`.
+   - Publicação: 70 deputados estaduais da ALERJ normalizados e publicados sem nenhuma rejeição de schema.
+9. Sexto estado da federação: avaliação técnica e planejamento para Rio Grande do Sul (ALRS) ou Ceará (ALECE).
 
 ### Redes sociais
 

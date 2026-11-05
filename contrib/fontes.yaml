@@ -1550,3 +1550,48 @@
   status: validado
   validado_em: 2026-11-04
 
+- id: alerj-deputados
+  nome: Assembleia Legislativa do Estado do Rio de Janeiro, deputados estaduais
+  orgao: Assembleia Legislativa do Estado do Rio de Janeiro
+  esfera: estadual
+  ente: RJ
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://www.alerj.rj.gov.br/Deputados/QuemSao
+  formato: HTML
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Lista oficial de deputados estaduais em exercício na 13ª legislatura."
+  status: validado
+  validado_em: 2026-11-05
+
+- id: alerj-deputados-detalhes
+  nome: Assembleia Legislativa do Estado do Rio de Janeiro, perfis individuais e biografias
+  orgao: Assembleia Legislativa do Estado do Rio de Janeiro
+  esfera: estadual
+  ente: RJ
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://www.alerj.rj.gov.br/Deputados/PerfilDeputado/505?Legislatura=20
+  formato: HTML
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Páginas biográficas de deputados com histórico partidário, data de posse e biografia oficial."
+  status: validado
+  validado_em: 2026-11-05
+
+- id: alerj-portal
+  nome: Assembleia Legislativa do Estado do Rio de Janeiro, portal institucional e fotos
+  orgao: Assembleia Legislativa do Estado do Rio de Janeiro
+  esfera: estadual
+  ente: RJ
+  categoria: primeira_parte
+  nivel_confianca: T0
+  url_base: https://www.alerj.rj.gov.br/
+  formato: HTML e JPG
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Portal institucional oficial e fotos de parlamentares hospedadas em /Uploads/PerfilDeputado/Imagem/."
+  status: validado
+  validado_em: 2026-11-05
+

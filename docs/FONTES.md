@@ -583,6 +583,32 @@ Validação em 2026-11-03 com o User-Agent do projeto.
 - Mandato do Governador Jerônimo Rodrigues integrado ao modelo e ao arquivo histórico via candidaturas do TSE.
 
 
+## Fontes do Rio de Janeiro (ALERJ & Governo do Estado)
+
+### `alerj-deputados`: parlamentares em exercício
+
+- URL base: `https://www.alerj.rj.gov.br/Deputados/QuemSao`
+- 70 deputados estaduais em exercício na 13ª legislatura (2023–2027), com ID numérico oficial, nome parlamentar, partido e foto oficial.
+- Identificador canônico no projeto: `alerj-{id}` (ex.: `alerj-505`).
+
+### `alerj-deputados-detalhes`: perfil biográfico e atuação
+
+- URL base: `https://www.alerj.rj.gov.br/Deputados/PerfilDeputado/`
+- Data formal de posse na legislatura atual, histórico partidário, mandatos em legislaturas anteriores e biografia oficial.
+- Dados de gabinete, telefones e e-mails descartados na ingestão por regra estrita de privacidade.
+
+### `alerj-portal`: portal institucional e fotos
+
+- URL base: `https://www.alerj.rj.gov.br/`
+- Fotos oficiais dos parlamentares hospedadas em `/Uploads/PerfilDeputado/Imagem/`.
+
+### `rj-transparencia` e `rj-diario-oficial`: Executivo estadual
+
+- Transparência orçamentária: `https://www.transparencia.rj.gov.br/`
+- Diário Oficial (IOERJ): `https://www.ioerj.com.br/`
+- Mandato do Governador Cláudio Castro integrado ao modelo e ao arquivo histórico via candidaturas do TSE.
+
+
 ## Fora da política de fontes
 
 Imprensa, blogs, agregadores sem metodologia, redes sociais de terceiros, mensagens, vídeos não oficiais, Wikipedia e rankings de terceiros.
