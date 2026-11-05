@@ -99,7 +99,11 @@ public final class Http {
      * compactados e o arquivo ganha a extensão .gz.
      */
     public Baixado baixar(String url, Path destino, String accept) throws IOException, InterruptedException {
-        HttpResponse<InputStream> resposta = enviar(requisicao(url, accept, "GET"), HttpResponse.BodyHandlers.ofInputStream());
+        return baixar(url, destino, accept, Map.of());
+    }
+
+    public Baixado baixar(String url, Path destino, String accept, Map<String, String> cabecalhos) throws IOException, InterruptedException {
+        HttpResponse<InputStream> resposta = enviar(requisicao(url, accept, "GET", cabecalhos), HttpResponse.BodyHandlers.ofInputStream());
         try (InputStream corpo = resposta.body()) {
             if (resposta.statusCode() == 404 || resposta.statusCode() == 403) {
                 throw new NaoEncontrado("HTTP " + resposta.statusCode() + " em " + url);
@@ -135,13 +139,21 @@ public final class Http {
     }
 
     private HttpRequest requisicao(String url, String accept, String metodo) {
-        return HttpRequest.newBuilder(URI.create(url))
+        return requisicao(url, accept, metodo, Map.of());
+    }
+
+    private HttpRequest requisicao(String url, String accept, String metodo, Map<String, String> cabecalhos) {
+        var builder = HttpRequest.newBuilder(URI.create(url))
                 .timeout(Duration.ofSeconds(120))
                 .header("User-Agent", userAgent)
                 .header("Accept", accept)
-                .header("Accept-Encoding", "gzip")
-                .method(metodo, HttpRequest.BodyPublishers.noBody())
-                .build();
+                .header("Accept-Encoding", "gzip");
+        if (cabecalhos != null) {
+            for (var entry : cabecalhos.entrySet()) {
+                builder.header(entry.getKey(), entry.getValue());
+            }
+        }
+        return builder.method(metodo, HttpRequest.BodyPublishers.noBody()).build();
     }
 
     private <T> HttpResponse<T> enviar(HttpRequest requisicao, HttpResponse.BodyHandler<T> leitor)

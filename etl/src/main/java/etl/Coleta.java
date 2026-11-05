@@ -97,7 +97,12 @@ public final class Coleta {
 
     public Arquivo obter(String url, String caminho, String accept, Politica politica)
             throws IOException, InterruptedException {
-        return obter(url, caminho, accept, politica, false, null, false);
+        return obter(url, caminho, accept, politica, false, null, false, Map.of());
+    }
+
+    public Arquivo obter(String url, String caminho, String accept, Politica politica, Map<String, String> cabecalhos)
+            throws IOException, InterruptedException {
+        return obter(url, caminho, accept, politica, false, null, false, cabecalhos);
     }
 
     /** Transforma o download antes de guardar: de um arquivo grande, só a parte útil fica no cache. */
@@ -111,6 +116,11 @@ public final class Coleta {
      */
     public Arquivo obterOuVazio(String url, String caminho, String accept, Politica politica)
             throws IOException, InterruptedException {
+        return obterOuVazio(url, caminho, accept, politica, Map.of());
+    }
+
+    public Arquivo obterOuVazio(String url, String caminho, String accept, Politica politica, Map<String, String> cabecalhos)
+            throws IOException, InterruptedException {
         Path destino = ctx.raw().resolve(fonte).resolve(caminho);
         Path meta = lateral(destino);
         Arquivo emCache = emCache(meta);
@@ -121,7 +131,7 @@ public final class Coleta {
             return emCache;
         }
         try {
-            return obter(url, caminho, accept, politica, true, null, true);
+            return obter(url, caminho, accept, politica, true, null, true, cabecalhos);
         } catch (Http.NaoEncontrado e) {
             Files.createDirectories(destino.getParent());
             Files.write(destino, new byte[0]);
@@ -135,7 +145,7 @@ public final class Coleta {
     /** Como obterOpcional, mas guarda o resultado da derivação, não o download. O meta registra a URL e o hash do original. */
     public Arquivo obterDerivado(String url, String caminho, String accept, Politica politica, Derivacao derivacao)
             throws IOException, InterruptedException {
-        return obter(url, caminho, accept, politica, true, derivacao, false);
+        return obter(url, caminho, accept, politica, true, derivacao, false, Map.of());
     }
 
     /**
@@ -144,11 +154,21 @@ public final class Coleta {
      */
     public Arquivo obterOpcional(String url, String caminho, String accept, Politica politica)
             throws IOException, InterruptedException {
-        return obter(url, caminho, accept, politica, true, null, false);
+        return obter(url, caminho, accept, politica, true, null, false, Map.of());
+    }
+
+    public Arquivo obterOpcional(String url, String caminho, String accept, Politica politica, Map<String, String> cabecalhos)
+            throws IOException, InterruptedException {
+        return obter(url, caminho, accept, politica, true, null, false, cabecalhos);
     }
 
     private Arquivo obter(String url, String caminho, String accept, Politica politica, boolean opcional, Derivacao derivacao,
                           boolean propagarNaoEncontrado) throws IOException, InterruptedException {
+        return obter(url, caminho, accept, politica, opcional, derivacao, propagarNaoEncontrado, Map.of());
+    }
+
+    private Arquivo obter(String url, String caminho, String accept, Politica politica, boolean opcional, Derivacao derivacao,
+                          boolean propagarNaoEncontrado, Map<String, String> cabecalhos) throws IOException, InterruptedException {
         Path destino = ctx.raw().resolve(fonte).resolve(caminho);
         Path meta = lateral(destino);
         Arquivo emCache = emCache(meta);
@@ -179,11 +199,11 @@ public final class Coleta {
         try {
             Http.Baixado baixado;
             if (derivacao == null) {
-                baixado = ctx.http().baixar(url, destino, accept);
+                baixado = ctx.http().baixar(url, destino, accept, cabecalhos);
             } else {
                 Path temporario = Files.createTempFile(ctx.raw(), "download-", ".tmp");
                 try {
-                    baixado = ctx.http().baixar(url, temporario, accept);
+                    baixado = ctx.http().baixar(url, temporario, accept, cabecalhos);
                     Files.createDirectories(destino.getParent());
                     derivacao.derivar(baixado.arquivo(), destino);
                     baixado = new Http.Baixado(destino, baixado.sha256(), baixado.bytes());
