@@ -5,6 +5,7 @@ import java.nio.file.Path;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -100,6 +101,19 @@ final class Vinculo {
     static String pessoa(Tse.Chave chave) {
         return chave == null || chave.nomeCivil() == null || chave.nascimento() == null ? null
                 : chave.nomeCivil() + "|" + chave.nascimento();
+    }
+
+    private static Set<String> palavras(String texto) {
+        if (texto == null || texto.isBlank()) {
+            return Set.of();
+        }
+        Set<String> set = new HashSet<>();
+        for (String p : texto.split("\\s+")) {
+            if (!p.isBlank()) {
+                set.add(p);
+            }
+        }
+        return set;
     }
 
     /** Um perfil por pessoa de uma casa legislativa, com os blocos normalizados da casa. */
@@ -355,20 +369,18 @@ final class Vinculo {
                     cand = candPorAlerjNomeCivil.get(nomeNorm);
                 }
                 if (cand == null) {
-                    Set<String> palavras = Set.of(nomeNorm.split("\\s+"));
+                    Set<String> palavras = palavras(nomeNorm);
                     for (var entry : candPorAlerjNomeUrna.entrySet()) {
-                        Set<String> candPalavras = Set.of(entry.getKey().split("\\s+"));
-                        if (candPalavras.containsAll(palavras)) {
+                        if (palavras(entry.getKey()).containsAll(palavras)) {
                             cand = entry.getValue();
                             break;
                         }
                     }
                 }
                 if (cand == null) {
-                    Set<String> palavras = Set.of(nomeNorm.split("\\s+"));
+                    Set<String> palavras = palavras(nomeNorm);
                     for (var entry : candPorAlerjNomeCivil.entrySet()) {
-                        Set<String> candPalavras = Set.of(entry.getKey().split("\\s+"));
-                        if (candPalavras.containsAll(palavras)) {
+                        if (palavras(entry.getKey()).containsAll(palavras)) {
                             cand = entry.getValue();
                             break;
                         }
