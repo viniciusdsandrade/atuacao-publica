@@ -18,6 +18,7 @@ import etl.Coleta;
 import etl.Coleta.Politica;
 import etl.Contexto;
 import etl.Fonte;
+import etl.Guarda;
 import etl.Json;
 import etl.Registros.Despesa;
 import etl.Registros.FonteUsada;
@@ -98,7 +99,8 @@ public final class Alesc implements Fonte {
             Map.entry("JESSE DE FARIA LOPES", "jesse-lopes"),
             Map.entry("PEDRO BALDISSERA", "padre-pedro-baldissera"),
             Map.entry("CARLOS HUMBERTO METZNER SILVA", "carlos-humberto"),
-            Map.entry("CARLOS HUMBERTO", "carlos-humberto")
+            Map.entry("CARLOS HUMBERTO", "carlos-humberto"),
+            Map.entry("JERRY EDSON COMPER", "jerry-comper")
     );
 
     @Override
@@ -392,6 +394,8 @@ public final class Alesc implements Fonte {
 
     public static Map<String, List<Despesa>> extrairDespesas(Contexto ctx, Map<String, String> slugPorNomeNorm) {
         Map<String, List<Despesa>> despesasPorSlug = new HashMap<>();
+        int vinculadas = 0;
+        int semPerfil = 0;
         for (int ano = 2023; ano <= 2026; ano++) {
             Coleta.Arquivo arq = Coleta.metadados(ctx, "alesc", "despesas/" + ano + ".csv");
             if (arq == null) {
@@ -428,6 +432,7 @@ public final class Alesc implements Fonte {
 
                     String slug = resolverSlugPorNome(conta, slugPorNomeNorm);
                     if (slug == null) {
+                        semPerfil++;
                         continue;
                     }
 
@@ -449,22 +454,29 @@ public final class Alesc implements Fonte {
                     } catch (Exception ignored) {
                         continue;
                     }
+                    if (valor == null) {
+                        continue;
+                    }
 
                     String categoria = !verba.isEmpty() ? formatarNome(verba) : "Outras despesas";
                     if (!descricao.isEmpty() && !descricao.equalsIgnoreCase(verba)) {
                         categoria += " - " + descricao;
                     }
 
+                    // Favorecido MEI vem como "NOME + CPF": a sequência de 11 dígitos é removida (METODOLOGIA).
                     Despesa desp = new Despesa(data, anoLinha, mes, categoria,
-                            favorecido.isEmpty() ? null : favorecido,
+                            Guarda.semCpf(favorecido),
                             null, valor, null, null, prov);
 
                     despesasPorSlug.computeIfAbsent(slug, k -> new ArrayList<>()).add(desp);
+                    vinculadas++;
                 }
             } catch (Exception e) {
                 System.err.println("alesc: erro ao ler despesas de " + ano + ": " + e.getMessage());
             }
         }
+        System.out.println("alesc: " + vinculadas + " lançamentos de despesas vinculados; " + semPerfil
+                + " descartados por conta sem perfil de deputado em exercício");
         for (List<Despesa> lista : despesasPorSlug.values()) {
             lista.sort(Comparator.comparing(Despesa::ano).thenComparing(Despesa::mes).reversed());
         }

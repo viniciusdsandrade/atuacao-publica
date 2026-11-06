@@ -2,14 +2,18 @@ package etl.fontes;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -17,6 +21,7 @@ import org.junit.jupiter.api.io.TempDir;
 import etl.Coleta;
 import etl.Contexto;
 import etl.Json;
+import etl.Registros.Despesa;
 import etl.Registros.OrgaoOuFrente;
 import etl.Registros.Prov;
 import etl.Texto;
@@ -215,6 +220,41 @@ class AlescTest {
         );
         assertEquals("paulinha", Alesc.resolverSlugPorNome("Ana Paula da Silva (Paulinha)", mapa));
         assertEquals("antidio-lunelli", Alesc.resolverSlugPorNome("Antídio Lunelli", mapa));
+    }
+
+    @Test
+    void vinculaDespesaPeloNomeCivilERemoveCpfDoFavorecido(@TempDir Path tempDir) throws Exception {
+        Contexto ctx = new Contexto(tempDir, tempDir.resolve("data"), null, null, Instant.parse("2026-11-05T12:00:00Z"), null);
+        Path rawAlesc = ctx.raw().resolve("alesc");
+        Files.createDirectories(rawAlesc.resolve("despesas"));
+
+        // Cabeçalho com BOM, como na fonte. O favorecido MEI vem como "NOME + CPF"; o estorno vem com valor negativo.
+        String csv = "﻿Verba;Descrição;Conta;Favorecido;Trecho;\"Data de Referência\";Valor\n"
+                + "REEMBOLSOS;\"Material de Escritório\";\"Jerry Edson Comper\";\"FULANO DE TAL 12345678909\";;15/03/2026;1.234,50\n"
+                + "REEMBOLSOS;\"Material de Escritório\";\"Jerry Edson Comper\";\"PAPELARIA EXEMPLO LTDA\";;16/03/2026;-20,00\n"
+                + "ALMOXARIFADO;\"Jornais e Revistas\";\"Alex Brasil\";;;10/03/2026;733,00\n"
+                + "ALMOXARIFADO;\"Jornais e Revistas\";\"Suplente Sem Perfil\";;;11/03/2026;10,00\n";
+        Files.writeString(rawAlesc.resolve("despesas/2026.csv"), csv);
+        gravarMetadado(rawAlesc, "despesas/2026.csv", Alesc.URL_DESPESAS + "2026");
+
+        Map<String, String> slugPorNome = Map.of(
+                Texto.normalizarNome("Jerry Comper"), "jerry-comper",
+                Texto.normalizarNome("Alex Brasil"), "alex-brasil");
+
+        Map<String, List<Despesa>> despesas = Alesc.extrairDespesas(ctx, slugPorNome);
+
+        assertEquals(Set.of("jerry-comper", "alex-brasil"), despesas.keySet());
+
+        List<Despesa> jerry = despesas.get("jerry-comper");
+        assertEquals(2, jerry.size());
+        assertEquals(Set.of("FULANO DE TAL", "PAPELARIA EXEMPLO LTDA"),
+                jerry.stream().map(Despesa::fornecedorNome).collect(Collectors.toSet()));
+        BigDecimal total = jerry.stream().map(Despesa::valor).reduce(BigDecimal.ZERO, BigDecimal::add);
+        assertEquals(0, new BigDecimal("1214.50").compareTo(total));
+        assertEquals("Reembolsos - Material de Escritório", jerry.get(0).categoria());
+        assertEquals(3, jerry.get(0).mes());
+
+        assertNull(despesas.get("alex-brasil").get(0).fornecedorNome());
     }
 
     private static void gravarMetadado(Path dir, String arquivo, String url) throws IOException {
