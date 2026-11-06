@@ -41,6 +41,7 @@ Estado real de cada fase. Atualizado ao fechar cada fase.
 - A listagem de autorias do Senado (`/processo`) não traz temas.
 - O Senado não publica presença em evento equivalente à da Câmara.
 - O TSE registra a eleição, não o exercício do cargo. Renúncia ou sucessão de governador entra por contribuição com fonte T0.
+- Oito governadores eleitos em 2022 têm candidatura a outro cargo em 2026 no próprio TSE: senador no AC, AM, ES, MT, PA e PB e presidente em GO e MG. Para concorrer a outro cargo, o governador renuncia até seis meses antes do pleito (CF, art. 14, § 6º). Em 2026-11-06, o site ainda mostra os oito em exercício até 2027-01-06, e quem assumiu esses governos não tem perfil. Correção pendente: registrar cada renúncia com fonte T0 (diário oficial do estado) ou definir a regra num ADR.
 - Planos de governo: só das eleições de 2022 e 2026.
 - O site não embute fotos oficiais, para não gerar requisição do navegador do visitante a terceiros.
 - SAPL do piloto: `ordemdia` e `expedientemateria` paginam de forma instável. A coleta vai por sessão. Os votos sem registro de votação ou sem item votado ficam fora e aparecem na saída do `normalize`.
