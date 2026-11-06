@@ -847,7 +847,7 @@ Validação em 2026-11-03 com o User-Agent do projeto.
 Capital do estado, código IBGE `3550308` e unidade eleitoral `71072` no TSE (ADR-0027).
 Validação em 2026-11-06.
 
-### `cmsp-splegisws`: vereadores, gabinetes e comissões
+### `cmsp-splegisws`: vereadores, gabinetes, comissões e proposições
 
 - URL base: `https://splegisws.saopaulo.sp.leg.br/ws/ws2.asmx`. Serviço ASMX com operações `*JSON` por GET, sem autenticação.
 - `VereadoresCMSPJSON`: 364 vereadores desde a década de 1990, com `chave`, nome, mandatos, filiações e cargos em comissões e na Mesa. Não traz CPF, telefone nem e-mail.
@@ -856,6 +856,12 @@ Validação em 2026-11-06.
 - Identificador canônico no projeto: `cmsp-{chave}`.
 - A fonte deixa cargo antigo da Mesa sem data de fim quando há sucessor. Em cargo exclusivo (Mesa, presidência e vice-presidência de comissão), vale o de início mais recente entre os vereadores em exercício.
 - O serviço não tem operação de voto nominal por vereador.
+- Proposições, validadas em 2026-11-06:
+  - `LeisAprovadasPorPromoventeJSON`, `ProjetosVetadosPorPromoventeJSON` e `ProjetosEmTramitacaoPorPromoventeJSON`, com `Codigo` igual à `chave` do vereador. Trazem os projetos de que o vereador é promovente, autor ou coautor: os que viraram lei (com número e data de publicação), os vetados (com o tipo de veto) e os em tramitação.
+  - `ProjetosPorAnoJSON?Ano={ano}`: todos os documentos do ano, com `tipo`, `numero`, `ano`, `data` e `ementa`, sem autor. Dá a ementa e a data dos projetos das listas de autoria.
+  - O projeto encerrado sem virar lei fica fora. `ProjetosEncerradosJSON` não traz o autor, e `ProjetosAutoresJSON` pede uma chamada por projeto.
+  - A fonte não separa autor de coautor. O campo `proponente` fica nulo.
+  - Na validação: 6.495 proposições de 2022 a 2026 nos 55 vereadores em exercício, de 4.084 projetos distintos (PL, PDL, PLO e PR). Situação: 5.501 em tramitação, 951 viraram lei e 43 com veto total.
 
 ### `cmsp-portal`: portal institucional
 

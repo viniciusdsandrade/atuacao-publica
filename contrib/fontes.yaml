@@ -1993,7 +1993,7 @@
 
 
 - id: cmsp-splegisws
-  nome: Câmara Municipal de São Paulo, serviço SPLegisWS (vereadores, gabinetes e comissões)
+  nome: Câmara Municipal de São Paulo, serviço SPLegisWS (vereadores, gabinetes, comissões e proposições)
   orgao: Câmara Municipal de São Paulo
   esfera: municipal
   ente: "3550308"
@@ -2003,7 +2003,7 @@
   formato: JSON (serviço ASMX por GET)
   autenticacao: nenhuma
   licenca: null
-  limitacoes: "Só vereadores em exercício (gabinete vigente e mandato vigente). Cargo antigo sem data de fim é omitido quando há sucessor. Sem votos nominais, proposições nem foto. Não validado a partir do runner do GitHub Actions."
+  limitacoes: "Só vereadores em exercício (gabinete vigente e mandato vigente). Cargo antigo sem data de fim é omitido quando há sucessor. Proposições desde 2022 só em tramitação, transformadas em lei ou vetadas: o serviço não informa o autor do projeto encerrado sem virar lei, nem separa autor de coautor. Sem votos nominais nem foto."
   status: validado com limitação
   validado_em: 2026-11-06
 

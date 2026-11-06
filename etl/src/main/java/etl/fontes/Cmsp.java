@@ -8,6 +8,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -23,6 +24,7 @@ import etl.Registros.LinkOficial;
 import etl.Registros.Mandato;
 import etl.Registros.OrgaoOuFrente;
 import etl.Registros.Pessoa;
+import etl.Registros.Proposicao;
 import etl.Registros.Prov;
 import etl.Texto;
 import tools.jackson.databind.JsonNode;
@@ -42,6 +44,12 @@ public final class Cmsp implements Fonte {
     public static final String URL_GABINETES = API + "/OcupacaoGabineteJSON";
     public static final String URL_COMISSOES = API + "/ComissoesCMSPJSON";
     public static final String URL_MEMBROS = "https://www.saopaulo.sp.leg.br/vereadores/membros/";
+    public static final String URL_PROJETOS_POR_ANO = API + "/ProjetosPorAnoJSON";
+    public static final String URL_TRAMITACAO = API + "/ProjetosEmTramitacaoPorPromoventeJSON";
+    public static final String URL_LEIS = API + "/LeisAprovadasPorPromoventeJSON";
+    public static final String URL_VETADOS = API + "/ProjetosVetadosPorPromoventeJSON";
+    /** Primeiro ano das proposições: a cobertura do projeto começa em 2022 (ADR-0009). */
+    static final int PRIMEIRO_ANO_PROPOSICOES = 2022;
 
     public static final String IBGE = "3550308";
     public static final String UF = "SP";
@@ -67,6 +75,19 @@ public final class Cmsp implements Fonte {
         coleta.obter(URL_GABINETES, "gabinetes.json", "application/json", Politica.SEMANAL);
         coleta.obterOuVazio(URL_COMISSOES, "comissoes.json", "application/json", Politica.SEMANAL);
         coleta.obterOuVazio(URL_MEMBROS, "membros.html", "text/html", Politica.SEMANAL);
+        // Proposições: o autor só aparece nas consultas por vereador. Ementa e data vêm da lista anual de projetos.
+        for (int ano = PRIMEIRO_ANO_PROPOSICOES; ano <= ctx.hoje().getYear(); ano++) {
+            coleta.obterOpcional(URL_PROJETOS_POR_ANO + "?Ano=" + ano, "projetos/" + ano + ".json", "application/json",
+                    Politica.porAnoSemanal(ano, ctx.hoje()));
+        }
+        for (Vereador v : emExercicio(ctx)) {
+            coleta.obterOpcional(URL_LEIS + "?Codigo=" + v.chave(), arquivoDeAutoria(v.chave(), "leis"), "application/json",
+                    Politica.SEMANAL);
+            coleta.obterOpcional(URL_VETADOS + "?Codigo=" + v.chave(), arquivoDeAutoria(v.chave(), "vetados"),
+                    "application/json", Politica.SEMANAL);
+            coleta.obterOpcional(URL_TRAMITACAO + "?Codigo=" + v.chave(), arquivoDeAutoria(v.chave(), "tramitacao"),
+                    "application/json", Politica.SEMANAL);
+        }
     }
 
     @Override
@@ -102,8 +123,27 @@ public final class Cmsp implements Fonte {
             throw new RuntimeException("cmsp: erro ao criar pasta de blocos", e);
         }
 
+        Map<String, List<Autoria>> autorias = new HashMap<>();
+        Set<String> procurados = new HashSet<>();
+        for (Vereador v : emExercicio) {
+            List<Autoria> listas = List.of(autoria(ctx, v.chave(), "leis"), autoria(ctx, v.chave(), "vetados"),
+                    autoria(ctx, v.chave(), "tramitacao"));
+            autorias.put(v.chave(), listas);
+            for (Autoria a : listas) {
+                for (JsonNode item : itens(a)) {
+                    String id = identificacao(item.has("projeto") ? item.path("projeto") : item);
+                    if (id != null) {
+                        procurados.add(id);
+                    }
+                }
+            }
+        }
+        Map<Integer, Coleta.Arquivo> listasAnuais = new HashMap<>();
+        Map<String, ProjetoDoAno> projetos = projetosDoAno(ctx, procurados, listasAnuais);
+
         Map<String, LocalDate> maisRecentes = inicioMaisRecenteDosExclusivos(emExercicio, ctx.hoje());
         List<Pessoa> pessoas = new ArrayList<>();
+        int totalProposicoes = 0;
         for (Vereador v : emExercicio) {
             String textoMandato = "Vereador na " + v.legislatura() + "ª Legislatura (" + v.inicio().getYear()
                     + (v.fim() == null ? ")" : "–" + v.fim().getYear() + ")");
@@ -127,16 +167,168 @@ public final class Cmsp implements Fonte {
                 fontes.put("orgaos_e_frentes", deOrgaos);
             }
 
+            List<Autoria> listas = autorias.get(v.chave());
+            List<Proposicao> proposicoes = proposicoes(listas.get(0), listas.get(1), listas.get(2), projetos);
+            totalProposicoes += proposicoes.size();
+            if (!proposicoes.isEmpty()) {
+                // A autoria vem da consulta do vereador; ementa e data, da lista anual do ano do projeto.
+                Set<FonteUsada> deProposicoes = new LinkedHashSet<>();
+                for (Proposicao p : proposicoes) {
+                    deProposicoes.add(new FonteUsada(p.prov().fonteId(), p.prov().urlOrigem(), p.prov().capturadoEm()));
+                }
+                for (Proposicao p : proposicoes) {
+                    Coleta.Arquivo anual = listasAnuais.get(p.ano());
+                    if (anual != null && projetos.containsKey(p.identificacao())) {
+                        deProposicoes.add(FonteUsada.de(FONTE_API, anual));
+                    }
+                }
+                fontes.put("proposicoes", List.copyOf(deProposicoes));
+            }
+
             var blocos = Json.SAIDA.createObjectNode();
             blocos.set("mandatos", Json.SAIDA.valueToTree(mandatos));
             blocos.set("orgaos_e_frentes", Json.SAIDA.valueToTree(orgaos));
+            blocos.set("proposicoes", Json.SAIDA.valueToTree(proposicoes));
             blocos.set("fontes", Json.SAIDA.valueToTree(fontes));
             Json.gravar(pastaBlocos.resolve(v.chave() + ".json"), blocos);
         }
 
         pessoas.sort(Comparator.comparing(Pessoa::nome));
         Json.gravar(ctx.normalizado().resolve("cmsp/pessoas.json"), Json.SAIDA.valueToTree(pessoas));
-        System.out.println("cmsp: " + pessoas.size() + " vereadores em exercício normalizados");
+        System.out.println("cmsp: " + pessoas.size() + " vereadores em exercício normalizados, com " + totalProposicoes
+                + " proposições desde " + PRIMEIRO_ANO_PROPOSICOES + " (" + projetos.size() + " com ementa e data da lista anual)");
+    }
+
+    /** Lista de autoria de um vereador (leis aprovadas, vetos ou projetos em tramitação), com a proveniência da consulta. */
+    public record Autoria(JsonNode itens, Prov prov) {
+    }
+
+    /** Data e ementa do projeto na lista anual, que as listas de autoria nem sempre trazem. */
+    public record ProjetoDoAno(String data, String ementa) {
+    }
+
+    /**
+     * Proposições do vereador desde 2022, pelas listas de autoria do serviço. O projeto que está em mais de uma lista
+     * entra uma vez, com a situação mais avançada: lei, veto, tramitação. Projeto encerrado sem virar lei fica fora,
+     * porque o serviço não informa o autor dele.
+     */
+    public static List<Proposicao> proposicoes(Autoria leis, Autoria vetados, Autoria tramitacao,
+                                               Map<String, ProjetoDoAno> projetosDoAno) {
+        Map<String, String> vetos = new HashMap<>();
+        for (JsonNode v : itens(vetados)) {
+            String id = identificacao(v);
+            if (id != null) {
+                vetos.put(id, Json.texto(v.path("veto"), "nome"));
+            }
+        }
+        Map<String, Proposicao> porIdentificacao = new LinkedHashMap<>();
+        for (JsonNode lei : itens(leis)) {
+            JsonNode projeto = lei.path("projeto");
+            String id = identificacao(projeto);
+            if (id != null && !porIdentificacao.containsKey(id)) {
+                String situacao = situacaoDaLei(lei);
+                String veto = vetos.get(id);
+                porIdentificacao.put(id, proposicao(projeto, id, Json.texto(projeto, "ementa"),
+                        veto == null ? situacao : situacao + " (" + veto + ")", projetosDoAno, leis.prov()));
+            }
+        }
+        for (JsonNode v : itens(vetados)) {
+            String id = identificacao(v);
+            if (id != null && !porIdentificacao.containsKey(id)) {
+                String veto = vetos.get(id);
+                porIdentificacao.put(id, proposicao(v, id, null, veto == null ? "Vetado" : veto, projetosDoAno, vetados.prov()));
+            }
+        }
+        for (JsonNode t : itens(tramitacao)) {
+            String id = identificacao(t);
+            if (id != null && !porIdentificacao.containsKey(id)) {
+                porIdentificacao.put(id, proposicao(t, id, null, "Em tramitação", projetosDoAno, tramitacao.prov()));
+            }
+        }
+        return new ArrayList<>(porIdentificacao.values());
+    }
+
+    /** "PL 384/2023", ou null fora da cobertura (antes de 2022) ou sem tipo, número e ano. */
+    static String identificacao(JsonNode projeto) {
+        String tipo = Json.texto(projeto, "tipo");
+        Integer numero = Json.inteiro(projeto, "numero");
+        Integer ano = Json.inteiro(projeto, "ano");
+        if (tipo == null || numero == null || ano == null || ano < PRIMEIRO_ANO_PROPOSICOES) {
+            return null;
+        }
+        return tipo + " " + numero + "/" + ano;
+    }
+
+    private static Proposicao proposicao(JsonNode projeto, String identificacao, String ementa, String situacao,
+                                         Map<String, ProjetoDoAno> projetosDoAno, Prov prov) {
+        ProjetoDoAno doAno = projetosDoAno.get(identificacao);
+        String tipo = Json.texto(projeto, "tipo");
+        Integer numero = Json.inteiro(projeto, "numero");
+        Integer ano = Json.inteiro(projeto, "ano");
+        return new Proposicao(tipo + "-" + numero + "-" + ano, tipo, numero, ano, identificacao,
+                ementa != null ? ementa : doAno == null ? null : doAno.ementa(), situacao, null,
+                doAno == null ? null : doAno.data(), null, null, null, prov);
+    }
+
+    /** "Lei nº 18.253, publicada em 2025-05-22". */
+    private static String situacaoDaLei(JsonNode lei) {
+        Integer numero = Json.inteiro(lei, "numero");
+        String texto = numero == null ? "Lei" : "Lei nº " + String.format(Locale.forLanguageTag("pt-BR"), "%,d", numero);
+        String publicacao = dia(lei, "publicacao");
+        return publicacao == null ? texto : texto + ", publicada em " + publicacao;
+    }
+
+    /** Data ISO (aaaa-mm-dd) de um campo com data e hora. */
+    private static String dia(JsonNode no, String campo) {
+        String texto = Json.texto(no, campo);
+        return texto == null || texto.length() < 10 ? null : texto.substring(0, 10);
+    }
+
+    private static Iterable<JsonNode> itens(Autoria autoria) {
+        return autoria == null || autoria.itens() == null ? List.of() : autoria.itens();
+    }
+
+    private static String arquivoDeAutoria(String chave, String lista) {
+        return "autoria/" + chave + "-" + lista + ".json";
+    }
+
+    /** Lista de autoria em cache. Sem cópia, ou com cópia vazia (404 ou 403), a lista fica vazia. */
+    private Autoria autoria(Contexto ctx, String chave, String lista) {
+        Coleta.Arquivo arq = Coleta.metadados(ctx, nome(), arquivoDeAutoria(chave, lista));
+        if (!existe(ctx, arq) || arq.bytes() == 0) {
+            return new Autoria(null, null);
+        }
+        JsonNode itens = Json.ler(Coleta.caminho(ctx, arq));
+        return new Autoria(itens.isArray() ? itens : null, Prov.de(FONTE_API, arq.url(), arq));
+    }
+
+    /** Data e ementa dos projetos procurados, nas listas anuais desde 2022. Guarda em {@code usadas} a lista de cada ano. */
+    private Map<String, ProjetoDoAno> projetosDoAno(Contexto ctx, Set<String> procurados, Map<Integer, Coleta.Arquivo> usadas) {
+        Map<String, ProjetoDoAno> projetos = new HashMap<>();
+        for (int ano = PRIMEIRO_ANO_PROPOSICOES; ano <= ctx.hoje().getYear(); ano++) {
+            Coleta.Arquivo arq = Coleta.metadados(ctx, nome(), "projetos/" + ano + ".json");
+            if (!existe(ctx, arq) || arq.bytes() == 0) {
+                continue;
+            }
+            usadas.put(ano, arq);
+            for (JsonNode p : Json.ler(Coleta.caminho(ctx, arq))) {
+                String id = identificacao(p);
+                if (id != null && procurados.contains(id)) {
+                    projetos.putIfAbsent(id, new ProjetoDoAno(dia(p, "data"), Json.texto(p, "ementa")));
+                }
+            }
+        }
+        return projetos;
+    }
+
+    /** Vereadores em exercício pelas cópias em cache de vereadores e gabinetes. Vazio se faltar uma delas. */
+    private List<Vereador> emExercicio(Contexto ctx) {
+        Coleta.Arquivo arqVereadores = Coleta.metadados(ctx, nome(), "vereadores.json");
+        Coleta.Arquivo arqGabinetes = Coleta.metadados(ctx, nome(), "gabinetes.json");
+        if (!existe(ctx, arqVereadores) || !existe(ctx, arqGabinetes)) {
+            return List.of();
+        }
+        return emExercicio(Json.ler(Coleta.caminho(ctx, arqVereadores)), Json.ler(Coleta.caminho(ctx, arqGabinetes)), ctx.hoje());
     }
 
     /**

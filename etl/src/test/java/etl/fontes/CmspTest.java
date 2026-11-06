@@ -19,6 +19,7 @@ import etl.Coleta;
 import etl.Contexto;
 import etl.Json;
 import etl.Registros.OrgaoOuFrente;
+import etl.Registros.Proposicao;
 import etl.Registros.Prov;
 import tools.jackson.databind.JsonNode;
 
@@ -199,6 +200,15 @@ class CmspTest {
         gravarMetadado(raw, "comissoes.json", Cmsp.URL_COMISSOES);
         Files.writeString(raw.resolve("membros.html"), "<html></html>");
         gravarMetadado(raw, "membros.html", Cmsp.URL_MEMBROS);
+        Files.createDirectories(raw.resolve("autoria"));
+        Files.createDirectories(raw.resolve("projetos"));
+        Files.writeString(raw.resolve("autoria/2266-tramitacao.json"), "[{\"tipo\": \"PL\", \"numero\": 7, \"ano\": 2025}]");
+        gravarMetadado(raw, "autoria/2266-tramitacao.json", Cmsp.URL_TRAMITACAO + "?Codigo=2266");
+        Files.writeString(raw.resolve("projetos/2025.json"), """
+                [{"chave": "1", "tipo": "PL", "numero": 7, "ano": 2025, "data": "2025-02-03T00:00:00", "ementa": " Dispõe sobre D."},
+                 {"chave": "2", "tipo": "PL", "numero": 8, "ano": 2025, "data": "2025-02-04T00:00:00", "ementa": " De outro autor."}]
+                """);
+        gravarMetadado(raw, "projetos/2025.json", Cmsp.URL_PROJETOS_POR_ANO + "?Ano=2025");
 
         new Cmsp().normalize(ctx);
 
@@ -227,6 +237,57 @@ class CmspTest {
         assertTrue(bloco.get("fontes").isObject());
         assertEquals(2, bloco.get("fontes").get("mandatos").size());
         assertEquals(2, bloco.get("fontes").get("orgaos_e_frentes").size());
+        // Autoria pela consulta do vereador; ementa e data pela lista anual, que também entra como fonte do bloco.
+        assertEquals(1, bloco.get("proposicoes").size());
+        JsonNode proposicao = bloco.get("proposicoes").get(0);
+        assertEquals("PL 7/2025", proposicao.get("identificacao").stringValue());
+        assertEquals("Dispõe sobre D.", proposicao.get("ementa").stringValue());
+        assertEquals("2025-02-03", proposicao.get("data_apresentacao").stringValue());
+        assertEquals("Em tramitação", proposicao.get("situacao").stringValue());
+        assertEquals(2, bloco.get("fontes").get("proposicoes").size());
+    }
+
+    @Test
+    void proposicoesEntramUmaVezComASituacaoMaisAvancadaDesde2022() {
+        Instant captura = Instant.parse("2026-11-05T12:00:00Z");
+        Prov leis = new Prov(Cmsp.FONTE_API, Cmsp.URL_LEIS + "?Codigo=1", captura);
+        Prov vetos = new Prov(Cmsp.FONTE_API, Cmsp.URL_VETADOS + "?Codigo=1", captura);
+        Prov tramitacao = new Prov(Cmsp.FONTE_API, Cmsp.URL_TRAMITACAO + "?Codigo=1", captura);
+        JsonNode listaLeis = Json.FONTE.readTree("""
+                [{"projeto": {"tipo": "PL", "numero": 384, "ano": 2023, "ementa": "Institui o programa A."},
+                  "numero": 18253, "publicacao": "2025-05-22T00:00:00"},
+                 {"projeto": {"tipo": "PL", "numero": 10, "ano": 2019, "ementa": "Anterior à cobertura."},
+                  "numero": 17000, "publicacao": "2019-08-01T00:00:00"}]
+                """);
+        JsonNode listaVetos = Json.FONTE.readTree("""
+                [{"tipo": "PL", "numero": 384, "ano": 2023, "veto": {"chave": 2, "nome": "Veto Parcial"}},
+                 {"tipo": "PL", "numero": 500, "ano": 2024, "veto": {"chave": 1, "nome": "Veto Total"}}]
+                """);
+        JsonNode listaTramitacao = Json.FONTE.readTree("""
+                [{"tipo": "PL", "numero": 384, "ano": 2023}, {"tipo": "PDL", "numero": 5, "ano": 2025},
+                 {"tipo": "PL", "numero": 647, "ano": 2018}]
+                """);
+        Map<String, Cmsp.ProjetoDoAno> doAno = Map.of(
+                "PL 384/2023", new Cmsp.ProjetoDoAno("2023-04-01", "Ementa da lista anual."),
+                "PL 500/2024", new Cmsp.ProjetoDoAno("2024-03-01", "Dispõe sobre B."),
+                "PDL 5/2025", new Cmsp.ProjetoDoAno("2025-02-10", "Concede C."));
+
+        List<Proposicao> lista = Cmsp.proposicoes(new Cmsp.Autoria(listaLeis, leis), new Cmsp.Autoria(listaVetos, vetos),
+                new Cmsp.Autoria(listaTramitacao, tramitacao), doAno);
+
+        assertEquals(List.of("PL 384/2023", "PL 500/2024", "PDL 5/2025"), lista.stream().map(Proposicao::identificacao).toList());
+        Proposicao lei = lista.getFirst();
+        assertEquals("PL-384-2023", lei.idFonte());
+        assertEquals("Lei nº 18.253, publicada em 2025-05-22 (Veto Parcial)", lei.situacao());
+        assertEquals("Institui o programa A.", lei.ementa());
+        assertEquals("2023-04-01", lei.dataApresentacao());
+        assertEquals(leis, lei.prov());
+        assertEquals("Veto Total", lista.get(1).situacao());
+        assertEquals("Dispõe sobre B.", lista.get(1).ementa());
+        assertEquals(vetos, lista.get(1).prov());
+        assertEquals("Em tramitação", lista.get(2).situacao());
+        assertEquals(tramitacao, lista.get(2).prov());
+        assertNull(lista.get(2).temas());
     }
 
     private static void gravarMetadado(Path dir, String arquivo, String url) throws IOException {
