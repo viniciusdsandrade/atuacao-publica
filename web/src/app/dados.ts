@@ -4,6 +4,21 @@ import { Observable, from, shareReplay, switchMap } from 'rxjs';
 
 import { Detalhe, Execucao, Fonte, Indice, Perfil } from './modelo';
 
+export interface ItemManifestDump {
+  arquivo: string;
+  formato: string;
+  titulo: string;
+  descricao: string;
+  total_registros: number;
+  tamanho_bytes: number;
+}
+
+export interface ManifestDumps {
+  gerado_em: string;
+  total_arquivos: number;
+  arquivos: ItemManifestDump[];
+}
+
 /** Lê os JSON publicados pelo ETL. Tudo vem do próprio site: nenhuma chamada a terceiros. */
 @Injectable({ providedIn: 'root' })
 export class Dados {
@@ -13,6 +28,7 @@ export class Dados {
   readonly indice$: Observable<Indice> = this.http.get<Indice>(this.base + 'index.json').pipe(shareReplay(1));
   readonly execucao$: Observable<Execucao> = this.http.get<Execucao>(this.base + '_meta/execucao.json').pipe(shareReplay(1));
   readonly fontes$: Observable<Fonte[]> = this.http.get<Fonte[]>(this.base + 'fontes.json').pipe(shareReplay(1));
+  readonly manifestDumps$: Observable<ManifestDumps> = this.http.get<ManifestDumps>(this.base + 'dumps/manifest.json').pipe(shareReplay(1));
 
   /** Perfis já abertos ficam em memória (os 6 mais recentes): voltar de um detalhe não baixa o perfil de novo. */
   private readonly perfis = new Map<string, Observable<Perfil>>();

@@ -216,6 +216,7 @@ public final class Publicador {
                 .<ObjectNode>set("politicos", indice)
                 .set("aliases", mapa));
         gravarValidado("fontes", ctx.publicado().resolve("fontes.json"), Json.arvore(catalogo.itens()));
+        gerarDumps(indice, ctx.publicado().resolve("dumps"), ctx.agora());
 
         List<Meta.StatusFonte> status = new ArrayList<>();
         for (String fonte : FONTES_CLI) {
@@ -713,7 +714,128 @@ public final class Publicador {
         }
     }
 
+    public int gerarDumpsDoIndiceExistente() {
+        Path arqIndice = ctx.publicado().resolve("index.json");
+        if (!Files.exists(arqIndice)) {
+            System.err.println("dumps: index.json não encontrado em " + arqIndice);
+            return 1;
+        }
+        JsonNode doc = Json.ler(arqIndice);
+        ArrayNode politicos = (ArrayNode) doc.path("politicos");
+        Path pastaDumps = ctx.publicado().resolve("dumps");
+        gerarDumps(politicos, pastaDumps, ctx.agora());
+        System.out.println("dumps: gerados com sucesso em " + pastaDumps + " (" + politicos.size() + " políticos)");
+        return 0;
+    }
+
     static Set<String> blocosDe(String cargo) {
         return Set.copyOf(BLOCOS.get(cargo));
+    }
+
+    static void gerarDumps(ArrayNode indice, Path pastaDumps, Instant agora) {
+        try {
+            Files.createDirectories(pastaDumps);
+
+            List<String> linhas = new ArrayList<>();
+            linhas.add("id,nome,cargo,esfera,ente,uf,partido,situacao,em_exercicio,foto_url");
+
+            Map<String, List<String>> porUf = new TreeMap<>();
+            List<String> federais = new ArrayList<>();
+            federais.add("id,nome,cargo,esfera,ente,uf,partido,situacao,em_exercicio,foto_url");
+
+            for (JsonNode p : indice) {
+                String id = textoOuVazio(p, "id");
+                String nome = textoOuVazio(p, "nome");
+                String cargo = textoOuVazio(p, "cargo");
+                String esfera = textoOuVazio(p, "esfera");
+                String ente = textoOuVazio(p, "ente");
+                String uf = textoOuVazio(p, "uf");
+                String partido = textoOuVazio(p, "partido");
+                String situacao = textoOuVazio(p, "situacao");
+                boolean emExercicio = p.has("em_exercicio") && p.get("em_exercicio").asBoolean();
+                String fotoUrl = textoOuVazio(p, "foto_url");
+
+                String linha = String.join(",",
+                        escaparCsv(id),
+                        escaparCsv(nome),
+                        escaparCsv(cargo),
+                        escaparCsv(esfera),
+                        escaparCsv(ente),
+                        escaparCsv(uf),
+                        escaparCsv(partido),
+                        escaparCsv(situacao),
+                        String.valueOf(emExercicio),
+                        escaparCsv(fotoUrl));
+                linhas.add(linha);
+
+                if ("federal".equals(esfera)) {
+                    federais.add(linha);
+                }
+                if (!uf.isEmpty()) {
+                    porUf.computeIfAbsent(uf, k -> {
+                        List<String> l = new ArrayList<>();
+                        l.add("id,nome,cargo,esfera,ente,uf,partido,situacao,em_exercicio,foto_url");
+                        return l;
+                    }).add(linha);
+                }
+            }
+
+            Path arqTodos = pastaDumps.resolve("politicos.csv");
+            Files.writeString(arqTodos, String.join("\n", linhas) + "\n");
+
+            Path arqFederal = pastaDumps.resolve("politicos-federal.csv");
+            Files.writeString(arqFederal, String.join("\n", federais) + "\n");
+
+            ArrayNode arquivosManifest = Json.SAIDA.createArrayNode();
+            arquivosManifest.add(Json.SAIDA.createObjectNode()
+                    .put("arquivo", "politicos.csv")
+                    .put("formato", "CSV")
+                    .put("titulo", "Todos os políticos catalogados")
+                    .put("descricao", "Consolidado nacional de todos os parlamentares e governantes")
+                    .put("total_registros", indice.size())
+                    .put("tamanho_bytes", Files.size(arqTodos)));
+
+            arquivosManifest.add(Json.SAIDA.createObjectNode()
+                    .put("arquivo", "politicos-federal.csv")
+                    .put("formato", "CSV")
+                    .put("titulo", "Esfera Federal")
+                    .put("descricao", "Deputados federais, senadores e Presidência da República")
+                    .put("total_registros", Math.max(0, federais.size() - 1))
+                    .put("tamanho_bytes", Files.size(arqFederal)));
+
+            for (var entry : porUf.entrySet()) {
+                String uf = entry.getKey();
+                List<String> listaUf = entry.getValue();
+                Path arqUf = pastaDumps.resolve("politicos-" + uf + ".csv");
+                Files.writeString(arqUf, String.join("\n", listaUf) + "\n");
+
+                arquivosManifest.add(Json.SAIDA.createObjectNode()
+                        .put("arquivo", "politicos-" + uf + ".csv")
+                        .put("formato", "CSV")
+                        .put("titulo", "Unidade da Federação: " + uf)
+                        .put("descricao", "Parlamentares e governantes de " + uf)
+                        .put("total_registros", Math.max(0, listaUf.size() - 1))
+                        .put("tamanho_bytes", Files.size(arqUf)));
+            }
+
+            ObjectNode manifest = Json.SAIDA.createObjectNode()
+                    .put("gerado_em", agora.toString())
+                    .put("total_arquivos", arquivosManifest.size())
+                    .<ObjectNode>set("arquivos", arquivosManifest);
+
+            Json.gravar(pastaDumps.resolve("manifest.json"), manifest);
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+
+    static String escaparCsv(String valor) {
+        if (valor == null) {
+            return "";
+        }
+        if (valor.contains(",") || valor.contains("\"") || valor.contains("\n") || valor.contains("\r")) {
+            return "\"" + valor.replace("\"", "\"\"") + "\"";
+        }
+        return valor;
     }
 }

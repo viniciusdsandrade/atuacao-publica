@@ -93,4 +93,67 @@ class PublicadorTest {
         assertEquals(List.of("cam-2"), Publicador.sumiram(anterior, Set.of("cam-1"), Map.of(), Set.of()));
         assertTrue(Publicador.sumiram(anterior, Set.of("cam-1"), Map.of(), Set.of("cam-2")).isEmpty());
     }
+
+    @Test
+    void escaparCsvTrataAspasEVirgulas() {
+        assertEquals("", Publicador.escaparCsv(null));
+        assertEquals("normal", Publicador.escaparCsv("normal"));
+        assertEquals("\"com, virgula\"", Publicador.escaparCsv("com, virgula"));
+        assertEquals("\"com \"\"aspas\"\"\"", Publicador.escaparCsv("com \"aspas\""));
+    }
+
+    @Test
+    void gerarDumpsGeraCsvEJsonManifestComConsolidadoEPorUf() throws java.io.IOException {
+        java.nio.file.Path tempDir = java.nio.file.Files.createTempDirectory("dumps-test");
+        try {
+            tools.jackson.databind.node.ArrayNode indice = Json.SAIDA.createArrayNode();
+            indice.add(Json.SAIDA.createObjectNode()
+                    .put("id", "cam-1")
+                    .put("nome", "Deputado A")
+                    .put("cargo", "deputado_federal")
+                    .put("esfera", "federal")
+                    .put("ente", "BR")
+                    .put("uf", "SP")
+                    .put("partido", "PL")
+                    .put("situacao", "Exercício")
+                    .put("em_exercicio", true)
+                    .put("foto_url", "https://exemplo.org/foto.jpg"));
+
+            indice.add(Json.SAIDA.createObjectNode()
+                    .put("id", "alep-2")
+                    .put("nome", "Deputado B")
+                    .put("cargo", "deputado_estadual")
+                    .put("esfera", "estadual")
+                    .put("ente", "PR")
+                    .put("uf", "PR")
+                    .put("partido", "PT")
+                    .put("situacao", "Exercício")
+                    .put("em_exercicio", true)
+                    .put("foto_url", ""));
+
+            java.nio.file.Path pastaDumps = tempDir.resolve("dumps");
+            Publicador.gerarDumps(indice, pastaDumps, java.time.Instant.parse("2026-11-06T15:00:00Z"));
+
+            assertTrue(java.nio.file.Files.exists(pastaDumps.resolve("politicos.csv")));
+            assertTrue(java.nio.file.Files.exists(pastaDumps.resolve("politicos-federal.csv")));
+            assertTrue(java.nio.file.Files.exists(pastaDumps.resolve("politicos-SP.csv")));
+            assertTrue(java.nio.file.Files.exists(pastaDumps.resolve("politicos-PR.csv")));
+            assertTrue(java.nio.file.Files.exists(pastaDumps.resolve("manifest.json")));
+
+            List<String> linhasGeral = java.nio.file.Files.readAllLines(pastaDumps.resolve("politicos.csv"));
+            assertEquals(3, linhasGeral.size()); // cabeçalho + 2 políticos
+
+            tools.jackson.databind.JsonNode manifest = Json.ler(pastaDumps.resolve("manifest.json"));
+            assertEquals(4, manifest.get("total_arquivos").asInt());
+        } finally {
+            try (java.util.stream.Stream<java.nio.file.Path> stream = java.nio.file.Files.walk(tempDir)) {
+                stream.sorted(java.util.Comparator.reverseOrder()).forEach(p -> {
+                    try {
+                        java.nio.file.Files.delete(p);
+                    } catch (java.io.IOException ignored) {
+                    }
+                });
+            }
+        }
+    }
 }

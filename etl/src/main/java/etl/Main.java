@@ -68,9 +68,9 @@ public final class Main {
     public static void main(String[] args) {
         // O validador de schema usa SLF4J sem provedor; o aviso de "no providers" não interessa aqui.
         System.setProperty("slf4j.internal.verbosity", "ERROR");
-        if (args.length == 0 || !List.of("fetch", "normalize", "publish").contains(args[0])
+        if (args.length == 0 || !List.of("fetch", "normalize", "publish", "dumps").contains(args[0])
                 || (args.length > 1 && !FONTES.containsKey(args[1]))) {
-            System.err.println("uso: java -jar etl/target/etl.jar <fetch|normalize|publish> [fonte]");
+            System.err.println("uso: java -jar etl/target/etl.jar <fetch|normalize|publish|dumps> [fonte]");
             System.err.println("fontes: " + String.join(", ", FONTES.keySet()));
             System.exit(2);
         }
@@ -84,6 +84,7 @@ public final class Main {
         int codigo = switch (args[0]) {
             case "fetch" -> fetch(ctx, selecionar(filtro, FETCH_PADRAO));
             case "normalize" -> normalize(ctx, selecionar(filtro, NORMALIZE_PADRAO));
+            case "dumps" -> new Publicador(ctx).gerarDumpsDoIndiceExistente();
             default -> new Publicador(ctx).publicar();
         };
         System.exit(codigo);

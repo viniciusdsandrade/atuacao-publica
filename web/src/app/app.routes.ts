@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
 
 import { Comparar } from './comparar/comparar';
+import { DadosAbertos } from './dados-abertos/dados-abertos';
 import { Detalhe } from './detalhe/detalhe';
 import { Doc } from './doc/doc';
 import { Estado } from './estado/estado';
@@ -12,6 +13,7 @@ export const routes: Routes = [
   { path: 'politico/:id', component: Perfil, title: 'Perfil · Atuação Pública' },
   { path: 'politico/:id/:bloco/:ano', component: Detalhe, title: 'Registros do ano · Atuação Pública' },
   { path: 'comparar', component: Comparar, title: 'Comparação Parlamentar · Atuação Pública' },
+  { path: 'dados-abertos', component: DadosAbertos, title: 'Dados Abertos e Downloads · Atuação Pública' },
   { path: 'estado', component: Estado, title: 'Estado das coletas · Atuação Pública' },
   { path: 'metodologia', component: Doc, data: { arquivo: 'METODOLOGIA.md' }, title: 'Metodologia · Atuação Pública' },
   { path: 'fontes', component: Doc, data: { arquivo: 'FONTES.md' }, title: 'Fontes · Atuação Pública' },

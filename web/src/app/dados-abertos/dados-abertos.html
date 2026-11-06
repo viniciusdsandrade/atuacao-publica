@@ -1,0 +1,218 @@
+<div class="dados-abertos-pagina">
+  <header class="dados-abertos-intro">
+    <nav class="migalhas" aria-label="Você está em">
+      <ol>
+        <li><a routerLink="/">Políticos</a></li>
+        <li aria-current="page">Dados abertos e downloads</li>
+      </ol>
+    </nav>
+    <h1 class="titulo-pagina">Dados Abertos e Downloads</h1>
+    <p class="lead">
+      Bases de dados completas e consolidadas para jornalistas, pesquisadores, organizações da sociedade civil e cientistas de dados.
+    </p>
+    <div class="dados-abertos-licenca painel">
+      <div class="dados-abertos-licenca-texto">
+        <strong>Licença Creative Commons Atribuição 4.0 Internacional (CC BY 4.0)</strong>
+        <p>
+          Você é livre para compartilhar, copiar, redistribuir, transformar e criar obras derivadas deste conjunto de dados para qualquer fim,
+          inclusive comercial, sob a única condição de atribuir a fonte: <em>Atuação Pública (https://atuacao-publica.org)</em>.
+        </p>
+      </div>
+      <button type="button" class="botao botao--secundario" (click)="copiarCitacao()">
+        <app-icone [nome]="copiado() ? 'verificado' : 'documento'" [pequeno]="true" />
+        {{ copiado() ? 'Citação copiada!' : 'Copiar citação' }}
+      </button>
+    </div>
+  </header>
+
+  <!-- Pacotes Consolidados Principais -->
+  <section class="dados-abertos-secao" aria-labelledby="titulo-consolidados">
+    <h2 id="titulo-consolidados">Dumps Nacionais Consolidados</h2>
+    <div class="dados-abertos-cards-principais">
+      @if (dumpConsolidado(); as d) {
+        <div class="card-dump painel">
+          <div class="card-dump-corpo">
+            <span class="selo selo--ativo">{{ d.formato }}</span>
+            <h3>{{ d.titulo }}</h3>
+            <p>{{ d.descricao }}</p>
+            <dl class="card-dump-estats">
+              <div>
+                <dt>Políticos catalogados</dt>
+                <dd class="numero">{{ inteiro(d.total_registros) }}</dd>
+              </div>
+              <div>
+                <dt>Tamanho</dt>
+                <dd class="numero">{{ tamanhoLegivel(d.tamanho_bytes) }}</dd>
+              </div>
+            </dl>
+          </div>
+          <div class="card-dump-acoes">
+            <a class="botao botao--primario" [href]="enderecoDump(d.arquivo)" [download]="d.arquivo">
+              <app-icone nome="documento" [pequeno]="true" />
+              Baixar {{ d.arquivo }}
+            </a>
+          </div>
+        </div>
+      }
+
+      @if (dumpFederal(); as f) {
+        <div class="card-dump painel">
+          <div class="card-dump-corpo">
+            <span class="selo selo--partido">{{ f.formato }}</span>
+            <h3>{{ f.titulo }}</h3>
+            <p>{{ f.descricao }}</p>
+            <dl class="card-dump-estats">
+              <div>
+                <dt>Parlamentares federais</dt>
+                <dd class="numero">{{ inteiro(f.total_registros) }}</dd>
+              </div>
+              <div>
+                <dt>Tamanho</dt>
+                <dd class="numero">{{ tamanhoLegivel(f.tamanho_bytes) }}</dd>
+              </div>
+            </dl>
+          </div>
+          <div class="card-dump-acoes">
+            <a class="botao botao--secundario" [href]="enderecoDump(f.arquivo)" [download]="f.arquivo">
+              <app-icone nome="documento" [pequeno]="true" />
+              Baixar {{ f.arquivo }}
+            </a>
+          </div>
+        </div>
+      }
+
+      <!-- Dump JSON do Índice Geral -->
+      <div class="card-dump painel">
+        <div class="card-dump-corpo">
+          <span class="selo selo--partido">JSON</span>
+          <h3>Índice Completo (JSON)</h3>
+          <p>Índice completo de todas as pessoas catalogadas, cargos, esferas, partidos e referências cruzadas.</p>
+          <dl class="card-dump-estats">
+            <div>
+              <dt>Formato</dt>
+              <dd>REST / Estático</dd>
+            </div>
+            <div>
+              <dt>Estrutura</dt>
+              <dd>UTF-8</dd>
+            </div>
+          </dl>
+        </div>
+        <div class="card-dump-acoes">
+          <a class="botao botao--secundario" href="dados/index.json" target="_blank" download="index.json">
+            <app-icone nome="externo" [pequeno]="true" />
+            Baixar index.json
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Dumps por Unidade da Federação -->
+  <section class="dados-abertos-secao" aria-labelledby="titulo-ufs">
+    <div class="dados-abertos-cabecalho-ufs">
+      <div>
+        <h2 id="titulo-ufs">Dumps por Unidade da Federação</h2>
+        <p class="lead">Arquivos CSV segmentados por Estado e Poder Legislativo Estadual/Distrital.</p>
+      </div>
+      <div class="dados-abertos-busca-campo">
+        <app-icone nome="busca" [pequeno]="true" />
+        <input
+          type="search"
+          placeholder="Filtrar por UF ou nome..."
+          [value]="busca()"
+          (input)="busca.set($any($event.target).value)"
+          aria-label="Filtrar por UF"
+        />
+      </div>
+    </div>
+
+    <div class="dados-abertos-grade-ufs">
+      @for (dump of dumpsUf(); track dump.arquivo) {
+        <div class="card-uf painel">
+          <div class="card-uf-info">
+            <span class="selo selo--partido">{{ dump.formato }}</span>
+            <h3>{{ dump.titulo }}</h3>
+            <p>{{ dump.descricao }}</p>
+            <span class="card-uf-meta">
+              {{ inteiro(dump.total_registros) }} registros · {{ tamanhoLegivel(dump.tamanho_bytes) }}
+            </span>
+          </div>
+          <a class="botao botao--pequeno botao--discreto" [href]="enderecoDump(dump.arquivo)" [download]="dump.arquivo">
+            <app-icone nome="documento" [pequeno]="true" />
+            Baixar
+          </a>
+        </div>
+      }
+    </div>
+  </section>
+
+  <!-- Metodologia e Dicionário de Dados -->
+  <section class="dados-abertos-secao painel" aria-labelledby="titulo-dicionario">
+    <h2 id="titulo-dicionario">Dicionário de Dados das Tabelas CSV</h2>
+    <div class="tabela-rolagem">
+      <table role="table">
+        <caption>Estrutura dos arquivos CSV de políticos</caption>
+        <thead role="rowgroup">
+          <tr role="row">
+            <th scope="col">Coluna</th>
+            <th scope="col">Tipo</th>
+            <th scope="col">Descrição</th>
+          </tr>
+        </thead>
+        <tbody role="rowgroup">
+          <tr role="row">
+            <td><code>id</code></td>
+            <td>Texto</td>
+            <td>Identificador único e estável do perfil no projeto (ex: <code>cam-141401</code>, <code>alep-adao-litro</code>).</td>
+          </tr>
+          <tr role="row">
+            <td><code>nome</code></td>
+            <td>Texto</td>
+            <td>Nome oficial do político catalogado.</td>
+          </tr>
+          <tr role="row">
+            <td><code>cargo</code></td>
+            <td>Texto</td>
+            <td>Cargo público em exercício ou mandatado (ex: <code>deputado_federal</code>, <code>deputado_estadual</code>, <code>governador</code>).</td>
+          </tr>
+          <tr role="row">
+            <td><code>esfera</code></td>
+            <td>Texto</td>
+            <td>Esfera da federação: <code>federal</code>, <code>estadual</code> ou <code>municipal</code>.</td>
+          </tr>
+          <tr role="row">
+            <td><code>ente</code></td>
+            <td>Texto</td>
+            <td>Sigla da UF, país (<code>BR</code>) ou código IBGE de 7 dígitos para municípios.</td>
+          </tr>
+          <tr role="row">
+            <td><code>uf</code></td>
+            <td>Texto</td>
+            <td>Sigla de 2 letras da Unidade da Federação correspondente.</td>
+          </tr>
+          <tr role="row">
+            <td><code>partido</code></td>
+            <td>Texto</td>
+            <td>Sigla oficial do partido político atual registrado na respectiva casa legislativa.</td>
+          </tr>
+          <tr role="row">
+            <td><code>situacao</code></td>
+            <td>Texto</td>
+            <td>Situação funcional oficial (ex: <code>Exercício</code>).</td>
+          </tr>
+          <tr role="row">
+            <td><code>em_exercicio</code></td>
+            <td>Booleano</td>
+            <td><code>true</code> se o mandato está ativo na data de compilação da base.</td>
+          </tr>
+          <tr role="row">
+            <td><code>foto_url</code></td>
+            <td>URL</td>
+            <td>Endereço da fotografia oficial arquivada na fonte pública institucional.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+</div>
