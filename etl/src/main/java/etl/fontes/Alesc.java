@@ -19,6 +19,7 @@ import etl.Coleta.Politica;
 import etl.Contexto;
 import etl.Fonte;
 import etl.Json;
+import etl.Registros.Despesa;
 import etl.Registros.FonteUsada;
 import etl.Registros.LinkOficial;
 import etl.Registros.Mandato;
@@ -37,15 +38,19 @@ public final class Alesc implements Fonte {
     public static final String FONTE_DEPUTADOS = "alesc-deputados";
     public static final String FONTE_DETALHES = "alesc-deputados-detalhes";
     public static final String FONTE_PORTAL = "alesc-portal";
+    public static final String FONTE_DESPESAS = "alesc-despesas";
 
     public static final String SITE = "https://www.alesc.sc.gov.br";
     public static final String URL_DEPUTADOS = "https://www.alesc.sc.gov.br/deputados/";
     public static final String URL_COMISSOES = "https://portalelegis.alesc.sc.gov.br/comissoes-permanentes";
+    public static final String URL_DESPESAS = "https://transparencia.alesc.sc.gov.br/gabinetes-parlamentares/csv/";
     public static final String UF = "SC";
 
     public static final LocalDate INICIO_LEG_20 = LocalDate.of(2023, 2, 1);
     public static final LocalDate FIM_LEG_20 = LocalDate.of(2027, 1, 31);
     public static final int LEGISLATURA_20 = 20;
+
+    private static final java.time.format.DateTimeFormatter DATA_BR = java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
     public static final Pattern CARD_PATTERN = Pattern.compile(
             "<article class=\"lab-card-team[^\"]*\".*?" +
@@ -71,6 +76,30 @@ public final class Alesc implements Fonte {
             "<dd>([^<]+)</dd>");
 
     private static final Set<String> PREPOSICOES = Set.of("de", "da", "do", "das", "dos", "del", "e");
+
+    private static final Map<String, String> NOMES_ALTERNATIVOS = Map.ofEntries(
+            Map.entry("ANA PAULA DA SILVA", "paulinha"),
+            Map.entry("PAULINHA", "paulinha"),
+            Map.entry("VICENTE CAROPRESO", "dr-vicente-caropreso"),
+            Map.entry("ANA CAROLINE CAMPAGNOLO", "ana-campagnolo"),
+            Map.entry("MARCIUS MACHADO", "marcius-machado"),
+            Map.entry("MARCIUS DA SILVA MACHADO", "marcius-machado"),
+            Map.entry("MARCOS VIEIRA", "marcos-vieira"),
+            Map.entry("MARCOS LUIZ VIEIRA", "marcos-vieira"),
+            Map.entry("MAURICIO ESKUDLARK", "mauricio-eskudlark"),
+            Map.entry("MAURICIO JOSE ESKUDLARK", "mauricio-eskudlark"),
+            Map.entry("SERGIO MOTTA", "sergio-motta"),
+            Map.entry("SERGIO MOTTA RIBEIRO", "sergio-motta"),
+            Map.entry("CARLOS HENRIQUE LIMA", "sargento-lima"),
+            Map.entry("CARLOS HENRIQUE DE LIMA", "sargento-lima"),
+            Map.entry("SARGENTO LIMA", "sargento-lima"),
+            Map.entry("JAIR ANTONIO MIOTTO", "jair-miotto"),
+            Map.entry("JESSE LOPES", "jesse-lopes"),
+            Map.entry("JESSE DE FARIA LOPES", "jesse-lopes"),
+            Map.entry("PEDRO BALDISSERA", "padre-pedro-baldissera"),
+            Map.entry("CARLOS HUMBERTO METZNER SILVA", "carlos-humberto"),
+            Map.entry("CARLOS HUMBERTO", "carlos-humberto")
+    );
 
     @Override
     public String nome() {
@@ -101,6 +130,10 @@ public final class Alesc implements Fonte {
             coleta.obterOuVazio(urlModal, "comissoes/" + com.id() + ".html", "text/html", Politica.SEMANAL,
                     Map.of("X-Requested-With", "XMLHttpRequest"));
         }
+
+        for (int ano = 2023; ano <= 2026; ano++) {
+            coleta.obterOuVazio(URL_DESPESAS + ano, "despesas/" + ano + ".csv", "text/csv", Politica.porAno(ano, ctx.hoje()));
+        }
     }
 
     @Override
@@ -129,6 +162,7 @@ public final class Alesc implements Fonte {
         }
 
         Map<String, List<OrgaoOuFrente>> comissoesPorSlug = extrairComissoes(ctx, slugPorNomeNorm);
+        Map<String, List<Despesa>> despesasPorSlug = extrairDespesas(ctx, slugPorNomeNorm);
 
         List<Pessoa> pessoas = new ArrayList<>();
 
@@ -169,10 +203,19 @@ public final class Alesc implements Fonte {
                 }
             }
 
+            List<Despesa> despesas = despesasPorSlug.getOrDefault(slug, List.of());
+            if (!despesas.isEmpty()) {
+                Coleta.Arquivo arqDesp = Coleta.metadados(ctx, nome(), "despesas/2026.csv");
+                if (arqDesp == null) {
+                    arqDesp = Coleta.metadados(ctx, nome(), "despesas/2025.csv");
+                }
+                fontes.add(new FonteUsada(FONTE_DESPESAS, URL_DESPESAS, arqDesp != null ? arqDesp.capturadoEm() : null));
+            }
+
             var blocosNode = Json.SAIDA.createObjectNode();
             blocosNode.set("mandatos", Json.SAIDA.valueToTree(mandatos));
             blocosNode.set("orgaos_e_frentes", Json.SAIDA.valueToTree(orgaos));
-            blocosNode.set("despesas", Json.SAIDA.createArrayNode());
+            blocosNode.set("despesas", Json.SAIDA.valueToTree(despesas));
             blocosNode.set("fontes", Json.SAIDA.valueToTree(fontes));
             Json.gravar(pastaBlocos.resolve(slug + ".json"), blocosNode);
         }
@@ -345,5 +388,124 @@ public final class Alesc implements Fonte {
             }
         }
         return sb.toString();
+    }
+
+    public static Map<String, List<Despesa>> extrairDespesas(Contexto ctx, Map<String, String> slugPorNomeNorm) {
+        Map<String, List<Despesa>> despesasPorSlug = new HashMap<>();
+        for (int ano = 2023; ano <= 2026; ano++) {
+            Coleta.Arquivo arq = Coleta.metadados(ctx, "alesc", "despesas/" + ano + ".csv");
+            if (arq == null) {
+                continue;
+            }
+            Path caminho = Coleta.caminho(ctx, arq);
+            if (!Files.exists(caminho)) {
+                continue;
+            }
+            Prov prov = Prov.de(FONTE_DESPESAS, URL_DESPESAS + ano, arq);
+            try (java.io.BufferedReader leitor = Files.newBufferedReader(caminho, java.nio.charset.StandardCharsets.UTF_8)) {
+                String linha = leitor.readLine(); // cabeçalho
+                if (linha == null) {
+                    continue;
+                }
+                while ((linha = leitor.readLine()) != null) {
+                    if (linha.isBlank()) {
+                        continue;
+                    }
+                    String[] partes = splitCsvPontoEVirgula(linha);
+                    if (partes.length < 7) {
+                        continue;
+                    }
+                    String verba = partes[0].trim();
+                    String descricao = partes[1].trim();
+                    String conta = partes[2].trim();
+                    String favorecido = partes[3].trim();
+                    String dataRef = partes[5].trim();
+                    String valorStr = partes[6].trim();
+
+                    if (conta.isEmpty() || valorStr.isEmpty()) {
+                        continue;
+                    }
+
+                    String slug = resolverSlugPorNome(conta, slugPorNomeNorm);
+                    if (slug == null) {
+                        continue;
+                    }
+
+                    LocalDate data = null;
+                    int mes = 1;
+                    int anoLinha = ano;
+                    try {
+                        if (!dataRef.isEmpty()) {
+                            data = LocalDate.parse(dataRef, DATA_BR);
+                            mes = data.getMonthValue();
+                            anoLinha = data.getYear();
+                        }
+                    } catch (Exception ignored) {
+                    }
+
+                    java.math.BigDecimal valor;
+                    try {
+                        valor = Texto.valor(valorStr.replace(".", "").replace(",", "."));
+                    } catch (Exception ignored) {
+                        continue;
+                    }
+
+                    String categoria = !verba.isEmpty() ? formatarNome(verba) : "Outras despesas";
+                    if (!descricao.isEmpty() && !descricao.equalsIgnoreCase(verba)) {
+                        categoria += " - " + descricao;
+                    }
+
+                    Despesa desp = new Despesa(data, anoLinha, mes, categoria,
+                            favorecido.isEmpty() ? null : favorecido,
+                            null, valor, null, null, prov);
+
+                    despesasPorSlug.computeIfAbsent(slug, k -> new ArrayList<>()).add(desp);
+                }
+            } catch (Exception e) {
+                System.err.println("alesc: erro ao ler despesas de " + ano + ": " + e.getMessage());
+            }
+        }
+        for (List<Despesa> lista : despesasPorSlug.values()) {
+            lista.sort(Comparator.comparing(Despesa::ano).thenComparing(Despesa::mes).reversed());
+        }
+        return despesasPorSlug;
+    }
+
+    public static String resolverSlugPorNome(String conta, Map<String, String> slugPorNomeNorm) {
+        String limpo = conta.replaceAll("\\s*\\([^)]*\\)", "").trim();
+        String norm = Texto.normalizarNome(limpo);
+        String alternativo = NOMES_ALTERNATIVOS.get(norm);
+        if (alternativo != null) {
+            return alternativo;
+        }
+        String slug = slugPorNomeNorm.get(norm);
+        if (slug != null) {
+            return slug;
+        }
+        String normOriginal = Texto.normalizarNome(conta);
+        alternativo = NOMES_ALTERNATIVOS.get(normOriginal);
+        if (alternativo != null) {
+            return alternativo;
+        }
+        return slugPorNomeNorm.get(normOriginal);
+    }
+
+    public static String[] splitCsvPontoEVirgula(String linha) {
+        List<String> tokens = new ArrayList<>();
+        StringBuilder sb = new StringBuilder();
+        boolean emAspas = false;
+        for (int i = 0; i < linha.length(); i++) {
+            char c = linha.charAt(i);
+            if (c == '"') {
+                emAspas = !emAspas;
+            } else if (c == ';' && !emAspas) {
+                tokens.add(sb.toString().trim().replaceAll("^\"|\"$", ""));
+                sb.setLength(0);
+            } else {
+                sb.append(c);
+            }
+        }
+        tokens.add(sb.toString().trim().replaceAll("^\"|\"$", ""));
+        return tokens.toArray(new String[0]);
     }
 }

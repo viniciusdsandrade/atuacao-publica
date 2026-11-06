@@ -1730,6 +1730,21 @@
   status: validado
   validado_em: 2026-11-05
 
+- id: alesc-despesas
+  nome: Assembleia Legislativa do Estado de Santa Catarina, despesas dos gabinetes parlamentares
+  orgao: Assembleia Legislativa do Estado de Santa Catarina
+  esfera: estadual
+  ente: SC
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://transparencia.alesc.sc.gov.br/gabinetes-parlamentares/csv/
+  formato: CSV
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Demonstrativos anuais de despesas e verbas indenizatórias dos gabinetes dos deputados estaduais."
+  status: validado
+  validado_em: 2026-11-06
+
 - id: alego-deputados
   nome: Assembleia Legislativa do Estado de Goiás, deputados estaduais
   orgao: Assembleia Legislativa do Estado de Goiás

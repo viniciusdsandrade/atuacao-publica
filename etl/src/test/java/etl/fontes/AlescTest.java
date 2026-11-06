@@ -196,6 +196,27 @@ class AlescTest {
         assertEquals("SC", bloco.get("mandatos").get(0).get("uf").stringValue());
     }
 
+    @Test
+    void divideCsvComPontoEVirgulaEEspas() {
+        String linha = "ALMOXARIFADO;\"Jornais e Revistas\";\"Ana Paula da Silva (Paulinha)\";;;\t26/06/2026;733,00";
+        String[] partes = Alesc.splitCsvPontoEVirgula(linha);
+        assertEquals(7, partes.length);
+        assertEquals("ALMOXARIFADO", partes[0]);
+        assertEquals("Jornais e Revistas", partes[1]);
+        assertEquals("Ana Paula da Silva (Paulinha)", partes[2]);
+        assertEquals("26/06/2026", partes[5]);
+        assertEquals("733,00", partes[6]);
+    }
+
+    @Test
+    void resolveSlugPorNomeIgnoraParenteses() {
+        Map<String, String> mapa = Map.of(
+                "ANTIDIO LUNELLI", "antidio-lunelli"
+        );
+        assertEquals("paulinha", Alesc.resolverSlugPorNome("Ana Paula da Silva (Paulinha)", mapa));
+        assertEquals("antidio-lunelli", Alesc.resolverSlugPorNome("Antídio Lunelli", mapa));
+    }
+
     private static void gravarMetadado(Path dir, String arquivo, String url) throws IOException {
         Path meta = dir.resolve(arquivo + ".meta.json");
         Coleta.Arquivo arq = new Coleta.Arquivo(url, "raw/alesc/" + arquivo, "abc", 100L, Instant.parse("2026-11-05T12:00:00Z"));

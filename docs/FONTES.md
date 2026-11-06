@@ -682,6 +682,12 @@ Validação em 2026-11-03 com o User-Agent do projeto.
 - URL base: `https://www.alesc.sc.gov.br/`
 - Repositório de fotos oficiais dos parlamentares em alta resolução hospedadas no portal institucional.
 
+### `alesc-despesas`: despesas dos gabinetes parlamentares
+
+- URL base: `https://transparencia.alesc.sc.gov.br/gabinetes-parlamentares/csv/`
+- Demonstrativos anuais em CSV (2023–2026) com verbas de ressarcimento e despesas dos gabinetes (combustíveis, diárias, passagens, correios, materiais e despesas do mandato).
+- Registros vinculados diretamente aos deputados estaduais com valores, fornecedores e datas de referência.
+
 ### `sc-transparencia` e `sc-diario-oficial`: Executivo estadual
 
 - Transparência orçamentária: `https://www.transparencia.sc.gov.br/`
