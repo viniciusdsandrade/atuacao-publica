@@ -34,6 +34,8 @@ public final class Publicador {
                     "discursos", "eventos", "orgaos_e_frentes", "candidaturas", "posicionamentos_declarados"),
             "deputado_estadual", List.of("mandatos", "participacao_votacoes", "votos", "despesas", "proposicoes",
                     "discursos", "eventos", "orgaos_e_frentes", "candidaturas", "posicionamentos_declarados"),
+            "deputado_distrital", List.of("mandatos", "participacao_votacoes", "votos", "despesas", "proposicoes",
+                    "discursos", "eventos", "orgaos_e_frentes", "candidaturas", "posicionamentos_declarados"),
             "vereador", List.of("mandatos", "participacao_votacoes", "votos", "despesas", "proposicoes",
                     "discursos", "eventos", "orgaos_e_frentes", "candidaturas", "posicionamentos_declarados"),
             "presidente", List.of("mandatos", "candidaturas", "despesas_executivo", "atos_normativos", "agenda_oficial",

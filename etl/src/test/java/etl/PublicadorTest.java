@@ -3,11 +3,14 @@ package etl;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import org.junit.jupiter.api.Test;
+
+import tools.jackson.databind.JsonNode;
 
 /** Identificadores sintéticos. */
 class PublicadorTest {
@@ -18,6 +21,18 @@ class PublicadorTest {
         p.chaveExterna = chave;
         p.tse.putAll(tse);
         return p;
+    }
+
+    @Test
+    void todoCargoDoSchemaTemBlocos() {
+        // Cargo fora da tabela de blocos sai publicado sem bloco nenhum, nem mandato.
+        Path comum = Contexto.acharRaiz(Path.of("").toAbsolutePath()).resolve("schemas/comum.schema.json");
+        JsonNode cargos = Json.ler(comum).path("$defs").path("cargo").path("enum");
+        assertTrue(cargos.size() > 0);
+        for (JsonNode cargo : cargos) {
+            assertTrue(Publicador.BLOCOS.containsKey(cargo.stringValue()), "cargo sem blocos: " + cargo.stringValue());
+            assertTrue(Publicador.BLOCOS.get(cargo.stringValue()).contains("mandatos"), "cargo sem mandatos: " + cargo.stringValue());
+        }
     }
 
     @Test
