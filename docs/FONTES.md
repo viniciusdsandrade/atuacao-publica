@@ -536,6 +536,7 @@ Validação em 2026-11-03 com o User-Agent do projeto.
 | `alep-deputados-detalhes` | ALEP, perfis individuais e biografias | T0 | HTML | nenhuma | validado | 2026-11-03 |
 | `alep-comissoes` | ALEP, comissões permanentes e temporárias | T0 | HTML | nenhuma | validado | 2026-11-03 |
 | `alep-transparencia` | ALEP, portal da transparência | T0 | HTML e XLSX | nenhuma | validado | 2026-11-03 |
+| `alep-ressarcimento` | ALEP, verbas de ressarcimento dos deputados | T0 | JSON | reCAPTCHA v3 | bloqueado | 2026-11-06 |
 | `alep-portal` | ALEP, portal institucional e fotos | T0 | HTML e JPG | nenhuma | validado | 2026-11-03 |
 
 ### `alep-deputados`: catálogo e legislaturas
@@ -555,6 +556,12 @@ Validação em 2026-11-03 com o User-Agent do projeto.
 
 - URL base: `https://transparencia.assembleia.pr.leg.br/`
 - Demonstrativos consolidados de despesas orçamentárias e pagamentos em `https://storage2.assembleia.pr.leg.br/file/public-media/transparencia/despesas/consolidados/`.
+
+### `alep-ressarcimento`: verbas de ressarcimento (bloqueado)
+
+- URL base: `https://transparencia.assembleia.pr.leg.br/receitas-e-despesas/verbas-de-ressarcimento`
+- O script da página (`assets/js/ressarcimento.min.js`) lista os meses em `api/ressarcimento_meses` sem token. A consulta em `api/ressarcimento` (POST) envia `X-Recaptcha-Token` com reCAPTCHA v3. Verificado em 2026-11-06.
+- O ETL não contorna CAPTCHA. Por isso as despesas por deputado da ALEP não são coletadas.
 
 
 ## Fontes da Bahia (ALBA & Governo do Estado)
@@ -601,6 +608,7 @@ Validação em 2026-11-03 com o User-Agent do projeto.
 
 - URL base: `https://www.alerj.rj.gov.br/`
 - Fotos oficiais dos parlamentares hospedadas em `/Uploads/PerfilDeputado/Imagem/`.
+- Despesas e verba de gabinete por deputado: nenhum conjunto de dados abertos foi localizado até 2026-11-06. Não validado.
 
 ### `rj-transparencia` e `rj-diario-oficial`: Executivo estadual
 
@@ -684,9 +692,12 @@ Validação em 2026-11-03 com o User-Agent do projeto.
 
 ### `alesc-despesas`: despesas dos gabinetes parlamentares
 
-- URL base: `https://transparencia.alesc.sc.gov.br/gabinetes-parlamentares/csv/`
-- Demonstrativos anuais em CSV (2023–2026) com verbas de ressarcimento e despesas dos gabinetes (combustíveis, diárias, passagens, correios, materiais e despesas do mandato).
-- Registros vinculados diretamente aos deputados estaduais com valores, fornecedores e datas de referência.
+- URL base: `https://transparencia.alesc.sc.gov.br/gabinetes-parlamentares/csv/{ano}`
+- Demonstrativos anuais em CSV (2023–2026), UTF-8 com BOM e separador `;`. Colunas: verba, descrição, conta, favorecido, trecho, data de referência e valor.
+- Verbas como diárias, reembolsos, passagens, telefone, veículos, almoxarifado e aluguel. Valor negativo é estorno e entra como veio.
+- O vínculo com o deputado usa o nome da conta (nome parlamentar ou civil, com mapa de apelidos no adaptador). Conta que não corresponde a um dos 40 deputados em exercício é descartada, e a contagem aparece na saída do `normalize`.
+- Privacidade: o favorecido MEI vem como nome e CPF. O ETL remove a sequência de 11 dígitos (`Guarda.semCpf`). A coluna `trecho` não é usada.
+- A fonte não traz CNPJ nem número de documento, e o favorecido vem vazio em cerca de 21% das linhas.
 
 ### `sc-transparencia` e `sc-diario-oficial`: Executivo estadual
 

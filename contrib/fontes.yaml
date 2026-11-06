@@ -1475,6 +1475,21 @@
   status: validado
   validado_em: 2026-11-03
 
+- id: alep-ressarcimento
+  nome: Assembleia Legislativa do Estado do Paraná, verbas de ressarcimento dos deputados
+  orgao: Assembleia Legislativa do Estado do Paraná
+  esfera: estadual
+  ente: PR
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://transparencia.assembleia.pr.leg.br/receitas-e-despesas/verbas-de-ressarcimento
+  formato: JSON (API da aplicação)
+  autenticacao: reCAPTCHA v3
+  licenca: null
+  limitacoes: "A consulta (api/ressarcimento) exige token reCAPTCHA v3, conforme o script da página. Não contornamos."
+  status: bloqueado
+  validado_em: 2026-11-06
+
 - id: alep-portal
   nome: Assembleia Legislativa do Estado do Paraná, portal institucional e fotos
   orgao: Assembleia Legislativa do Estado do Paraná
@@ -1741,7 +1756,7 @@
   formato: CSV
   autenticacao: nenhuma
   licenca: null
-  limitacoes: "Demonstrativos anuais de despesas e verbas indenizatórias dos gabinetes dos deputados estaduais."
+  limitacoes: "Cobre 2023 a 2026. Só deputados em exercício: conta sem perfil é descartada. CPF no nome do favorecido (MEI) é removido. Sem CNPJ nem número de documento."
   status: validado
   validado_em: 2026-11-06
 

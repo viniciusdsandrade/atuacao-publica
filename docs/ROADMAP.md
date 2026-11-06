@@ -60,6 +60,10 @@ Estado real de cada fase. Atualizado ao fechar cada fase.
 - A API de dados abertos da ALMG (`dadosabertos.almg.gov.br`) descarta conexões SYN de datacenters estrangeiros (geo-blocking/firewall de rede nos runners do GitHub Actions/Azure nos EUA). O download completo inicial foi executado em ambiente nacional e mantido no cache incremental; o step `fetch almg` usa `continue-on-error: true`.
 - A API da ALMG restringe certos recursos como `/proposicoes/pesquisa` (`Access Denied`). Deputados, comissões e verbas indenizatórias são abertos e funcionam via API v2.
 - O portal institucional da ALES (`www.al.es.gov.br`) descarta conexões de datacenters estrangeiros (timeout de conexão em runners internacionais do GitHub Actions). A coleta responde normalmente em ambiente nacional e o step `fetch ales` opera com `continue-on-error: true`.
+- ALESC: as despesas dos gabinetes (`alesc-despesas`) cobrem 2023 a 2026 e entram só para os 40 deputados em exercício. Em 2026-11-06, 4.355 de 54.524 linhas não correspondiam a nenhum deles e foram descartadas; a contagem aparece na saída do `normalize`. A fonte não traz CNPJ nem número de documento, e o favorecido vem vazio em cerca de 21% das linhas.
+- ALESC: o favorecido MEI vem como nome e CPF. A sequência de 11 dígitos é removida na normalização (`Guarda.semCpf`), como na Câmara, no Senado, na ALESP e na ALMG.
+- ALEP: a consulta das verbas de ressarcimento por deputado (`api/ressarcimento`) exige reCAPTCHA v3, conforme o script da própria página (2026-11-06). O ETL não contorna CAPTCHA, então essas despesas não são coletadas (`alep-ressarcimento`, bloqueado).
+- ALERJ: não foi localizado conjunto de dados abertos de despesas ou verba de gabinete por deputado até 2026-11-06. Não validado.
 
 
 ## Ativação pendente (decisão do mantenedor)
@@ -241,6 +245,11 @@ Verificação de 2026-11-02, com scripts locais (Playwright e axe-core, fora do 
 19. Dumps de dados abertos: concluído em 2026-11-06.
     - O `publish` gera `politicos.csv` (todos), `politicos-federal.csv` e `politicos-{uf}.csv`, com um manifest JSON de metadados e contagens. O comando `dumps` refaz os arquivos a partir do `index.json` existente.
     - Rota `/dados-abertos` no site, com downloads diretos, dicionário de dados, citação e a licença CC BY 4.0.
+20. Despesas das assembleias estaduais: concluído em 2026-11-06 para a ALESC; ALEP e ALERJ não validadas.
+    - Fonte `alesc-despesas`: demonstrativos anuais em CSV (2023 a 2026), catalogada em `contrib/fontes.yaml` e `docs/FONTES.md`.
+    - Adaptador `Alesc.java` (`AlescTest.java`): 50.169 lançamentos de 2023 a 2026 vinculados aos 40 deputados em exercício, todos com despesas. Cada lançamento traz categoria, favorecido, data de referência e valor. Estorno (valor negativo) entra como veio.
+    - Privacidade: a sequência de 11 dígitos do favorecido MEI é removida.
+    - ALEP e ALERJ: ver "Limitações conhecidas".
 
 ### Redes sociais
 
