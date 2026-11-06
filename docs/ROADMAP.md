@@ -235,6 +235,12 @@ Verificação de 2026-11-02, com scripts locais (Playwright e axe-core, fora do 
     - Executivo distrital do DF: Governador Ibaneis Rocha coberto pelo arquivo histórico via candidaturas do TSE e portais do GDF catalogados.
     - Pipeline e workflow: registro de `cldf` em `Main.java`, `Publicador.java`, `Vinculo.java` e passo `fetch cldf` no workflow `.github/workflows/dados.yml`.
 17. Enriquecimento Temático: visualização expandida de Comissões Permanentes e Frentes Parlamentares na interface web com filtro por órgão e papel institucional.
+18. Comparador de Atuação Parlamentar: concluído em 2026-11-06.
+    - Rota `/comparar` no site: dois parlamentares da mesma casa lado a lado, só com dado factual (votações nominais, proposições, órgãos e frentes, despesas).
+    - Seleção por busca, com sugestões da mesma UF e da mesma bancada, botão para inverter a ordem e atalho em cada perfil.
+19. Dumps de dados abertos: concluído em 2026-11-06.
+    - O `publish` gera `politicos.csv` (todos), `politicos-federal.csv` e `politicos-{uf}.csv`, com um manifest JSON de metadados e contagens. O comando `dumps` refaz os arquivos a partir do `index.json` existente.
+    - Rota `/dados-abertos` no site, com downloads diretos, dicionário de dados, citação e a licença CC BY 4.0.
 
 ### Redes sociais
 
