@@ -59,6 +59,7 @@ Estado real de cada fase. Atualizado ao fechar cada fase.
 - O site só vai ao ar pelo workflow `dados` (agendado ou manual). Mudança só de interface espera a próxima execução.
 - A API de dados abertos da ALMG (`dadosabertos.almg.gov.br`) descarta conexões SYN de datacenters estrangeiros (geo-blocking/firewall de rede nos runners do GitHub Actions/Azure nos EUA). O download completo inicial foi executado em ambiente nacional e mantido no cache incremental; o step `fetch almg` usa `continue-on-error: true`.
 - A API da ALMG restringe certos recursos como `/proposicoes/pesquisa` (`Access Denied`). Deputados, comissões e verbas indenizatórias são abertos e funcionam via API v2.
+- O portal institucional da ALES (`www.al.es.gov.br`) descarta conexões de datacenters estrangeiros (timeout de conexão em runners internacionais do GitHub Actions). A coleta responde normalmente em ambiente nacional e o step `fetch ales` opera com `continue-on-error: true`.
 
 
 ## Ativação pendente (decisão do mantenedor)
@@ -210,6 +211,7 @@ Verificação de 2026-11-02, com scripts locais (Playwright e axe-core, fora do 
     - Executivo estadual do Espírito Santo: Governador Renato Casagrande coberto pelo arquivo histórico via candidaturas do TSE e portais estaduais catalogados.
     - Cobertura regional: consolidação de 100% de cobertura dos quatro estados da Região Sudeste do Brasil (SP, MG, RJ, ES), totalizando duas macrorregiões inteiras (Sul e Sudeste).
     - Pipeline e workflow: registro de `ales` em `Main.java`, `Publicador.java`, `Vinculo.java` e passo `fetch ales` no workflow `.github/workflows/dados.yml`.
+    - Limitação documentada: o portal da ALES (`www.al.es.gov.br`) descarta requisições de datacenters internacionais dos runners do GitHub Actions (connect timeout); a coleta em ambiente nacional e a suíte de testes operam com 100% de sucesso.
 14. Décimo primeiro estado da federação: avaliação técnica e planejamento para Pernambuco (ALEPE — Região Nordeste) ou Pará (ALEPA — Região Norte).
 
 ### Redes sociais

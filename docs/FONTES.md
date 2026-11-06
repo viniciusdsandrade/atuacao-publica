@@ -741,6 +741,7 @@ Validação em 2026-11-03 com o User-Agent do projeto.
 - Transparência orçamentária: `https://transparencia.es.gov.br/`
 - Diário Oficial: `https://ioes.dio.es.gov.br/`
 - Mandato do Governador Renato Casagrande integrado ao modelo e ao arquivo histórico via candidaturas do TSE.
+- O portal institucional da ALES (`www.al.es.gov.br`) descarta conexões de datacenters estrangeiros (timeout de conexão em runners internacionais do GitHub Actions); a coleta em ambiente nacional e a suíte de testes operam normalmente.
 
 
 ## Fora da política de fontes

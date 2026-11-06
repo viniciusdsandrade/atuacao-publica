@@ -46,6 +46,8 @@ test('rotuloLocal formata localização por esfera e ente', () => {
   assert.equal(rotuloLocal('municipal', '3509502', 'SP'), 'Campinas (SP)');
   assert.equal(rotuloLocal('municipal', '3509502', null), 'Campinas');
   assert.equal(rotuloLocal('estadual', 'SP', 'SP'), 'SP');
+  assert.equal(rotuloLocal('estadual', 'ES', 'ES'), 'ES');
+  assert.equal(rotuloLocal('estadual', 'GO', 'GO'), 'GO');
   assert.equal(rotuloLocal('federal', 'BR', 'RJ'), 'RJ');
   assert.equal(rotuloLocal('federal', 'BR', null), '');
 });
