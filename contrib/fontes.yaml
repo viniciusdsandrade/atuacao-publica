@@ -1730,6 +1730,52 @@
   status: validado
   validado_em: 2026-11-05
 
+- id: alego-deputados
+  nome: Assembleia Legislativa do Estado de Goiás, deputados estaduais
+  orgao: Assembleia Legislativa do Estado de Goiás
+  esfera: estadual
+  ente: GO
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://portal.al.go.leg.br/deputados/em-exercicio
+  formato: HTML
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Listagem oficial de deputados estaduais em exercício na 20ª legislatura."
+  status: validado
+  validado_em: 2026-11-06
+
+- id: alego-deputados-detalhes
+  nome: Assembleia Legislativa do Estado de Goiás, perfis parlamentares e comissões
+  orgao: Assembleia Legislativa do Estado de Goiás
+  esfera: estadual
+  ente: GO
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://portal.al.go.leg.br/deputados/perfil/
+  formato: HTML
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Páginas de perfil individual, perfil biográfico e composições de comissões e frentes parlamentares."
+  status: validado
+  validado_em: 2026-11-06
+
+- id: alego-portal
+  nome: Assembleia Legislativa do Estado de Goiás, portal institucional e fotos
+  orgao: Assembleia Legislativa do Estado de Goiás
+  esfera: estadual
+  ente: GO
+  categoria: primeira_parte
+  nivel_confianca: T0
+  url_base: https://portal.al.go.leg.br/
+  formato: HTML e JPG
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Portal institucional e repositório de fotografias oficiais dos parlamentares em saba.al.go.leg.br."
+  status: validado
+  validado_em: 2026-11-06
+
+
 
 
 

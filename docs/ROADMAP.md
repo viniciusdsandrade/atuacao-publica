@@ -194,7 +194,15 @@ Verificação de 2026-11-02, com scripts locais (Playwright e axe-core, fora do 
     - Executivo estadual de Santa Catarina: Governador Jorginho Mello coberto pelo arquivo histórico via candidaturas do TSE e portais estaduais catalogados.
     - Cobertura regional: consolidação de 100% de cobertura dos estados da Região Sul do Brasil (PR, RS, SC).
     - Pipeline e workflow: registro de `alesc` em `Main.java`, `Publicador.java`, `Vinculo.java` e passo `fetch alesc` no workflow `.github/workflows/dados.yml`.
-12. Nono estado da federação: avaliação técnica e planejamento para Goiás (ALEGO — Região Centro-Oeste) ou Pernambuco (ALEPE — Região Nordeste).
+12. ALEGO e Governo do Estado de Goiás (nono estado da federação, ADR-0022): concluído em 2026-11-06.
+    - Fontes catalogadas e validadas em `docs/FONTES.md`: portal institucional aberto da ALEGO (`https://portal.al.go.leg.br`), endpoint de deputados em exercício (`/deputados/em-exercicio`), perfis individuais (`/deputados/perfil/{id}`), perfis biográficos (`/deputados/perfil-biografico/{id}`), comissões permanentes e frentes parlamentares (`/comissoes/{id}`), fotos oficiais em alta resolução (`https://saba.al.go.leg.br/`) e portais estaduais de transparência (`go-transparencia`) e diário oficial (`go-diario-oficial`).
+    - Modelo e identificador: identificador canônico `alego-{id}` (numérico oficial) e chave `alego` em `ids_externos` de `schemas/politico.schema.json`.
+    - Adaptador `Alego.java` implementado e coberto por testes unitários (`AlegoTest.java`): ingestão e parsing dos deputados estaduais em exercício na 20ª Legislatura (2023–2027), fotos oficiais em resolução original, extração de nome civil e datas de nascimento, órgãos e frentes parlamentares populando `orgaos_e_frentes` e minimização estrita de dados de contato e informações familiares.
+    - Vínculo com o TSE: inclusão de `GO` em `UFS_ESTADUAIS` de `Tse.java` (+1.800 candidaturas estaduais indexadas); vínculo determinístico dos deputados estaduais da ALEGO às suas candidaturas das eleições de 2018, 2022 e 2026.
+    - Executivo estadual de Goiás: Governador Ronaldo Caiado coberto pelo arquivo histórico via candidaturas do TSE e portais estaduais catalogados.
+    - Cobertura regional: estreia oficial do projeto na Região Centro-Oeste do Brasil.
+    - Pipeline e workflow: registro de `alego` em `Main.java`, `Publicador.java`, `Vinculo.java` e passo `fetch alego` no workflow `.github/workflows/dados.yml`.
+13. Décimo estado da federação: avaliação técnica e planejamento para Pernambuco (ALEPE — Região Nordeste) ou Pará (ALEPA — Região Norte).
 
 ### Redes sociais
 

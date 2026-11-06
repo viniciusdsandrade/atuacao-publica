@@ -689,6 +689,33 @@ Validação em 2026-11-03 com o User-Agent do projeto.
 - Mandato do Governador Jorginho Mello integrado ao modelo e ao arquivo histórico via candidaturas do TSE.
 
 
+## Fontes de Goiás (ALEGO & Governo do Estado)
+
+### `alego-deputados`: parlamentares em exercício
+
+- URL base: `https://portal.al.go.leg.br/deputados/em-exercicio`
+- Deputados estaduais da 20ª legislatura (2023–2027), com ID numérico oficial, nome parlamentar e partido.
+- Identificador canônico no projeto: `alego-{id}` (ex.: `alego-808`, `alego-51`, `alego-137`).
+
+### `alego-deputados-detalhes`: perfil individual, biografia e comissões
+
+- URL base: `https://portal.al.go.leg.br/deputados/perfil/`, `https://portal.al.go.leg.br/deputados/perfil-biografico/` e `https://portal.al.go.leg.br/comissoes/`
+- Perfil com nome civil completo (`Nome Civil: ...`), data e município de nascimento, e histórico de legislaturas.
+- Comissões permanentes e frentes parlamentares populando `orgaos_e_frentes` com papéis oficiais (Presidente, Vice-Presidente, Titular, Suplente).
+- Dados de gabinete, telefones, e-mails institucionais e informações de parentesco descartados na ingestão por regra estrita de privacidade.
+
+### `alego-portal`: portal institucional e fotos
+
+- URL base: `https://portal.al.go.leg.br/`
+- Repositório de fotos oficiais dos parlamentares em alta resolução hospedadas no servidor institucional `https://saba.al.go.leg.br/`.
+
+### `go-transparencia` e `go-diario-oficial`: Executivo estadual
+
+- Transparência orçamentária: `https://www.transparencia.go.gov.br/`
+- Diário Oficial: `https://diariooficial.abc.go.gov.br/`
+- Mandato do Governador Ronaldo Caiado integrado ao modelo e ao arquivo histórico via candidaturas do TSE.
+
+
 ## Fora da política de fontes
 
 Imprensa, blogs, agregadores sem metodologia, redes sociais de terceiros, mensagens, vídeos não oficiais, Wikipedia e rankings de terceiros.
