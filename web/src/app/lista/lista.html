@@ -118,6 +118,19 @@
           </div>
         </div>
       }
+      @if (segmentosPartido().length > 2) {
+        <div class="segmentos segmentos--partido" role="radiogroup" aria-labelledby="rotulo-partido-chips">
+          <span id="rotulo-partido-chips" class="campo-rotulo">Maiores bancadas</span>
+          <div class="segmentos-lista">
+            @for (p of segmentosPartido(); track p.valor) {
+              <label class="segmento">
+                <input type="radio" name="partido-chip" [value]="p.valor" [checked]="filtros().partido === p.valor" (change)="alterar({ partido: p.valor })" />
+                <span>{{ p.rotulo }} <small>{{ inteiro(p.total) }}</small></span>
+              </label>
+            }
+          </div>
+        </div>
+      }
     </div>
 
     <div class="filtros-mais">

@@ -150,7 +150,7 @@ export class Lista {
   protected readonly partidos = computed(() => ordenar(this.valores((p) => p.partido), []));
 
   /** Cada palavra da busca precisa aparecer no nome, no município, no partido ou no cargo. */
-  private filtrar(ignorar: 'situacao' | 'esfera' | 'uf' | null): EntradaIndice[] {
+  private filtrar(ignorar: 'situacao' | 'esfera' | 'uf' | 'partido' | null): EntradaIndice[] {
     const f = this.filtros();
     const termos = chaveDeBusca(f.busca).split(/\s+/).filter(Boolean);
     const chaves = this.chaves();
@@ -161,7 +161,7 @@ export class Lista {
         (ignorar === 'esfera' || !f.esfera || p.esfera === f.esfera) &&
         (!f.cargo || p.cargo === f.cargo) &&
         (ignorar === 'uf' || !f.uf || p.uf === f.uf) &&
-        (!f.partido || p.partido === f.partido),
+        (ignorar === 'partido' || !f.partido || p.partido === f.partido),
     );
   }
 
@@ -169,6 +169,7 @@ export class Lista {
   private readonly semSituacao = computed(() => this.filtrar('situacao'));
   private readonly semEsfera = computed(() => this.filtrar('esfera'));
   private readonly semUf = computed(() => this.filtrar('uf'));
+  private readonly semPartido = computed(() => this.filtrar('partido'));
 
   /** Contagens que respeitam os outros filtros: o número prevê o resultado de cada clique. */
   protected readonly segmentosSituacao = computed(() => {
@@ -208,6 +209,29 @@ export class Lista {
     return [
       { valor: '', rotulo: 'Todas', total: base.length },
       ...this.ufs().map((u) => ({ valor: u, rotulo: u, total: contagem.get(u) ?? 0 })),
+    ];
+  });
+
+  protected readonly segmentosPartido = computed(() => {
+    const base = this.semPartido();
+    const contagem = new Map<string, number>();
+    for (const p of base) {
+      if (p.partido) {
+        contagem.set(p.partido, (contagem.get(p.partido) ?? 0) + 1);
+      }
+    }
+    const selecionado = this.filtros().partido;
+    const top = [...contagem.entries()]
+      .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], 'pt-BR'))
+      .slice(0, 10);
+
+    if (selecionado && !top.some(([sigla]) => sigla === selecionado)) {
+      top.push([selecionado, contagem.get(selecionado) ?? 0]);
+    }
+
+    return [
+      { valor: '', rotulo: 'Todos os partidos', total: base.length },
+      ...top.map(([sigla, total]) => ({ valor: sigla, rotulo: sigla, total })),
     ];
   });
 
