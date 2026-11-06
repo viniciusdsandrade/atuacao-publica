@@ -130,17 +130,98 @@
       </table>
     }
     @case ('orgaos_e_frentes') {
+      @if (contagensOrgao(); as c) {
+        @if (c.todos > 1 && (c.comissao > 0 || c.frente > 0 || c.orgao > 0 || c.lideranca > 0)) {
+          <div class="filtros-tabela" role="toolbar" aria-label="Filtrar colegiados por tipo ou liderança">
+            <button
+              type="button"
+              class="botao-filtro-tabela"
+              [attr.aria-pressed]="filtroOrgao() === 'todos'"
+              (click)="definirFiltroOrgao('todos')"
+            >
+              Todos ({{ c.todos }})
+            </button>
+            @if (c.comissao > 0) {
+              <button
+                type="button"
+                class="botao-filtro-tabela"
+                [attr.aria-pressed]="filtroOrgao() === 'comissao'"
+                (click)="definirFiltroOrgao('comissao')"
+              >
+                Comissões ({{ c.comissao }})
+              </button>
+            }
+            @if (c.frente > 0) {
+              <button
+                type="button"
+                class="botao-filtro-tabela"
+                [attr.aria-pressed]="filtroOrgao() === 'frente'"
+                (click)="definirFiltroOrgao('frente')"
+              >
+                Frentes parlamentares ({{ c.frente }})
+              </button>
+            }
+            @if (c.orgao > 0) {
+              <button
+                type="button"
+                class="botao-filtro-tabela"
+                [attr.aria-pressed]="filtroOrgao() === 'orgao'"
+                (click)="definirFiltroOrgao('orgao')"
+              >
+                Órgãos / Conselhos ({{ c.orgao }})
+              </button>
+            }
+            @if (c.lideranca > 0) {
+              <button
+                type="button"
+                class="botao-filtro-tabela"
+                [attr.aria-pressed]="filtroOrgao() === 'lideranca'"
+                (click)="definirFiltroOrgao('lideranca')"
+              >
+                Liderança / Diretoria ({{ c.lideranca }})
+              </button>
+            }
+          </div>
+        }
+      }
       <table role="table" data-cols="5">
         <caption [class.sr-only]="!legenda()">{{ legenda() || 'Órgãos, comissões e frentes' }}</caption>
-        <thead role="rowgroup"><tr role="row"><th scope="col" role="columnheader">Tipo</th><th scope="col" role="columnheader">Nome</th><th scope="col" role="columnheader">Papel</th><th scope="col" role="columnheader">Início</th><th scope="col" role="columnheader">Fim</th></tr></thead>
+        <thead role="rowgroup"><tr role="row"><th scope="col" role="columnheader">Tipo</th><th scope="col" role="columnheader">Nome</th><th scope="col" role="columnheader">Papel</th><th scope="col" role="columnheader">Início</th><th scope="col" role="columnheader">Fim / Situação</th></tr></thead>
         <tbody role="rowgroup">
           @for (r of visiveis(); track $index) {
             <tr role="row">
-              <td role="cell" data-label="Tipo"><span class="v">{{ r['tipo'] }}</span></td>
-              <td role="cell" data-label="Nome"><span class="v"><a [href]="r.url_origem" rel="noopener noreferrer" target="_blank">{{ r['nome'] }}</a></span></td>
-              <td role="cell" data-label="Papel"><span class="v">{{ texto(r['papel']) }}</span></td>
+              <td role="cell" data-label="Tipo"><span class="v">{{ rotuloTipoOrgao(textoOuNulo(r['tipo'])) }}</span></td>
+              <td role="cell" data-label="Nome">
+                <span class="v">
+                  @if (r['sigla']) {
+                    <strong>{{ r['sigla'] }}</strong> · 
+                  }
+                  @if (r.url_origem) {
+                    <a [href]="r.url_origem" rel="noopener noreferrer" target="_blank">{{ r['nome'] }}</a>
+                  } @else {
+                    {{ r['nome'] }}
+                  }
+                </span>
+              </td>
+              <td role="cell" data-label="Papel">
+                <span class="v">
+                  @if (ePapelLideranca(textoOuNulo(r['papel']))) {
+                    <span class="selo selo--lideranca">{{ texto(r['papel']) }}</span>
+                  } @else {
+                    {{ texto(r['papel']) }}
+                  }
+                </span>
+              </td>
               <td role="cell" data-label="Início"><span class="v">{{ data(r['inicio']) }}</span></td>
-              <td role="cell" data-label="Fim"><span class="v">{{ data(r['fim']) }}</span></td>
+              <td role="cell" data-label="Fim / Situação">
+                <span class="v">
+                  @if (r['fim']) {
+                    {{ data(r['fim']) }}
+                  } @else {
+                    <span class="selo selo--ativo">Em andamento</span>
+                  }
+                </span>
+              </td>
             </tr>
           }
         </tbody>

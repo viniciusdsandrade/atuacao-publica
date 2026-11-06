@@ -10,6 +10,7 @@ import { MemoriaLista } from '../lista/memoria-lista';
 import { Bloco, DespesaAgregada, Perfil as PerfilPublicado } from '../modelo';
 import {
   data,
+  ePapelLideranca,
   iniciais,
   inteiro,
   moeda,
@@ -74,6 +75,32 @@ export class Perfil {
   protected readonly situacao = computed(() => {
     const p = this.perfil();
     return p ? situacaoDe(p) : 'exercicio';
+  });
+
+  /** Cargos de comando em órgãos, comissões ou frentes atualmente em andamento. */
+  protected readonly liderancasAtivas = computed(() => {
+    const p = this.perfil();
+    if (!p) {
+      return [];
+    }
+    const bloco = p.blocos?.['orgaos_e_frentes'];
+    const regs = (bloco?.registros ?? bloco?.recentes ?? []) as Array<Record<string, unknown>>;
+    if (regs.length === 0) {
+      return [];
+    }
+    const hoje = new Date().toISOString().substring(0, 10);
+    return regs
+      .filter((r) => {
+        const fim = typeof r['fim'] === 'string' ? r['fim'] : null;
+        const papel = typeof r['papel'] === 'string' ? r['papel'] : null;
+        return (!fim || fim >= hoje) && ePapelLideranca(papel);
+      })
+      .slice(0, 4)
+      .map((r) => ({
+        papel: String(r['papel']),
+        nome: String(r['nome']),
+        sigla: typeof r['sigla'] === 'string' ? r['sigla'] : null,
+      }));
   });
 
   /** Bloco em leitura, para destacar no sumário. */

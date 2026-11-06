@@ -23,6 +23,30 @@ export const ENTES_MUNICIPAIS: Record<string, string> = {
   '3509502': 'Campinas',
 };
 
+export const TIPOS_ORGAO: Record<string, string> = {
+  comissao: 'Comissão',
+  frente: 'Frente parlamentar',
+  orgao: 'Órgão / Conselho',
+};
+
+export function rotuloTipoOrgao(tipo: string | null | undefined): string {
+  if (!tipo) {
+    return SEM_REGISTRO;
+  }
+  return TIPOS_ORGAO[tipo] ?? tipo;
+}
+
+const REGEX_LIDERANCA =
+  /^(presidente|presidenta|1[ºª]?\s*vice|2[ºª]?\s*vice|3[ºª]?\s*vice|vice-presid|coordenador|relator|ouvidor|procurador|corregedor|secret[aá]ri)/i;
+
+/** Identifica papéis de liderança em comissões, frentes e colegiados (Presidente, Vice, Relator, Coordenador, etc.). */
+export function ePapelLideranca(papel: string | null | undefined): boolean {
+  if (!papel) {
+    return false;
+  }
+  return REGEX_LIDERANCA.test(papel.trim());
+}
+
 export const BLOCOS: Record<string, string> = {
   mandatos: 'Mandatos',
   participacao_votacoes: 'Participação em votações nominais',

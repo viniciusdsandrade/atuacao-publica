@@ -7,6 +7,8 @@ import {
   ENTES_MUNICIPAIS,
   rotuloCargo,
   rotuloEsfera,
+  rotuloTipoOrgao,
+  ePapelLideranca,
   nomeDoEnte,
   rotuloLocal,
   chaveDeBusca,
@@ -28,6 +30,27 @@ test('rotuloCargo retorna nome legível dos cargos municipais e gerais', () => {
   assert.equal(rotuloCargo('governador'), 'Governador(a)');
   assert.equal(rotuloCargo('presidente'), 'Presidente da República');
   assert.equal(rotuloCargo('desconhecido'), 'desconhecido');
+});
+
+test('rotuloTipoOrgao retorna rótulo descritivo', () => {
+  assert.equal(rotuloTipoOrgao('comissao'), 'Comissão');
+  assert.equal(rotuloTipoOrgao('frente'), 'Frente parlamentar');
+  assert.equal(rotuloTipoOrgao('orgao'), 'Órgão / Conselho');
+  assert.equal(rotuloTipoOrgao(null), 'Sem registro na fonte.');
+  assert.equal(rotuloTipoOrgao('outro'), 'outro');
+});
+
+test('ePapelLideranca identifica cargos de comando em colegiados', () => {
+  assert.equal(ePapelLideranca('Presidente'), true);
+  assert.equal(ePapelLideranca('1º Vice-Presidente'), true);
+  assert.equal(ePapelLideranca('Vice-Presidenta'), true);
+  assert.equal(ePapelLideranca('Coordenador-Geral'), true);
+  assert.equal(ePapelLideranca('Relator'), true);
+  assert.equal(ePapelLideranca('Secretário de Transparência'), true);
+  assert.equal(ePapelLideranca('Titular'), false);
+  assert.equal(ePapelLideranca('Suplente'), false);
+  assert.equal(ePapelLideranca('Membro'), false);
+  assert.equal(ePapelLideranca(null), false);
 });
 
 test('rotuloEsfera mapeia esferas corretamente', () => {

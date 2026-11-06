@@ -1,7 +1,17 @@
-import { Component, computed, input, linkedSignal } from '@angular/core';
+import { Component, computed, input, linkedSignal, signal } from '@angular/core';
 
 import { Registro } from '../modelo';
-import { data, inteiro, moeda, nomeDoEnte, rotuloCargo, rotuloLocal, SEM_REGISTRO } from '../rotulos';
+import {
+  data,
+  ePapelLideranca,
+  inteiro,
+  moeda,
+  nomeDoEnte,
+  rotuloCargo,
+  rotuloLocal,
+  rotuloTipoOrgao,
+  SEM_REGISTRO,
+} from '../rotulos';
 
 /** Tabela de registros de um bloco. Usada no perfil (mais recentes) e no detalhe anual (todos). */
 @Component({
@@ -15,16 +25,59 @@ export class Tabela {
   /** Quantas linhas aparecem de cada vez. Zero mostra todas. */
   readonly limite = input<number>(0);
 
+  /** Filtro por tipo ou liderança no bloco de órgãos, comissões e frentes. */
+  protected readonly filtroOrgao = signal<string>('todos');
+
+  protected readonly contagensOrgao = computed(() => {
+    if (this.bloco() !== 'orgaos_e_frentes') {
+      return { todos: 0, comissao: 0, frente: 0, orgao: 0, lideranca: 0 };
+    }
+    const regs = this.registros();
+    let comissao = 0;
+    let frente = 0;
+    let orgao = 0;
+    let lideranca = 0;
+    for (const r of regs) {
+      const tipo = r['tipo'];
+      if (tipo === 'comissao') comissao++;
+      else if (tipo === 'frente') frente++;
+      else if (tipo === 'orgao') orgao++;
+      if (ePapelLideranca(this.textoOuNulo(r['papel']))) lideranca++;
+    }
+    return {
+      todos: regs.length,
+      comissao,
+      frente,
+      orgao,
+      lideranca,
+    };
+  });
+
+  protected readonly registrosFiltrados = computed(() => {
+    if (this.bloco() !== 'orgaos_e_frentes') {
+      return this.registros();
+    }
+    const f = this.filtroOrgao();
+    if (f === 'todos') {
+      return this.registros();
+    }
+    if (f === 'lideranca') {
+      return this.registros().filter((r) => ePapelLideranca(this.textoOuNulo(r['papel'])));
+    }
+    return this.registros().filter((r) => r['tipo'] === f);
+  });
+
   /** Volta ao primeiro lote quando a lista de registros muda (por exemplo, ao filtrar). */
   private readonly mostrando = linkedSignal({
-    source: () => ({ limite: this.limite(), registros: this.registros() }),
+    source: () => ({ limite: this.limite(), registros: this.registrosFiltrados() }),
     computation: ({ limite }) => limite,
   });
   protected readonly visiveis = computed(() => {
     const quantas = this.mostrando();
-    return quantas > 0 ? this.registros().slice(0, quantas) : this.registros();
+    const lista = this.registrosFiltrados();
+    return quantas > 0 ? lista.slice(0, quantas) : lista;
   });
-  protected readonly restantes = computed(() => Math.max(0, this.registros().length - this.visiveis().length));
+  protected readonly restantes = computed(() => Math.max(0, this.registrosFiltrados().length - this.visiveis().length));
 
   protected readonly data = data;
   protected readonly inteiro = inteiro;
@@ -32,7 +85,13 @@ export class Tabela {
   protected readonly rotuloCargo = rotuloCargo;
   protected readonly rotuloLocal = rotuloLocal;
   protected readonly nomeDoEnte = nomeDoEnte;
+  protected readonly rotuloTipoOrgao = rotuloTipoOrgao;
+  protected readonly ePapelLideranca = ePapelLideranca;
   protected readonly semRegistro = SEM_REGISTRO;
+
+  protected definirFiltroOrgao(filtro: string): void {
+    this.filtroOrgao.set(filtro);
+  }
 
   /** Cargo com o local entre parênteses quando há. Sem UF, nada é inventado. */
   protected cargoELocal(r: Registro): string {
@@ -41,12 +100,12 @@ export class Tabela {
     return local ? `${cargo} (${local})` : cargo;
   }
 
-  private textoOuNulo(valor: unknown): string | null {
+  protected textoOuNulo(valor: unknown): string | null {
     return typeof valor === 'string' && valor !== '' ? valor : null;
   }
 
   protected mostrarMais(todos: boolean): void {
-    this.mostrando.update((atual) => (todos ? this.registros().length : atual + this.limite()));
+    this.mostrando.update((atual) => (todos ? this.registrosFiltrados().length : atual + this.limite()));
   }
 
   protected localCandidatura(r: Registro): string {

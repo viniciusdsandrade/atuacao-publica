@@ -352,6 +352,13 @@
   color: var(--texto);
 }
 
+.selo--lideranca {
+  background: var(--destaque-suave);
+  border-color: var(--destaque);
+  color: var(--destaque);
+  font-weight: 650;
+}
+
 /* Avatar com iniciais: o site não embute foto de terceiros (política de privacidade do visitante). */
 .avatar {
   display: grid;

@@ -32,6 +32,23 @@
             }
             <span class="selo selo--partido">Partido: {{ p.partido_atual ?? 'sem registro na fonte' }}</span>
           </p>
+          @if (liderancasAtivas(); as liderancas) {
+            @if (liderancas.length > 0) {
+              <div class="perfil-liderancas" aria-label="Lideranças em colegiados">
+                @for (l of liderancas; track l.nome) {
+                  <a
+                    [routerLink]="[]"
+                    fragment="bloco-orgaos_e_frentes"
+                    (click)="ir('orgaos_e_frentes')"
+                    class="selo selo--lideranca"
+                    [title]="l.papel + ': ' + l.nome"
+                  >
+                    <strong>{{ l.papel }}:</strong> {{ l.sigla || l.nome }}
+                  </a>
+                }
+              </div>
+            }
+          }
         </div>
       </div>
 
