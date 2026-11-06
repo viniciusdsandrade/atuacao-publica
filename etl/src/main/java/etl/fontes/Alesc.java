@@ -20,8 +20,8 @@ import etl.Contexto;
 import etl.Fonte;
 import etl.Guarda;
 import etl.Json;
+import etl.Registros;
 import etl.Registros.Despesa;
-import etl.Registros.FonteUsada;
 import etl.Registros.LinkOficial;
 import etl.Registros.Mandato;
 import etl.Registros.OrgaoOuFrente;
@@ -191,34 +191,14 @@ public final class Alesc implements Fonte {
                     partido, fotoUrl, "Em exercício", true, links);
             pessoas.add(pessoa);
 
-            List<FonteUsada> fontes = new ArrayList<>();
-            fontes.add(new FonteUsada(FONTE_DEPUTADOS, URL_DEPUTADOS, arqDeputados != null ? arqDeputados.capturadoEm() : null));
-            if (arqPerfil != null) {
-                fontes.add(new FonteUsada(FONTE_DETALHES, urlPerfil, arqPerfil.capturadoEm()));
-            }
-
             List<OrgaoOuFrente> orgaos = comissoesPorSlug.getOrDefault(slug, List.of());
-            if (!orgaos.isEmpty()) {
-                Coleta.Arquivo arqComissoes = Coleta.metadados(ctx, nome(), "comissoes.html");
-                if (arqComissoes != null) {
-                    fontes.add(new FonteUsada(FONTE_DETALHES, URL_COMISSOES, arqComissoes.capturadoEm()));
-                }
-            }
-
             List<Despesa> despesas = despesasPorSlug.getOrDefault(slug, List.of());
-            if (!despesas.isEmpty()) {
-                Coleta.Arquivo arqDesp = Coleta.metadados(ctx, nome(), "despesas/2026.csv");
-                if (arqDesp == null) {
-                    arqDesp = Coleta.metadados(ctx, nome(), "despesas/2025.csv");
-                }
-                fontes.add(new FonteUsada(FONTE_DESPESAS, URL_DESPESAS, arqDesp != null ? arqDesp.capturadoEm() : null));
-            }
 
             var blocosNode = Json.SAIDA.createObjectNode();
             blocosNode.set("mandatos", Json.SAIDA.valueToTree(mandatos));
             blocosNode.set("orgaos_e_frentes", Json.SAIDA.valueToTree(orgaos));
             blocosNode.set("despesas", Json.SAIDA.valueToTree(despesas));
-            blocosNode.set("fontes", Json.SAIDA.valueToTree(fontes));
+            blocosNode.set("fontes", Json.SAIDA.valueToTree(Registros.fontesDosBlocos(blocosNode)));
             Json.gravar(pastaBlocos.resolve(slug + ".json"), blocosNode);
         }
 

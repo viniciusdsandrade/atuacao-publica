@@ -19,7 +19,7 @@ import etl.Coleta.Politica;
 import etl.Contexto;
 import etl.Fonte;
 import etl.Json;
-import etl.Registros.FonteUsada;
+import etl.Registros;
 import etl.Registros.LinkOficial;
 import etl.Registros.Mandato;
 import etl.Registros.Pessoa;
@@ -150,17 +150,11 @@ public final class Alerj implements Fonte {
                     partido, fotoUrl, "Em exercício", true, links);
             pessoas.add(pessoa);
 
-            List<FonteUsada> fontes = new ArrayList<>();
-            fontes.add(new FonteUsada(FONTE_DEPUTADOS, SITE + "/Deputados/QuemSao", arqDeputados != null ? arqDeputados.capturadoEm() : null));
-            if (arqPerfil != null) {
-                fontes.add(new FonteUsada(FONTE_DETALHES, SITE + "/Deputados/PerfilDeputado/" + id + "?Legislatura=20", arqPerfil.capturadoEm()));
-            }
-
             var blocosNode = Json.SAIDA.createObjectNode();
             blocosNode.set("mandatos", Json.SAIDA.valueToTree(mandatos));
             blocosNode.set("orgaos_e_frentes", Json.SAIDA.createArrayNode());
             blocosNode.set("despesas", Json.SAIDA.createArrayNode());
-            blocosNode.set("fontes", Json.SAIDA.valueToTree(fontes));
+            blocosNode.set("fontes", Json.SAIDA.valueToTree(Registros.fontesDosBlocos(blocosNode)));
             Json.gravar(pastaBlocos.resolve(id + ".json"), blocosNode);
         }
 

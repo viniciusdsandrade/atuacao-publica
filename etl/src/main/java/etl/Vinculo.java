@@ -163,7 +163,13 @@ final class Vinculo {
             JsonNode blocos = Json.ler(arquivoDeBlocos);
             blocos.path("mandatos").forEach(p.bloco("mandatos")::add);
             p.arquivosDeBlocos.add(arquivoDeBlocos);
-            for (var usadas : blocos.path("fontes").properties()) {
+            JsonNode fontesPorBloco = blocos.path("fontes");
+            if (fontesPorBloco.isArray()) {
+                // Uma lista não diz de que bloco é cada fonte: o perfil sairia com os blocos sem fonte e sem data.
+                throw new IllegalStateException(fonte + "/blocos/" + idFonte + ".json: \"fontes\" é uma lista; grave um objeto"
+                        + " com as fontes de cada bloco (Registros.fontesDosBlocos)");
+            }
+            for (var usadas : fontesPorBloco.properties()) {
                 List<JsonNode> lista = p.fontes.computeIfAbsent(usadas.getKey(), k -> new ArrayList<>());
                 usadas.getValue().forEach(lista::add);
             }

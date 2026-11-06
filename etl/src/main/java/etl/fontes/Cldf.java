@@ -19,7 +19,7 @@ import etl.Coleta.Politica;
 import etl.Contexto;
 import etl.Fonte;
 import etl.Json;
-import etl.Registros.FonteUsada;
+import etl.Registros;
 import etl.Registros.LinkOficial;
 import etl.Registros.Mandato;
 import etl.Registros.OrgaoOuFrente;
@@ -160,13 +160,6 @@ public final class Cldf implements Fonte {
                     INICIO_LEG_9, FIM_LEG_9, "Em exercício", "Titular", LEGISLATURA_9, 2022,
                     "Deputado Distrital na 9ª Legislatura (2023–2027)", provDeputados));
 
-            List<FonteUsada> fontes = new ArrayList<>();
-            fontes.add(new FonteUsada(FONTE_DEPUTADOS, URL_DEPUTADOS,
-                    arqDeputados != null ? arqDeputados.capturadoEm() : null));
-            if (arqPerfil != null) {
-                fontes.add(new FonteUsada(FONTE_DETALHES, urlPerfil, arqPerfil.capturadoEm()));
-            }
-
             String chaveNome = normalizarChaveNome(nome);
             List<OrgaoOuFrente> orgaos = comissoesPorNome.getOrDefault(chaveNome, List.of());
 
@@ -174,7 +167,7 @@ public final class Cldf implements Fonte {
             blocosNode.set("mandatos", Json.SAIDA.valueToTree(mandatos));
             blocosNode.set("orgaos_e_frentes", Json.SAIDA.valueToTree(orgaos));
             blocosNode.set("despesas", Json.SAIDA.createArrayNode());
-            blocosNode.set("fontes", Json.SAIDA.valueToTree(fontes));
+            blocosNode.set("fontes", Json.SAIDA.valueToTree(Registros.fontesDosBlocos(blocosNode)));
             if (biografia != null) {
                 blocosNode.put("biografia", biografia);
             }

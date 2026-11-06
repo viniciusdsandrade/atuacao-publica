@@ -20,7 +20,7 @@ import etl.Coleta.Politica;
 import etl.Contexto;
 import etl.Fonte;
 import etl.Json;
-import etl.Registros.FonteUsada;
+import etl.Registros;
 import etl.Registros.LinkOficial;
 import etl.Registros.Mandato;
 import etl.Registros.OrgaoOuFrente;
@@ -206,21 +206,13 @@ public final class Alepe implements Fonte {
                     INICIO_LEG_20, FIM_LEG_20, "Em exercício", "Titular", LEGISLATURA_20, 2022,
                     "Deputado Estadual na 20ª Legislatura (2023–2027)", provDeputados));
 
-            List<FonteUsada> fontes = new ArrayList<>();
-            fontes.add(new FonteUsada(FONTE_DEPUTADOS, URL_DEPUTADOS,
-                    arqDeputados != null ? arqDeputados.capturadoEm() : null));
-            if (arqPerfil != null) {
-                fontes.add(new FonteUsada(FONTE_DETALHES, SITE + "/parlamentar/" + slug + "/",
-                        arqPerfil.capturadoEm()));
-            }
-
             List<OrgaoOuFrente> orgaos = comissoesPorDeputado.getOrDefault(slug, List.of());
 
             var blocosNode = Json.SAIDA.createObjectNode();
             blocosNode.set("mandatos", Json.SAIDA.valueToTree(mandatos));
             blocosNode.set("orgaos_e_frentes", Json.SAIDA.valueToTree(orgaos));
             blocosNode.set("despesas", Json.SAIDA.createArrayNode());
-            blocosNode.set("fontes", Json.SAIDA.valueToTree(fontes));
+            blocosNode.set("fontes", Json.SAIDA.valueToTree(Registros.fontesDosBlocos(blocosNode)));
             if (biografia != null) {
                 blocosNode.put("biografia", biografia);
             }

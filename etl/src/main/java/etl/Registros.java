@@ -3,15 +3,45 @@ package etl;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import com.fasterxml.jackson.annotation.JsonUnwrapped;
+import tools.jackson.databind.JsonNode;
 
 /** Registros tipados do modelo canônico (schemas/registros.schema.json). Saída em snake_case. */
 public final class Registros {
 
     private Registros() {
+    }
+
+    /**
+     * Fontes de cada bloco, tiradas da proveniência dos próprios registros e sem repetição. O bloco cita os mesmos
+     * arquivos, com o mesmo instante de captura, que os seus registros. Bloco vazio fica sem fonte.
+     */
+    public static Map<String, List<FonteUsada>> fontesDosBlocos(JsonNode blocos) {
+        Map<String, List<FonteUsada>> fontes = new LinkedHashMap<>();
+        for (var bloco : blocos.properties()) {
+            if (bloco.getKey().equals("fontes")) {
+                continue;
+            }
+            Set<FonteUsada> usadas = new LinkedHashSet<>();
+            for (JsonNode registro : bloco.getValue()) {
+                String fonteId = Json.texto(registro, "fonte_id");
+                String url = Json.texto(registro, "url_origem");
+                String capturado = Json.texto(registro, "capturado_em");
+                if (fonteId != null && url != null && capturado != null) {
+                    usadas.add(new FonteUsada(fonteId, url, Instant.parse(capturado)));
+                }
+            }
+            if (!usadas.isEmpty()) {
+                fontes.put(bloco.getKey(), List.copyOf(usadas));
+            }
+        }
+        return fontes;
     }
 
     /** Proveniência de todo registro automático. */
