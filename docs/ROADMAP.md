@@ -58,11 +58,13 @@ Estado real de cada fase. Atualizado ao fechar cada fase.
 - Não validado: leitor de tela real (VoiceOver, NVDA, TalkBack) e aparelhos móveis físicos. A auditoria de acessibilidade foi automatizada e por teclado.
 - A auditoria de acessibilidade (axe, WCAG 2.1 AA) roda no CI sobre dados sintéticos, só no Chromium e no estado inicial das páginas (ADR-0028). Dado real longo, outros navegadores e estados interativos seguem sem varredura automática.
 - O site só vai ao ar pelo workflow `dados` (agendado ou manual). Mudança só de interface espera a próxima execução.
-- ALMG, ALRS e ALES não aceitam conexão do runner do GitHub Actions: a conexão TCP expira. Nenhuma das três teve coleta válida no CI, e o site não tem perfil dessas casas (issues #5, #6 e #7). A coleta local funciona.
-- Teste de 2026-11-06 com provas do Globalping, nos endereços que o ETL usa:
-  - ALRS (API na porta 5000 e portal) e ALES respondem a todas as redes testadas no Brasil: residenciais e datacenters da AWS, do Google Cloud, da Oracle e da Vultr em São Paulo. Não respondem à Azure (eastus) nem à AWS (us-east-1).
-  - A ALMG não responde à Azure nem à AWS nos EUA. Em São Paulo, recusa AWS e Oracle e responde a Google Cloud e Vultr. Redes residenciais funcionam.
-  - Um runner ou um proxy no Brasil resolve as três, desde que fora da AWS e da Oracle. A escolha é do mantenedor.
+- ALMG, ALRS, ALES, ALEPE e CLDF não aceitam conexão do runner do GitHub Actions: a conexão TCP expira. Nenhuma das cinco teve coleta válida no CI até 2026-11-06, e o site não tem perfil dessas casas (issues #5, #6 e #7 para as três primeiras). A coleta local funciona.
+- Teste de 2026-11-06 com provas do Globalping, nos endereços que o ETL usa. Nenhuma das cinco responde à Azure (eastus) nem à AWS (us-east-1).
+  - ALRS (API na porta 5000 e portal), ALES e CLDF respondem a todas as redes testadas no Brasil: residenciais e datacenters da AWS, do Google Cloud e da Oracle em São Paulo. ALRS e ALES também respondem à Vultr em São Paulo.
+  - A ALMG, em São Paulo, recusa AWS e Oracle e responde a Google Cloud e Vultr. Redes residenciais funcionam.
+  - A ALEPE recusa todos os datacenters testados, inclusive os de São Paulo. Só a rede residencial testada respondeu.
+  - A ALEPA respondeu a todas as redes, nos EUA e no Brasil.
+  - Um proxy numa nuvem no Brasil, fora da AWS e da Oracle, resolve quatro casas. Só um runner em rede residencial resolve as cinco. A escolha é do mantenedor.
 - A API da ALMG restringe certos recursos como `/proposicoes/pesquisa` (`Access Denied`). Deputados, comissões e verbas indenizatórias são abertos e funcionam via API v2.
 - ALESC: as despesas dos gabinetes (`alesc-despesas`) cobrem 2023 a 2026 e entram só para os 40 deputados em exercício. Em 2026-11-06, 4.355 de 54.524 linhas não correspondiam a nenhum deles e foram descartadas; a contagem aparece na saída do `normalize`. A fonte não traz CNPJ nem número de documento, e o favorecido vem vazio em cerca de 21% das linhas.
 - ALESC: o favorecido MEI vem como nome e CPF. A sequência de 11 dígitos é removida na normalização (`Guarda.semCpf`), como na Câmara, no Senado, na ALESP e na ALMG.
@@ -79,6 +81,30 @@ Estado real de cada fase. Atualizado ao fechar cada fase.
 ## Publicação
 
 - Pages e execução diária ativos desde 2026-11-01 (`ETL_AGENDADO` e `PUBLICAR_PAGES` em `true`). Passos em `docs/MAINTAINER_CHECKLIST.md`.
+
+## Casas estaduais e municipais no site
+
+Estado da publicação de 2026-11-06, às 23:51 UTC, com 1.867 perfis. "Perfis" conta os perfis com o identificador da casa, inclusive os fundidos com outra casa.
+
+| Casa | Coleta no CI | Perfis | Vínculo com o TSE | Blocos além de mandato e candidaturas |
+|---|---|---|---|---|
+| ALESP (SP) | ok | 153 | 140 | votações em comissão, proposições, despesas e comissões |
+| ALMG (MG) | falha: rede bloqueada | 0 | - | - |
+| ALEP (PR) | ok | 54 | 51 | comissões |
+| ALBA (BA) | ok | 63 | 63 | comissões |
+| ALERJ (RJ) | ok | 70 | 70 | nenhum |
+| ALRS (RS) | falha: rede bloqueada | 0 | - | - |
+| ALECE (CE) | ok | 54 | 51 | comissões |
+| ALESC (SC) | ok | 40 | 40 | despesas e comissões |
+| ALEGO (GO) | ok | 43 | 43 | comissões e frentes |
+| ALES (ES) | falha: rede bloqueada | 0 | - | - |
+| ALEPA (PA) | ok, primeira coleta | 41 | 40 | comissões |
+| ALEPE (PE) | falha: rede bloqueada | 0 | - | - |
+| CLDF (DF) | falha: rede bloqueada | 0 | - | - |
+| CMSP (capital) | ok | 55 | 51 | comissões; proposições a partir da próxima publicação |
+| Câmara do piloto (SAPL) | ok | 50 | 50 | votos, presença, falas, matérias, despesas e comissões |
+
+Nesta publicação, os blocos das casas com adaptador novo ainda saem sem fonte por bloco. A correção (ver "Limitações conhecidas") entra na próxima publicação.
 
 ## Cobertura 2022 a 2026 (ADR-0009)
 
@@ -229,6 +255,7 @@ Verificação de 2026-11-02, com scripts locais (Playwright e axe-core, fora do 
     - Modelo e identificador: identificador canônico `alepa-{id}` (numérico oficial) e chave `alepa` em `ids_externos` de `schemas/politico.schema.json`.
     - Adaptador `Alepa.java` implementado e coberto por testes unitários (`AlepaTest.java`): ingestão e parsing dos 41 deputados estaduais em exercício na 60ª Legislatura (2023–2027), fotos oficiais, extração de nome civil e datas de nascimento, comissões permanentes populando `orgaos_e_frentes` com papéis oficiais e minimização de dados de contato.
     - Vínculo com o TSE: inclusão de `PA` em `UFS_ESTADUAIS` de `Tse.java` (1.761 candidaturas a deputado estadual em 2018, 2022 e 2026). No ensaio local de 2026-11-06, 40 dos 41 deputados ficaram vinculados.
+    - No site: 41 perfis desde a publicação de 2026-11-06, a primeira com a coleta da ALEPA no CI.
     - Executivo estadual do Pará: Governador Helder Barbalho coberto pelo arquivo histórico via candidaturas do TSE e portais estaduais catalogados.
     - Pipeline e workflow: registro de `alepa` em `Main.java`, `Publicador.java`, `Vinculo.java` e passo `fetch alepa` no workflow `.github/workflows/dados.yml`.
 15. ALEPE e Governo do Estado de Pernambuco (décimo segundo estado da federação, Região Nordeste, ADR-0025): concluído em 2026-11-06.
@@ -236,6 +263,7 @@ Verificação de 2026-11-02, com scripts locais (Playwright e axe-core, fora do 
     - Modelo e identificador: identificador canônico `alepe-{slug}` e chave `alepe` em `ids_externos` de `schemas/politico.schema.json` (regex `^[a-z0-9-]+$`).
     - Adaptador `Alepe.java` implementado e coberto por testes unitários (`AlepeTest.java`): ingestão e parsing dos 49 deputados estaduais em exercício na 20ª Legislatura (2023–2027), fotos oficiais, extração de nome civil, naturalidade e biografia, comissões temáticas permanentes e especiais populando `orgaos_e_frentes` com papéis oficiais e minimização de dados de contato.
     - Vínculo com o TSE: inclusão de `PE` em `UFS_ESTADUAIS` de `Tse.java` (1.811 candidaturas a deputado estadual em 2018, 2022 e 2026). No ensaio local de 2026-11-06, 49 dos 49 deputados ficaram vinculados.
+    - No site: nenhum perfil da ALEPE, porque a coleta falha no CI (ver "Limitações conhecidas").
     - Executivo estadual de Pernambuco: Governadora Raquel Lyra coberta pelo arquivo histórico via candidaturas do TSE e portais estaduais catalogados.
     - Pipeline e workflow: registro de `alepe` em `Main.java`, `Publicador.java`, `Vinculo.java` e passo `fetch alepe` no workflow `.github/workflows/dados.yml`.
 16. CLDF e Governo do Distrito Federal (décimo terceiro ente da federação, Poder Legislativo Distrital, ADR-0026): concluído em 2026-11-06.
@@ -243,6 +271,7 @@ Verificação de 2026-11-02, com scripts locais (Playwright e axe-core, fora do 
     - Modelo e identificador: identificador canônico `cldf-{slug}` e chave `cldf` em `ids_externos` de `schemas/politico.schema.json` (regex `^[a-z0-9-]+$`). Suporte ao cargo `deputado_distrital` nos schemas e na interface web. Na tabela de blocos do `Publicador`, só a partir de 2026-11-06 (ver "Limitações conhecidas").
     - Adaptador `Cldf.java` implementado e coberto por testes unitários (`CldfTest.java`): ingestão e parsing dos 24 deputados distritais em exercício na 9ª Legislatura (2023–2027), fotos oficiais, biografias oficiais da CLDF, 16 comissões permanentes populando `orgaos_e_frentes` com titulares e suplentes, e minimização de dados de contato.
     - Vínculo com o TSE: inclusão de `DF` em `UFS_ESTADUAIS` e `"DEPUTADO DISTRITAL"` em `CARGOS` de `Tse.java` (2.024 candidaturas a deputado distrital em 2018, 2022 e 2026). No ensaio local de 2026-11-06, 24 dos 24 deputados ficaram vinculados.
+    - No site: nenhum perfil da CLDF, porque a coleta falha no CI (ver "Limitações conhecidas").
     - Executivo distrital do DF: Governador Ibaneis Rocha coberto pelo arquivo histórico via candidaturas do TSE e portais do GDF catalogados.
     - Pipeline e workflow: registro de `cldf` em `Main.java`, `Publicador.java`, `Vinculo.java` e passo `fetch cldf` no workflow `.github/workflows/dados.yml`.
 17. Enriquecimento Temático: visualização expandida de Comissões Permanentes e Frentes Parlamentares na interface web com filtro por órgão e papel institucional.
