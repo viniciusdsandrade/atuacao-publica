@@ -17,6 +17,8 @@ build/
 dist/
 out-tsc/
 .angular/
+web/playwright-report/
+web/test-results/
 
 # IDE e sistema
 .idea/
