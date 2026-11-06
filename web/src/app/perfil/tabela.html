@@ -1,4 +1,4 @@
-<div class="tabela-rolagem">
+<div class="tabela-rolagem" role="region" tabindex="0" [attr.aria-label]="(legenda() || 'Registros do bloco') + ', tabela rolável'">
   @switch (bloco()) {
     @case ('mandatos') {
       <table role="table" data-cols="6">

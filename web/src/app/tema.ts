@@ -71,11 +71,12 @@ export function rotuloCurtoTema(tema: Tema): string {
 export function rotuloTema(tema: Tema): string {
   switch (tema) {
     case 'sistema':
-      return 'Tema do site: automático (sistema). Clique para mudar para tema claro.';
+      // O nome acessível contém o texto visível do botão ("Auto", "Claro", "Escuro"): WCAG 2.5.3, rótulo no nome.
+      return 'Tema do site: Auto, segue o sistema. Clique para mudar para tema claro.';
     case 'claro':
-      return 'Tema do site: claro. Clique para mudar para tema escuro.';
+      return 'Tema do site: Claro. Clique para mudar para tema escuro.';
     case 'escuro':
-      return 'Tema do site: escuro. Clique para mudar para automático (sistema).';
+      return 'Tema do site: Escuro. Clique para mudar para Auto, que segue o sistema.';
   }
 }
 

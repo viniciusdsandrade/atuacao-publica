@@ -183,7 +183,7 @@
                         <span class="ano-despesa-valor numero">{{ moeda(a.valor) }}</span>
                         <span class="ano-despesa-qtd numero">{{ inteiro(a.quantidade) }} {{ unidade(b) }}</span>
                       </summary>
-                      <div class="tabela-rolagem">
+                      <div class="tabela-rolagem" role="region" tabindex="0" [attr.aria-label]="'Por ' + (b === 'despesas' ? 'categoria' : 'órgão') + ' em ' + a.ano + ', tabela rolável'">
                         <table role="table">
                           <caption>Por {{ b === 'despesas' ? 'categoria' : 'órgão' }} em {{ a.ano }}</caption>
                           <thead role="rowgroup">

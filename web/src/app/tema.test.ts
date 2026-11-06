@@ -31,9 +31,17 @@ test('iconeTema retorna ícone adequado ao tema', () => {
 });
 
 test('rotuloTema descreve o tema atual e a próxima ação para acessibilidade', () => {
-  assert.match(rotuloTema('sistema'), /automático/);
-  assert.match(rotuloTema('claro'), /claro/);
-  assert.match(rotuloTema('escuro'), /escuro/);
+  assert.match(rotuloTema('sistema'), /Auto/);
+  assert.match(rotuloTema('claro'), /Claro/);
+  assert.match(rotuloTema('escuro'), /Escuro/);
+});
+
+test('o nome acessível do botão de tema contém o texto visível (WCAG 2.5.3)', () => {
+  for (const tema of ['sistema', 'claro', 'escuro'] as const) {
+    const visivel = rotuloCurtoTema(tema).toLowerCase();
+    const palavras = rotuloTema(tema).toLowerCase().split(/[^a-zà-ú]+/);
+    assert.ok(palavras.includes(visivel), `${tema}: "${visivel}" deve ser palavra do nome acessível`);
+  }
 });
 
 test('salvarTema e lerTemaSalvo persistem no storage', () => {
