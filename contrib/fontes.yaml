@@ -1865,6 +1865,51 @@
   status: validado
   validado_em: 2026-11-06
 
+- id: alepe-deputados
+  nome: Assembleia Legislativa do Estado de Pernambuco, deputados estaduais
+  orgao: Assembleia Legislativa do Estado de Pernambuco
+  esfera: estadual
+  ente: PE
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://www.alepe.pe.gov.br/parlamentares/
+  formato: HTML
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Listagem oficial de deputados estaduais em exercício na 20ª legislatura (2023–2027)."
+  status: validado
+  validado_em: 2026-11-06
+
+- id: alepe-deputados-detalhes
+  nome: Assembleia Legislativa do Estado de Pernambuco, perfis parlamentares e comissões
+  orgao: Assembleia Legislativa do Estado de Pernambuco
+  esfera: estadual
+  ente: PE
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://www.alepe.pe.gov.br/parlamentar/
+  formato: HTML
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Páginas de perfil parlamentar, biografia oficial e composições das comissões temáticas."
+  status: validado
+  validado_em: 2026-11-06
+
+- id: alepe-portal
+  nome: Assembleia Legislativa do Estado de Pernambuco, portal institucional e fotos
+  orgao: Assembleia Legislativa do Estado de Pernambuco
+  esfera: estadual
+  ente: PE
+  categoria: primeira_parte
+  nivel_confianca: T0
+  url_base: https://www.alepe.pe.gov.br/
+  formato: HTML, WebP e JPEG
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Portal institucional e repositório de fotografias oficiais dos parlamentares em wp-content."
+  status: validado
+  validado_em: 2026-11-06
+
 
 
 

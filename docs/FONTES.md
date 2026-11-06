@@ -771,6 +771,33 @@ Validação em 2026-11-03 com o User-Agent do projeto.
 - Mandato do Governador Helder Barbalho integrado ao modelo e ao arquivo histórico via candidaturas do TSE.
 
 
+## Fontes de Pernambuco (ALEPE & Governo do Estado)
+
+### `alepe-deputados`: parlamentares em exercício
+
+- URL base: `https://www.alepe.pe.gov.br/parlamentares/`
+- Deputados estaduais da 20ª legislatura (2023–2027), com slug oficial, nome parlamentar, foto oficial e sigla partidária.
+- Identificador canônico no projeto: `alepe-{slug}` (ex.: `alepe-abimael-santos`, `alepe-dani-portela`).
+
+### `alepe-deputados-detalhes`: perfil individual, biografia e comissões
+
+- URL base: `https://www.alepe.pe.gov.br/parlamentar/` e `https://www.alepe.pe.gov.br/comissao/`
+- Perfil com nome civil completo, naturalidade, partido, redes sociais oficiais e biografia parlamentar oficial.
+- Comissões permanentes e especiais populando `orgaos_e_frentes` com vínculos determinísticos pelos identificadores dos parlamentares (Presidente, Vice-Presidente e Titular).
+- Dados de gabinete, telefones e e-mails institucionais descartados na ingestão por regra estrita de privacidade.
+
+### `alepe-portal`: portal institucional e fotos
+
+- URL base: `https://www.alepe.pe.gov.br/`
+- Repositório de fotos oficiais dos parlamentares em WebP e JPEG de alta resolução hospedadas no portal em `wp-content`.
+
+### `pe-transparencia` e `pe-diario-oficial`: Executivo estadual
+
+- Transparência orçamentária: `https://web.transparencia.pe.gov.br/`
+- Diário Oficial: `https://diariooficial.cepe.com.br/` (CEPE)
+- Mandato da Governadora Raquel Lyra integrado ao modelo e ao arquivo histórico via candidaturas do TSE.
+
+
 ## Fora da política de fontes
 
 Imprensa, blogs, agregadores sem metodologia, redes sociais de terceiros, mensagens, vídeos não oficiais, Wikipedia e rankings de terceiros.

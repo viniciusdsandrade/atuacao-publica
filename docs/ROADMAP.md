@@ -220,7 +220,14 @@ Verificação de 2026-11-02, com scripts locais (Playwright e axe-core, fora do 
     - Executivo estadual do Pará: Governador Helder Barbalho coberto pelo arquivo histórico via candidaturas do TSE e portais estaduais catalogados.
     - Cobertura regional: conquista histórica alcançando **presença oficial em todas as 5 Grandes Regiões do Brasil** (Norte, Nordeste, Centro-Oeste, Sudeste e Sul).
     - Pipeline e workflow: registro de `alepa` em `Main.java`, `Publicador.java`, `Vinculo.java` e passo `fetch alepa` no workflow `.github/workflows/dados.yml`.
-15. Décimo segundo estado da federação: avaliação técnica e planejamento para Pernambuco (ALEPE — Região Nordeste) e Distrito Federal (CLDF).
+15. ALEPE e Governo do Estado de Pernambuco (décimo segundo estado da federação, Região Nordeste, ADR-0025): concluído em 2026-11-06.
+    - Fontes catalogadas e validadas em `docs/FONTES.md`: portal institucional aberto da ALEPE (`https://www.alepe.pe.gov.br`), endpoint de parlamentares da legislatura (`https://www.alepe.pe.gov.br/parlamentares/`), perfis individuais (`https://www.alepe.pe.gov.br/parlamentar/{slug}/`), comissões temáticas (`https://www.alepe.pe.gov.br/comissao/{slug}/`), fotos oficiais em WebP e JPEG de alta resolução e portais estaduais de transparência (`pe-transparencia`) e diário oficial (`pe-diario-oficial`).
+    - Modelo e identificador: identificador canônico `alepe-{slug}` e chave `alepe` em `ids_externos` de `schemas/politico.schema.json` (regex `^[a-z0-9-]+$`).
+    - Adaptador `Alepe.java` implementado e coberto por testes unitários (`AlepeTest.java`): ingestão e parsing dos 49 deputados estaduais em exercício na 20ª Legislatura (2023–2027), fotos oficiais, extração de nome civil, naturalidade e biografia, comissões temáticas permanentes e especiais populando `orgaos_e_frentes` com papéis oficiais e minimização de dados de contato.
+    - Vínculo com o TSE: inclusão de `PE` em `UFS_ESTADUAIS` de `Tse.java` (+1.500 candidaturas estaduais indexadas); deputados estaduais da ALEPE vinculados deterministicamente às suas candidaturas das eleições de 2018, 2022 e 2026.
+    - Executivo estadual de Pernambuco: Governadora Raquel Lyra coberta pelo arquivo histórico via candidaturas do TSE e portais estaduais catalogados.
+    - Pipeline e workflow: registro de `alepe` em `Main.java`, `Publicador.java`, `Vinculo.java` e passo `fetch alepe` no workflow `.github/workflows/dados.yml`.
+16. Décimo terceiro ente da federação: avaliação técnica e planejamento para Distrito Federal (CLDF — Poder Legislativo Distrital) e Executivo do DF.
 
 ### Redes sociais
 
