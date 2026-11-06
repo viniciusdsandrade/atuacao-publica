@@ -17,7 +17,8 @@ export type NomeIcone =
   | 'topo'
   | 'sol'
   | 'lua'
-  | 'sistema';
+  | 'sistema'
+  | 'comparar';
 
 /** Ícones em SVG embutido, 24 px, traço em currentColor. Decorativos: o texto vizinho diz o que o ícone diz. */
 @Component({
@@ -97,6 +98,10 @@ export type NomeIcone =
         @case ('sistema') {
           <rect x="2" y="3" width="20" height="14" rx="2" />
           <path d="M8 21h8M12 17v4" />
+        }
+        @case ('comparar') {
+          <rect x="3" y="4" width="7" height="16" rx="1" />
+          <rect x="14" y="4" width="7" height="16" rx="1" />
         }
       }
     </svg>

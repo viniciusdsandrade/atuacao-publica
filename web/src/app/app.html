@@ -11,6 +11,7 @@
           <li>
             <a routerLink="/" [class.ativo]="naSecaoPoliticos()" [attr.aria-current]="naLista() ? 'page' : null">Políticos</a>
           </li>
+          <li><a routerLink="/comparar" routerLinkActive="ativo" ariaCurrentWhenActive="page">Comparar</a></li>
           <li><a routerLink="/metodologia" routerLinkActive="ativo" ariaCurrentWhenActive="page">Metodologia</a></li>
           <li><a routerLink="/fontes" routerLinkActive="ativo" ariaCurrentWhenActive="page">Fontes</a></li>
           <li><a routerLink="/contribuir" routerLinkActive="ativo" ariaCurrentWhenActive="page">Contribuir</a></li>
@@ -45,6 +46,7 @@
       <h2 class="rodape-titulo">Site</h2>
       <ul>
         <li><a routerLink="/">Políticos</a></li>
+        <li><a routerLink="/comparar">Comparar atuação</a></li>
         <li><a routerLink="/estado">Estado das coletas</a></li>
         <li><a routerLink="/contribuir">Contribuir</a></li>
       </ul>
