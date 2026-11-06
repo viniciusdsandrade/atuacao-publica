@@ -1910,6 +1910,51 @@
   status: validado
   validado_em: 2026-11-06
 
+- id: cldf-deputados
+  nome: Câmara Legislativa do Distrito Federal, deputados distritais
+  orgao: Câmara Legislativa do Distrito Federal
+  esfera: estadual
+  ente: DF
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://www.cl.df.gov.br/deputados-2023-2026
+  formato: HTML
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Listagem oficial de deputados distritais em exercício na 9ª legislatura (2023–2027)."
+  status: validado
+  validado_em: 2026-11-06
+
+- id: cldf-deputados-detalhes
+  nome: Câmara Legislativa do Distrito Federal, perfis parlamentares e comissões
+  orgao: Câmara Legislativa do Distrito Federal
+  esfera: estadual
+  ente: DF
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://www.cl.df.gov.br/
+  formato: HTML e JavaScript
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Páginas de perfil parlamentar, biografia oficial e composições estruturadas das comissões permanentes."
+  status: validado
+  validado_em: 2026-11-06
+
+- id: cldf-portal
+  nome: Câmara Legislativa do Distrito Federal, portal institucional e fotos
+  orgao: Câmara Legislativa do Distrito Federal
+  esfera: estadual
+  ente: DF
+  categoria: primeira_parte
+  nivel_confianca: T0
+  url_base: https://www.cl.df.gov.br/
+  formato: HTML e JPEG
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Portal institucional e repositório de fotografias oficiais dos parlamentares em documents."
+  status: validado
+  validado_em: 2026-11-06
+
 
 
 

@@ -6,6 +6,7 @@ export const CARGOS: Record<string, string> = {
   deputado_federal: 'Deputado(a) federal',
   senador: 'Senador(a)',
   deputado_estadual: 'Deputado(a) estadual',
+  deputado_distrital: 'Deputado(a) distrital',
   prefeito: 'Prefeito(a)',
   vice_prefeito: 'Vice-prefeito(a)',
   vereador: 'Vereador(a)',

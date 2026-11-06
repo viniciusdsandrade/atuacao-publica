@@ -227,7 +227,14 @@ Verificação de 2026-11-02, com scripts locais (Playwright e axe-core, fora do 
     - Vínculo com o TSE: inclusão de `PE` em `UFS_ESTADUAIS` de `Tse.java` (+1.500 candidaturas estaduais indexadas); deputados estaduais da ALEPE vinculados deterministicamente às suas candidaturas das eleições de 2018, 2022 e 2026.
     - Executivo estadual de Pernambuco: Governadora Raquel Lyra coberta pelo arquivo histórico via candidaturas do TSE e portais estaduais catalogados.
     - Pipeline e workflow: registro de `alepe` em `Main.java`, `Publicador.java`, `Vinculo.java` e passo `fetch alepe` no workflow `.github/workflows/dados.yml`.
-16. Décimo terceiro ente da federação: avaliação técnica e planejamento para Distrito Federal (CLDF — Poder Legislativo Distrital) e Executivo do DF.
+16. CLDF e Governo do Distrito Federal (décimo terceiro ente da federação, Poder Legislativo Distrital, ADR-0026): concluído em 2026-11-06.
+    - Fontes catalogadas e validadas em `docs/FONTES.md`: portal institucional da CLDF (`https://www.cl.df.gov.br`), endpoint de deputados da legislatura (`https://www.cl.df.gov.br/deputados-2023-2026`), perfis individuais (`https://www.cl.df.gov.br/web/guest/{slug}`), comissões permanentes estruturadas (`https://www.cl.df.gov.br/comissoes-permanentes`), fotos oficiais em alta resolução e portais do GDF (`df-transparencia` e `df-dodf`).
+    - Modelo e identificador: identificador canônico `cldf-{slug}` e chave `cldf` em `ids_externos` de `schemas/politico.schema.json` (regex `^[a-z0-9-]+$`). Suporte ao cargo `deputado_distrital` nos schemas e na interface web.
+    - Adaptador `Cldf.java` implementado e coberto por testes unitários (`CldfTest.java`): ingestão e parsing dos 24 deputados distritais em exercício na 9ª Legislatura (2023–2027), fotos oficiais, biografias oficiais da CLDF, 16 comissões permanentes populando `orgaos_e_frentes` com titulares e suplentes, e minimização de dados de contato.
+    - Vínculo com o TSE: inclusão de `DF` em `UFS_ESTADUAIS` e `"DEPUTADO DISTRITAL"` em `CARGOS` de `Tse.java`; deputados distritais da CLDF vinculados deterministicamente às suas candidaturas das eleições de 2018, 2022 e 2026.
+    - Executivo distrital do DF: Governador Ibaneis Rocha coberto pelo arquivo histórico via candidaturas do TSE e portais do GDF catalogados.
+    - Pipeline e workflow: registro de `cldf` em `Main.java`, `Publicador.java`, `Vinculo.java` e passo `fetch cldf` no workflow `.github/workflows/dados.yml`.
+17. Enriquecimento Temático: visualização expandida de Comissões Permanentes e Frentes Parlamentares na interface web com filtro por órgão e papel institucional.
 
 ### Redes sociais
 

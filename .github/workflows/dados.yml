@@ -11,7 +11,7 @@ on:
       fonte:
         description: Fonte a coletar. As demais seguem do cache de dados brutos.
         type: choice
-        options: [todas, camara, senado, tse, executivo, sapl, tcesp, cgu, agenda, contrib, alesp, executivosp, almg, alep, alba, alerj, alrs, alece, alesc, alego, ales, alepa, alepe]
+        options: [todas, camara, senado, tse, executivo, sapl, tcesp, cgu, agenda, contrib, alesp, executivosp, almg, alep, alba, alerj, alrs, alece, alesc, alego, ales, alepa, alepe, cldf]
         default: todas
 
 permissions:
@@ -225,6 +225,14 @@ jobs:
         env:
           ETL_ORCAMENTO_MINUTOS: '15'
         run: java -Xmx2g -jar etl/target/etl.jar fetch alepe
+      - name: fetch cldf
+        # Câmara Legislativa do Distrito Federal: 24 deputados distritais, comissões e perfis.
+        if: env.FONTE == 'todas' || env.FONTE == 'cldf'
+        continue-on-error: true
+        timeout-minutes: 20
+        env:
+          ETL_ORCAMENTO_MINUTOS: '15'
+        run: java -Xmx2g -jar etl/target/etl.jar fetch cldf
       - name: fetch contrib
         # Confere se as URLs de origem e os snapshots dos registros manuais ainda respondem.
         if: env.FONTE == 'todas' || env.FONTE == 'contrib'

@@ -35,10 +35,10 @@ public final class Tse implements Fonte {
     static final String CDN = "https://cdn.tse.jus.br/estatistica/sead/odsele";
     static final Set<String> CARGOS_GERAIS = Set.of("PRESIDENTE", "VICE-PRESIDENTE", "GOVERNADOR", "VICE-GOVERNADOR",
             "SENADOR", "1º SUPLENTE", "2º SUPLENTE", "DEPUTADO FEDERAL");
-    static final Set<String> UFS_ESTADUAIS = Set.of("SP", "MG", "PR", "BA", "RJ", "RS", "CE", "SC", "GO", "ES", "PA", "PE");
+    static final Set<String> UFS_ESTADUAIS = Set.of("SP", "MG", "PR", "BA", "RJ", "RS", "CE", "SC", "GO", "ES", "PA", "PE", "DF");
     static final Set<String> CARGOS_MUNICIPAIS = Set.of("PREFEITO", "VICE-PREFEITO", "VEREADOR");
     static final Set<String> CARGOS = Set.of("PRESIDENTE", "VICE-PRESIDENTE", "GOVERNADOR", "VICE-GOVERNADOR",
-            "SENADOR", "1º SUPLENTE", "2º SUPLENTE", "DEPUTADO FEDERAL", "DEPUTADO ESTADUAL", "PREFEITO", "VICE-PREFEITO", "VEREADOR");
+            "SENADOR", "1º SUPLENTE", "2º SUPLENTE", "DEPUTADO FEDERAL", "DEPUTADO ESTADUAL", "DEPUTADO DISTRITAL", "PREFEITO", "VICE-PREFEITO", "VEREADOR");
     static final Set<String> EXECUTIVO = Set.of("PRESIDENTE", "GOVERNADOR", "PREFEITO");
     static final Set<String> ELEITO = Set.of("ELEITO", "ELEITO POR QP", "ELEITO POR MÉDIA");
     /** Unidades eleitorais municipais cobertas (piloto municipal ADR-0007). */
@@ -51,7 +51,7 @@ public final class Tse implements Fonte {
         if (CARGOS_GERAIS.contains(cargo)) {
             return true;
         }
-        if ("DEPUTADO ESTADUAL".equals(cargo)) {
+        if ("DEPUTADO ESTADUAL".equals(cargo) || "DEPUTADO DISTRITAL".equals(cargo)) {
             String uf = linha.get("SG_UF");
             return uf != null && UFS_ESTADUAIS.contains(uf);
         }

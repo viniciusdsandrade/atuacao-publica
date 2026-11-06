@@ -798,6 +798,33 @@ Validação em 2026-11-03 com o User-Agent do projeto.
 - Mandato da Governadora Raquel Lyra integrado ao modelo e ao arquivo histórico via candidaturas do TSE.
 
 
+## Fontes do Distrito Federal (CLDF & Governo do Distrito Federal)
+
+### `cldf-deputados`: parlamentares distritais em exercício
+
+- URL base: `https://www.cl.df.gov.br/deputados-2023-2026`
+- Deputados distritais da 9ª legislatura (2023–2027), com slug oficial, nome parlamentar, foto oficial e sigla partidária.
+- Identificador canônico no projeto: `cldf-{slug}` (ex.: `cldf-chico-vigilante`, `cldf-fabio-felix`, `cldf-paula-belmonte`).
+
+### `cldf-deputados-detalhes`: perfil individual, biografia e comissões
+
+- URL base: `https://www.cl.df.gov.br/web/guest/` e `https://www.cl.df.gov.br/comissoes-permanentes`
+- Perfil biográfico individual e atuação parlamentar no portal Liferay da CLDF.
+- 16 comissões permanentes populando `orgaos_e_frentes` com vínculos determinísticos pelos identificadores e nomes dos parlamentares (Presidente, Vice-Presidente, Membro e Suplente).
+- Dados de gabinete, telefones e e-mails institucionais descartados na ingestão por regra estrita de privacidade.
+
+### `cldf-portal`: portal institucional e fotos
+
+- URL base: `https://www.cl.df.gov.br/`
+- Repositório de fotos oficiais dos parlamentares em alta resolução hospedadas no portal em `/documents/`.
+
+### `df-transparencia` e `df-dodf`: Executivo distrital
+
+- Transparência orçamentária: `https://www.transparencia.df.gov.br/`
+- Diário Oficial: `https://dodf.df.gov.br/`
+- Mandato do Governador Ibaneis Rocha integrado ao modelo e ao arquivo histórico via candidaturas do TSE.
+
+
 ## Fora da política de fontes
 
 Imprensa, blogs, agregadores sem metodologia, redes sociais de terceiros, mensagens, vídeos não oficiais, Wikipedia e rankings de terceiros.
