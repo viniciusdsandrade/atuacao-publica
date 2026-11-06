@@ -26,7 +26,10 @@ import { MemoriaLista } from './memoria-lista';
 const LOTE = 48;
 const LIMITE_MOSTRAR = 5000;
 const ORDEM_ESFERAS = ['federal', 'estadual', 'municipal'];
-const ORDEM_CARGOS = ['presidente', 'governador', 'prefeito', 'vice_prefeito', 'senador', 'deputado_federal', 'deputado_estadual', 'vereador'];
+const ORDEM_CARGOS = [
+  'presidente', 'governador', 'prefeito', 'vice_prefeito', 'senador', 'deputado_federal', 'deputado_estadual',
+  'deputado_distrital', 'vereador',
+];
 
 interface Filtros {
   busca: string;
