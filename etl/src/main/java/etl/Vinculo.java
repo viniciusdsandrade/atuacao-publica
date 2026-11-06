@@ -12,6 +12,7 @@ import java.util.Set;
 import java.util.regex.Pattern;
 
 import etl.Publicador.Perfil;
+import etl.fontes.Cmsp;
 import etl.fontes.Sapl;
 import etl.fontes.Tse;
 import tools.jackson.databind.JsonNode;
@@ -43,6 +44,7 @@ final class Vinculo {
         perfis.addAll(legisladores(ctx, "alepa", "alepa", "alepa"));
         perfis.addAll(legisladores(ctx, "alepe", "alepe", "alepe"));
         perfis.addAll(legisladores(ctx, "cldf", "cldf", "cldf"));
+        perfis.addAll(legisladores(ctx, "cmsp", "cmsp", "cmsp"));
         perfis.addAll(legisladores(ctx, "sapl", "sapl-" + Sapl.IBGE, "sapl"));
         List<JsonNode> candidaturas = Tse.linhas(ctx);
         if (!candidaturas.isEmpty()) {
@@ -177,6 +179,8 @@ final class Vinculo {
         Map<String, String> cpfPorSenadoChave = new HashMap<>();
         Map<String, JsonNode> candPorSaplNomeCivil = new HashMap<>();
         Map<String, JsonNode> candPorSaplNomeUrna = new HashMap<>();
+        Map<String, JsonNode> candPorCmspNomeCivil = new HashMap<>();
+        Map<String, JsonNode> candPorCmspNomeUrna = new HashMap<>();
         Map<String, JsonNode> candPorAlespNomeCivil = new HashMap<>();
         Map<String, JsonNode> candPorAlespNomeUrna = new HashMap<>();
         Map<String, JsonNode> candPorAlmgNomeCivil = new HashMap<>();
@@ -222,9 +226,18 @@ final class Vinculo {
                     cpfPorSenadoChave.put(chave.nomeCivil() + "|" + chave.uf() + "|" + chave.nascimento(), chave.cpf());
                 } else if ("VEREADOR".equals(chave.cargo())) {
                     // A candidatura mais recente com o nome vale como ponte; as demais eleições vêm pelo CPF, em memória.
-                    candPorSaplNomeCivil.merge(chave.nomeCivil(), c, Vinculo::maisRecente);
-                    if (c.hasNonNull("nome_urna")) {
-                        candPorSaplNomeUrna.merge(Texto.normalizarNome(c.get("nome_urna").stringValue()), c, Vinculo::maisRecente);
+                    // Cada município tem os seus mapas: dois municípios podem ter vereadores com o mesmo nome.
+                    String enteDaCandidatura = Json.texto(c.path("registro"), "ente");
+                    if (Cmsp.IBGE.equals(enteDaCandidatura)) {
+                        candPorCmspNomeCivil.merge(chave.nomeCivil(), c, Vinculo::maisRecente);
+                        if (c.hasNonNull("nome_urna")) {
+                            candPorCmspNomeUrna.merge(semPontos(Texto.normalizarNome(c.get("nome_urna").stringValue())), c, Vinculo::maisRecente);
+                        }
+                    } else if (Sapl.IBGE.equals(enteDaCandidatura)) {
+                        candPorSaplNomeCivil.merge(chave.nomeCivil(), c, Vinculo::maisRecente);
+                        if (c.hasNonNull("nome_urna")) {
+                            candPorSaplNomeUrna.merge(Texto.normalizarNome(c.get("nome_urna").stringValue()), c, Vinculo::maisRecente);
+                        }
                     }
                 } else if ("DEPUTADO ESTADUAL".equals(chave.cargo()) && "SP".equals(chave.uf())) {
                     candPorAlespNomeCivil.merge(chave.nomeCivil(), c, Vinculo::maisRecente);
@@ -371,6 +384,19 @@ final class Vinculo {
                         chaveSapl = chaves.get(cand.get("sq").stringValue());
                         cpf = chaveSapl == null ? null : chaveSapl.cpf();
                     }
+                }
+            } else if ("cmsp".equals(p.fonteCli)) {
+                // O serviço da CMSP só tem o nome parlamentar, que costuma ser o nome de urna. Só a pontuação ("Jr.", "Dra.")
+                // é ignorada: casar por palavras soltas ligaria homônimos parciais, e isso atribuiria candidaturas e bens a outra pessoa.
+                String nomeParl = semPontos(Texto.normalizarNome(p.nome));
+                JsonNode cand = candPorCmspNomeUrna.get(nomeParl);
+                if (cand == null) {
+                    cand = candPorCmspNomeCivil.get(nomeParl);
+                }
+                if (cand != null) {
+                    candSapl = cand;
+                    chaveSapl = chaves.get(cand.get("sq").stringValue());
+                    cpf = chaveSapl == null ? null : chaveSapl.cpf();
                 }
             } else if ("alesp".equals(p.fonteCli)) {
                 String nomeParl = Texto.normalizarNome(p.nome);
@@ -1003,6 +1029,10 @@ final class Vinculo {
         }
     }
 
+    private static String semPontos(String nome) {
+        return nome == null ? null : nome.replace(".", "");
+    }
+
     private static JsonNode maisRecente(JsonNode a, JsonNode b) {
         return b.get("ano").asInt() > a.get("ano").asInt() ? b : a;
     }
@@ -1038,12 +1068,17 @@ final class Vinculo {
             String cargo = Json.texto(regra, "cargo");
             int eleicao = Json.inteiro(regra, "eleicao");
             Fase fase = Fase.de(ctx.hoje(), inicio, fim, eleicao);
+            boolean municipal = cargo.equals("prefeito") || cargo.equals("vice_prefeito");
+            String enteDaRegra = regra.hasNonNull("ente") ? Json.texto(regra, "ente") : Sapl.IBGE;
             for (JsonNode c : eleitos(candidaturas, eleicao, cargo)) {
+                // A regra municipal vale só para o município dela. Com mais de um município coberto, o eleito de outro não entra.
+                if (municipal && !enteDaRegra.equals(Json.texto(c.path("registro"), "ente"))) {
+                    continue;
+                }
                 Perfil p = perfilDoEleito(c, ligacoes, perfilPorCpf, perfilPorPessoa, novos);
                 String uf = Json.texto(c, "uf");
-                boolean municipal = cargo.equals("prefeito") || cargo.equals("vice_prefeito");
                 String esfera = cargo.equals("presidente") ? "federal" : (municipal ? "municipal" : "estadual");
-                String ente = cargo.equals("presidente") ? "BR" : (municipal ? (regra.hasNonNull("ente") ? Json.texto(regra, "ente") : Sapl.IBGE) : uf);
+                String ente = cargo.equals("presidente") ? "BR" : (municipal ? enteDaRegra : uf);
                 p.papel(cargo, esfera, ente, cargo.equals("presidente") ? null : uf, Json.texto(c, "partido"), fase.situacao(),
                         fase.prioridade(), inicio);
                 ObjectNode mandato = Json.SAIDA.createObjectNode();

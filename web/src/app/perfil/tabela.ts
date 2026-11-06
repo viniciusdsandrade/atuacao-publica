@@ -3,6 +3,7 @@ import { Component, computed, input, linkedSignal, signal } from '@angular/core'
 import { Registro } from '../modelo';
 import {
   data,
+  ENTES_MUNICIPAIS,
   ePapelLideranca,
   inteiro,
   moeda,
@@ -110,8 +111,9 @@ export class Tabela {
 
   protected localCandidatura(r: Registro): string {
     const ente = typeof r['ente'] === 'string' ? r['ente'] : '';
-    if (ente === '3509502') {
-      return 'Campinas (SP)';
+    if (ente in ENTES_MUNICIPAIS) {
+      // Os municípios catalogados ficam todos em SP. Um município de outra UF pede a UF no catálogo.
+      return `${ENTES_MUNICIPAIS[ente]} (SP)`;
     }
     if (ente === 'BR') {
       return 'Brasil';

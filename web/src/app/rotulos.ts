@@ -21,6 +21,7 @@ export const ESFERAS: Record<string, string> = {
 /** Entes municipais catalogados (código IBGE de 7 dígitos para nome do município). */
 export const ENTES_MUNICIPAIS: Record<string, string> = {
   '3509502': 'Campinas',
+  '3550308': 'São Paulo',
 };
 
 export const TIPOS_ORGAO: Record<string, string> = {

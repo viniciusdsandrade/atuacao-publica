@@ -41,8 +41,14 @@ public final class Tse implements Fonte {
             "SENADOR", "1º SUPLENTE", "2º SUPLENTE", "DEPUTADO FEDERAL", "DEPUTADO ESTADUAL", "DEPUTADO DISTRITAL", "PREFEITO", "VICE-PREFEITO", "VEREADOR");
     static final Set<String> EXECUTIVO = Set.of("PRESIDENTE", "GOVERNADOR", "PREFEITO");
     static final Set<String> ELEITO = Set.of("ELEITO", "ELEITO POR QP", "ELEITO POR MÉDIA");
-    /** Unidades eleitorais municipais cobertas (piloto municipal ADR-0007). */
-    static final Set<String> UES_MUNICIPAIS = Set.of("62910"); // Campinas - SP
+    /** Município coberto: código IBGE do ente e primeira eleição que entra (a regra de mandato supõe que o eleito exerce os quatro anos). */
+    record Municipio(String ibge, int primeiraEleicao) {
+    }
+
+    /** Unidades eleitorais municipais cobertas, por código da UE no TSE (ADR-0007 e ADR-0027). */
+    static final Map<String, Municipio> UES_MUNICIPAIS = Map.of(
+            "62910", new Municipio(Sapl.IBGE, 2020), // Campinas - SP
+            "71072", new Municipio(Cmsp.IBGE, 2024)); // São Paulo - SP
     static final List<String> UFS = List.of("BR", "AC", "AL", "AM", "AP", "BA", "CE", "DF", "ES", "GO", "MA", "MG", "MS",
             "MT", "PA", "PB", "PE", "PI", "PR", "RJ", "RN", "RO", "RR", "RS", "SC", "SE", "SP", "TO");
 
@@ -57,9 +63,18 @@ public final class Tse implements Fonte {
         }
         if (CARGOS_MUNICIPAIS.contains(cargo)) {
             String ue = linha.get("SG_UE");
-            return ue != null && UES_MUNICIPAIS.contains(ue);
+            Municipio municipio = ue == null ? null : UES_MUNICIPAIS.get(ue);
+            return municipio != null && anoDaEleicao(linha) >= municipio.primeiraEleicao();
         }
         return false;
+    }
+
+    private static int anoDaEleicao(Map<String, String> linha) {
+        try {
+            return Integer.parseInt(linha.get("ANO_ELEICAO"));
+        } catch (NumberFormatException e) {
+            return 0;
+        }
     }
 
     /** Candidatura normalizada, sem CPF, título, e-mail nem data de nascimento. */
@@ -172,7 +187,7 @@ public final class Tse implements Fonte {
                 String sq = item.getKey();
                 String uf = l.get("SG_UF");
                 String cargo = l.get("DS_CARGO");
-                String ente = CARGOS_MUNICIPAIS.contains(cargo) ? Sapl.IBGE : uf;
+                String ente = CARGOS_MUNICIPAIS.contains(cargo) ? UES_MUNICIPAIS.get(l.get("SG_UE")).ibge() : uf;
                 String resultado = semNulo(l.get("DS_SIT_TOT_TURNO"));
                 String planoUrl = null;
                 String planoArquivo = null;

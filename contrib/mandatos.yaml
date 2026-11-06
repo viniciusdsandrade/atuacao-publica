@@ -121,3 +121,28 @@
   capturado_em: 2026-11-02T18:40:00Z
   contribuidor: viniciusdsandrade
 
+# Segundo município piloto (ADR-0027): a eleição de 2024 da capital. A de 2020 não entra, porque houve sucessão no cargo.
+- cargo: prefeito
+  ente: "3550308"
+  eleicao: 2024
+  inicio: 2025-01-01
+  fim: 2029-01-01
+  texto_oficial: "Art. 29. O Município reger-se-á por lei orgânica, votada em dois turnos, com o interstício mínimo de dez dias, e aprovada por dois terços dos membros da Câmara Municipal, que a promulgará, atendidos os princípios estabelecidos nesta Constituição, na Constituição do respectivo Estado e os seguintes preceitos: [...] II - posse do Prefeito e do Vice-Prefeito no dia 1º de janeiro do ano subsequente ao da eleição;"
+  fonte_id: planalto-legislacao
+  url_origem: https://www.planalto.gov.br/ccivil_03/constituicao/constituicao.htm
+  snapshot_url: https://web.archive.org/web/20261023091924/https://www.planalto.gov.br/ccivil_03/constituicao/constituicao.htm
+  capturado_em: 2026-11-02T18:40:00Z
+  contribuidor: viniciusdsandrade
+
+- cargo: vice_prefeito
+  ente: "3550308"
+  eleicao: 2024
+  inicio: 2025-01-01
+  fim: 2029-01-01
+  texto_oficial: "Art. 29. O Município reger-se-á por lei orgânica, votada em dois turnos, com o interstício mínimo de dez dias, e aprovada por dois terços dos membros da Câmara Municipal, que a promulgará, atendidos os princípios estabelecidos nesta Constituição, na Constituição do respectivo Estado e os seguintes preceitos: [...] II - posse do Prefeito e do Vice-Prefeito no dia 1º de janeiro do ano subsequente ao da eleição;"
+  fonte_id: planalto-legislacao
+  url_origem: https://www.planalto.gov.br/ccivil_03/constituicao/constituicao.htm
+  snapshot_url: https://web.archive.org/web/20261023091924/https://www.planalto.gov.br/ccivil_03/constituicao/constituicao.htm
+  capturado_em: 2026-11-02T18:40:00Z
+  contribuidor: viniciusdsandrade
+

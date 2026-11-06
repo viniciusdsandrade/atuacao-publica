@@ -61,6 +61,7 @@ test('rotuloEsfera mapeia esferas corretamente', () => {
 
 test('nomeDoEnte resolve código IBGE para nome de município', () => {
   assert.equal(nomeDoEnte('3509502'), 'Campinas');
+  assert.equal(nomeDoEnte('3550308'), 'São Paulo');
   assert.equal(nomeDoEnte('BR'), 'BR');
   assert.equal(nomeDoEnte(null), '');
   assert.equal(nomeDoEnte(undefined), '');
@@ -69,6 +70,7 @@ test('nomeDoEnte resolve código IBGE para nome de município', () => {
 test('rotuloLocal formata localização por esfera e ente', () => {
   assert.equal(rotuloLocal('municipal', '3509502', 'SP'), 'Campinas (SP)');
   assert.equal(rotuloLocal('municipal', '3509502', null), 'Campinas');
+  assert.equal(rotuloLocal('municipal', '3550308', 'SP'), 'São Paulo (SP)');
   assert.equal(rotuloLocal('estadual', 'SP', 'SP'), 'SP');
   assert.equal(rotuloLocal('estadual', 'ES', 'ES'), 'ES');
   assert.equal(rotuloLocal('estadual', 'GO', 'GO'), 'GO');
