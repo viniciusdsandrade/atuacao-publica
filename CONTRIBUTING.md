@@ -127,4 +127,5 @@ Imprensa, blogs, redes sociais de terceiros, Wikipedia e rankings ficam fora.
 - Commits pequenos, um tema por commit, mensagem em português no modo indicativo.
 - `git add` com caminhos explícitos.
 - Teste só regra de dados (parse, normalização, deduplicação, bloqueio de dado pessoal).
+- Testes do site: `cd web && npm ci && npx playwright install chromium`. Depois, `npm test` roda os unitários e `npm run e2e` roda os fluxos e a auditoria de acessibilidade (WCAG 2.1 AA), com dados sintéticos de `web/e2e/` e sem rede externa (ADR-0028).
 - Boas primeiras tarefas: `docs/TAREFAS.md`.

@@ -55,7 +55,7 @@ Estado real de cada fase. Atualizado ao fechar cada fase.
 - Em 2026-11-02 o `publish` do CI parou com "dois perfis com o identificador sapl-3509502-306": um ex-deputado novo no arquivo era o mesmo vereador já publicado, e o vínculo entre casas não os fundiu, porque o TSE mascara o CPF de 2024. Corrigido em dois pontos. O vínculo passa a usar também nome civil e data de nascimento. E o id publicado só passa a um perfil se não for o id derivado de outro, o que vale mesmo quando a fusão falha.
 - A lista da página inicial exibe 48 cartões por vez. A busca do navegador (Ctrl+F) só acha o que está na tela. Use a busca do site.
 - Não validado: leitor de tela real (VoiceOver, NVDA, TalkBack) e aparelhos móveis físicos. A auditoria de acessibilidade foi automatizada e por teclado.
-- A auditoria de interface roda em scripts locais. Ela não está no CI.
+- A auditoria de acessibilidade (axe, WCAG 2.1 AA) roda no CI sobre dados sintéticos, só no Chromium e no estado inicial das páginas (ADR-0028). Dado real longo, outros navegadores e estados interativos seguem sem varredura automática.
 - O site só vai ao ar pelo workflow `dados` (agendado ou manual). Mudança só de interface espera a próxima execução.
 - A API de dados abertos da ALMG (`dadosabertos.almg.gov.br`) descarta conexões SYN de datacenters estrangeiros (geo-blocking/firewall de rede nos runners do GitHub Actions/Azure nos EUA). O download completo inicial foi executado em ambiente nacional e mantido no cache incremental; o step `fetch almg` usa `continue-on-error: true`.
 - A API da ALMG restringe certos recursos como `/proposicoes/pesquisa` (`Access Denied`). Deputados, comissões e verbas indenizatórias são abertos e funcionam via API v2.
@@ -64,6 +64,11 @@ Estado real de cada fase. Atualizado ao fechar cada fase.
 - ALESC: o favorecido MEI vem como nome e CPF. A sequência de 11 dígitos é removida na normalização (`Guarda.semCpf`), como na Câmara, no Senado, na ALESP e na ALMG.
 - ALEP: a consulta das verbas de ressarcimento por deputado (`api/ressarcimento`) exige reCAPTCHA v3, conforme o script da própria página (2026-11-06). O ETL não contorna CAPTCHA, então essas despesas não são coletadas (`alep-ressarcimento`, bloqueado).
 - ALERJ: não foi localizado conjunto de dados abertos de despesas ou verba de gabinete por deputado até 2026-11-06. Não validado.
+- CMSP (capital): só vereadores em exercício entram. Os 9 suplentes sem exercício e quem deixou a vereança na legislatura ficam fora. O serviço não tem voto nominal por vereador, e os perfis ficam sem proposições, votações e foto.
+- CMSP: 4 dos 55 vereadores ficaram sem vínculo com o TSE porque o nome parlamentar difere do nome de urna (por exemplo, uma palavra só). O vínculo ignora só a pontuação ("Jr.", "Dra."), porque casar por palavras soltas ligaria homônimos parciais e atribuiria candidaturas e bens a outra pessoa.
+- CMSP: a fonte deixa cargo antigo da Mesa sem data de fim quando há sucessor. Em cargo exclusivo (Mesa, presidência e vice-presidência de comissão), vale o de início mais recente entre os vereadores em exercício.
+- Capital: a eleição de 2020 não entra, porque o eleito prefeito deixou o cargo em 2021 e a regra de mandato do projeto supõe os quatro anos do eleito. A despesa do Executivo também não: a API do TCE-SP devolve lista vazia para a capital, e o Diário Oficial da Cidade respondeu 403 à requisição direta.
+- Nove adaptadores (ALECE, ALEGO, ALEPE, ALERJ, ALEPA, ALES, ALRS, ALESC e CLDF) gravam o bloco `fontes` como lista plana, e o `Vinculo` e o `Publicador` leem por bloco. Nos perfis publicados dessas casas, `fontes` fica vazio e `atualizado_em` nulo em cada bloco (verificado no perfil de um deputado da ALEPE). Cada registro mantém a sua proveniência. ALBA, ALEP e CMSP já gravam por bloco. Correção pendente: gravar `fontes` por bloco nesses nove.
 
 
 ## Ativação pendente (decisão do mantenedor)
@@ -250,6 +255,18 @@ Verificação de 2026-11-02, com scripts locais (Playwright e axe-core, fora do 
     - Adaptador `Alesc.java` (`AlescTest.java`): 50.169 lançamentos de 2023 a 2026 vinculados aos 40 deputados em exercício, todos com despesas. Cada lançamento traz categoria, favorecido, data de referência e valor. Estorno (valor negativo) entra como veio.
     - Privacidade: a sequência de 11 dígitos do favorecido MEI é removida.
     - ALEP e ALERJ: ver "Limitações conhecidas".
+21. Segundo município piloto: São Paulo (capital), Câmara Municipal e Prefeitura (ADR-0027): concluído em 2026-11-06.
+    - Fontes catalogadas e validadas em `docs/FONTES.md`: serviço SPLegisWS da CMSP (`cmsp-splegisws`), portal institucional (`cmsp-portal`) e Portal da Transparência da Prefeitura (`sp-capital-transparencia`).
+    - Modelo e identificador: identificador canônico `cmsp-{chave}` e chave `cmsp` em `ids_externos` de `schemas/politico.schema.json`. Cargo `vereador`, esfera `municipal`, ente `3550308`.
+    - Adaptador `Cmsp.java` implementado e coberto por testes unitários (`CmspTest.java`): 55 vereadores em exercício na 19ª Legislatura (2025 a 2028), com mandato, partido, 154 cargos em comissões e 7 na Mesa. Em exercício é quem ocupa um gabinete vigente: a lista de mandatos traz 64 nomes, com 9 suplentes sem exercício.
+    - Vínculo com o TSE: a unidade eleitoral `71072` entra a partir da eleição de 2024, e 51 dos 55 vereadores foram vinculados pelo nome de urna. Prefeito e vice de 2024 entram com regras de mandato do ente `3550308` em `contrib/mandatos.yaml`.
+    - Generalização municipal: cada unidade eleitoral tem o seu código IBGE e a sua primeira eleição (`Tse.UES_MUNICIPAIS`). As regras de mandato municipais valem só para o ente delas, e os mapas de vínculo de vereador são por município. Na comparação do `publish` antes e depois, os 52 perfis do piloto anterior ficaram idênticos.
+    - Pipeline e workflow: registro de `cmsp` em `Main.java`, `Publicador.java` e `Vinculo.java` e passo `fetch cmsp` no workflow `.github/workflows/dados.yml`.
+22. Testes de ponta a ponta e acessibilidade no CI (ADR-0028): concluído em 2026-11-06.
+    - Playwright (Chromium) e axe-core, na versão exata, contra o build do site com dados sintéticos (`web/e2e/`).
+    - 60 testes: 24 de fluxo (lista, perfil, comparação, dados abertos, documento e teclado) e 36 de WCAG 2.1 AA (nove rotas, temas claro e escuro, desktop e celular emulado).
+    - O job `web` do CI passa a rodar testes unitários, build e a suíte. Em falha, o relatório sobe como artefato.
+    - A primeira varredura achou dois defeitos reais, já corrigidos: o nome acessível do botão de tema não continha o texto visível (WCAG 2.5.3) e a tabela rolável de `/dados-abertos` não tinha foco por teclado (WCAG 2.1.1).
 
 ### Redes sociais
 

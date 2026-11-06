@@ -842,6 +842,35 @@ Validação em 2026-11-03 com o User-Agent do projeto.
 - Mandato do Governador Ibaneis Rocha integrado ao modelo e ao arquivo histórico via candidaturas do TSE.
 
 
+## Segundo município piloto: São Paulo (CMSP & Prefeitura)
+
+Capital do estado, código IBGE `3550308` e unidade eleitoral `71072` no TSE (ADR-0027).
+Validação em 2026-11-06.
+
+### `cmsp-splegisws`: vereadores, gabinetes e comissões
+
+- URL base: `https://splegisws.saopaulo.sp.leg.br/ws/ws2.asmx`. Serviço ASMX com operações `*JSON` por GET, sem autenticação.
+- `VereadoresCMSPJSON`: 364 vereadores desde a década de 1990, com `chave`, nome, mandatos, filiações e cargos em comissões e na Mesa. Não traz CPF, telefone nem e-mail.
+- `OcupacaoGabineteJSON`: ocupação dos 55 gabinetes por legislatura. O `codigo` é a `chave` do vereador. É o que diz quem está em exercício: a lista de mandatos vigentes traz 64 nomes, com 9 suplentes sem exercício.
+- `ComissoesCMSPJSON`: comissões, com sigla.
+- Identificador canônico no projeto: `cmsp-{chave}`.
+- A fonte deixa cargo antigo da Mesa sem data de fim quando há sucessor. Em cargo exclusivo (Mesa, presidência e vice-presidência de comissão), vale o de início mais recente entre os vereadores em exercício.
+- O serviço não tem operação de voto nominal por vereador.
+
+### `cmsp-portal`: portal institucional
+
+- URL base: `https://www.saopaulo.sp.leg.br/`
+- A página de membros (`/vereadores/membros/`) é o link oficial de cada perfil.
+- Os cartões individuais, com foto, não vêm no HTML estático, e o projeto não executa JavaScript de terceiros. Por isso os perfis ficam sem foto.
+
+### `sp-capital-transparencia`: Executivo municipal
+
+- URL base: `https://transparencia.prefeitura.sp.gov.br/`
+- Prefeito e vice entram pelas candidaturas do TSE de 2024. A eleição de 2020 não entra: o eleito prefeito deixou o cargo em 2021 e o vice assumiu, e a regra de mandato do projeto supõe os quatro anos do eleito.
+- Despesa do Executivo: a API do TCE-SP devolve lista vazia para a capital (2026-11-06). Sem fonte validada.
+- O Diário Oficial da Cidade (`diariooficial.prefeitura.sp.gov.br`) respondeu 403 à requisição direta de teste. Não foi catalogado.
+
+
 ## Fora da política de fontes
 
 Imprensa, blogs, agregadores sem metodologia, redes sociais de terceiros, mensagens, vídeos não oficiais, Wikipedia e rankings de terceiros.
