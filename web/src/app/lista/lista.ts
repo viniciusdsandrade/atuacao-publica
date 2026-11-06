@@ -150,7 +150,7 @@ export class Lista {
   protected readonly partidos = computed(() => ordenar(this.valores((p) => p.partido), []));
 
   /** Cada palavra da busca precisa aparecer no nome, no município, no partido ou no cargo. */
-  private filtrar(ignorar: 'situacao' | 'esfera' | null): EntradaIndice[] {
+  private filtrar(ignorar: 'situacao' | 'esfera' | 'uf' | null): EntradaIndice[] {
     const f = this.filtros();
     const termos = chaveDeBusca(f.busca).split(/\s+/).filter(Boolean);
     const chaves = this.chaves();
@@ -160,7 +160,7 @@ export class Lista {
         (ignorar === 'situacao' || !f.situacao || situacaoDe(p) === f.situacao) &&
         (ignorar === 'esfera' || !f.esfera || p.esfera === f.esfera) &&
         (!f.cargo || p.cargo === f.cargo) &&
-        (!f.uf || p.uf === f.uf) &&
+        (ignorar === 'uf' || !f.uf || p.uf === f.uf) &&
         (!f.partido || p.partido === f.partido),
     );
   }
@@ -168,6 +168,7 @@ export class Lista {
   protected readonly resultado = computed(() => this.filtrar(null));
   private readonly semSituacao = computed(() => this.filtrar('situacao'));
   private readonly semEsfera = computed(() => this.filtrar('esfera'));
+  private readonly semUf = computed(() => this.filtrar('uf'));
 
   /** Contagens que respeitam os outros filtros: o número prevê o resultado de cada clique. */
   protected readonly segmentosSituacao = computed(() => {
@@ -193,6 +194,20 @@ export class Lista {
     return [
       { valor: '', rotulo: 'Todas', total: base.length },
       ...this.esferas().map((e) => ({ valor: e, rotulo: rotuloEsfera(e), total: contagem.get(e) ?? 0 })),
+    ];
+  });
+
+  protected readonly segmentosUf = computed(() => {
+    const base = this.semUf();
+    const contagem = new Map<string, number>();
+    for (const p of base) {
+      if (p.uf) {
+        contagem.set(p.uf, (contagem.get(p.uf) ?? 0) + 1);
+      }
+    }
+    return [
+      { valor: '', rotulo: 'Todas', total: base.length },
+      ...this.ufs().map((u) => ({ valor: u, rotulo: u, total: contagem.get(u) ?? 0 })),
     ];
   });
 

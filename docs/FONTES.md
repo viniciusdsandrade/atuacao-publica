@@ -716,6 +716,33 @@ Validação em 2026-11-03 com o User-Agent do projeto.
 - Mandato do Governador Ronaldo Caiado integrado ao modelo e ao arquivo histórico via candidaturas do TSE.
 
 
+## Fontes do Espírito Santo (ALES & Governo do Estado)
+
+### `ales-deputados`: parlamentares em exercício
+
+- URL base: `https://www.al.es.gov.br/Deputado/Lista`
+- Deputados estaduais da 20ª legislatura (2023–2027), com ID numérico oficial (`idDeputado`) e nome parlamentar.
+- Identificador canônico no projeto: `ales-{id}` (ex.: `ales-305`, `ales-27`, `ales-349`).
+
+### `ales-deputados-detalhes`: perfil individual, biografia e comissões
+
+- URL base: `https://www.al.es.gov.br/Deputado/` e `https://www.al.es.gov.br/Comissao/`
+- Perfil com nome civil completo, data e município de nascimento, partido e histórico parlamentar ("Sobre").
+- 18 comissões permanentes populando `orgaos_e_frentes` com papéis oficiais (Presidente, Vice-Presidente, Membro Efetivo, Membro Suplente).
+- Dados de gabinete, telefones e e-mails institucionais descartados na ingestão por regra estrita de privacidade.
+
+### `ales-portal`: portal institucional e fotos
+
+- URL base: `https://www.al.es.gov.br/`
+- Repositório de fotos oficiais dos parlamentares em alta resolução hospedadas no portal institucional `/appdata/anexos_internet/portal/deputados/`.
+
+### `es-transparencia` e `es-dioe`: Executivo estadual
+
+- Transparência orçamentária: `https://transparencia.es.gov.br/`
+- Diário Oficial: `https://ioes.dio.es.gov.br/`
+- Mandato do Governador Renato Casagrande integrado ao modelo e ao arquivo histórico via candidaturas do TSE.
+
+
 ## Fora da política de fontes
 
 Imprensa, blogs, agregadores sem metodologia, redes sociais de terceiros, mensagens, vídeos não oficiais, Wikipedia e rankings de terceiros.

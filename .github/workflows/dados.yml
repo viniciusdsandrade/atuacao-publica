@@ -11,7 +11,7 @@ on:
       fonte:
         description: Fonte a coletar. As demais seguem do cache de dados brutos.
         type: choice
-        options: [todas, camara, senado, tse, executivo, sapl, tcesp, cgu, agenda, contrib, alesp, executivosp, almg, alep, alba, alerj, alrs, alece, alesc, alego]
+        options: [todas, camara, senado, tse, executivo, sapl, tcesp, cgu, agenda, contrib, alesp, executivosp, almg, alep, alba, alerj, alrs, alece, alesc, alego, ales]
         default: todas
 
 permissions:
@@ -201,6 +201,14 @@ jobs:
         env:
           ETL_ORCAMENTO_MINUTOS: '15'
         run: java -Xmx2g -jar etl/target/etl.jar fetch alego
+      - name: fetch ales
+        # Assembleia Legislativa do Estado do Espírito Santo: 30 deputados, comissões e perfis.
+        if: env.FONTE == 'todas' || env.FONTE == 'ales'
+        continue-on-error: true
+        timeout-minutes: 20
+        env:
+          ETL_ORCAMENTO_MINUTOS: '15'
+        run: java -Xmx2g -jar etl/target/etl.jar fetch ales
       - name: fetch contrib
         # Confere se as URLs de origem e os snapshots dos registros manuais ainda respondem.
         if: env.FONTE == 'todas' || env.FONTE == 'contrib'

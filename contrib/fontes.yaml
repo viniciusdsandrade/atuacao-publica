@@ -1775,6 +1775,52 @@
   status: validado
   validado_em: 2026-11-06
 
+- id: ales-deputados
+  nome: Assembleia Legislativa do Estado do Espírito Santo, deputados estaduais
+  orgao: Assembleia Legislativa do Estado do Espírito Santo
+  esfera: estadual
+  ente: ES
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://www.al.es.gov.br/Deputado/Lista
+  formato: HTML
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Listagem oficial de deputados estaduais em exercício na 20ª legislatura."
+  status: validado
+  validado_em: 2026-11-06
+
+- id: ales-deputados-detalhes
+  nome: Assembleia Legislativa do Estado do Espírito Santo, perfis parlamentares e comissões
+  orgao: Assembleia Legislativa do Estado do Espírito Santo
+  esfera: estadual
+  ente: ES
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://www.al.es.gov.br/Deputado/
+  formato: HTML
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Páginas de perfil parlamentar, biografia sobre e composição das comissões permanentes."
+  status: validado
+  validado_em: 2026-11-06
+
+- id: ales-portal
+  nome: Assembleia Legislativa do Estado do Espírito Santo, portal institucional e fotos
+  orgao: Assembleia Legislativa do Estado do Espírito Santo
+  esfera: estadual
+  ente: ES
+  categoria: primeira_parte
+  nivel_confianca: T0
+  url_base: https://www.al.es.gov.br/
+  formato: HTML e JPG
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Portal institucional e repositório de fotografias oficiais dos parlamentares em /appdata/anexos_internet/portal/deputados/."
+  status: validado
+  validado_em: 2026-11-06
+
+
 
 
 

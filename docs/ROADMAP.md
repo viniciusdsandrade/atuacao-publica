@@ -202,7 +202,15 @@ Verificação de 2026-11-02, com scripts locais (Playwright e axe-core, fora do 
     - Executivo estadual de Goiás: Governador Ronaldo Caiado coberto pelo arquivo histórico via candidaturas do TSE e portais estaduais catalogados.
     - Cobertura regional: estreia oficial do projeto na Região Centro-Oeste do Brasil.
     - Pipeline e workflow: registro de `alego` em `Main.java`, `Publicador.java`, `Vinculo.java` e passo `fetch alego` no workflow `.github/workflows/dados.yml`.
-13. Décimo estado da federação: avaliação técnica e planejamento para Pernambuco (ALEPE — Região Nordeste) ou Pará (ALEPA — Região Norte).
+13. ALES e Governo do Estado do Espírito Santo (décimo estado da federação, ADR-0023): concluído em 2026-11-06.
+    - Fontes catalogadas e validadas em `docs/FONTES.md`: portal institucional aberto da ALES (`https://www.al.es.gov.br`), endpoint de deputados em exercício (`/Deputado/Lista`), perfis individuais (`/Deputado/{slug}`), comissões permanentes (`/Comissao/{slug}`), fotos oficiais em alta resolução (`/appdata/anexos_internet/portal/deputados/`) e portais estaduais de transparência (`es-transparencia`) e diário oficial (`es-dioe`).
+    - Modelo e identificador: identificador canônico `ales-{id}` (numérico oficial) e chave `ales` em `ids_externos` de `schemas/politico.schema.json`.
+    - Adaptador `Ales.java` implementado e coberto por testes unitários (`AlesTest.java`): ingestão e parsing dos 30 deputados estaduais em exercício na 20ª Legislatura (2023–2027), fotos oficiais, extração de nome civil e datas de nascimento, 18 comissões permanentes populando `orgaos_e_frentes` e minimização estrita de dados de contato.
+    - Vínculo com o TSE: inclusão de `ES` em `UFS_ESTADUAIS` de `Tse.java` (+1.000 candidaturas estaduais indexadas); 100% dos deputados estaduais da ALES vinculados deterministicamente às suas candidaturas das eleições de 2018, 2022 e 2026.
+    - Executivo estadual do Espírito Santo: Governador Renato Casagrande coberto pelo arquivo histórico via candidaturas do TSE e portais estaduais catalogados.
+    - Cobertura regional: consolidação de 100% de cobertura dos quatro estados da Região Sudeste do Brasil (SP, MG, RJ, ES), totalizando duas macrorregiões inteiras (Sul e Sudeste).
+    - Pipeline e workflow: registro de `ales` em `Main.java`, `Publicador.java`, `Vinculo.java` e passo `fetch ales` no workflow `.github/workflows/dados.yml`.
+14. Décimo primeiro estado da federação: avaliação técnica e planejamento para Pernambuco (ALEPE — Região Nordeste) ou Pará (ALEPA — Região Norte).
 
 ### Redes sociais
 

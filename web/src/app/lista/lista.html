@@ -105,6 +105,19 @@
           }
         </div>
       </div>
+      @if (filtros().esfera === 'estadual') {
+        <div class="segmentos segmentos--uf" role="radiogroup" aria-labelledby="rotulo-uf-chips">
+          <span id="rotulo-uf-chips" class="campo-rotulo">Estado (UF)</span>
+          <div class="segmentos-lista">
+            @for (u of segmentosUf(); track u.valor) {
+              <label class="segmento">
+                <input type="radio" name="uf-chip" [value]="u.valor" [checked]="filtros().uf === u.valor" (change)="alterar({ uf: u.valor })" />
+                <span>{{ u.rotulo }} <small>{{ inteiro(u.total) }}</small></span>
+              </label>
+            }
+          </div>
+        </div>
+      }
     </div>
 
     <div class="filtros-mais">
