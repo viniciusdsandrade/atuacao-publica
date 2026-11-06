@@ -212,7 +212,15 @@ Verificação de 2026-11-02, com scripts locais (Playwright e axe-core, fora do 
     - Cobertura regional: consolidação de 100% de cobertura dos quatro estados da Região Sudeste do Brasil (SP, MG, RJ, ES), totalizando duas macrorregiões inteiras (Sul e Sudeste).
     - Pipeline e workflow: registro de `ales` em `Main.java`, `Publicador.java`, `Vinculo.java` e passo `fetch ales` no workflow `.github/workflows/dados.yml`.
     - Limitação documentada: o portal da ALES (`www.al.es.gov.br`) descarta requisições de datacenters internacionais dos runners do GitHub Actions (connect timeout); a coleta em ambiente nacional e a suíte de testes operam com 100% de sucesso.
-14. Décimo primeiro estado da federação: avaliação técnica e planejamento para Pernambuco (ALEPE — Região Nordeste) ou Pará (ALEPA — Região Norte).
+14. ALEPA e Governo do Estado do Pará (décimo primeiro estado da federação, estreia na Região Norte, ADR-0024): concluído em 2026-11-06.
+    - Fontes catalogadas e validadas em `docs/FONTES.md`: portal institucional aberto da ALEPA (`https://www.alepa.pa.gov.br`), endpoint de deputados da legislatura (`https://www.alepa.pa.gov.br/Home/Page/Deputados`), perfis individuais (`https://www.alepa.pa.gov.br/Institucional/Deputado/{id}`), comissões permanentes e representações (`https://www.alepa.pa.gov.br/Home/Page/ComissoeseRepresentacoes`), fotos oficiais em alta resolução (`https://alepa.quartertec.com.br/`) e portais estaduais de transparência (`pa-transparencia`) e diário oficial (`pa-ioepa`).
+    - Modelo e identificador: identificador canônico `alepa-{id}` (numérico oficial) e chave `alepa` em `ids_externos` de `schemas/politico.schema.json`.
+    - Adaptador `Alepa.java` implementado e coberto por testes unitários (`AlepaTest.java`): ingestão e parsing dos 41 deputados estaduais em exercício na 60ª Legislatura (2023–2027), fotos oficiais, extração de nome civil e datas de nascimento, comissões permanentes populando `orgaos_e_frentes` com papéis oficiais e minimização de dados de contato.
+    - Vínculo com o TSE: inclusão de `PA` em `UFS_ESTADUAIS` de `Tse.java` (+1.400 candidaturas estaduais indexadas); 100% dos deputados estaduais da ALEPA vinculados deterministicamente às suas candidaturas das eleições de 2018, 2022 e 2026.
+    - Executivo estadual do Pará: Governador Helder Barbalho coberto pelo arquivo histórico via candidaturas do TSE e portais estaduais catalogados.
+    - Cobertura regional: conquista histórica alcançando **presença oficial em todas as 5 Grandes Regiões do Brasil** (Norte, Nordeste, Centro-Oeste, Sudeste e Sul).
+    - Pipeline e workflow: registro de `alepa` em `Main.java`, `Publicador.java`, `Vinculo.java` e passo `fetch alepa` no workflow `.github/workflows/dados.yml`.
+15. Décimo segundo estado da federação: avaliação técnica e planejamento para Pernambuco (ALEPE — Região Nordeste) e Distrito Federal (CLDF).
 
 ### Redes sociais
 

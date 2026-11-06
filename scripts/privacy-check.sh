@@ -12,7 +12,7 @@ raiz=$(git rev-parse --show-toplevel)
 padroes="${PRIVACY_PATTERNS_FILE:-$raiz/.privacy-patterns}"
 
 # Caminho absoluto de pasta pessoal denuncia o usuário em qualquer máquina.
-genericos='(/Users/|/home/)[A-Za-z0-9._-]+/|[A-Za-z]:\\Users\\'
+genericos='(^|[[:space:]"'"'"'`])(/Users/|/home/)[A-Za-z0-9._-]+/|[A-Za-z]:\\Users\\'
 
 lista_padroes=$(mktemp)
 trap 'rm -f "$lista_padroes"' EXIT

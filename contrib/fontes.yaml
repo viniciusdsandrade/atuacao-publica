@@ -1820,6 +1820,52 @@
   status: validado
   validado_em: 2026-11-06
 
+- id: alepa-deputados
+  nome: Assembleia Legislativa do Estado do Pará, deputados estaduais
+  orgao: Assembleia Legislativa do Estado do Pará
+  esfera: estadual
+  ente: PA
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://www.alepa.pa.gov.br/Home/Page/Deputados
+  formato: HTML
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Listagem oficial de deputados estaduais em exercício na 60ª legislatura (2023–2027)."
+  status: validado
+  validado_em: 2026-11-06
+
+- id: alepa-deputados-detalhes
+  nome: Assembleia Legislativa do Estado do Pará, perfis parlamentares e comissões
+  orgao: Assembleia Legislativa do Estado do Pará
+  esfera: estadual
+  ente: PA
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://www.alepa.pa.gov.br/Institucional/Deputado/
+  formato: HTML
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Páginas de perfil parlamentar, biografia sobre e composição das comissões permanentes e representações."
+  status: validado
+  validado_em: 2026-11-06
+
+- id: alepa-portal
+  nome: Assembleia Legislativa do Estado do Pará, portal institucional e fotos
+  orgao: Assembleia Legislativa do Estado do Pará
+  esfera: estadual
+  ente: PA
+  categoria: primeira_parte
+  nivel_confianca: T0
+  url_base: https://www.alepa.pa.gov.br/
+  formato: HTML e PNG
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Portal institucional e repositório de fotografias oficiais dos parlamentares em PerfilAgentePolitico."
+  status: validado
+  validado_em: 2026-11-06
+
+
 
 
 

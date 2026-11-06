@@ -744,6 +744,33 @@ Validação em 2026-11-03 com o User-Agent do projeto.
 - O portal institucional da ALES (`www.al.es.gov.br`) descarta conexões de datacenters estrangeiros (timeout de conexão em runners internacionais do GitHub Actions); a coleta em ambiente nacional e a suíte de testes operam normalmente.
 
 
+## Fontes do Pará (ALEPA & Governo do Estado)
+
+### `alepa-deputados`: parlamentares em exercício
+
+- URL base: `https://www.alepa.pa.gov.br/Home/Page/Deputados`
+- Deputados estaduais da 60ª legislatura (2023–2027), com ID numérico oficial (`IdApPortAgentePolitico`), nome parlamentar, foto oficial e partido.
+- Identificador canônico no projeto: `alepa-{id}` (ex.: `alepa-1024`, `alepa-1011`).
+
+### `alepa-deputados-detalhes`: perfil individual, biografia e comissões
+
+- URL base: `https://www.alepa.pa.gov.br/Institucional/Deputado/` e `https://www.alepa.pa.gov.br/Home/Page/ComissoeseRepresentacoes`
+- Perfil com nome civil completo, data de nascimento, partido e biografia oficial ("bioContent").
+- Comissões permanentes e representações populando `orgaos_e_frentes` com vínculos determinísticos pelos identificadores oficiais dos parlamentares (Presidente, Vice-Presidente, Titular e Suplente).
+- Dados de gabinete, telefones e e-mails institucionais descartados na ingestão por regra estrita de privacidade.
+
+### `alepa-portal`: portal institucional e fotos
+
+- URL base: `https://www.alepa.pa.gov.br/`
+- Repositório de fotos oficiais dos parlamentares em alta resolução hospedadas no portal institucional `https://alepa.quartertec.com.br/Content/Portal/PerfilAgentePolitico/`.
+
+### `pa-transparencia` e `pa-ioepa`: Executivo estadual
+
+- Transparência orçamentária: `https://www.transparencia.pa.gov.br/`
+- Diário Oficial: `https://www.ioepa.com.br/`
+- Mandato do Governador Helder Barbalho integrado ao modelo e ao arquivo histórico via candidaturas do TSE.
+
+
 ## Fora da política de fontes
 
 Imprensa, blogs, agregadores sem metodologia, redes sociais de terceiros, mensagens, vídeos não oficiais, Wikipedia e rankings de terceiros.
