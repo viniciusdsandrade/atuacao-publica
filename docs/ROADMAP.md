@@ -73,7 +73,7 @@ Estado real de cada fase. Atualizado ao fechar cada fase.
 - ALESC: as despesas dos gabinetes (`alesc-despesas`) cobrem 2023 a 2026 e entram só para os 40 deputados em exercício. Em 2026-11-06, 4.355 de 54.524 linhas não correspondiam a nenhum deles e foram descartadas; a contagem aparece na saída do `normalize`. A fonte não traz CNPJ nem número de documento, e o favorecido vem vazio em cerca de 21% das linhas.
 - ALESC: o favorecido MEI vem como nome e CPF. A sequência de 11 dígitos é removida na normalização (`Guarda.semCpf`), como na Câmara, no Senado, na ALESP e na ALMG.
 - ALEP: a consulta das verbas de ressarcimento por deputado (`api/ressarcimento`) exige reCAPTCHA v3, conforme o script da própria página (2026-11-06). O ETL não contorna CAPTCHA, então essas despesas não são coletadas (`alep-ressarcimento`, bloqueado).
-- ALERJ: não foi localizado conjunto de dados abertos de despesas ou verba de gabinete por deputado até 2026-11-06. Não validado.
+- ALERJ: o levantamento de 2026-11-06 achou a API do DOCIGP (`docigp.alerj.rj.gov.br/api/v1`), com lançamentos de verba por deputado e fornecedor. O `remote_id` é o id do perfil da ALERJ. Ainda sem adaptador. A partir do exterior, a Azure (eastus) recebeu resposta, e a AWS e o Google Cloud não.
 - CMSP (capital): só vereadores em exercício entram. Os 9 suplentes sem exercício e quem deixou a vereança na legislatura ficam fora. O serviço não tem voto nominal por vereador, e os perfis ficam sem votações e sem foto. As proposições cobrem, desde 2022, só o que está em tramitação, virou lei ou foi vetado: o serviço não informa o autor do projeto encerrado sem virar lei, nem separa autor de coautor.
 - CMSP: 4 dos 55 vereadores ficaram sem vínculo com o TSE porque o nome parlamentar difere do nome de urna (por exemplo, uma palavra só). O vínculo ignora só a pontuação ("Jr.", "Dra."), porque casar por palavras soltas ligaria homônimos parciais e atribuiria candidaturas e bens a outra pessoa.
 - CMSP: a fonte deixa cargo antigo da Mesa sem data de fim quando há sucessor. Em cargo exclusivo (Mesa, presidência e vice-presidência de comissão), vale o de início mais recente entre os vereadores em exercício.
@@ -316,6 +316,24 @@ Verificação de 2026-11-02, com scripts locais (Playwright e axe-core, fora do 
     - 60 testes: 24 de fluxo (lista, perfil, comparação, dados abertos, documento e teclado) e 36 de WCAG 2.1 AA (nove rotas, temas claro e escuro, desktop e celular emulado).
     - O job `web` do CI passa a rodar testes unitários, build e a suíte. Em falha, o relatório sobe como artefato.
     - A primeira varredura achou dois defeitos reais, já corrigidos: o nome acessível do botão de tema não continha o texto visível (WCAG 2.5.3) e a tabela rolável de `/dados-abertos` não tinha foco por teclado (WCAG 2.1.1).
+23. Fontes de atuação das assembleias: levantamento de 2026-11-06, ainda sem adaptador.
+    - Cada endereço respondeu a requisição real no levantamento. O acesso a partir do exterior só foi testado onde a tabela diz.
+    - Sugestão de ordem: despesas da ALERJ, despesas e votações da ALECE, votações da ALEP.
+
+    | Casa | Despesas | Proposições com autor | Votações nominais |
+    |---|---|---|---|
+    | ALERJ | API do DOCIGP, com fornecedor e o id do perfil. Do exterior, só a Azure recebeu resposta | o sistema Domino recusa parâmetros de listagem | não encontrado |
+    | ALECE | CSV mensal da verba de desempenho parlamentar, com credor e CNPJ. Deputado por nome. Respondeu da Azure | HTML paginado, de 350 a 450 páginas | XLSX por matéria, 61 de 2023 a 2026. Respondeu da Azure |
+    | ALEGO | implementado em 2026-11-06 | API NoPaper, autor por nome | JSON anual. Parlamentar só por nome, com grafia irregular |
+    | ALEP | bloqueado por reCAPTCHA | API documentada, autor em texto | ZIP por sessão, sem CAPTCHA, com um XLSX por item |
+    | ALMG | implementado; coleta bloqueada no CI | CSV anual, com o id do autor igual ao do perfil | só em texto livre na tramitação |
+    | ALBA | XLSX anual, deputado por nome; fornecedor só no detalhe HTML | API NoPaper, com id de autor diferente do id do portal | não validado |
+    | CLDF | portal CKAN, com CPF do deputado e do prestador, que precisa sair | API do PLe, autoria por nome | exige login |
+    | ALEPE | JSON por deputado e mês, com id próprio | API de dados abertos, que recusa conexão do exterior | só resultado agregado |
+    | ALES | por gabinete, sem fornecedor | API NoPaper | boletins em PDF |
+    | ALRS | agregado por categoria, sem fornecedor | HTML por deputado | HTML por deputado e ano, com JSON embutido |
+    | ALESC | implementado | HTML paginado | não validado |
+    | ALEPA | painel interno de BI, sem fornecedor | callback de componente, paginação não validada | HTML por votação |
 
 ### Redes sociais
 
