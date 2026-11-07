@@ -1,13 +1,23 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { Title } from '@angular/platform-browser';
 import { RouterLink } from '@angular/router';
-import { catchError, of } from 'rxjs';
+import { catchError, map, of, startWith } from 'rxjs';
 
-import { Dados, ItemManifestDump } from '../dados';
+import { Dados, ManifestDumps } from '../dados';
 import { Icone } from '../icone/icone';
-import { chaveDeBusca, data, inteiro } from '../rotulos';
+import { NOMES_DAS_UFS, chaveDeBusca, data, inteiro } from '../rotulos';
 
+type Carga = { estado: 'carregando' } | { estado: 'erro' } | { estado: 'pronto'; manifesto: ManifestDumps };
+
+interface ArquivoDaUf {
+  uf: string;
+  nome: string;
+  arquivo: string;
+  total: number;
+  tamanho: number;
+}
+
+/** Arquivos de dados abertos listados no manifesto que o ETL publica (dados/dumps/manifest.json). */
 @Component({
   selector: 'app-dados-abertos',
   imports: [RouterLink, Icone],
@@ -15,39 +25,64 @@ import { chaveDeBusca, data, inteiro } from '../rotulos';
 })
 export class DadosAbertos {
   private readonly dados = inject(Dados);
-  private readonly titulo = inject(Title);
 
   protected readonly busca = signal('');
-  protected readonly copiado = signal(false);
+  protected readonly copia = signal<'feita' | 'falhou' | null>(null);
 
-  private readonly manifesto = toSignal(this.dados.manifestDumps$.pipe(catchError(() => of(null))));
+  protected readonly carga = toSignal(
+    this.dados.manifestDumps$.pipe(
+      map((manifesto): Carga => ({ estado: 'pronto', manifesto })),
+      catchError(() => of<Carga>({ estado: 'erro' })),
+      startWith<Carga>({ estado: 'carregando' }),
+    ),
+    { requireSync: true },
+  );
 
-  protected readonly dataGeracao = computed(() => {
-    const m = this.manifesto();
-    return m ? data(m.gerado_em) : '-';
+  private readonly arquivos = computed(() => {
+    const c = this.carga();
+    return c.estado === 'pronto' ? c.manifesto.arquivos : [];
   });
 
-  protected readonly dumpConsolidado = computed(() => {
-    return this.manifesto()?.arquivos.find((a) => a.arquivo === 'politicos.csv') ?? null;
+  protected readonly geradoEm = computed(() => {
+    const c = this.carga();
+    return c.estado === 'pronto' ? data(c.manifesto.gerado_em) : '';
   });
 
-  protected readonly dumpFederal = computed(() => {
-    return this.manifesto()?.arquivos.find((a) => a.arquivo === 'politicos-federal.csv') ?? null;
+  protected readonly consolidado = computed(() => this.arquivos().find((a) => a.arquivo === 'politicos.csv') ?? null);
+  protected readonly federal = computed(() => this.arquivos().find((a) => a.arquivo === 'politicos-federal.csv') ?? null);
+
+  /** Um CSV por UF (politicos-SP.csv), em ordem alfabética do nome do estado. */
+  protected readonly porUf = computed((): ArquivoDaUf[] =>
+    this.arquivos()
+      .filter((a) => /^politicos-[a-z]{2}\.csv$/i.test(a.arquivo))
+      .map((a) => {
+        const uf = a.arquivo.slice('politicos-'.length, 'politicos-'.length + 2).toUpperCase();
+        return { uf, nome: NOMES_DAS_UFS[uf] ?? uf, arquivo: a.arquivo, total: a.total_registros, tamanho: a.tamanho_bytes };
+      })
+      .sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR')),
+  );
+
+  protected readonly ufsFiltradas = computed(() => {
+    const termo = chaveDeBusca(this.busca());
+    return termo ? this.porUf().filter((u) => chaveDeBusca(`${u.nome} ${u.uf}`).includes(termo)) : this.porUf();
   });
 
-  protected readonly dumpsUf = computed(() => {
-    const arquivos = this.manifesto()?.arquivos ?? [];
-    const q = chaveDeBusca(this.busca());
-    return arquivos
-      .filter((a) => a.arquivo.startsWith('politicos-') && a.arquivo !== 'politicos-federal.csv')
-      .filter((a) => !q || chaveDeBusca(a.titulo).includes(q) || chaveDeBusca(a.arquivo).includes(q));
+  protected readonly anuncioUf = computed(() => {
+    if (!this.busca().trim()) {
+      return '';
+    }
+    const n = this.ufsFiltradas().length;
+    return n === 0 ? 'Nenhum estado encontrado.' : n === 1 ? '1 estado encontrado.' : `${n} estados encontrados.`;
+  });
+
+  /** O endereço da citação é o que o visitante está usando: o código não fixa domínio. */
+  protected readonly citacao = computed(() => {
+    const endereco = typeof document === 'undefined' ? '' : document.baseURI;
+    const hoje = new Intl.DateTimeFormat('pt-BR').format(new Date());
+    return `Atuação Pública. Dados abertos sobre a atividade de políticos brasileiros. Licença CC BY 4.0. Disponível em: ${endereco}. Acesso em: ${hoje}.`;
   });
 
   protected readonly inteiro = inteiro;
-
-  constructor() {
-    this.titulo.setTitle('Dados Abertos e Downloads · Atuação Pública');
-  }
 
   protected tamanhoLegivel(bytes: number): string {
     if (bytes < 1024) {
@@ -65,15 +100,17 @@ export class DadosAbertos {
     return 'dados/dumps/' + arquivo;
   }
 
+  protected valor(evento: Event): string {
+    return (evento.target as HTMLInputElement).value;
+  }
+
   protected async copiarCitacao(): Promise<void> {
-    const texto =
-      'Atuação Pública. Base de Dados Abertos Parlamentares e Governamentais do Brasil (CC BY 4.0). Disponível em: https://atuacao-publica.org.';
     try {
-      await navigator.clipboard.writeText(texto);
-      this.copiado.set(true);
-      setTimeout(() => this.copiado.set(false), 2500);
+      await navigator.clipboard.writeText(this.citacao());
+      this.copia.set('feita');
     } catch {
-      // Ignora falha de clipboard no ambiente restrito
+      // Navegador sem permissão de área de transferência: o texto fica à vista para copiar à mão.
+      this.copia.set('falhou');
     }
   }
 }

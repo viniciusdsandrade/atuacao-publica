@@ -1,169 +1,104 @@
-/* Estilos da página de Dados Abertos e Downloads */
+/* Dados abertos: licença e citação, arquivos completos, arquivos por estado e dicionário. */
 
-.dados-abertos-pagina {
-  max-width: 72rem;
-  margin: 0 auto;
-  padding: 1.5rem 1rem 3rem;
-}
-
-.dados-abertos-intro {
-  margin-bottom: 2rem;
-}
-
-.dados-abertos-licenca {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1.25rem;
-  margin-top: 1.25rem;
+.dados-licenca {
+  display: grid;
+  gap: 0.625rem;
+  margin: 1.25rem 0 2rem;
   padding: 1.25rem;
   background: var(--superficie-2);
 }
 
-.dados-abertos-licenca-texto {
-  flex: 1;
-  min-width: 280px;
+.dados-licenca h2 {
+  font-size: 1.125rem;
 }
 
-.dados-abertos-licenca-texto p {
-  margin: 0.35rem 0 0;
+.dados-licenca p {
+  max-width: 70ch;
+  margin: 0;
   color: var(--texto-2);
-  font-size: 0.875rem;
-  line-height: 1.5;
 }
 
-.dados-abertos-secao {
+.dados-licenca .dados-citacao {
+  max-width: none;
+  padding: 0.75rem 1rem;
+  border-left: 3px solid var(--destaque);
+  border-radius: 0 var(--r-2) var(--r-2) 0;
+  background: var(--superficie);
+  color: var(--texto);
+  overflow-wrap: anywhere;
+}
+
+.dados-citacao .rotulo-secao {
+  display: block;
+}
+
+.dados-citacao-acoes {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 1rem;
+}
+
+.dados-licenca .dados-copia {
+  font-size: 0.9375rem;
+}
+
+.dados-secao {
   margin-bottom: 2.5rem;
 }
 
-.dados-abertos-secao h2 {
-  margin: 0 0 1rem;
-  font-size: 1.25rem;
-  font-weight: 700;
-  color: var(--texto);
+.dados-secao > h2 {
+  margin-bottom: 0.5rem;
 }
 
-.dados-abertos-cards-principais {
+.dados-arquivos {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 1.25rem;
-}
-
-.card-dump {
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  padding: 1.5rem;
-  height: 100%;
-}
-
-.card-dump-corpo h3 {
-  margin: 0.75rem 0 0.35rem;
-  font-size: 1.125rem;
-  color: var(--texto);
-}
-
-.card-dump-corpo p {
-  margin: 0 0 1rem;
-  color: var(--texto-2);
-  font-size: 0.875rem;
-  line-height: 1.5;
-}
-
-.card-dump-estats {
-  display: flex;
-  gap: 1.5rem;
-  margin: 0 0 1.25rem;
-}
-
-.card-dump-estats dt {
-  font-size: 0.75rem;
-  color: var(--texto-3);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-.card-dump-estats dd {
-  margin: 0.2rem 0 0;
-  font-size: 1.25rem;
-  font-weight: 700;
-  color: var(--texto);
-}
-
-.card-dump-acoes {
-  display: flex;
-}
-
-.card-dump-acoes .botao {
-  width: 100%;
-  justify-content: center;
-}
-
-.dados-abertos-cabecalho-ufs {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-end;
-  justify-content: space-between;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 17rem), 1fr));
   gap: 1rem;
-  margin-bottom: 1.25rem;
+  margin-top: 1rem;
+  list-style: none;
 }
 
-.dados-abertos-busca-campo {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.35rem 0.65rem;
-  background: var(--superficie);
-  border: 1px solid var(--borda-controle);
-  border-radius: var(--r-cartao);
-  width: 100%;
-  max-width: 280px;
-}
-
-.dados-abertos-busca-campo input {
-  flex: 1;
-  border: none;
-  background: transparent;
-  color: var(--texto);
-  font-size: 0.875rem;
-  outline: none;
-}
-
-.dados-abertos-grade-ufs {
+.dados-arquivo {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-  gap: 0.875rem;
+  grid-template-rows: auto auto 1fr auto auto;
+  align-items: start;
+  gap: 0.5rem;
+  padding: 1.25rem;
 }
 
-.card-uf {
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  padding: 1rem;
-  gap: 0.75rem;
+.dados-arquivo .selo {
+  justify-self: start;
 }
 
-.card-uf-info h3 {
-  margin: 0.35rem 0 0.2rem;
-  font-size: 0.9375rem;
-  font-weight: 700;
-  color: var(--texto);
+.dados-arquivo h3 {
+  font-size: 1.125rem;
 }
 
-.card-uf-info p {
-  margin: 0 0 0.5rem;
-  font-size: 0.8125rem;
+.dados-arquivo p {
+  margin: 0;
   color: var(--texto-2);
+  font-size: 0.9375rem;
 }
 
-.card-uf-meta {
-  display: block;
-  font-size: 0.75rem;
-  font-weight: 600;
+.dados-arquivo .dados-arquivo-meta {
   color: var(--texto-3);
+  font-weight: 600;
 }
 
-.card-uf .botao {
-  align-self: flex-start;
+.dados-arquivo .botao {
+  margin-top: 0.5rem;
+}
+
+.dados-filtro {
+  max-width: 24rem;
+  margin: 1rem 0;
+}
+
+.dados-dicionario {
+  padding: 1.25rem;
+}
+
+.dados-dicionario h2 {
+  margin-bottom: 1rem;
 }

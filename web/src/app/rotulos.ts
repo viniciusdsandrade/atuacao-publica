@@ -18,6 +18,37 @@ export const ESFERAS: Record<string, string> = {
   municipal: 'Municipal',
 };
 
+/** Nome de cada unidade da federação, pela sigla. */
+export const NOMES_DAS_UFS: Record<string, string> = {
+  AC: 'Acre',
+  AL: 'Alagoas',
+  AM: 'Amazonas',
+  AP: 'Amapá',
+  BA: 'Bahia',
+  CE: 'Ceará',
+  DF: 'Distrito Federal',
+  ES: 'Espírito Santo',
+  GO: 'Goiás',
+  MA: 'Maranhão',
+  MG: 'Minas Gerais',
+  MS: 'Mato Grosso do Sul',
+  MT: 'Mato Grosso',
+  PA: 'Pará',
+  PB: 'Paraíba',
+  PE: 'Pernambuco',
+  PI: 'Piauí',
+  PR: 'Paraná',
+  RJ: 'Rio de Janeiro',
+  RN: 'Rio Grande do Norte',
+  RO: 'Rondônia',
+  RR: 'Roraima',
+  RS: 'Rio Grande do Sul',
+  SC: 'Santa Catarina',
+  SE: 'Sergipe',
+  SP: 'São Paulo',
+  TO: 'Tocantins',
+};
+
 /** Entes municipais catalogados (código IBGE de 7 dígitos para nome do município). */
 export const ENTES_MUNICIPAIS: Record<string, string> = {
   '3509502': 'Campinas',

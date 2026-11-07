@@ -112,7 +112,7 @@ test.describe('lado a lado', () => {
 test.describe('dados abertos e documentos', () => {
   test('lista os arquivos do manifest com link de download', async ({ page }) => {
     await page.goto('/#/dados-abertos');
-    await expect(page.getByRole('heading', { level: 1 })).toContainText('Dados Abertos e Downloads');
+    await expect(page.getByRole('heading', { level: 1 })).toContainText('Dados abertos');
     await expect(page.locator('a[href$="dados/dumps/politicos.csv"]').first()).toBeVisible();
   });
 
