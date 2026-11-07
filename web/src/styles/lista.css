@@ -8,8 +8,27 @@
   background: linear-gradient(120deg, var(--destaque-suave) 0%, var(--superficie) 65%);
 }
 
+/* No celular, os números do índice cabem numa linha: "2.116 políticos no arquivo · 1.422 em exercício". */
 .heroi-numeros {
-  display: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 1.25rem;
+  margin: 0.875rem 0 0;
+  color: var(--texto-2);
+  font-size: 0.9375rem;
+}
+
+.heroi-numeros > div {
+  display: flex;
+  flex-direction: row-reverse;
+  align-items: baseline;
+  gap: 0.3rem;
+}
+
+.heroi-numeros dd {
+  margin: 0;
+  color: var(--texto);
+  font-weight: 750;
 }
 
 .heroi h1 {
@@ -19,32 +38,21 @@
 
 .heroi-lead {
   max-width: 62ch;
-  margin: 0.75rem 0 0.5rem;
+  margin: 0.75rem 0 0;
   color: var(--texto-2);
   font-size: 1rem;
 }
 
-.heroi-regras {
-  max-width: 62ch;
-  margin: 0 0 0.75rem;
-  color: var(--texto);
-  font-size: 0.9375rem;
-  font-weight: 550;
+.heroi-busca {
+  max-width: 40rem;
+  margin: 1.125rem 0 0.875rem;
 }
 
-.heroi-estado {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.25rem 1.25rem;
+.heroi-regras {
+  max-width: 62ch;
   margin: 0;
   color: var(--texto-2);
   font-size: 0.9375rem;
-}
-
-.heroi-estado a {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
 }
 
 .painel-busca {
@@ -99,8 +107,35 @@
   border-top: 1px solid var(--borda);
 }
 
-.resultados-titulo {
+/* Contagem à esquerda; data dos dados e estado das coletas ao lado, sem tom de alarme. */
+.resultados-topo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.25rem 1.5rem;
   margin-bottom: 0.875rem;
+}
+
+.resultados-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0 1.25rem;
+  margin: 0;
+  color: var(--texto-2);
+  font-size: 0.9375rem;
+}
+
+.resultados-meta a {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-height: 2rem;
+}
+
+.resultados-titulo {
+  margin: 0;
   color: var(--texto-2);
   font-size: 1.0625rem;
   font-weight: 500;
@@ -198,7 +233,7 @@
 
 @media (min-width: 48rem) {
   .heroi {
-    padding: 2.25rem 2.5rem;
+    padding: 2rem 2.5rem;
   }
 
   .heroi-numeros {
@@ -209,6 +244,7 @@
   }
 
   .heroi-numeros > div {
+    display: block;
     padding: 0.75rem 1.25rem;
     border: 1px solid var(--borda);
     border-radius: var(--r-2);

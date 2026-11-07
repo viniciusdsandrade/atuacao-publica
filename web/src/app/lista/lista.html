@@ -1,32 +1,40 @@
 <section class="heroi" aria-labelledby="titulo-pagina">
   <div class="heroi-texto">
-  <h1 id="titulo-pagina">Atividade de políticos brasileiros, com fonte e data em cada registro</h1>
-  <p class="heroi-lead">
-    Votos, despesas, proposições, discursos, candidaturas e atos de parlamentares federais, da Presidência da República,
-    de governadores e do piloto municipal (Campinas/SP). Quem deixa o cargo continua no arquivo.
-  </p>
-  <p class="heroi-regras">
-    Sem nota, ranking nem juízo. O que a fonte não publica aparece como “sem registro na fonte”.
-    <a routerLink="/metodologia">Metodologia</a> · <a routerLink="/politica-editorial">Política editorial</a>
-  </p>
-  <p class="heroi-estado">
-    @if (indice(); as i) {
-      <span>Índice gerado em {{ data(i.gerado_em) }}.</span>
+    <h1 id="titulo-pagina">Atividade de políticos brasileiros, com fonte e data</h1>
+    <p class="heroi-lead">
+      Votos, despesas, proposições, discursos, candidaturas e atos de quem exerce ou exerceu mandato federal, estadual ou
+      municipal desde 2022.
+    </p>
+    @if (!erro()) {
+      <form class="heroi-busca campo" role="search" aria-label="Buscar políticos" (submit)="$event.preventDefault(); gravarAgora()">
+        <label for="busca">Buscar por nome, município, cargo ou partido</label>
+        <div class="busca">
+          <app-icone class="icone-busca" nome="busca" />
+          <input
+            #campoBusca
+            id="busca"
+            class="controle"
+            type="search"
+            name="busca"
+            placeholder="Digite para buscar"
+            autocomplete="off"
+            enterkeyhint="search"
+            [value]="filtros().busca"
+            (input)="alterar({ busca: valor($event) })"
+            (blur)="gravarAgora()"
+          />
+          @if (filtros().busca) {
+            <button type="button" class="busca-limpar" aria-label="Limpar a busca" (click)="alterar({ busca: '' }); campoBusca.focus()">
+              <app-icone nome="fechar" />
+            </button>
+          }
+        </div>
+      </form>
     }
-    @if (resumoColetas(); as r) {
-      <a routerLink="/estado">
-        @if (r.comAviso > 0) {
-          <app-icone nome="alerta" [pequeno]="true" />
-          {{ r.comAviso }} {{ r.comAviso === 1 ? 'fonte com aviso' : 'fontes com aviso' }} nas coletas
-        } @else {
-          <app-icone nome="verificado" [pequeno]="true" />
-          Coletas das {{ r.total }} fontes sem aviso
-        }
-      </a>
-    } @else {
-      <a routerLink="/estado">Estado das coletas</a>
-    }
-  </p>
+    <p class="heroi-regras">
+      Sem nota, ranking nem juízo. O que a fonte não publica aparece como “sem registro na fonte”.
+      <a routerLink="/metodologia">Metodologia</a> · <a routerLink="/politica-editorial">Política editorial</a>
+    </p>
   </div>
   @if (numeros(); as n) {
     <dl class="heroi-numeros">
@@ -56,32 +64,7 @@
     <button type="button" class="botao botao--primario" (click)="tentarDeNovo()">Tentar de novo</button>
   </div>
 } @else if (indice(); as i) {
-  <form class="painel painel-busca" role="search" aria-label="Buscar e filtrar políticos" (submit)="$event.preventDefault()">
-    <div class="campo">
-      <label for="busca">Buscar por nome, município, cargo ou partido</label>
-      <div class="busca">
-        <app-icone class="icone-busca" nome="busca" />
-        <input
-          #campoBusca
-          id="busca"
-          class="controle"
-          type="search"
-          name="busca"
-          placeholder="Digite para buscar"
-          autocomplete="off"
-          enterkeyhint="search"
-          [value]="filtros().busca"
-          (input)="alterar({ busca: valor($event) })"
-          (blur)="gravarAgora()"
-        />
-        @if (filtros().busca) {
-          <button type="button" class="busca-limpar" aria-label="Limpar a busca" (click)="alterar({ busca: '' }); campoBusca.focus()">
-            <app-icone nome="fechar" />
-          </button>
-        }
-      </div>
-    </div>
-
+  <div class="painel painel-busca" role="group" aria-label="Filtrar a lista">
     <div class="filtros-segmentos">
       <div class="segmentos" role="radiogroup" aria-labelledby="rotulo-situacao">
         <span id="rotulo-situacao" class="campo-rotulo">Situação</span>
@@ -204,12 +187,30 @@
         <button type="button" class="botao botao--discreto botao--pequeno" (click)="limpar()">Limpar tudo</button>
       </div>
     }
-  </form>
+  </div>
 
   <section aria-labelledby="titulo-resultados">
-    <h2 id="titulo-resultados" class="resultados-titulo">
-      <strong>{{ inteiro(resultado().length) }}</strong> de {{ inteiro(i.total) }} políticos
-    </h2>
+    <div class="resultados-topo">
+      <h2 id="titulo-resultados" class="resultados-titulo">
+        <strong>{{ inteiro(resultado().length) }}</strong> de {{ inteiro(i.total) }} políticos
+      </h2>
+      <p class="resultados-meta">
+        <span>Dados de {{ data(i.gerado_em) }}</span>
+        @if (resumoColetas(); as r) {
+          <a routerLink="/estado">
+            @if (r.comAviso > 0) {
+              <app-icone nome="alerta" [pequeno]="true" />
+              {{ r.comAviso }} {{ r.comAviso === 1 ? 'fonte com aviso' : 'fontes com aviso' }} nas coletas
+            } @else {
+              <app-icone nome="verificado" [pequeno]="true" />
+              Coletas das {{ r.total }} fontes sem aviso
+            }
+          </a>
+        } @else {
+          <a routerLink="/estado">Estado das coletas</a>
+        }
+      </p>
+    </div>
     <p class="sr-only" role="status">{{ anuncio() }}</p>
 
     @if (resultado().length === 0) {
@@ -275,7 +276,7 @@
 } @else {
   <p class="sr-only" role="status">Carregando o índice de políticos.</p>
   <div class="painel painel-busca" aria-hidden="true">
-    <div class="esqueleto esqueleto--campo"></div>
+    <div class="esqueleto esqueleto--linha"></div>
     <div class="esqueleto esqueleto--linha"></div>
   </div>
   <ul class="grade-cartoes" aria-hidden="true">
