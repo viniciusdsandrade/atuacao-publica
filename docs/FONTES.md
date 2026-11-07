@@ -621,7 +621,19 @@ Validação em 2026-11-03 com o User-Agent do projeto.
 
 - URL base: `https://www.alerj.rj.gov.br/`
 - Fotos oficiais dos parlamentares hospedadas em `/Uploads/PerfilDeputado/Imagem/`.
-- Despesas e verba de gabinete por deputado: nenhum conjunto de dados abertos foi localizado até 2026-11-06. Não validado.
+- Despesas e verba de gabinete por deputado: ver `alerj-docigp`.
+
+### `alerj-docigp`: verba de gabinete (DOCIGP)
+
+- URL base: `https://docigp.alerj.rj.gov.br/api/v1`. JSON, sem autenticação. Validação em 2026-11-07.
+- `/congressmen?page={n}`: 137 parlamentares em 7 páginas. O `remote_id` é o id do perfil na ALERJ (`alerj-{id}`).
+- `/congressmen/{id}/legislatures/2/budgets?page={n}`: um orçamento por mês da legislatura de 2023 a 2027, do mais novo para o mais velho, 20 por página. Cada orçamento já traz os lançamentos (`entries`): data, valor, objeto, centro de custo, número do documento e fornecedor.
+- `/cost-centers`: os centros de custo. Os de código em algarismo romano (I a XI e subitens) são as despesas da verba. Os de código numérico são crédito, transporte de saldo e devolução de saldo, e ficam fora.
+- A despesa vem com valor negativo e entra positiva. A categoria é o nome do centro de custo, sem o código.
+- O fornecedor traz CNPJ ou CPF e endereço. Só o CNPJ entra; o endereço não é guardado.
+- Um mês novo desloca todas as páginas. Quando a primeira página de um deputado é renovada, as outras são renovadas na mesma execução.
+- Na validação: 30.330 lançamentos de 2023 a 2026 em 67 dos 70 deputados em exercício, 95% com CNPJ. Os ids 344, 514 e 515 não constam do DOCIGP.
+- A conexão oscila. Na validação, 12 tentativas esgotaram o tempo e foram repetidas. Entre provas do Globalping, a Azure (eastus), a AWS em São Paulo e uma rede residencial receberam resposta; a AWS nos EUA e o Google Cloud e a Oracle em São Paulo não.
 
 ### `rj-transparencia` e `rj-diario-oficial`: Executivo estadual
 

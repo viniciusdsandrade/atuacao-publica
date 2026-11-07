@@ -1610,6 +1610,21 @@
   status: validado
   validado_em: 2026-11-05
 
+- id: alerj-docigp
+  nome: Assembleia Legislativa do Estado do Rio de Janeiro, DOCIGP (verba de gabinete dos deputados)
+  orgao: Assembleia Legislativa do Estado do Rio de Janeiro
+  esfera: estadual
+  ente: RJ
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://docigp.alerj.rj.gov.br/api/v1
+  formato: JSON
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Legislatura de 2023 a 2027, só deputados em exercício que constam do DOCIGP. Orçamento mensal com os lançamentos embutidos, 20 meses por página. Crédito, transporte e devolução de saldo ficam fora. CPF de pessoa física e endereço do fornecedor não entram. A conexão oscila: houve tempo esgotado em algumas tentativas."
+  status: validado
+  validado_em: 2026-11-07
+
 - id: alrs-deputados
   nome: Assembleia Legislativa do Estado do Rio Grande do Sul, deputados estaduais
   orgao: Assembleia Legislativa do Estado do Rio Grande do Sul

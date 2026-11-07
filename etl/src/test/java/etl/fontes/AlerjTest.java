@@ -11,6 +11,7 @@ import java.nio.file.Path;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -18,9 +19,51 @@ import org.junit.jupiter.api.io.TempDir;
 import etl.Coleta;
 import etl.Contexto;
 import etl.Json;
+import etl.Registros.Despesa;
+import etl.Registros.Prov;
 import tools.jackson.databind.JsonNode;
 
 class AlerjTest {
+
+    /** Orçamento mensal sintético do DOCIGP, com lançamentos embutidos, na forma da API. */
+    private static final String ORCAMENTO = """
+            {"id": 1, "month": "06", "budget": {"date": "2026-06-01T03:00:00.000000Z"},
+             "entries": [
+               {"date": "2026-06-30T16:34:21.000000Z", "value": "-4500.00", "cost_center_id": 21, "document_number": null,
+                "to": "LOCADORA EXEMPLO", "provider": {"name": "LOCADORA EXEMPLO LTDA", "cpf_cnpj": "11.222.333/0001-81",
+                "type": "CNPJ", "street": "RUA EXEMPLO", "zipcode": "00000-000"}},
+               {"date": "2026-06-15T10:00:00.000000Z", "value": "-180.00", "cost_center_id": 23, "document_number": "77",
+                "to": "FULANO DE TAL", "provider": {"name": "FULANO DE TAL", "cpf_cnpj": "123.456.789-01", "type": "CPF"}},
+               {"date": "2026-06-30T18:00:00.000000Z", "value": "-900.00", "cost_center_id": 26,
+                "to": "ALERJ", "provider": {"name": "ALERJ", "cpf_cnpj": "11.222.333/0001-81", "type": "CNPJ"}}]}
+            """;
+
+    @Test
+    void orcamentoDoDocigpTrazSoDespesasComValorPositivo() {
+        Map<String, Alerj.CentroDeCusto> centros = Map.of(
+                "21", new Alerj.CentroDeCusto("VI.a", "VI.a - Locação ou fretamento de veículos automotores"),
+                "23", new Alerj.CentroDeCusto("VII", "VII - Combustíveis e lubrificantes"),
+                "26", new Alerj.CentroDeCusto("4", "4 - Devolução de saldo"));
+        Prov prov = new Prov(Alerj.FONTE_DESPESAS, Alerj.API_DOCIGP + "/congressmen/1/legislatures/2/budgets?page=1",
+                Instant.parse("2026-11-07T00:00:00Z"));
+
+        List<Despesa> despesas = Alerj.despesasDoOrcamento(Json.FONTE.readTree(ORCAMENTO), centros, prov);
+
+        // A devolução de saldo não é despesa e fica fora.
+        assertEquals(2, despesas.size());
+        Despesa locacao = despesas.get(0);
+        assertEquals(2026, locacao.ano());
+        assertEquals(6, locacao.mes());
+        assertEquals(LocalDate.of(2026, 6, 30), locacao.data());
+        assertEquals("Locação ou fretamento de veículos automotores", locacao.categoria());
+        assertEquals(new java.math.BigDecimal("4500.00"), locacao.valor());
+        assertEquals("11222333000181", locacao.fornecedorCnpj());
+        assertEquals("LOCADORA EXEMPLO LTDA", locacao.fornecedorNome());
+        Despesa combustivel = despesas.get(1);
+        assertEquals("Combustíveis e lubrificantes", combustivel.categoria());
+        assertEquals(null, combustivel.fornecedorCnpj());
+        assertEquals("77", combustivel.documentoNumero());
+    }
 
     @Test
     void formataNomeComPreposicoesEMaiusculas() {
