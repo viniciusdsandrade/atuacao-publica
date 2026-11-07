@@ -26,6 +26,32 @@ import etl.Registros.Prov;
 class AlepTest {
 
     @Test
+    void itemVotadoLeCabecalhoEVotosPeloNomeCivil() {
+        List<Map<String, String>> linhas = List.of(
+                Map.of("A", "ITEM 10.0", "B", "PROJETO DE LEI 243/2024"),
+                Map.of("A", "SESSÃO / REUNIÃO:", "B", "20ª SESSÃO ORDINÁRIA"),
+                Map.of("A", "DATA:", "B", "31/03/2025 02:30:00"),
+                Map.of("A", "TIPO VOTAÇÃO:", "B", "NOMINAL"),
+                Map.of("A", "EMENTA:", "B", "Insere data no calendário oficial."),
+                Map.of("A", "RESULTADO DA VOTAÇÃO:", "B", "APROVADO"),
+                Map.of("A", "PARLAMENTAR", "B", "PARTIDO", "C", "VOTO"),
+                Map.of("A", "FULANO DE TAL SILVA", "B", "AAA", "C", "SIM"),
+                Map.of("A", "BELTRANA DOS SANTOS", "B", "BBB", "C", "NÃO VOTOU"));
+
+        Alep.ItemVotado item = Alep.itemVotado(linhas);
+
+        assertTrue(item.nominal());
+        assertEquals("PROJETO DE LEI 243/2024", item.proposicao());
+        assertEquals(java.time.LocalDate.of(2025, 3, 31), item.data());
+        assertEquals("APROVADO", item.resultado());
+        assertEquals(2, item.votos().size());
+        assertEquals("FULANO DE TAL SILVA", item.votos().getFirst().nomeCivil());
+        assertEquals("Sim", Alep.votoLegivel(item.votos().getFirst().voto()));
+        assertEquals("Não votou", Alep.votoLegivel(item.votos().get(1).voto()));
+        assertEquals("fulano-de-tal-silva", Alep.arquivoDeVotos("Fulano de Tal Silva"));
+    }
+
+    @Test
     void chaveDeAutoriaIgnoraCargoTituloEPontuacao() {
         assertEquals("FULANO DE TAL", Alep.chaveDeAutoria("DEPUTADO FULANO DE TAL"));
         assertEquals("DOUTORA BELTRANA", Alep.chaveDeAutoria(" DEPUTADA DRA. BELTRANA"));

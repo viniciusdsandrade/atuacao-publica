@@ -593,11 +593,14 @@ Validação em 2026-11-03 com o User-Agent do projeto.
 - Na validação, 24.238 autorias de 2023 a 2026 nos 54 deputados em exercício. Autores que não são deputados em exercício (Poder Executivo, comissões, ex-deputados) ficam fora.
 - O HTTPS do host tem certificado autoassinado, e a URL documentada é HTTP. Respondeu a provas nos EUA (Azure e AWS) e no Brasil.
 
-### Votações nominais (não implementadas)
+### `alep-votacoes`: votações nominais
 
-- Os arquivos de dados abertos por sessão respondem sem CAPTCHA: `https://transparencia.assembleia.pr.leg.br/api/votacoes/sessoes?ano={ano}&mes={mes}` lista as sessões, e `/api/votacoes/dados-abertos?sessao={id}` aponta um ZIP com um XLSX por item votado. A API exige `Accept: application/json`; sem ele, responde 403.
-- O XLSX traz o voto de cada parlamentar pelo nome civil. A ALEP não publica, nem no portal nem na API, a correspondência entre nome civil e nome parlamentar, e casar por palavras soltas ligaria homônimos parciais. Fica sem adaptador até haver essa correspondência por fonte oficial.
-
+- URL base: `https://transparencia.assembleia.pr.leg.br/api/votacoes`. A API exige `Accept: application/json`; sem ele, responde 403. Validação em 2026-11-07.
+- `/sessoes?ano={ano}&mes={mes}` lista as sessões do mês (id e nome); mês sem sessão vem como lista vazia. `/dados-abertos?sessao={id}` aponta um ZIP em `storage2.assembleia.pr.leg.br` com um XLSX por item votado; sessão sem arquivo responde 404. A pesquisa principal (`/api/votacoes`) exige reCAPTCHA v3 e não é usada.
+- O XLSX traz item, autores, sessão, data, tipo de votação, ementa e resultado, e uma linha por parlamentar com nome civil, partido e voto (SIM, NÃO, ABSTENÇÃO ou NÃO VOTOU). Só entra votação de tipo NOMINAL.
+- O voto vem pelo nome civil, e o perfil da ALEP usa o nome parlamentar. A ponte é o TSE: o `Vinculo` liga o perfil à candidatura, e o nome civil dessa candidatura liga o arquivo de votos ao perfil. Nada é casado por palavra solta.
+- Na validação: 527 sessões de 2023 a 2026, 456 com ZIP, 4.135 itens com votação nominal e 197.559 votos em 51 dos 54 deputados em exercício. Os 3 sem vínculo com o TSE ficam sem votos.
+- O bloco de votos cita o ZIP de cada sessão, como cada voto: o perfil de um deputado da ALEP chega a 130 KB.
 
 ## Fontes da Bahia (ALBA & Governo do Estado)
 

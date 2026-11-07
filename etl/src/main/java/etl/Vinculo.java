@@ -13,6 +13,7 @@ import java.util.Set;
 import java.util.regex.Pattern;
 
 import etl.Publicador.Perfil;
+import etl.fontes.Alep;
 import etl.fontes.Cmsp;
 import etl.fontes.Sapl;
 import etl.fontes.Tse;
@@ -575,6 +576,10 @@ final class Vinculo {
                     chaveSapl = chaves.get(cand.get("sq").stringValue());
                     if (cpf == null && chaveSapl != null) {
                         cpf = chaveSapl.cpf();
+                    }
+                    // Os votos da ALEP vêm pelo nome civil: o da candidatura do TSE liga o arquivo ao perfil.
+                    if (chaveSapl != null && chaveSapl.nomeCivil() != null) {
+                        anexarBlocos(p, ctx.normalizado().resolve("alep/votos").resolve(Alep.arquivoDeVotos(chaveSapl.nomeCivil()) + ".json"));
                     }
                 }
             } else if ("alba".equals(p.fonteCli)) {
@@ -1304,6 +1309,22 @@ final class Vinculo {
             }
         }
         return novos;
+    }
+
+    /** Arquivo de blocos a mais para o perfil, lido no publish como os demais; as fontes dele entram no perfil. */
+    private static void anexarBlocos(Perfil p, Path arquivo) {
+        if (!Files.exists(arquivo) || p.arquivosDeBlocos.contains(arquivo)) {
+            return;
+        }
+        JsonNode blocos = Json.ler(arquivo);
+        if (blocos.path("fontes").isArray()) {
+            throw new IllegalStateException(arquivo.getFileName() + ": \"fontes\" é uma lista; grave um objeto com as fontes de cada bloco");
+        }
+        p.arquivosDeBlocos.add(arquivo);
+        for (var usadas : blocos.path("fontes").properties()) {
+            List<JsonNode> lista = p.fontes.computeIfAbsent(usadas.getKey(), k -> new ArrayList<>());
+            usadas.getValue().forEach(lista::add);
+        }
     }
 
     /**

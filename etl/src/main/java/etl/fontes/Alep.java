@@ -50,6 +50,8 @@ public final class Alep implements Fonte {
     public static final String FONTE_PROPOSICOES = "alep-proposicoes";
     /** API documentada da ALEP. O HTTPS do host tem certificado autoassinado; a URL documentada é HTTP. */
     public static final String API_PROPOSICOES = "http://webservices.assembleia.pr.leg.br/api/public/proposicao/filtrar";
+    public static final String FONTE_VOTACOES = "alep-votacoes";
+    public static final String API_VOTACOES = "https://transparencia.assembleia.pr.leg.br/api/votacoes";
     /** Primeiro ano das proposições: a 20ª legislatura começa em 2023. */
     static final int PRIMEIRO_ANO_PROPOSICOES = 2023;
     /** Nome da autoria que difere do nome e do slug do perfil; cada um corresponde a um único deputado da lista da ALEP. */
@@ -110,6 +112,202 @@ public final class Alep implements Fonte {
             coleta.obterPostOpcional(API_PROPOSICOES, "{\"ano\":" + ano + ",\"numeroMaximoRegistro\":50000}",
                     "proposicoes/" + ano + ".json", "application/json", Politica.porAnoSemanal(ano, ctx.hoje()));
         }
+
+        // Votações nominais: as sessões de cada mês, o arquivo de dados abertos de cada sessão e o ZIP com um XLSX por
+        // item votado. A API exige Accept JSON. Sessão sem arquivo responde 404 e guarda cópia vazia, sem contar falha.
+        for (int ano = PRIMEIRO_ANO_PROPOSICOES; ano <= ctx.hoje().getYear(); ano++) {
+            Politica politica = Politica.porAnoSemanal(ano, ctx.hoje());
+            int ultimoMes = ano == ctx.hoje().getYear() ? ctx.hoje().getMonthValue() : 12;
+            for (int mes = 1; mes <= ultimoMes; mes++) {
+                Coleta.Arquivo sessoes = coleta.obterOpcional(API_VOTACOES + "/sessoes?ano=" + ano + "&mes=" + mes,
+                        String.format(Locale.ROOT, "votacoes/sessoes-%d-%02d.json", ano, mes), "application/json", politica);
+                List<String> falhas = Camara.paraCadaDeputado(idsDeSessao(ctx, sessoes), id -> {
+                    Coleta.Arquivo dados = coleta.obterOuVazio(API_VOTACOES + "/dados-abertos?sessao=" + id,
+                            "votacoes/sessoes/" + id + ".json", "application/json", politica);
+                    String zip = urlDoZip(ctx, dados);
+                    if (zip != null) {
+                        coleta.obterOuVazio(zip, "votacoes/zip/" + id + ".zip", "application/zip", Politica.SE_AUSENTE);
+                    }
+                });
+                for (String falha : falhas) {
+                    coleta.falhaParcial("votacoes", falha);
+                }
+            }
+        }
+    }
+
+    /** Ids das sessões do mês; o mês sem sessão vem como lista vazia. */
+    private static List<String> idsDeSessao(Contexto ctx, Coleta.Arquivo sessoes) {
+        List<String> ids = new ArrayList<>();
+        if (sessoes == null || sessoes.bytes() == 0 || !Files.exists(Coleta.caminho(ctx, sessoes))) {
+            return ids;
+        }
+        JsonNode lista = Json.ler(Coleta.caminho(ctx, sessoes));
+        if (lista.isObject()) {
+            for (var sessao : lista.properties()) {
+                ids.add(sessao.getKey());
+            }
+        }
+        return ids;
+    }
+
+    /** Endereço do ZIP de dados abertos da sessão, ou null sem arquivo. */
+    private static String urlDoZip(Contexto ctx, Coleta.Arquivo dados) {
+        if (dados == null || dados.bytes() == 0 || !Files.exists(Coleta.caminho(ctx, dados))) {
+            return null;
+        }
+        String url = Json.texto(Json.ler(Coleta.caminho(ctx, dados)), "arquivo");
+        return url != null && url.endsWith(".zip") ? url : null;
+    }
+
+    /** Voto lido de um XLSX de item votado: o parlamentar vem pelo nome civil. */
+    public record VotoNoItem(String nomeCivil, String partido, String voto) {
+    }
+
+    /** Item votado: cabeçalho do XLSX e os votos nominais. */
+    public record ItemVotado(String proposicao, String ementa, String resultado, LocalDate data, boolean nominal,
+                             List<VotoNoItem> votos) {
+    }
+
+    /**
+     * Lê o XLSX de um item: pares de rótulo e valor nas colunas A e B até a linha "PARLAMENTAR", e depois uma linha por
+     * parlamentar, com nome civil, partido e voto ("SIM", "NÃO", "ABSTENÇÃO" ou "NÃO VOTOU").
+     */
+    public static ItemVotado itemVotado(List<Map<String, String>> linhas) {
+        Map<String, String> cabecalho = new HashMap<>();
+        String proposicao = null;
+        List<VotoNoItem> votos = new ArrayList<>();
+        boolean tabela = false;
+        for (Map<String, String> linha : linhas) {
+            String a = linha.getOrDefault("A", "");
+            if (!tabela) {
+                if (Texto.normalizarNome(a).equals("PARLAMENTAR")) {
+                    tabela = true;
+                } else if (Texto.normalizarNome(a).startsWith("ITEM")) {
+                    proposicao = linha.get("B");
+                } else if (!a.isEmpty()) {
+                    cabecalho.put(Texto.normalizarNome(a).replace(":", "").strip(), linha.get("B"));
+                }
+                continue;
+            }
+            String voto = linha.get("C");
+            if (!a.isEmpty() && voto != null) {
+                votos.add(new VotoNoItem(Texto.normalizarNome(a), linha.get("B"), voto.strip()));
+            }
+        }
+        String data = cabecalho.get("DATA");
+        LocalDate dia = null;
+        if (data != null && data.length() >= 10) {
+            try {
+                dia = LocalDate.parse(data.substring(0, 10), java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+            } catch (java.time.format.DateTimeParseException ignorada) {
+                // sem data legível, o item fica fora
+            }
+        }
+        String tipo = cabecalho.getOrDefault("TIPO VOTACAO", "");
+        return new ItemVotado(proposicao, cabecalho.get("EMENTA"), cabecalho.get("RESULTADO DA VOTACAO"), dia,
+                Texto.normalizarNome(tipo).equals("NOMINAL"), votos);
+    }
+
+    /** Voto como o site mostra: "Sim", "Não", "Abstenção", ou o texto da fonte para os demais. */
+    static String votoLegivel(String voto) {
+        return switch (Texto.normalizarNome(voto)) {
+            case "SIM" -> "Sim";
+            case "NAO" -> "Não";
+            case "ABSTENCAO" -> "Abstenção";
+            case "NAO VOTOU" -> "Não votou";
+            default -> voto;
+        };
+    }
+
+    /** Chave do arquivo de votos de um parlamentar pelo nome civil (normalizado, só letras e hífen). */
+    public static String arquivoDeVotos(String nomeCivil) {
+        return Texto.normalizarNome(nomeCivil).toLowerCase(Locale.ROOT).replaceAll("[^a-z0-9]+", "-").replaceAll("^-|-$", "");
+    }
+
+    /**
+     * Votos de todos os parlamentares, agrupados pelo nome civil, gravados em alep/votos/{nome}.json com votos,
+     * participação por ano e fontes. O Vinculo liga cada arquivo ao perfil pelo nome civil da candidatura no TSE.
+     */
+    private static void gravarVotosPorNomeCivil(Contexto ctx) throws Exception {
+        Path pastaZip = ctx.raw().resolve("alep/votacoes/zip");
+        if (!Files.isDirectory(pastaZip)) {
+            return;
+        }
+        Pattern codigoDoItem = Pattern.compile("ITEM-\\d+-(\\d+)");
+        Map<String, List<Registros.Voto>> votos = new HashMap<>();
+        Map<String, Map<Integer, int[]>> contagem = new HashMap<>();
+        Map<String, Map<Integer, Map<String, Integer>>> porTipo = new HashMap<>();
+        int itens = 0;
+        List<String> sessoes;
+        try (var lista = Files.list(pastaZip)) {
+            sessoes = lista.map(p -> p.getFileName().toString()).filter(n -> n.endsWith(".zip.meta.json"))
+                    .map(n -> n.replace(".zip.meta.json", "")).sorted().toList();
+        }
+        for (String sessao : sessoes) {
+            Coleta.Arquivo arq = Coleta.metadados(ctx, "alep", "votacoes/zip/" + sessao + ".zip");
+            if (arq == null || arq.bytes() == 0 || !Files.exists(Coleta.caminho(ctx, arq))) {
+                continue;
+            }
+            Prov prov = Prov.de(FONTE_VOTACOES, arq.url(), arq);
+            Path caminho = Coleta.caminho(ctx, arq);
+            byte[] bytes;
+            if (caminho.getFileName().toString().endsWith(".gz")) {
+                try (var entrada = new java.util.zip.GZIPInputStream(Files.newInputStream(caminho))) {
+                    bytes = entrada.readAllBytes();
+                }
+            } else {
+                bytes = Files.readAllBytes(caminho);
+            }
+            try (var zip = new java.util.zip.ZipInputStream(new java.io.ByteArrayInputStream(bytes))) {
+                java.util.zip.ZipEntry entrada;
+                while ((entrada = zip.getNextEntry()) != null) {
+                    if (!entrada.getName().toLowerCase(Locale.ROOT).endsWith(".xlsx")) {
+                        continue;
+                    }
+                    ItemVotado item = itemVotado(etl.Planilha.linhas(zip.readAllBytes()));
+                    if (!item.nominal() || item.data() == null || item.votos().isEmpty()) {
+                        continue;
+                    }
+                    itens++;
+                    Matcher codigo = codigoDoItem.matcher(entrada.getName());
+                    String id = sessao + "-" + (codigo.find() ? codigo.group(1) : Integer.toHexString(entrada.getName().hashCode()));
+                    for (VotoNoItem v : item.votos()) {
+                        String texto = votoLegivel(v.voto());
+                        votos.computeIfAbsent(v.nomeCivil(), k -> new ArrayList<>()).add(new Registros.Voto(id, item.data().toString(),
+                                "PLEN", item.proposicao(), item.ementa(), texto, v.partido(), null, null, null, prov));
+                        int[] n = contagem.computeIfAbsent(v.nomeCivil(), k -> new HashMap<>()).computeIfAbsent(item.data().getYear(),
+                                k -> new int[2]);
+                        n[0]++;
+                        if (!texto.equals("Não votou")) {
+                            n[1]++;
+                        }
+                        porTipo.computeIfAbsent(v.nomeCivil(), k -> new HashMap<>()).computeIfAbsent(item.data().getYear(),
+                                k -> new java.util.TreeMap<>()).merge(texto, 1, Integer::sum);
+                    }
+                }
+            } catch (java.io.IOException e) {
+                System.err.println("alep: ZIP de votação ilegível na sessão " + sessao + ": " + e.getMessage());
+            }
+        }
+        Path pasta = ctx.normalizado().resolve("alep/votos");
+        Files.createDirectories(pasta);
+        for (var porNome : votos.entrySet()) {
+            List<Registros.Participacao> participacao = new ArrayList<>();
+            for (var ano : new java.util.TreeMap<>(contagem.get(porNome.getKey())).entrySet()) {
+                int[] n = ano.getValue();
+                Prov prov = porNome.getValue().getFirst().prov();
+                participacao.add(new Registros.Participacao(String.valueOf(ano.getKey()), n[0], n[1], n[0] - n[1],
+                        porTipo.get(porNome.getKey()).get(ano.getKey()), prov));
+            }
+            var blocos = Json.SAIDA.createObjectNode();
+            blocos.set("votos", Json.SAIDA.valueToTree(porNome.getValue()));
+            blocos.set("participacao_votacoes", Json.SAIDA.valueToTree(participacao));
+            blocos.set("fontes", Json.SAIDA.valueToTree(Registros.fontesDosBlocos(blocos)));
+            Json.gravar(pasta.resolve(arquivoDeVotos(porNome.getKey()) + ".json"), blocos);
+        }
+        System.out.println("alep: " + itens + " itens com votação nominal; votos de " + votos.size()
+                + " parlamentares, a ligar ao perfil pelo nome civil do TSE");
     }
 
     /**
@@ -266,6 +464,7 @@ public final class Alep implements Fonte {
             Json.gravar(pastaBlocos.resolve(slug + ".json"), blocosNode);
         }
 
+        gravarVotosPorNomeCivil(ctx);
         System.out.println("alep: " + pessoas.size() + " deputados estaduais normalizados");
     }
 

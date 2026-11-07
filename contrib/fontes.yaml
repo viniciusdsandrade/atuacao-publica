@@ -1520,6 +1520,21 @@
   status: validado
   validado_em: 2026-11-07
 
+- id: alep-votacoes
+  nome: Assembleia Legislativa do Estado do Paraná, votações nominais em plenário (dados abertos por sessão)
+  orgao: Assembleia Legislativa do Estado do Paraná
+  esfera: estadual
+  ente: PR
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://transparencia.assembleia.pr.leg.br/api/votacoes
+  formato: JSON e ZIP com XLSX
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Cobre 2023 a 2026. O voto vem pelo nome civil do parlamentar; o perfil recebe os votos pelo nome civil da candidatura do TSE ligada a ele. Deputado sem vínculo com o TSE fica sem votos. A API exige Accept JSON. A pesquisa principal de votações exige reCAPTCHA e não é usada."
+  status: validado
+  validado_em: 2026-11-07
+
 - id: alba-deputados
   nome: Assembleia Legislativa do Estado da Bahia, deputados estaduais
   orgao: Assembleia Legislativa do Estado da Bahia
