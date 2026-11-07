@@ -58,6 +58,16 @@ jobs:
       - name: build do ETL
         working-directory: etl
         run: ./mvnw -B -ntp -q package -DskipTests
+      - name: túnel pelo Brasil para ALMG, ALRS, ALES e CLDF
+        # Esses sites recusam conexão de fora do país (ADR-0029). Sem os segredos, o passo não faz nada.
+        if: env.FONTE == 'todas' || env.FONTE == 'almg' || env.FONTE == 'alrs' || env.FONTE == 'ales' || env.FONTE == 'cldf'
+        continue-on-error: true
+        timeout-minutes: 3
+        env:
+          TUNEL_SSH_DESTINO: ${{ secrets.TUNEL_SSH_DESTINO }}
+          TUNEL_SSH_CHAVE: ${{ secrets.TUNEL_SSH_CHAVE }}
+          TUNEL_SSH_KNOWN_HOSTS: ${{ secrets.TUNEL_SSH_KNOWN_HOSTS }}
+        run: scripts/tunel-brasil.sh
       # Um passo por fonte, cada um com limite de tempo: fonte lenta não consome o tempo das outras.
       # ETL_ORCAMENTO_MINUTOS fica abaixo do limite do passo: esgotado, o restante vem do cache, a fonte fica parcial,
       # e o cursor e o cache são gravados. Falha ou limite estourado não derruba o job.

@@ -51,6 +51,34 @@ O pipeline de dados não roda e não publica nada até o mantenedor ativar:
 4. Dispare **Actions > dados > Run workflow** para a primeira carga.
 5. Mantenha as issues ligadas no repositório: o pipeline abre uma issue com o rótulo `coleta` quando uma fonte passa de 3 dias sem coleta válida.
 
+## Ativar o túnel pelo Brasil (ADR-0029)
+
+ALMG, ALRS, ALES e CLDF recusam conexão do runner nos EUA. O túnel faz essas coletas saírem por uma máquina no Brasil.
+
+1. Crie uma máquina pequena no Google Cloud, na região `southamerica-east1` (São Paulo), com Debian. Reserve um IP externo fixo: sem ele, o segredo muda quando o IP muda. Na rede padrão, a porta 22 já fica aberta, e o login por senha já vem desligado.
+2. Numa máquina de confiança, gere a chave do túnel: `ssh-keygen -t ed25519 -N "" -C tunel-ci -f tunel-ci`.
+3. Na máquina do Google Cloud, crie o usuário do túnel, sem shell:
+
+   ```
+   sudo useradd --create-home --shell /usr/sbin/nologin tunel
+   sudo install -d -m 700 -o tunel -g tunel ~tunel/.ssh
+   ```
+
+4. Grave em `~tunel/.ssh/authorized_keys`, com dono `tunel` e modo 600, uma linha só, com o conteúdo de `tunel-ci.pub` no fim:
+
+   ```
+   restrict,port-forwarding,permitopen="dadosabertos.almg.gov.br:443",permitopen="ww4.al.rs.gov.br:443",permitopen="ww4.al.rs.gov.br:5000",permitopen="www.al.es.gov.br:443",permitopen="www.cl.df.gov.br:443" ssh-ed25519 AAAA... tunel-ci
+   ```
+
+   A chave só encaminha para esses cinco destinos e não abre shell.
+5. Fixe a chave do servidor: rode `ssh-keyscan -t ed25519 <IP>` e confira a impressão digital (`ssh-keygen -lf`) com a mostrada no console serial da máquina.
+6. Em **Settings > Secrets and variables > Actions > Secrets**, crie:
+   - `TUNEL_SSH_DESTINO`: `tunel@<IP>`;
+   - `TUNEL_SSH_CHAVE`: o conteúdo de `tunel-ci`, a chave privada;
+   - `TUNEL_SSH_KNOWN_HOSTS`: a linha do `ssh-keyscan` conferida no passo 5.
+7. Apague a chave privada da máquina de confiança.
+8. Dispare **Actions > dados > Run workflow** com `fonte=almg`. O passo `túnel pelo Brasil` mostra o código HTTP de cada site, e o relatório da execução deve trazer `almg` com status `ok`.
+
 ## Checklist de abertura do repositório
 
 1. Rode `scripts/audit-history.sh` com o `.privacy-patterns` completo.
