@@ -13,8 +13,8 @@
               <td role="cell" data-label="Situação"><span class="v">{{ texto(r['situacao']) }}</span></td>
               <td role="cell" data-label="Condição"><span class="v">{{ texto(r['condicao']) }}</span></td>
               <td role="cell" data-label="Fonte"><span class="v">
-                <a [href]="r.url_origem" rel="noopener noreferrer" target="_blank">origem</a>
-                @if (r.snapshot_url) { · <a [href]="r.snapshot_url" rel="noopener noreferrer" target="_blank">snapshot</a> }
+                <a [href]="r.url_origem" rel="noopener noreferrer" target="_blank">ver na fonte<span class="sr-only">: mandato iniciado em {{ data(r['inicio']) }}</span></a>
+                @if (r.snapshot_url) { · <a [href]="r.snapshot_url" rel="noopener noreferrer" target="_blank">ver snapshot<span class="sr-only">: mandato iniciado em {{ data(r['inicio']) }}</span></a> }
               </span></td>
             </tr>
           }
@@ -41,7 +41,7 @@
     @case ('votos') {
       <table role="table" data-cols="6">
         <caption [class.sr-only]="!legenda()">{{ legenda() || 'Votos' }}</caption>
-        <thead role="rowgroup"><tr role="row"><th scope="col" role="columnheader">Data</th><th scope="col" role="columnheader">Proposição</th><th scope="col" role="columnheader">Voto</th><th scope="col" role="columnheader">Orientação do partido</th><th scope="col" role="columnheader">Orientação do governo</th><th scope="col" role="columnheader">Registro</th></tr></thead>
+        <thead role="rowgroup"><tr role="row"><th scope="col" role="columnheader">Data</th><th scope="col" role="columnheader">Proposição</th><th scope="col" role="columnheader">Voto</th><th scope="col" role="columnheader">Orientação do partido</th><th scope="col" role="columnheader">Orientação do governo</th><th scope="col" role="columnheader">Fonte</th></tr></thead>
         <tbody role="rowgroup">
           @for (r of visiveis(); track $index) {
             <tr role="row">
@@ -50,7 +50,7 @@
               <td role="cell" data-label="Voto"><span class="v">{{ r['voto'] ?? '(vazio na fonte)' }}</span></td>
               <td role="cell" data-label="Orientação do partido"><span class="v">{{ texto(r['orientacao_partido']) }}{{ r['orientacao_partido_bancada'] ? ' (' + r['orientacao_partido_bancada'] + ')' : '' }}</span></td>
               <td role="cell" data-label="Orientação do governo"><span class="v">{{ texto(r['orientacao_governo']) }}</span></td>
-              <td role="cell" data-label="Registro"><span class="v"><a [href]="r.url_origem" rel="noopener noreferrer" target="_blank">votação</a></span></td>
+              <td role="cell" data-label="Fonte"><span class="v"><a [href]="r.url_origem" rel="noopener noreferrer" target="_blank">ver na fonte<span class="sr-only">: votação de {{ data(r['data']) }}, {{ texto(r['proposicao']) }}</span></a></span></td>
             </tr>
           }
         </tbody>
@@ -69,7 +69,7 @@
               <td role="cell" data-label="CNPJ"><span class="v">{{ texto(r['fornecedor_cnpj']) }}</span></td>
               <td class="numero" role="cell" data-label="Valor"><span class="v">{{ moeda(numero(r['valor'])) }}</span></td>
               <td role="cell" data-label="Documento"><span class="v">
-                @if (url(r['documento_url']); as u) { <a [href]="u" rel="noopener noreferrer" target="_blank">documento</a> } @else { {{ texto(r['documento_numero']) }} }
+                @if (url(r['documento_url']); as u) { <a [href]="u" rel="noopener noreferrer" target="_blank">documento<span class="sr-only">: {{ texto(r['fornecedor_nome']) }}, {{ r['data'] ? data(r['data']) : r['mes'] + '/' + r['ano'] }}</span></a> } @else { {{ texto(r['documento_numero']) }} }
               </span></td>
             </tr>
           }
@@ -105,7 +105,7 @@
               <td role="cell" data-label="Tipo"><span class="v">{{ texto(r['tipo']) }}{{ r['fase'] ? ' · ' + r['fase'] : '' }}</span></td>
               <td role="cell" data-label="Resumo oficial"><span class="v">{{ texto(r['resumo']) }}</span></td>
               <td role="cell" data-label="Texto"><span class="v">
-                @if (url(r['transcricao_url']); as u) { <a [href]="u" rel="noopener noreferrer" target="_blank">transcrição</a> } @else { <a [href]="r.url_origem" rel="noopener noreferrer" target="_blank">registro</a> }
+                @if (url(r['transcricao_url']); as u) { <a [href]="u" rel="noopener noreferrer" target="_blank">transcrição<span class="sr-only">: discurso de {{ data(r['data']) }}</span></a> } @else { <a [href]="r.url_origem" rel="noopener noreferrer" target="_blank">ver na fonte<span class="sr-only">: discurso de {{ data(r['data']) }}</span></a> }
               </span></td>
             </tr>
           }
@@ -115,7 +115,7 @@
     @case ('eventos') {
       <table role="table" data-cols="5">
         <caption [class.sr-only]="!legenda()">{{ legenda() || 'Eventos com presença registrada' }}</caption>
-        <thead role="rowgroup"><tr role="row"><th scope="col" role="columnheader">Data</th><th scope="col" role="columnheader">Tipo</th><th scope="col" role="columnheader">Órgão</th><th scope="col" role="columnheader">Descrição oficial</th><th scope="col" role="columnheader">Registro</th></tr></thead>
+        <thead role="rowgroup"><tr role="row"><th scope="col" role="columnheader">Data</th><th scope="col" role="columnheader">Tipo</th><th scope="col" role="columnheader">Órgão</th><th scope="col" role="columnheader">Descrição oficial</th><th scope="col" role="columnheader">Fonte</th></tr></thead>
         <tbody role="rowgroup">
           @for (r of visiveis(); track $index) {
             <tr role="row">
@@ -123,7 +123,7 @@
               <td role="cell" data-label="Tipo"><span class="v">{{ texto(r['tipo']) }}</span></td>
               <td role="cell" data-label="Órgão"><span class="v">{{ texto(r['orgao']) }}</span></td>
               <td class="longo" role="cell" data-label="Descrição oficial"><span class="v">{{ texto(r['titulo']) }}</span></td>
-              <td role="cell" data-label="Registro"><span class="v"><a [href]="r.url_origem" rel="noopener noreferrer" target="_blank">evento</a></span></td>
+              <td role="cell" data-label="Fonte"><span class="v"><a [href]="r.url_origem" rel="noopener noreferrer" target="_blank">ver na fonte<span class="sr-only">: evento de {{ data(r['data']) }}</span></a></span></td>
             </tr>
           }
         </tbody>
@@ -298,8 +298,8 @@
             @if (r['rotulo']) { <p class="rotulo">{{ r['rotulo'] }}</p> }
             <p>{{ r['texto_oficial'] ?? r['resumo_factual'] }}</p>
             <p class="meta">
-              <a [href]="r.url_origem" rel="noopener noreferrer" target="_blank">fonte</a>
-              @if (r.snapshot_url) { · <a [href]="r.snapshot_url" rel="noopener noreferrer" target="_blank">snapshot arquivado</a> }
+              <a [href]="r.url_origem" rel="noopener noreferrer" target="_blank">ver na fonte<span class="sr-only">: registro de {{ data(r['data']) }}</span></a>
+              @if (r.snapshot_url) { · <a [href]="r.snapshot_url" rel="noopener noreferrer" target="_blank">snapshot arquivado<span class="sr-only">: registro de {{ data(r['data']) }}</span></a> }
               · capturado em {{ data(r.capturado_em) }}
             </p>
           </li>
