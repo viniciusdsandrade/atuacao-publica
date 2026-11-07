@@ -1,5 +1,7 @@
 package etl.fontes;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -15,16 +17,23 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import javax.xml.stream.XMLInputFactory;
+import javax.xml.stream.XMLStreamConstants;
+import javax.xml.stream.XMLStreamException;
+import javax.xml.stream.XMLStreamReader;
+
 import etl.Coleta;
 import etl.Coleta.Politica;
 import etl.Contexto;
 import etl.Fonte;
+import etl.Guarda;
 import etl.Json;
 import etl.Registros;
 import etl.Registros.LinkOficial;
 import etl.Registros.Mandato;
 import etl.Registros.OrgaoOuFrente;
 import etl.Registros.Pessoa;
+import etl.Registros.Proposicao;
 import etl.Registros.Prov;
 import etl.Texto;
 
@@ -38,6 +47,21 @@ public final class Alepe implements Fonte {
     public static final String FONTE_DEPUTADOS = "alepe-deputados";
     public static final String FONTE_DETALHES = "alepe-deputados-detalhes";
     public static final String FONTE_PORTAL = "alepe-portal";
+    public static final String FONTE_PROPOSICOES = "alepe-proposicoes";
+
+    public static final String API_PROPOSICOES = "https://dadosabertos.alepe.pe.gov.br/api/v1/proposicoes/";
+    /** Página da proposição no sistema oficial, que carrega o item pela API com o mesmo docid e tipoprop. */
+    public static final String PAGINA_PROPOSICAO = "https://proposicoes.alepe.pe.gov.br/proposicoes/detalhes";
+    static final int PRIMEIRO_ANO_PROPOSICOES = 2022;
+
+    /** Lista anual da API: nome na URL, elemento de cada item, código do tipo na página oficial e tipo fixo. */
+    record ListaDeProposicoes(String lista, String elemento, String codigo, String tipoFixo) {
+    }
+
+    static final List<ListaDeProposicoes> LISTAS = List.of(
+            new ListaDeProposicoes("projetos", "projeto", "p", null),
+            new ListaDeProposicoes("indicacoes", "indicacao", "i", "INDICAÇÃO"),
+            new ListaDeProposicoes("requerimentos", "requerimento", "r", "REQUERIMENTO"));
 
     public static final String SITE = "https://www.alepe.pe.gov.br";
     public static final String URL_DEPUTADOS = "https://www.alepe.pe.gov.br/parlamentares/";
@@ -118,6 +142,18 @@ public final class Alepe implements Fonte {
             String urlComissao = SITE + caminho + "/";
             coleta.obterOuVazio(urlComissao, "comissoes/" + slugComissao + ".html", "text/html", Politica.SEMANAL);
         }
+
+        // Proposições: uma lista XML por tipo e ano na API de dados abertos.
+        for (int ano = PRIMEIRO_ANO_PROPOSICOES; ano <= ctx.hoje().getYear(); ano++) {
+            for (ListaDeProposicoes lista : LISTAS) {
+                coleta.obterOpcional(API_PROPOSICOES + lista.lista() + "/?ano=" + ano, caminhoDaLista(lista, ano),
+                        "application/xml", Politica.porAnoSemanal(ano, ctx.hoje()));
+            }
+        }
+    }
+
+    private static String caminhoDaLista(ListaDeProposicoes lista, int ano) {
+        return "proposicoes/" + lista.lista() + "-" + ano + ".xml";
     }
 
     @Override
@@ -139,6 +175,7 @@ public final class Alepe implements Fonte {
         }
 
         Map<String, List<OrgaoOuFrente>> comissoesPorDeputado = extrairTodasComissoes(ctx);
+        Map<String, List<Proposicao>> proposicoesPorDeputado = proposicoesPorSlug(ctx, deputados);
 
         List<Pessoa> pessoas = new ArrayList<>();
 
@@ -212,6 +249,7 @@ public final class Alepe implements Fonte {
             blocosNode.set("mandatos", Json.SAIDA.valueToTree(mandatos));
             blocosNode.set("orgaos_e_frentes", Json.SAIDA.valueToTree(orgaos));
             blocosNode.set("despesas", Json.SAIDA.createArrayNode());
+            blocosNode.set("proposicoes", Json.SAIDA.valueToTree(proposicoesPorDeputado.getOrDefault(slug, List.of())));
             blocosNode.set("fontes", Json.SAIDA.valueToTree(Registros.fontesDosBlocos(blocosNode)));
             if (biografia != null) {
                 blocosNode.put("biografia", biografia);
@@ -403,6 +441,119 @@ public final class Alepe implements Fonte {
         }
 
         return new String[]{limpo, null};
+    }
+
+    /** Chave de vínculo da autoria: nome sem acento e sem pontuação, em maiúsculas. Serve ao autor e ao perfil. */
+    static String chaveDeAutoria(String nome) {
+        return Texto.normalizarNome(nome.replaceAll("[^\\p{L}\\s]", " "));
+    }
+
+    /** Proposições de cada deputado em exercício, pelas listas anuais em cache. */
+    private static Map<String, List<Proposicao>> proposicoesPorSlug(Contexto ctx, List<DeputadoBruto> deputados) {
+        Map<String, String> slugPorChave = new HashMap<>();
+        for (DeputadoBruto d : deputados) {
+            slugPorChave.put(chaveDeAutoria(formatarNome(d.nome())), d.slug());
+        }
+        Map<String, List<Proposicao>> porSlug = new HashMap<>();
+        int total = 0;
+        for (int ano = PRIMEIRO_ANO_PROPOSICOES; ano <= ctx.hoje().getYear(); ano++) {
+            for (ListaDeProposicoes lista : LISTAS) {
+                Coleta.Arquivo arq = Coleta.metadados(ctx, "alepe", caminhoDaLista(lista, ano));
+                if (arq == null || arq.bytes() == 0 || !Files.exists(Coleta.caminho(ctx, arq))) {
+                    continue;
+                }
+                try (InputStream entrada = Json.abrir(Coleta.caminho(ctx, arq))) {
+                    var daLista = proposicoesDaLista(entrada, lista, slugPorChave, Prov.de(FONTE_PROPOSICOES, arq.url(), arq));
+                    for (var e : daLista.entrySet()) {
+                        porSlug.computeIfAbsent(e.getKey(), k -> new ArrayList<>()).addAll(e.getValue());
+                        total += e.getValue().size();
+                    }
+                } catch (IOException | XMLStreamException e) {
+                    throw new IllegalStateException("alepe: falha ao ler " + arq.caminho(), e);
+                }
+            }
+        }
+        System.out.println("alepe: " + total + " autorias de proposições em " + porSlug.size() + " deputados");
+        return porSlug;
+    }
+
+    /**
+     * Proposições de uma lista anual da API, por slug do autor. O autor vem pelo nome; só o autor do tipo DEPUTADO cujo
+     * nome casa com um deputado em exercício entra. A posição na lista de autores vira {@code ordem_assinatura}.
+     */
+    static Map<String, List<Proposicao>> proposicoesDaLista(InputStream xml, ListaDeProposicoes lista,
+                                                            Map<String, String> slugPorChave, Prov prov) throws XMLStreamException {
+        XMLInputFactory fabrica = XMLInputFactory.newFactory();
+        fabrica.setProperty(XMLInputFactory.SUPPORT_DTD, false);
+        fabrica.setProperty(XMLInputFactory.IS_SUPPORTING_EXTERNAL_ENTITIES, false);
+        // A ementa em HTML escapado soma mais de 100 mil caracteres de entidades por arquivo, o limite do JDK desde a
+        // versão 24. Sem DTD, só existem as entidades predefinidas do XML, de um caractere cada: sem risco de expansão.
+        fabrica.setProperty("jdk.xml.maxGeneralEntitySizeLimit", 0);
+        fabrica.setProperty("jdk.xml.totalEntitySizeLimit", 0);
+        XMLStreamReader leitor = fabrica.createXMLStreamReader(xml);
+        Map<String, List<Proposicao>> porSlug = new HashMap<>();
+        Map<String, String> item = null;
+        List<String[]> autores = new ArrayList<>();
+        try {
+            while (leitor.hasNext()) {
+                int evento = leitor.next();
+                if (evento == XMLStreamConstants.START_ELEMENT && leitor.getLocalName().equals(lista.elemento())) {
+                    item = new HashMap<>();
+                    for (int i = 0; i < leitor.getAttributeCount(); i++) {
+                        item.put(leitor.getAttributeLocalName(i), leitor.getAttributeValue(i));
+                    }
+                    autores.clear();
+                } else if (evento == XMLStreamConstants.START_ELEMENT && leitor.getLocalName().equals("autor") && item != null) {
+                    autores.add(new String[] {leitor.getAttributeValue(null, "nome"), leitor.getAttributeValue(null, "tipo")});
+                } else if (evento == XMLStreamConstants.END_ELEMENT && leitor.getLocalName().equals(lista.elemento()) && item != null) {
+                    adicionarProposicao(item, autores, lista, slugPorChave, prov, porSlug);
+                    item = null;
+                }
+            }
+        } finally {
+            leitor.close();
+        }
+        return porSlug;
+    }
+
+    private static void adicionarProposicao(Map<String, String> item, List<String[]> autores, ListaDeProposicoes lista,
+                                            Map<String, String> slugPorChave, Prov prov, Map<String, List<Proposicao>> porSlug) {
+        String docid = Texto.vazioParaNulo(item.get("docid"));
+        Integer numero = inteiro(item.get("numero"));
+        Integer ano = inteiro(item.get("ano"));
+        String tipo = lista.tipoFixo() != null ? lista.tipoFixo() : Texto.vazioParaNulo(item.get("tipo"));
+        if (docid == null || numero == null || ano == null || tipo == null) {
+            return;
+        }
+        String ementa = ementaLegivel(item.get("ementa"));
+        String url = PAGINA_PROPOSICAO + "?docid=" + docid + "&tipoprop=" + lista.codigo();
+        Set<String> jaContados = new HashSet<>();
+        for (int i = 0; i < autores.size(); i++) {
+            String nome = autores.get(i)[0];
+            String slug = nome == null || !"DEPUTADO".equals(autores.get(i)[1]) ? null : slugPorChave.get(chaveDeAutoria(nome));
+            if (slug == null || !jaContados.add(slug)) {
+                continue;
+            }
+            porSlug.computeIfAbsent(slug, k -> new ArrayList<>()).add(new Proposicao(docid, tipo, numero, ano,
+                    tipo + " " + numero + "/" + ano, ementa, null, null, Texto.dataBr(item.get("dataPublicacao")), i + 1,
+                    null, url, prov));
+        }
+    }
+
+    /** Ementa sem marcação: indicações e requerimentos trazem o texto em HTML, com entidades. */
+    static String ementaLegivel(String html) {
+        if (html == null || html.isBlank()) {
+            return null;
+        }
+        return Guarda.semCpf(Texto.semEntidades(html.replaceAll("(?s)<[^>]+>", " ")));
+    }
+
+    private static Integer inteiro(String texto) {
+        try {
+            return texto == null ? null : Integer.valueOf(texto.strip());
+        } catch (NumberFormatException e) {
+            return null;
+        }
     }
 
     public static String limparHtml(String raw) {

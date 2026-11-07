@@ -2045,6 +2045,21 @@
   status: validado
   validado_em: 2026-11-06
 
+- id: alepe-proposicoes
+  nome: Assembleia Legislativa do Estado de Pernambuco, proposições pela API de dados abertos
+  orgao: Assembleia Legislativa do Estado de Pernambuco
+  esfera: estadual
+  ente: PE
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://dadosabertos.alepe.pe.gov.br/api/v1/proposicoes/
+  formato: XML
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Uma lista XML por tipo (projetos, indicações e requerimentos) e ano. Autor só por nome. Sem situação de tramitação na lista. Recusa conexão de fora do Brasil."
+  status: validado
+  validado_em: 2026-11-07
+
 - id: cldf-deputados
   nome: Câmara Legislativa do Distrito Federal, deputados distritais
   orgao: Câmara Legislativa do Distrito Federal

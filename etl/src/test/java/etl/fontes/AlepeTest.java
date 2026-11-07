@@ -4,13 +4,17 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import javax.xml.stream.XMLStreamException;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -19,10 +23,60 @@ import etl.Coleta;
 import etl.Contexto;
 import etl.Json;
 import etl.Registros.OrgaoOuFrente;
+import etl.Registros.Proposicao;
 import etl.Registros.Prov;
 import tools.jackson.databind.JsonNode;
 
 class AlepeTest {
+
+    private static final Prov PROV = new Prov(Alepe.FONTE_PROPOSICOES, Alepe.API_PROPOSICOES + "requerimentos/?ano=2025",
+            Instant.parse("2026-11-07T12:00:00Z"));
+
+    private static Map<String, String> slugsDeExemplo() {
+        return Map.of(Alepe.chaveDeAutoria("Álvaro Porto"), "alvaro-porto",
+                Alepe.chaveDeAutoria("Maria do Carmo"), "maria-do-carmo");
+    }
+
+    private static Map<String, List<Proposicao>> ler(String xml, Alepe.ListaDeProposicoes lista) throws XMLStreamException {
+        return Alepe.proposicoesDaLista(new ByteArrayInputStream(xml.getBytes(StandardCharsets.UTF_8)), lista, slugsDeExemplo(), PROV);
+    }
+
+    @Test
+    void requerimentoFicaComCadaDeputadoAutorPeloNome() throws XMLStreamException {
+        // Dado sintético no formato da API: a ementa vem em HTML, com entidades.
+        String xml = """
+                <?xml version='1.0' encoding='utf-8'?>
+                <requerimentos>
+                  <requerimento docid="1" numero="10" ano="2025" legislatura="VIGÉSIMA" tipo="requerimento" subtipo="Voto de Aplauso" ementa="&lt;p style=&quot;text-align:justify&quot;&gt;Requeremos &amp;agrave; Mesa voto de aplauso&amp;nbsp;ao &lt;b&gt;13&amp;ordm;&lt;/b&gt; Batalh&amp;atilde;o.&lt;/p&gt;" dataPublicacao="03/02/2025"><autores><autor nome="Alvaro Porto" tipo="DEPUTADO"/><autor nome="Comissão de Justiça" tipo="COMISSAO"/><autor nome="Maria do Carmo" tipo="DEPUTADO"/></autores></requerimento>
+                  <requerimento docid="2" numero="11" ano="2025" legislatura="VIGÉSIMA" tipo="requerimento" subtipo="Diversos" ementa="" dataPublicacao="04/02/2025"><autores><autor nome="Ex Deputado" tipo="DEPUTADO"/></autores></requerimento>
+                </requerimentos>
+                """;
+        Map<String, List<Proposicao>> porSlug = ler(xml, Alepe.LISTAS.get(2));
+
+        assertEquals(2, porSlug.size(), "autor sem perfil em exercício fica fora");
+        Proposicao doPrimeiro = porSlug.get("alvaro-porto").getFirst();
+        assertEquals("REQUERIMENTO", doPrimeiro.tipo());
+        assertEquals("REQUERIMENTO 10/2025", doPrimeiro.identificacao());
+        assertEquals("Requeremos à Mesa voto de aplauso ao 13º Batalhão.", doPrimeiro.ementa());
+        assertEquals("2025-02-03", doPrimeiro.dataApresentacao());
+        assertEquals("https://proposicoes.alepe.pe.gov.br/proposicoes/detalhes?docid=1&tipoprop=r", doPrimeiro.urlTexto());
+        assertEquals(1, doPrimeiro.ordemAssinatura());
+        assertEquals(3, porSlug.get("maria-do-carmo").getFirst().ordemAssinatura(), "a ordem conta todos os autores");
+    }
+
+    @Test
+    void projetoUsaOTipoDaFonte() throws XMLStreamException {
+        String xml = """
+                <?xml version='1.0' encoding='utf-8'?>
+                <projetos>
+                  <projeto docid="13539" numero="3" ano="2024" legislatura="VIGÉSIMA " tipo="PROJETO DE LEI ORDINÁRIA" subtipo="" ementa="Institui a semana estadual de exemplo." dataPublicacao="14/06/2024"><autores><autor nome="Maria do Carmo" tipo="DEPUTADO"/></autores></projeto>
+                </projetos>
+                """;
+        Proposicao projeto = ler(xml, Alepe.LISTAS.getFirst()).get("maria-do-carmo").getFirst();
+        assertEquals("PROJETO DE LEI ORDINÁRIA 3/2024", projeto.identificacao());
+        assertEquals("Institui a semana estadual de exemplo.", projeto.ementa());
+        assertEquals("https://proposicoes.alepe.pe.gov.br/proposicoes/detalhes?docid=13539&tipoprop=p", projeto.urlTexto());
+    }
 
     @Test
     void formataNomeComPreposicoes() {

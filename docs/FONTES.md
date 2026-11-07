@@ -904,6 +904,16 @@ Validação em 2026-11-03 com o User-Agent do projeto.
 - URL base: `https://www.alepe.pe.gov.br/`
 - Repositório de fotos oficiais dos parlamentares em WebP e JPEG de alta resolução hospedadas no portal em `wp-content`.
 
+### `alepe-proposicoes`: proposições
+
+- URL base: `https://dadosabertos.alepe.pe.gov.br/api/v1/proposicoes/{lista}/?ano={ano}`, com `lista` igual a `projetos`, `indicacoes` ou `requerimentos`. Validação em 2026-11-07.
+- XML em UTF-8. Cada item traz `docid`, `numero`, `ano`, `tipo`, `subtipo`, `ementa` e `dataPublicacao`, e a lista de autores com `nome` e `tipo` (DEPUTADO, COMISSAO ou EXTERNO). A lista não traz situação de tramitação.
+- Em 2024: 945 projetos, 3.220 indicações e 1.322 requerimentos. A ementa de indicações e requerimentos é o texto em HTML, com entidades. O ETL tira a marcação e troca as entidades pelo caractere.
+- O autor vem só pelo nome parlamentar. O vínculo usa o nome sem acento e sem pontuação, igual ao nome do perfil. Os 49 deputados em exercício casaram. Na validação, 26.920 autorias de 2022 a 2026; as 3.045 de 30 ex-deputados ficam fora.
+- Página oficial de cada proposição: `https://proposicoes.alepe.pe.gov.br/proposicoes/detalhes?docid={docid}&tipoprop={p, i ou r}`. É a rota da aplicação oficial de consulta, lida no código dela. A página carrega o item por `.../api/v1/proposicoes/projetos/?docid={docid}&tipoprop={p, i ou r}`, que respondeu 200 para os três tipos.
+- O arquivo de indicações passa de 100 mil caracteres de entidades, o limite do leitor XML do JDK desde a versão 24. O leitor recusa DTD, e o ETL sobe esse limite só para essas listas.
+- Recusa conexão de fora do Brasil (ADR-0029). Entra pela coleta local cifrada (ADR-0034).
+
 ### `pe-transparencia` e `pe-diario-oficial`: Executivo estadual
 
 - Transparência orçamentária: `https://web.transparencia.pe.gov.br/`

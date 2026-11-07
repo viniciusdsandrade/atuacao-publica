@@ -374,6 +374,7 @@ Limitações:
 23. Fontes de atuação das assembleias: levantamento de 2026-11-06, ainda sem adaptador.
     - Cada endereço respondeu a requisição real no levantamento. O acesso a partir do exterior só foi testado onde a tabela diz.
     - Proposições da ALMG: implementadas em 2026-11-07 (`almg-proposicoes`), pelo CSV anual dos dados abertos, em que o id do autor é o id do perfil. A ALMG recusa conexão de fora do Brasil, e o CSV entra pela coleta local cifrada (ADR-0034). No ensaio local, 58.861 autorias de 2022 a 2026 em 108 dos 110 deputados, com tema da indexação oficial em 84%. Requerimentos vêm sem ementa.
+    - Proposições da ALEPE: implementadas em 2026-11-07 (`alepe-proposicoes`), pelas listas XML anuais de projetos, indicações e requerimentos da API de dados abertos. O autor vem pelo nome parlamentar, que casou com os 49 deputados em exercício. Entra pela coleta local cifrada. No ensaio local, 26.920 autorias de 2022 a 2026; 9 ementas com e-mail ficam para a guarda do `publish`.
     - Votações da ALECE: implementadas em 2026-11-07 (`alece-votacoes`), com a lista pública e uma planilha XLSX por matéria. No ensaio local, 2.427 votos de 61 votações nos 54 deputados, com participação por ano.
     - Proposições da ALEP: implementadas em 2026-11-07, pela API pública (`alep-proposicoes`), que só aceita o filtro no corpo de um POST. O `Coleta` ganhou `obterPostOpcional` para isso. No ensaio local, 24.238 autorias nos 54 deputados.
     - Votações da ALEP: implementadas em 2026-11-07 (`alep-votacoes`). Os XLSX por sessão trazem o parlamentar pelo nome civil, e a ponte com o perfil é o nome civil da candidatura do TSE ligada a ele. No ensaio local, 197.559 votos de 4.135 itens em 51 dos 54 deputados; os 3 sem vínculo com o TSE ficam sem votos.
@@ -387,7 +388,7 @@ Limitações:
     | ALMG | implementado, pela coleta local cifrada | implementado em 2026-11-07, pela coleta local cifrada | só em texto livre na tramitação |
     | ALBA | XLSX anual, deputado por nome; fornecedor só no detalhe HTML | API NoPaper, com id de autor diferente do id do portal | não validado |
     | CLDF | portal CKAN, com CPF do deputado e do prestador, que precisa sair | API do PLe, autoria por nome | exige login |
-    | ALEPE | JSON por deputado e mês, com id próprio | API de dados abertos, que recusa conexão do exterior | só resultado agregado |
+    | ALEPE | JSON por deputado e mês, com id próprio | implementado em 2026-11-07, pela coleta local cifrada | só resultado agregado |
     | ALES | por gabinete, sem fornecedor | API NoPaper | boletins em PDF |
     | ALRS | agregado por categoria, sem fornecedor | HTML por deputado | HTML por deputado e ano, com JSON embutido |
     | ALESC | implementado | HTML paginado | não validado |
