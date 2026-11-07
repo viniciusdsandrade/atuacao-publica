@@ -359,6 +359,11 @@
   font-weight: 650;
 }
 
+/* Selo que é link: alvo de toque de pelo menos 32 px (ADR-0012). */
+a.selo {
+  min-height: 2rem;
+}
+
 /* Avatar com iniciais: o site não embute foto de terceiros (política de privacidade do visitante). */
 .avatar {
   display: grid;
@@ -417,6 +422,17 @@
   border-radius: var(--r-3);
   background: var(--superficie);
   box-shadow: var(--sombra-1);
+}
+
+/* Rótulo de seção: maiúsculas pequenas, uma regra para o site todo. */
+.rotulo-secao {
+  margin: 0 0 0.375rem;
+  color: var(--texto-3);
+  font-size: 0.8125rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  line-height: 1.4;
+  text-transform: uppercase;
 }
 
 /* Migalhas de pão. */

@@ -121,7 +121,7 @@
 
     <div class="perfil-corpo">
       <nav class="perfil-nav" aria-label="Blocos do perfil">
-        <p class="perfil-nav-titulo" aria-hidden="true">Neste perfil</p>
+        <p class="perfil-nav-titulo rotulo-secao" aria-hidden="true">Neste perfil</p>
         <ul>
           @for (b of blocos(); track b) {
             <li>
@@ -302,7 +302,7 @@
                 </dl>
                 @if (porTipo(bloco).length) {
                   <div class="tipos">
-                    <p class="tipos-titulo">Por tipo</p>
+                    <p class="rotulo-secao">Por tipo</p>
                     <ul>
                       @for (t of porTipo(bloco); track t[0]) {
                         <li class="selo">{{ t[0] }}: <strong class="numero">{{ inteiro(t[1]) }}</strong></li>
@@ -340,7 +340,7 @@
               } @else {
                 @if (porTipo(bloco).length) {
                   <div class="tipos">
-                    <p class="tipos-titulo">Por tipo</p>
+                    <p class="rotulo-secao">Por tipo</p>
                     <ul>
                       @for (t of porTipo(bloco); track t[0]) {
                         <li class="selo">{{ t[0] }}: <strong class="numero">{{ inteiro(t[1]) }}</strong></li>
@@ -360,7 +360,7 @@
               }
               @if (bloco.arquivos?.length) {
                 <nav class="anos" [attr.aria-label]="'Todos os registros por ano: ' + titulo(b)">
-                  <p class="anos-titulo">Todos os registros por ano</p>
+                  <p class="rotulo-secao">Todos os registros por ano</p>
                   <ul>
                     @for (a of bloco.arquivos; track a.ano) {
                       <li>

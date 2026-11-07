@@ -30,7 +30,7 @@
             <app-icone nome="filtros" /> Neste documento
           </button>
           <nav id="doc-sumario-lista" class="doc-sumario-lista" [class.aberto]="sumarioAberto()" aria-label="Neste documento">
-            <p class="doc-sumario-titulo" aria-hidden="true">Neste documento</p>
+            <p class="doc-sumario-titulo rotulo-secao" aria-hidden="true">Neste documento</p>
             <ol>
               @for (i of sumario(); track i.id) {
                 <li [class.doc-sumario-sub]="i.nivel === 3">

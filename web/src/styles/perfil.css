@@ -282,16 +282,6 @@ app-proveniencia {
   margin: 0.5rem 0 1rem;
 }
 
-.tipos-titulo,
-.anos-titulo {
-  margin: 0 0 0.375rem;
-  color: var(--texto-3);
-  font-size: 0.8125rem;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-}
-
 .tipos ul,
 .anos ul {
   display: flex;
@@ -517,11 +507,6 @@ app-proveniencia {
   .perfil-nav-titulo {
     display: block;
     margin: 0.25rem 0.5rem 0.5rem;
-    color: var(--texto-3);
-    font-size: 0.8125rem;
-    font-weight: 700;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
   }
 
   .perfil-nav ul {
@@ -559,6 +544,10 @@ app-proveniencia {
 
   .ano-despesa-preenchimento {
     background: Highlight;
+  }
+
+  .ano-despesa-barra {
+    border: 1px solid CanvasText;
   }
 
   .perfil-nav a[aria-current='location'] {
