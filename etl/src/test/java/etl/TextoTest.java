@@ -20,6 +20,7 @@ class TextoTest {
     void trocaEntidadesHtmlSemMudarConteudo() {
         assertEquals("orientou a bancada na votação", Texto.semEntidades("orientou a&nbsp;bancada na vota&#231;&atilde;o"));
         assertNull(Texto.semEntidades("&nbsp;"));
+        assertEquals("Lei nº 1, art. 5º, § 2º: \u201Cprazo\u201D de 30° em 5 m³", Texto.semEntidades("Lei n&ordm; 1, art. 5&ordm;, &sect; 2&ordm;: &ldquo;prazo&rdquo; de 30&deg; em 5 m&sup3;&lrm;"));
     }
 
     @Test

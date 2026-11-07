@@ -12,10 +12,16 @@ public final class Texto {
 
     private static final Pattern MARCAS = Pattern.compile("\\p{M}+");
     private static final Pattern ESPACOS = Pattern.compile("\\s+");
-    private static final Pattern ENTIDADE = Pattern.compile("&(#[0-9]+|#x[0-9a-fA-F]+|[a-zA-Z]+);");
-    private static final Map<String, String> ENTIDADES = Map.of(
-            "nbsp", " ", "amp", "&", "quot", "\"", "apos", "'", "lt", "<", "gt", ">",
-            "ordm", "º", "ordf", "ª", "ndash", "-", "mdash", "-");
+    private static final Pattern ENTIDADE = Pattern.compile("&(#[0-9]+|#x[0-9a-fA-F]+|[a-zA-Z][a-zA-Z0-9]*);");
+    /** Marcas invisíveis (&lrm;, &shy;) saem do texto. */
+    private static final Map<String, String> ENTIDADES = Map.ofEntries(
+            Map.entry("nbsp", " "), Map.entry("amp", "&"), Map.entry("quot", "\""), Map.entry("apos", "'"),
+            Map.entry("lt", "<"), Map.entry("gt", ">"), Map.entry("ordm", "º"), Map.entry("ordf", "ª"),
+            Map.entry("ndash", "-"), Map.entry("mdash", "-"),
+            Map.entry("ldquo", "\u201C"), Map.entry("rdquo", "\u201D"), Map.entry("lsquo", "\u2018"), Map.entry("rsquo", "\u2019"),
+            Map.entry("deg", "°"), Map.entry("sect", "§"), Map.entry("acute", "´"), Map.entry("bull", "\u2022"),
+            Map.entry("sup1", "¹"), Map.entry("sup2", "²"), Map.entry("sup3", "³"),
+            Map.entry("lrm", ""), Map.entry("shy", ""));
     /** Entidade de letra acentuada (&atilde;, &ccedil;): letra base mais diacrítico combinante. */
     private static final Pattern LETRA_ACENTUADA = Pattern.compile("^([A-Za-z])(acute|grave|circ|tilde|uml|cedil|ring)$");
     private static final Map<String, String> DIACRITICOS = Map.of(
