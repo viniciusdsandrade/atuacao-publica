@@ -173,7 +173,20 @@
             [attr.aria-labelledby]="'titulo-' + b"
           >
             <header class="bloco-topo">
-              <h2 [id]="'titulo-' + b">{{ titulo(b) }}</h2>
+              <div class="bloco-titulo">
+                <h2 [id]="'titulo-' + b">{{ titulo(b) }}</h2>
+                <!-- Cada bloco tem endereço próprio (#/politico/{id}#bloco-{nome}): o link deixa isso à vista. -->
+                <a
+                  class="bloco-ancora"
+                  [routerLink]="[]"
+                  [fragment]="'bloco-' + b"
+                  (click)="ir(b)"
+                  [attr.aria-label]="'Link para o bloco ' + titulo(b)"
+                  title="Link para este bloco"
+                >
+                  <app-icone nome="link" [pequeno]="true" />
+                </a>
+              </div>
               @if (bloco.total > 0) {
                 <span class="selo bloco-total">{{ inteiro(bloco.total) }} {{ bloco.total === 1 ? 'registro' : 'registros' }}</span>
               } @else {
@@ -188,6 +201,21 @@
             }
 
             @if (bloco.total > 0) {
+              <!-- O caminho para todos os registros vem antes da amostra. -->
+              @if (bloco.arquivos?.length) {
+                <nav class="anos" [attr.aria-label]="'Todos os registros por ano: ' + titulo(b)">
+                  <p class="rotulo-secao">Todos os registros por ano</p>
+                  <ul>
+                    @for (a of bloco.arquivos; track a.ano) {
+                      <li>
+                        <a class="chip-link" [routerLink]="['/politico', p.id, b, a.ano]">
+                          {{ a.ano }} <small class="numero">{{ inteiro(a.total) }}</small>
+                        </a>
+                      </li>
+                    }
+                  </ul>
+                </nav>
+              }
               @if (b === 'despesas' || b === 'despesas_executivo') {
                 <dl class="estatisticas">
                   <div class="estatistica">
@@ -375,20 +403,6 @@
                 } @else if (bloco.registros) {
                   <app-tabela [bloco]="b" [registros]="bloco.registros" [limite]="30" />
                 }
-              }
-              @if (bloco.arquivos?.length) {
-                <nav class="anos" [attr.aria-label]="'Todos os registros por ano: ' + titulo(b)">
-                  <p class="rotulo-secao">Todos os registros por ano</p>
-                  <ul>
-                    @for (a of bloco.arquivos; track a.ano) {
-                      <li>
-                        <a class="chip-link" [routerLink]="['/politico', p.id, b, a.ano]">
-                          {{ a.ano }} <small class="numero">{{ inteiro(a.total) }}</small>
-                        </a>
-                      </li>
-                    }
-                  </ul>
-                </nav>
               }
             }
           </section>
