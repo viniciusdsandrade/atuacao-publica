@@ -48,24 +48,20 @@
   stroke: var(--sobre-destaque);
 }
 
-.botao-menu,
-.botao-tema {
+.botao-menu {
   display: inline-flex;
   align-items: center;
   gap: 0.45rem;
+  min-height: 2.75rem;
+  padding: 0 0.85rem;
   border: 1px solid var(--borda-controle);
   border-radius: var(--r-pilula);
   background: var(--superficie);
+  color: var(--texto);
   font: inherit;
+  font-weight: 600;
   cursor: pointer;
   transition: background var(--transicao), border-color var(--transicao), color var(--transicao);
-}
-
-.botao-menu {
-  min-height: 2.75rem;
-  padding: 0 0.85rem;
-  color: var(--texto);
-  font-weight: 600;
 }
 
 .botao-menu:hover {
@@ -134,24 +130,75 @@
   box-shadow: inset 3px 0 0 var(--destaque);
 }
 
+/* Interruptor de tema: trilho em pílula e bolinha. Desligado (à esquerda) no escuro, ligado (à direita) no claro.
+   O botão em volta do trilho dá o alvo de toque; o trilho é só o desenho. */
+.interruptor-tema {
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  min-width: 3.375rem;
+  min-height: 2.5rem;
+  padding: 0;
+  border: 0;
+  border-radius: var(--r-pilula);
+  background: none;
+  cursor: pointer;
+}
+
+.interruptor-trilho {
+  position: relative;
+  display: block;
+  width: 2.875rem;
+  height: 1.75rem;
+  border: 2px solid var(--destaque);
+  border-radius: var(--r-pilula);
+  background: var(--superficie);
+  transition: background var(--transicao);
+}
+
+.interruptor-botao {
+  position: absolute;
+  top: 50%;
+  left: 0.25rem;
+  width: 1rem;
+  height: 1rem;
+  border-radius: 50%;
+  background: var(--destaque);
+  transform: translateY(-50%);
+  transition: transform var(--transicao);
+}
+
+.interruptor-tema[aria-checked='true'] .interruptor-botao {
+  transform: translate(1.125rem, -50%);
+}
+
+.interruptor-tema:hover .interruptor-trilho {
+  background: var(--destaque-suave);
+}
+
+.interruptor-topo {
+  display: none;
+}
+
+.tema-linha {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0 0.75rem;
+}
+
+.tema-rotulo {
+  color: var(--texto-2);
+  font-weight: 550;
+  cursor: pointer;
+}
+
 .tema-nota {
-  margin: 0.375rem 0 0;
+  margin: 0.25rem 0 0;
+  padding: 0 0.75rem;
   color: var(--texto-3);
   font-size: 0.875rem;
-}
-
-.botao-tema {
-  display: none;
-  min-height: 2.5rem;
-  padding: 0 0.75rem;
-  color: var(--texto-2);
-  font-size: 0.875rem;
-  font-weight: 600;
-}
-
-.botao-tema:hover {
-  background: var(--superficie-2);
-  color: var(--texto);
 }
 
 main {
@@ -257,7 +304,7 @@ main {
   }
 
   .botao-menu,
-  .tema-opcoes,
+  .tema-painel,
   .busca-topo {
     display: none;
   }
@@ -299,8 +346,8 @@ main {
     box-shadow: inset 0 -2px 0 var(--destaque);
   }
 
-  .botao-tema {
-    display: inline-flex;
+  .interruptor-topo {
+    display: inline-grid;
   }
 }
 
@@ -326,9 +373,16 @@ main {
 
 @media (forced-colors: active) {
   .nav-principal a.ativo,
-  .botao-tema,
   .botao-menu {
     border: 1px solid CanvasText;
+  }
+
+  .interruptor-trilho {
+    border-color: ButtonText;
+  }
+
+  .interruptor-botao {
+    background: ButtonText;
   }
 
   .marca-logo rect {

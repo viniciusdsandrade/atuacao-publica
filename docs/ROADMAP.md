@@ -161,6 +161,10 @@ Concluída em 2026-11-07, sem mudar dado, rota nem parâmetro de URL.
 Também corrigido: o clique no sumário do perfil e dos documentos deixava o bloco ou o título embaixo da faixa fixa do celular.
 O roteador passa a usar o `scroll-padding-top` do CSS como deslocamento.
 
+Depois da publicação, o controle de tema virou um interruptor entre claro e escuro: trilho em pílula e bolinha, à esquerda no tema escuro e à direita no claro.
+Ele substitui o botão de três estados (Auto, Claro e Escuro) e as três opções do menu do celular (ADR-0035, item 26).
+Sem escolha salva, o site segue o aparelho. Quando o interruptor volta ao tema do aparelho, a escolha salva some.
+
 Medidas no Chromium, com o CSS e o HTML novos sobre o site publicado:
 
 | Medida | Antes | Depois |

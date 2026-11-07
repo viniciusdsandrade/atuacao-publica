@@ -4,43 +4,34 @@ import assert from 'node:assert/strict';
 import {
   CHAVE_STORAGE_TEMA,
   aplicarTemaNoDocumento,
-  iconeTema,
   lerTemaSalvo,
-  proximoTema,
-  rotuloCurtoTema,
-  rotuloTema,
   salvarTema,
+  temaAoAlternar,
+  temaEfetivo,
 } from './tema.ts';
 
-test('proximoTema cicla entre sistema, claro e escuro', () => {
-  assert.equal(proximoTema('sistema'), 'claro');
-  assert.equal(proximoTema('claro'), 'escuro');
-  assert.equal(proximoTema('escuro'), 'sistema');
+test('temaEfetivo usa a escolha salva ou, sem escolha, o tema do aparelho', () => {
+  assert.equal(temaEfetivo('sistema', true), 'escuro');
+  assert.equal(temaEfetivo('sistema', false), 'claro');
+  assert.equal(temaEfetivo('claro', true), 'claro');
+  assert.equal(temaEfetivo('escuro', false), 'escuro');
 });
 
-test('rotuloCurtoTema retorna rótulo resumido de cada estado', () => {
-  assert.equal(rotuloCurtoTema('sistema'), 'Auto');
-  assert.equal(rotuloCurtoTema('claro'), 'Claro');
-  assert.equal(rotuloCurtoTema('escuro'), 'Escuro');
+test('temaAoAlternar troca o tema da tela e volta a seguir o aparelho quando chega nele', () => {
+  // Aparelho escuro: sair do escuro salva "claro"; voltar ao escuro apaga a escolha.
+  assert.equal(temaAoAlternar('escuro', true), 'claro');
+  assert.equal(temaAoAlternar('claro', true), 'sistema');
+  // Aparelho claro: o inverso.
+  assert.equal(temaAoAlternar('claro', false), 'escuro');
+  assert.equal(temaAoAlternar('escuro', false), 'sistema');
 });
 
-test('iconeTema retorna ícone adequado ao tema', () => {
-  assert.equal(iconeTema('sistema'), 'sistema');
-  assert.equal(iconeTema('claro'), 'sol');
-  assert.equal(iconeTema('escuro'), 'lua');
-});
-
-test('rotuloTema descreve o tema atual e a próxima ação para acessibilidade', () => {
-  assert.match(rotuloTema('sistema'), /Auto/);
-  assert.match(rotuloTema('claro'), /Claro/);
-  assert.match(rotuloTema('escuro'), /Escuro/);
-});
-
-test('o nome acessível do botão de tema contém o texto visível (WCAG 2.5.3)', () => {
-  for (const tema of ['sistema', 'claro', 'escuro'] as const) {
-    const visivel = rotuloCurtoTema(tema).toLowerCase();
-    const palavras = rotuloTema(tema).toLowerCase().split(/[^a-zà-ú]+/);
-    assert.ok(palavras.includes(visivel), `${tema}: "${visivel}" deve ser palavra do nome acessível`);
+test('cada clique do interruptor mostra o outro tema na tela', () => {
+  for (const sistemaEscuro of [true, false]) {
+    for (const efetivo of ['claro', 'escuro'] as const) {
+      const depois = temaEfetivo(temaAoAlternar(efetivo, sistemaEscuro), sistemaEscuro);
+      assert.notEqual(depois, efetivo);
+    }
   }
 });
 

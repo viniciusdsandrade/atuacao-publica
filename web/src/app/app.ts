@@ -1,5 +1,5 @@
 import { ViewportScroller } from '@angular/common';
-import { Component, ElementRef, Injector, afterNextRender, inject, signal, viewChild } from '@angular/core';
+import { Component, DestroyRef, ElementRef, Injector, afterNextRender, computed, inject, signal, viewChild } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { catchError, filter, map, of, startWith } from 'rxjs';
@@ -9,14 +9,13 @@ import { Icone } from './icone/icone';
 import { Marca } from './marca';
 import { data } from './rotulos';
 import {
+  ROTULO_INTERRUPTOR,
   Tema,
   aplicarTemaNoDocumento,
-  iconeTema,
   lerTemaSalvo,
-  proximoTema,
-  rotuloCurtoTema,
-  rotuloTema,
   salvarTema,
+  temaAoAlternar,
+  temaEfetivo,
 } from './tema';
 
 /** Caminho da rota sem parâmetros de consulta nem fragmento. */
@@ -51,8 +50,10 @@ export class App {
   private caminhoAnterior: string | null = null;
 
   protected readonly tema = signal<Tema>(lerTemaSalvo());
-  protected readonly temas: readonly Tema[] = ['sistema', 'claro', 'escuro'];
-  protected readonly rotuloDoTema = rotuloCurtoTema;
+  /** Tema do aparelho, acompanhado ao vivo: o interruptor mostra o tema que está na tela. */
+  private readonly sistemaEscuro = signal(typeof matchMedia === 'function' && matchMedia('(prefers-color-scheme: dark)').matches);
+  protected readonly escuro = computed(() => temaEfetivo(this.tema(), this.sistemaEscuro()) === 'escuro');
+  protected readonly rotuloInterruptor = ROTULO_INTERRUPTOR;
   protected readonly menuAberto = signal(false);
   protected readonly data = data;
 
@@ -86,19 +87,11 @@ export class App {
   }
 
   protected alternarTema(): void {
-    this.definirTema(proximoTema(this.tema()));
+    this.definirTema(temaAoAlternar(this.escuro() ? 'escuro' : 'claro', this.sistemaEscuro()));
   }
 
-  protected iconeTema(): 'sistema' | 'sol' | 'lua' {
-    return iconeTema(this.tema());
-  }
-
-  protected rotuloCurtoTema(): string {
-    return rotuloCurtoTema(this.tema());
-  }
-
-  protected rotuloTema(): string {
-    return rotuloTema(this.tema());
+  protected tituloInterruptor(): string {
+    return this.escuro() ? 'Tema escuro. Clique para usar o tema claro.' : 'Tema claro. Clique para usar o tema escuro.';
   }
 
   /** Esc fecha o painel do menu e devolve o foco ao botão que o abriu. */
@@ -120,6 +113,13 @@ export class App {
   constructor() {
     aplicarTemaNoDocumento(this.tema());
     atualizarCorDoNavegador(this.tema());
+
+    if (typeof matchMedia === 'function') {
+      const esquema = matchMedia('(prefers-color-scheme: dark)');
+      const aoMudar = (e: MediaQueryListEvent) => this.sistemaEscuro.set(e.matches);
+      esquema.addEventListener('change', aoMudar);
+      inject(DestroyRef).onDestroy(() => esquema.removeEventListener('change', aoMudar));
+    }
 
     // O roteador rola até o fragmento com window.scrollTo, que ignora scroll-padding. Sem isso, o bloco
     // ou o título escolhido fica embaixo da faixa fixa do celular.

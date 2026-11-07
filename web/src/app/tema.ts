@@ -3,10 +3,17 @@
  * - 'sistema': segue a preferência do sistema operacional (prefers-color-scheme);
  * - 'claro': força o tema claro;
  * - 'escuro': força o tema escuro.
+ * O controle é um interruptor entre claro e escuro. Sem escolha salva, o site segue o aparelho.
  */
 export type Tema = 'sistema' | 'claro' | 'escuro';
 
+/** Tema que está na tela. */
+export type TemaEfetivo = 'claro' | 'escuro';
+
 export const CHAVE_STORAGE_TEMA = 'atuacao-publica:tema';
+
+/** Nome acessível do interruptor: ligado no tema claro, desligado no escuro. */
+export const ROTULO_INTERRUPTOR = 'Tema claro';
 
 export function lerTemaSalvo(armazenamento: Storage | null = obterStorage()): Tema {
   try {
@@ -46,49 +53,21 @@ export function aplicarTemaNoDocumento(tema: Tema, raiz: HTMLElement | null = ob
   }
 }
 
-export function proximoTema(atual: Tema): Tema {
-  switch (atual) {
-    case 'sistema':
-      return 'claro';
-    case 'claro':
-      return 'escuro';
-    case 'escuro':
-      return 'sistema';
+/** Tema na tela: a escolha salva ou, sem escolha, o do aparelho. */
+export function temaEfetivo(tema: Tema, sistemaEscuro: boolean): TemaEfetivo {
+  if (tema === 'sistema') {
+    return sistemaEscuro ? 'escuro' : 'claro';
   }
+  return tema;
 }
 
-export function rotuloCurtoTema(tema: Tema): string {
-  switch (tema) {
-    case 'sistema':
-      return 'Auto';
-    case 'claro':
-      return 'Claro';
-    case 'escuro':
-      return 'Escuro';
-  }
-}
-
-export function rotuloTema(tema: Tema): string {
-  switch (tema) {
-    case 'sistema':
-      // O nome acessível contém o texto visível do botão ("Auto", "Claro", "Escuro"): WCAG 2.5.3, rótulo no nome.
-      return 'Tema do site: Auto, segue o sistema. Clique para mudar para tema claro.';
-    case 'claro':
-      return 'Tema do site: Claro. Clique para mudar para tema escuro.';
-    case 'escuro':
-      return 'Tema do site: Escuro. Clique para mudar para Auto, que segue o sistema.';
-  }
-}
-
-export function iconeTema(tema: Tema): 'sistema' | 'sol' | 'lua' {
-  switch (tema) {
-    case 'sistema':
-      return 'sistema';
-    case 'claro':
-      return 'sol';
-    case 'escuro':
-      return 'lua';
-  }
+/**
+ * O interruptor troca o tema que está na tela. Quando a troca chega ao tema do aparelho,
+ * a escolha salva some e o site volta a seguir o aparelho.
+ */
+export function temaAoAlternar(efetivo: TemaEfetivo, sistemaEscuro: boolean): Tema {
+  const novo: TemaEfetivo = efetivo === 'escuro' ? 'claro' : 'escuro';
+  return (novo === 'escuro') === sistemaEscuro ? 'sistema' : novo;
 }
 
 function obterStorage(): Storage | null {

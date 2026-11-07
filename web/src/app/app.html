@@ -49,28 +49,34 @@
           <li><a routerLink="/contribuir" routerLinkActive="ativo" ariaCurrentWhenActive="page">Contribuir</a></li>
         </ul>
       </nav>
-      <div class="tema-opcoes segmentos" role="radiogroup" aria-labelledby="rotulo-tema">
-        <span id="rotulo-tema" class="campo-rotulo">Tema do site</span>
-        <div class="segmentos-lista">
-          @for (t of temas; track t) {
-            <label class="segmento">
-              <input type="radio" name="tema" [value]="t" [checked]="tema() === t" (change)="definirTema(t)" />
-              <span>{{ rotuloDoTema(t) }}</span>
-            </label>
-          }
+      <div class="tema-painel">
+        <div class="tema-linha">
+          <label class="tema-rotulo" for="interruptor-tema-painel">{{ rotuloInterruptor }}</label>
+          <button
+            id="interruptor-tema-painel"
+            type="button"
+            class="interruptor-tema"
+            role="switch"
+            [attr.aria-checked]="!escuro()"
+            (click)="alternarTema()"
+          >
+            <span class="interruptor-trilho" aria-hidden="true"><span class="interruptor-botao"></span></span>
+          </button>
         </div>
-        <p class="tema-nota">Auto segue o tema do aparelho.</p>
+        <p class="tema-nota">Sem escolha salva, o site segue o tema do aparelho.</p>
       </div>
     </div>
+    <!-- Interruptor de tema: bolinha à esquerda no tema escuro, à direita no claro. -->
     <button
       type="button"
-      class="botao-tema"
-      [attr.aria-label]="rotuloTema()"
-      [title]="rotuloTema()"
+      class="interruptor-tema interruptor-topo"
+      role="switch"
+      [attr.aria-checked]="!escuro()"
+      [attr.aria-label]="rotuloInterruptor"
+      [title]="tituloInterruptor()"
       (click)="alternarTema()"
     >
-      <app-icone [nome]="iconeTema()" />
-      <span class="botao-tema-texto">{{ rotuloCurtoTema() }}</span>
+      <span class="interruptor-trilho" aria-hidden="true"><span class="interruptor-botao"></span></span>
     </button>
   </div>
 </header>
