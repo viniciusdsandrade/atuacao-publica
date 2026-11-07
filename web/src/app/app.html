@@ -1,34 +1,77 @@
 <a class="pular" href="#conteudo" (click)="$event.preventDefault(); conteudo.focus()">Pular para o conteúdo</a>
-<header class="topo">
+<header class="topo" (keydown.escape)="fecharMenu(botaoMenu)">
   <div class="topo-interno">
     <a class="marca" routerLink="/">
       <app-marca />
       <span>Atuação Pública</span>
     </a>
-    <div class="topo-acoes">
+    <button
+      #botaoMenu
+      type="button"
+      class="botao-menu"
+      aria-controls="menu-painel"
+      [attr.aria-expanded]="menuAberto()"
+      (click)="menuAberto.set(!menuAberto())"
+    >
+      <app-icone [nome]="menuAberto() ? 'fechar' : 'menu'" />
+      Menu
+    </button>
+    <!-- Abaixo de 64 rem é o painel que o botão abre; a partir daí, os filhos entram na linha do cabeçalho. -->
+    <div id="menu-painel" class="menu-painel" [class.aberto]="menuAberto()">
+      @if (!naLista()) {
+        <form class="busca-topo" role="search" aria-label="Buscar políticos" (submit)="buscar($event, campoTopo)">
+          <label class="sr-only" for="busca-topo">Buscar políticos por nome, município, cargo ou partido</label>
+          <div class="busca">
+            <app-icone class="icone-busca" nome="busca" />
+            <input
+              #campoTopo
+              id="busca-topo"
+              class="controle"
+              type="search"
+              name="q"
+              placeholder="Buscar políticos"
+              autocomplete="off"
+              enterkeyhint="search"
+            />
+          </div>
+        </form>
+      }
       <nav class="nav-principal" aria-label="Principal">
-        <ul>
+        <ul class="nav-grupo">
           <li>
             <a routerLink="/" [class.ativo]="naSecaoPoliticos()" [attr.aria-current]="naLista() ? 'page' : null">Políticos</a>
           </li>
-          <li><a routerLink="/comparar" routerLinkActive="ativo" ariaCurrentWhenActive="page">Comparar</a></li>
           <li><a routerLink="/dados-abertos" routerLinkActive="ativo" ariaCurrentWhenActive="page">Dados abertos</a></li>
+        </ul>
+        <ul class="nav-grupo nav-grupo--sobre">
           <li><a routerLink="/metodologia" routerLinkActive="ativo" ariaCurrentWhenActive="page">Metodologia</a></li>
           <li><a routerLink="/fontes" routerLinkActive="ativo" ariaCurrentWhenActive="page">Fontes</a></li>
           <li><a routerLink="/contribuir" routerLinkActive="ativo" ariaCurrentWhenActive="page">Contribuir</a></li>
         </ul>
       </nav>
-      <button
-        type="button"
-        class="botao-tema"
-        [attr.aria-label]="rotuloTema()"
-        [title]="rotuloTema()"
-        (click)="alternarTema()"
-      >
-        <app-icone [nome]="iconeTema()" />
-        <span class="botao-tema-texto">{{ rotuloCurtoTema() }}</span>
-      </button>
+      <div class="tema-opcoes segmentos" role="radiogroup" aria-labelledby="rotulo-tema">
+        <span id="rotulo-tema" class="campo-rotulo">Tema do site</span>
+        <div class="segmentos-lista">
+          @for (t of temas; track t) {
+            <label class="segmento">
+              <input type="radio" name="tema" [value]="t" [checked]="tema() === t" (change)="definirTema(t)" />
+              <span>{{ rotuloDoTema(t) }}</span>
+            </label>
+          }
+        </div>
+        <p class="tema-nota">Auto segue o tema do aparelho.</p>
+      </div>
     </div>
+    <button
+      type="button"
+      class="botao-tema"
+      [attr.aria-label]="rotuloTema()"
+      [title]="rotuloTema()"
+      (click)="alternarTema()"
+    >
+      <app-icone [nome]="iconeTema()" />
+      <span class="botao-tema-texto">{{ rotuloCurtoTema() }}</span>
+    </button>
   </div>
 </header>
 <main id="conteudo" #conteudo tabindex="-1">
@@ -42,6 +85,9 @@
         Dados de fontes oficiais, com fonte e data de captura em cada bloco. Dado ausente na fonte aparece como
         "sem registro na fonte". O site não usa cookies nem rastreadores.
       </p>
+      @if (execucao(); as e) {
+        <p>Dados atualizados em {{ data(e.terminado_em) }}.</p>
+      }
     </div>
     <nav aria-label="Páginas do site">
       <h2 class="rodape-titulo rotulo-secao">Site</h2>
@@ -55,7 +101,7 @@
     <nav aria-label="Transparência">
       <h2 class="rodape-titulo rotulo-secao">Transparência</h2>
       <ul>
-        <li><a routerLink="/dados-abertos">Dados abertos (Downloads)</a></li>
+        <li><a routerLink="/dados-abertos">Dados abertos</a></li>
         <li><a routerLink="/metodologia">Metodologia</a></li>
         <li><a routerLink="/fontes">Fontes</a></li>
         <li><a routerLink="/politica-editorial">Política editorial</a></li>

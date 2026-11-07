@@ -2,10 +2,12 @@ import { ViewportScroller } from '@angular/common';
 import { Component, ElementRef, Injector, afterNextRender, inject, signal, viewChild } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
-import { filter, map, startWith } from 'rxjs';
+import { catchError, filter, map, of, startWith } from 'rxjs';
 
+import { Dados } from './dados';
 import { Icone } from './icone/icone';
 import { Marca } from './marca';
+import { data } from './rotulos';
 import {
   Tema,
   aplicarTemaNoDocumento,
@@ -28,6 +30,15 @@ function deslocamentoDoTopo(): number {
   return Number.isFinite(valor) ? valor : 0;
 }
 
+/** A barra do navegador acompanha o tema escolhido. No automático, cada meta volta à cor do seu esquema. */
+function atualizarCorDoNavegador(tema: Tema): void {
+  const cor = getComputedStyle(document.documentElement).getPropertyValue('--superficie').trim();
+  for (const meta of Array.from(document.querySelectorAll<HTMLMetaElement>('meta[name="theme-color"]'))) {
+    const original = (meta.dataset['original'] ??= meta.content);
+    meta.content = tema === 'sistema' || !cor ? original : cor;
+  }
+}
+
 @Component({
   selector: 'app-root',
   imports: [RouterOutlet, RouterLink, RouterLinkActive, Marca, Icone],
@@ -40,6 +51,13 @@ export class App {
   private caminhoAnterior: string | null = null;
 
   protected readonly tema = signal<Tema>(lerTemaSalvo());
+  protected readonly temas: readonly Tema[] = ['sistema', 'claro', 'escuro'];
+  protected readonly rotuloDoTema = rotuloCurtoTema;
+  protected readonly menuAberto = signal(false);
+  protected readonly data = data;
+
+  /** Última execução do ETL, para a data no rodapé. Sem o relatório, o rodapé fica sem a data. */
+  protected readonly execucao = toSignal(inject(Dados).execucao$.pipe(catchError(() => of(null))), { initialValue: null });
 
   private readonly caminho = toSignal(
     this.router.events.pipe(
@@ -54,16 +72,21 @@ export class App {
     return this.caminho() === '/';
   }
 
-  /** O item "Políticos" também vale para o perfil e o detalhe anual. */
+  /** O item "Políticos" também vale para o perfil, o detalhe anual e o lado a lado. */
   protected naSecaoPoliticos(): boolean {
-    return this.naLista() || this.caminho().startsWith('/politico');
+    const caminho = this.caminho();
+    return this.naLista() || caminho.startsWith('/politico') || caminho === '/comparar';
+  }
+
+  protected definirTema(tema: Tema): void {
+    this.tema.set(tema);
+    salvarTema(tema);
+    aplicarTemaNoDocumento(tema);
+    atualizarCorDoNavegador(tema);
   }
 
   protected alternarTema(): void {
-    const proximo = proximoTema(this.tema());
-    this.tema.set(proximo);
-    salvarTema(proximo);
-    aplicarTemaNoDocumento(proximo);
+    this.definirTema(proximoTema(this.tema()));
   }
 
   protected iconeTema(): 'sistema' | 'sol' | 'lua' {
@@ -78,8 +101,25 @@ export class App {
     return rotuloTema(this.tema());
   }
 
+  /** Esc fecha o painel do menu e devolve o foco ao botão que o abriu. */
+  protected fecharMenu(botao: HTMLElement): void {
+    if (this.menuAberto()) {
+      this.menuAberto.set(false);
+      botao.focus();
+    }
+  }
+
+  /** A busca das páginas internas leva à lista, com a busca no endereço (#/?q=...). */
+  protected buscar(evento: Event, campo: HTMLInputElement): void {
+    evento.preventDefault();
+    const busca = campo.value.trim();
+    campo.value = '';
+    this.router.navigate(['/'], { queryParams: busca ? { q: busca } : {} });
+  }
+
   constructor() {
     aplicarTemaNoDocumento(this.tema());
+    atualizarCorDoNavegador(this.tema());
 
     // O roteador rola até o fragmento com window.scrollTo, que ignora scroll-padding. Sem isso, o bloco
     // ou o título escolhido fica embaixo da faixa fixa do celular.
@@ -93,6 +133,7 @@ export class App {
         takeUntilDestroyed(),
       )
       .subscribe((e) => {
+        this.menuAberto.set(false);
         const caminho = caminhoDe(e.urlAfterRedirects);
         const trocou = this.caminhoAnterior !== null && caminho !== this.caminhoAnterior;
         this.caminhoAnterior = caminho;
