@@ -700,6 +700,17 @@ Validação em 2026-11-03 com o User-Agent do projeto.
 - URL base: `https://ww4.al.rs.gov.br/`
 - Repositório de fotos oficiais dos parlamentares em alta resolução hospedadas em `https://ww2.al.rs.gov.br/filerepository/fotografias/`.
 
+### `alrs-votos-plenario`: votos em plenário
+
+- URL base: `https://transparencia.al.rs.gov.br/parlamentares/votos-plenario/pesquisa?solicitante={id}&ano={ano}`. O `solicitante` é o id do perfil (`alrs-{id}`). Validação em 2026-11-07.
+- Uma página HTML por deputado e ano, de cerca de 1 MB (58 KB comprimida). Cada voto é um JSON no atributo `data-item`, com as entidades HTML do atributo e os escapes do JSON (`\u00e3`).
+- Campos: `nomeDeputado`, `dataVotacao`, `tipoProjeto`, `numProposicao`, `anoProposicao`, `materia`, `voto` e `resultadoVotacao`.
+- A página só lista o voto dado: Sim ou Não. Não informa ausência nem abstenção. Por isso o perfil não tem bloco de participação.
+- A votação não tem id na fonte, e a hora vem sempre 00:00. O id junta proposição e data. A mesma proposição pode ter mais de uma votação no dia (o projeto e o requerimento de preferência, por exemplo): a segunda leva o sufixo `-2`. A matéria distingue uma da outra.
+- A página de 2022 existe para quem já era deputado. Entram 2022 a 2026: 275 páginas para os 55 deputados.
+- Na validação, 33.204 votos nos 55 deputados: 30.909 Sim e 2.295 Não. Por ano: 4.856 (2022), 7.819 (2023), 7.697 (2024), 8.090 (2025) e 4.742 (2026). 4.556 votos são a segunda votação ou seguinte da mesma proposição no dia.
+- Recusa conexão de fora do Brasil (ADR-0029). Entra pela coleta local cifrada (ADR-0034).
+
 ### `rs-transparencia` e `rs-diario-oficial`: Executivo estadual
 
 - Transparência orçamentária: `https://www.transparencia.rs.gov.br/` e `https://transparencia.al.rs.gov.br/`

@@ -55,6 +55,7 @@ Não é presença. É a contagem de votos registrados em votações nominais.
 - Votação simbólica não tem voto individual e fica fora.
 - As casas registram ausência de forma diferente. Os números das casas não são comparáveis entre si.
 - No piloto municipal, a orientação de partido e de governo fica `null`: a fonte não publica orientação.
+- Na ALRS, a fonte lista só o voto dado (Sim ou Não), por deputado e ano. Sem ausência registrada, o perfil tem os votos e não tem bloco de participação.
 
 ## Orientação de voto
 

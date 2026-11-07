@@ -1715,6 +1715,21 @@
   status: validado
   validado_em: 2026-11-05
 
+- id: alrs-votos-plenario
+  nome: Assembleia Legislativa do Estado do Rio Grande do Sul, votos em plenário por deputado
+  orgao: Assembleia Legislativa do Estado do Rio Grande do Sul
+  esfera: estadual
+  ente: RS
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://transparencia.al.rs.gov.br/parlamentares/votos-plenario/pesquisa
+  formato: HTML com JSON
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Uma página por deputado e ano, com cada voto em JSON no atributo data-item. Só lista o voto dado (Sim ou Não), sem ausência. A votação não tem id. Recusa conexão de fora do Brasil."
+  status: validado
+  validado_em: 2026-11-07
+
 - id: alece-deputados
   nome: Assembleia Legislativa do Estado do Ceará, deputados estaduais
   orgao: Assembleia Legislativa do Estado do Ceará

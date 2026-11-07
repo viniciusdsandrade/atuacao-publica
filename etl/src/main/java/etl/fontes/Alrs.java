@@ -6,9 +6,11 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -26,6 +28,7 @@ import etl.Registros.Mandato;
 import etl.Registros.OrgaoOuFrente;
 import etl.Registros.Pessoa;
 import etl.Registros.Prov;
+import etl.Registros.Voto;
 import etl.Texto;
 
 /**
@@ -38,6 +41,12 @@ public final class Alrs implements Fonte {
     public static final String FONTE_DEPUTADOS = "alrs-deputados";
     public static final String FONTE_DETALHES = "alrs-deputados-detalhes";
     public static final String FONTE_PORTAL = "alrs-portal";
+    public static final String FONTE_VOTOS = "alrs-votos-plenario";
+
+    public static final String URL_VOTOS = "https://transparencia.al.rs.gov.br/parlamentares/votos-plenario/pesquisa";
+    static final int PRIMEIRO_ANO_VOTOS = 2022;
+    /** Cada voto da página é um JSON no atributo data-item, com as entidades HTML do atributo. */
+    private static final Pattern ITEM_DE_VOTO = Pattern.compile("data-item='([^']*)'");
 
     public static final String SITE = "https://ww4.al.rs.gov.br";
     public static final String API_DEPUTADOS = "https://ww4.al.rs.gov.br:5000/listarDestaqueDeputados";
@@ -72,6 +81,69 @@ public final class Alrs implements Fonte {
             String urlComissoes = SITE + "/deputados/" + d.id() + "/comissoes";
             coleta.obterOuVazio(urlComissoes, "comissoes/" + d.id() + ".html", "text/html", Politica.SEMANAL);
         }
+
+        // Votos em plenário: uma página por deputado e ano no portal da transparência, pelo mesmo id do perfil.
+        for (DeputadoBruto d : deputados) {
+            for (int ano = PRIMEIRO_ANO_VOTOS; ano <= ctx.hoje().getYear(); ano++) {
+                coleta.obterOpcional(urlVotos(d.id(), ano), arquivoDeVotos(d.id(), ano), "text/html",
+                        Politica.porAnoSemanal(ano, ctx.hoje()));
+            }
+        }
+    }
+
+    static String urlVotos(String id, int ano) {
+        return URL_VOTOS + "?solicitante=" + id + "&ano=" + ano;
+    }
+
+    private static String arquivoDeVotos(String id, int ano) {
+        return "votos/" + id + "-" + ano + ".html";
+    }
+
+    /** Votos do deputado nas páginas anuais em cache. */
+    private List<Voto> votosDoDeputado(Contexto ctx, String id) {
+        List<Voto> votos = new ArrayList<>();
+        for (int ano = PRIMEIRO_ANO_VOTOS; ano <= ctx.hoje().getYear(); ano++) {
+            Coleta.Arquivo arq = Coleta.metadados(ctx, nome(), arquivoDeVotos(id, ano));
+            if (arq == null || arq.bytes() == 0 || !Files.exists(Coleta.caminho(ctx, arq))) {
+                continue;
+            }
+            try {
+                votos.addAll(votosDaPagina(Texto.lerArquivo(Coleta.caminho(ctx, arq)), Prov.de(FONTE_VOTOS, arq.url(), arq)));
+            } catch (Exception e) {
+                System.err.println("alrs: erro ao ler votos do deputado " + id + " em " + ano + ": " + e.getMessage());
+            }
+        }
+        return votos;
+    }
+
+    /**
+     * Votos de uma página anual do deputado. A página só lista o voto dado (Sim ou Não): não informa ausência, e por
+     * isso não há bloco de participação. A votação não tem id na fonte: o id junta proposição e data, com um sufixo
+     * quando a mesma proposição tem mais de uma votação no dia.
+     */
+    static List<Voto> votosDaPagina(String html, Prov prov) {
+        List<Voto> votos = new ArrayList<>();
+        Map<String, Integer> vezes = new HashMap<>();
+        Matcher m = ITEM_DE_VOTO.matcher(html);
+        while (m.find()) {
+            String json = Texto.semEntidades(m.group(1));
+            if (json == null) {
+                continue;
+            }
+            JsonNode item = Json.FONTE.readTree(json);
+            String tipo = Json.texto(item, "tipoProjeto");
+            Integer numero = Json.inteiro(item, "numProposicao");
+            Integer ano = Json.inteiro(item, "anoProposicao");
+            String data = Texto.dataBr(Json.texto(item, "dataVotacao"));
+            if (tipo == null || numero == null || ano == null || data == null) {
+                continue;
+            }
+            String id = tipo + "-" + numero + "-" + ano + "-" + data;
+            int vez = vezes.merge(id, 1, Integer::sum);
+            votos.add(new Voto(vez == 1 ? id : id + "-" + vez, data, "PLEN", tipo + " " + numero + "/" + ano,
+                    Json.texto(item, "materia"), Json.texto(item, "voto"), null, null, null, null, prov));
+        }
+        return votos;
     }
 
     @Override
@@ -93,6 +165,7 @@ public final class Alrs implements Fonte {
         }
 
         List<Pessoa> pessoas = new ArrayList<>();
+        int totalDeVotos = 0;
 
         for (DeputadoBruto d : deputados) {
             String id = d.id();
@@ -134,9 +207,13 @@ public final class Alrs implements Fonte {
             blocosNode.set("mandatos", Json.SAIDA.valueToTree(mandatos));
             blocosNode.set("orgaos_e_frentes", Json.SAIDA.valueToTree(orgaos));
             blocosNode.set("despesas", Json.SAIDA.createArrayNode());
+            List<Voto> votos = votosDoDeputado(ctx, id);
+            totalDeVotos += votos.size();
+            blocosNode.set("votos", Json.SAIDA.valueToTree(votos));
             blocosNode.set("fontes", Json.SAIDA.valueToTree(Registros.fontesDosBlocos(blocosNode)));
             Json.gravar(pastaBlocos.resolve(id + ".json"), blocosNode);
         }
+        System.out.println("alrs: " + totalDeVotos + " votos em plenário desde " + PRIMEIRO_ANO_VOTOS);
 
         Json.gravar(ctx.normalizado().resolve("alrs/pessoas.json"), Json.SAIDA.valueToTree(pessoas));
         System.out.println("alrs: " + pessoas.size() + " deputados estaduais normalizados");

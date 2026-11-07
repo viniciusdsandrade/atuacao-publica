@@ -380,6 +380,7 @@ Limitações:
     - Proposições da ALMG: implementadas em 2026-11-07 (`almg-proposicoes`), pelo CSV anual dos dados abertos, em que o id do autor é o id do perfil. A ALMG recusa conexão de fora do Brasil, e o CSV entra pela coleta local cifrada (ADR-0034). No ensaio local, 58.861 autorias de 2022 a 2026 em 108 dos 110 deputados, com tema da indexação oficial em 84%. Requerimentos vêm sem ementa.
     - Proposições da ALEPE: implementadas em 2026-11-07 (`alepe-proposicoes`), pelas listas XML anuais de projetos, indicações e requerimentos da API de dados abertos. O autor vem pelo nome parlamentar, que casou com os 49 deputados em exercício. Entra pela coleta local cifrada. No ensaio local, 26.920 autorias de 2022 a 2026; 9 ementas com e-mail ficam para a guarda do `publish`.
     - Proposições da CLDF: implementadas em 2026-11-07 (`cldf-proposicoes`), pela API pública do PLe, em páginas de 2.000 por POST. A autoria vem por nome, que casou com os 24 deputados em exercício. Entra pela coleta local cifrada. No ensaio local, 26.090 autorias de 2022 a 2026; 23 ementas com número de telefone ficam para a guarda do `publish`.
+    - Votos em plenário da ALRS: implementados em 2026-11-07 (`alrs-votos-plenario`), por deputado e ano no portal da transparência, com o mesmo id do perfil. A fonte só lista o voto dado, sem ausência: não há bloco de participação. Entra pela coleta local cifrada. No ensaio local, 33.204 votos de 2022 a 2026 nos 55 deputados.
     - Votações da ALECE: implementadas em 2026-11-07 (`alece-votacoes`), com a lista pública e uma planilha XLSX por matéria. No ensaio local, 2.427 votos de 61 votações nos 54 deputados, com participação por ano.
     - Proposições da ALEP: implementadas em 2026-11-07, pela API pública (`alep-proposicoes`), que só aceita o filtro no corpo de um POST. O `Coleta` ganhou `obterPostOpcional` para isso. No ensaio local, 24.238 autorias nos 54 deputados.
     - Votações da ALEP: implementadas em 2026-11-07 (`alep-votacoes`). Os XLSX por sessão trazem o parlamentar pelo nome civil, e a ponte com o perfil é o nome civil da candidatura do TSE ligada a ele. No ensaio local, 197.559 votos de 4.135 itens em 51 dos 54 deputados; os 3 sem vínculo com o TSE ficam sem votos.
@@ -395,7 +396,7 @@ Limitações:
     | CLDF | portal CKAN, com CPF do deputado e do prestador, que precisa sair | implementado em 2026-11-07, pela coleta local cifrada | exige login |
     | ALEPE | JSON por deputado e mês, com id próprio | implementado em 2026-11-07, pela coleta local cifrada | só resultado agregado |
     | ALES | por gabinete, sem fornecedor | API NoPaper | boletins em PDF |
-    | ALRS | agregado por categoria, sem fornecedor | HTML por deputado | HTML por deputado e ano, com JSON embutido |
+    | ALRS | agregado por categoria, sem fornecedor | HTML por deputado | implementado em 2026-11-07, pela coleta local cifrada |
     | ALESC | implementado | HTML paginado | não validado |
     | ALEPA | painel interno de BI, sem fornecedor | callback de componente, paginação não validada | HTML por votação |
 
