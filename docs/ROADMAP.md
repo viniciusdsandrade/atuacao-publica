@@ -48,7 +48,7 @@ Estado real de cada fase. Atualizado ao fechar cada fase.
 - SAPL do piloto: a fonte não publica orientação de partido nem texto de discurso. Matérias com sequência de 11 dígitos na ementa (número de protocolo) são removidas pela regra de bloqueio de CPF e contam como rejeição em `_meta/execucao.json`.
 - TCE-SP: um mês por chamada, com cerca de 2 meses de defasagem. A fonte identifica só o órgão, não o gabinete do prefeito.
 - Portal da transparência da câmara do piloto: reprografia e correspondência vêm sem valor e ficam fora.
-- O arquivo de candidaturas do TSE de 2024 vem com o CPF mascarado. O vínculo dessa eleição com as demais usa nome civil e data de nascimento, em memória.
+- O arquivo de candidaturas do TSE de 2024 vem com o CPF mascarado. Desde 2026-11-06, o título de eleitor, completo no arquivo, liga essa eleição às demais da mesma pessoa (ADR-0003). Quando o título é ambíguo (9 candidaturas em 2026-11-06), o vínculo usa nome civil e data de nascimento. Tudo em memória.
 - SAPL do piloto: o filtro de votos por registro de votação admite votos anteriores a 2022, porque os ids de registro não seguem a ordem das sessões. Esses votos ficam fora, e a quantidade aparece na saída do `normalize`.
 - Até 2026-11-02, o bloco de órgãos e frentes saía vazio para deputados e senadores por um erro no nome do campo normalizado. Corrigido.
 - Agenda da Presidência: a primeira carga no CI foi concluída em execuções sucessivas com coleta em lotes de 40 dias. Dias já coletados ficam no cache; dias sem captura no arquivo ficam sem registro ou com cópia anterior preservada em caso de timeout. No site, 5.480 compromissos no presidente vigente (2023 a 2026) e 721 no presidente de 2019 a 2023.

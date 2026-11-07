@@ -223,6 +223,7 @@ public final class Tse implements Fonte {
 
     public static Map<String, Chave> chaves(Contexto ctx) {
         Map<String, Chave> chaves = new HashMap<>();
+        Map<String, String> tituloPorSq = new HashMap<>();
         for (int ano : eleicoes(ctx.hoje().getYear())) {
             Coleta.Arquivo arq = Coleta.metadados(ctx, "tse", "consulta_cand_" + ano + ".zip");
             if (arq == null || !Files.exists(Coleta.caminho(ctx, arq))) {
@@ -230,14 +231,74 @@ public final class Tse implements Fonte {
             }
             lerBrasil(Coleta.caminho(ctx, arq), l -> {
                 if (cargoValido(l)) {
+                    String sq = l.get("SQ_CANDIDATO");
                     String cpf = Texto.digitos(l.get("NR_CPF_CANDIDATO"));
-                    chaves.put(l.get("SQ_CANDIDATO"), new Chave(cpf.length() == 11 ? cpf : null,
+                    String titulo = Texto.digitos(l.get("NR_TITULO_ELEITORAL_CANDIDATO"));
+                    chaves.put(sq, new Chave(cpf.length() == 11 ? cpf : null,
                             Texto.normalizarNome(l.get("NM_CANDIDATO")), l.get("SG_UF"), Texto.dataBr(l.get("DT_NASCIMENTO")),
                             l.get("DS_CARGO")));
+                    if (titulo.length() == 12) {
+                        tituloPorSq.put(sq, titulo);
+                    }
                 }
             });
         }
-        return chaves;
+        PeloTitulo peloTitulo = completarCpfPeloTitulo(chaves, tituloPorSq);
+        if (peloTitulo.ligadas() > 0 || peloTitulo.ambiguas() > 0) {
+            System.out.println("tse: " + peloTitulo.ligadas() + " candidatura(s) com CPF mascarado ligada(s) a outra eleição pelo"
+                    + " título de eleitor; " + peloTitulo.ambiguas() + " com título ambíguo ficam pelo nome civil e nascimento");
+        }
+        return peloTitulo.chaves();
+    }
+
+    /** Chaves com o CPF completado pelo título, e quantas candidaturas ganharam CPF ou ficaram de fora por ambiguidade. */
+    record PeloTitulo(Map<String, Chave> chaves, int ligadas, int ambiguas) {
+    }
+
+    /**
+     * O TSE mascarou o CPF da eleição de 2024, mas manteve o título de eleitor completo. O título leva à candidatura
+     * o CPF da mesma pessoa em outra eleição só quando a correspondência é inequívoca: o título aparece com um único
+     * CPF, esse CPF com um único título, e a data de nascimento confere. Na dúvida, a candidatura segue sem CPF, e o
+     * vínculo usa nome civil e data de nascimento. O título, como o CPF, fica só em memória (ADR-0003).
+     */
+    static PeloTitulo completarCpfPeloTitulo(Map<String, Chave> chaves, Map<String, String> tituloPorSq) {
+        Map<String, Set<String>> cpfsPorTitulo = new HashMap<>();
+        Map<String, Set<String>> titulosPorCpf = new HashMap<>();
+        Map<String, Set<String>> nascimentosPorCpf = new HashMap<>();
+        for (var entrada : chaves.entrySet()) {
+            Chave chave = entrada.getValue();
+            String titulo = tituloPorSq.get(entrada.getKey());
+            if (chave.cpf() == null) {
+                continue;
+            }
+            if (chave.nascimento() != null) {
+                nascimentosPorCpf.computeIfAbsent(chave.cpf(), k -> new HashSet<>()).add(chave.nascimento());
+            }
+            if (titulo != null) {
+                cpfsPorTitulo.computeIfAbsent(titulo, k -> new HashSet<>()).add(chave.cpf());
+                titulosPorCpf.computeIfAbsent(chave.cpf(), k -> new HashSet<>()).add(titulo);
+            }
+        }
+        Map<String, Chave> completas = new HashMap<>(chaves);
+        int ligadas = 0;
+        int ambiguas = 0;
+        for (var entrada : chaves.entrySet()) {
+            Chave chave = entrada.getValue();
+            String titulo = tituloPorSq.get(entrada.getKey());
+            if (chave.cpf() != null || titulo == null || chave.nascimento() == null || !cpfsPorTitulo.containsKey(titulo)) {
+                continue;
+            }
+            Set<String> cpfs = cpfsPorTitulo.get(titulo);
+            String cpf = cpfs.iterator().next();
+            if (cpfs.size() != 1 || titulosPorCpf.get(cpf).size() != 1
+                    || !nascimentosPorCpf.getOrDefault(cpf, Set.of()).contains(chave.nascimento())) {
+                ambiguas++;
+                continue;
+            }
+            completas.put(entrada.getKey(), new Chave(cpf, chave.nomeCivil(), chave.uf(), chave.nascimento(), chave.cargo()));
+            ligadas++;
+        }
+        return new PeloTitulo(completas, ligadas, ambiguas);
     }
 
     private static String semNulo(String valor) {

@@ -166,7 +166,8 @@ Os dois arquivos mudam juntos.
 - Cada ZIP de candidatos traz um CSV por UF, `BR` (Presidência) e `BRASIL` (todos).
 - Codificação ISO-8859-1. Separador `;`. Campos de texto entre aspas e campos numéricos sem aspas.
 - O arquivo de 2026 já traz o resultado do 1º e do 2º turno em `DS_SIT_TOT_TURNO`: 1 presidente eleito, 27 governadores, 54 senadores, 513 deputados federais (385 por QP e 128 por média).
-- `NR_CPF_CANDIDATO`, `NR_TITULO_ELEITORAL_CANDIDATO` e `DS_EMAIL` vêm preenchidos. São descartados na ingestão. O CPF serve só de chave de vínculo em memória.
+- `NR_CPF_CANDIDATO`, `NR_TITULO_ELEITORAL_CANDIDATO` e `DS_EMAIL` vêm preenchidos. São descartados na ingestão. O CPF e o título servem só de chave de vínculo em memória.
+- No arquivo de 2024, `NR_CPF_CANDIDATO` vem mascarado (`-4`) nas 463.885 linhas. `NR_TITULO_ELEITORAL_CANDIDATO` vem completo, com 12 dígitos, em 463.839 delas (verificado em 2026-11-06).
 - O 2º turno aparece como uma segunda linha do candidato (`NR_TURNO = 2`).
 - Bens: `SQ_CANDIDATO` e `VR_BEM_CANDIDATO` com vírgula decimal. `DS_BEM_CANDIDATO` pode descrever endereço. Publicamos só o total.
 - Propostas de governo: PDFs dentro do ZIP da UF, com nome `{UF}/{ANO}{UF}{SQ_CANDIDATO}.pdf`.
