@@ -89,7 +89,7 @@ Estado real de cada fase. Atualizado ao fechar cada fase.
 
 ## Casas estaduais e municipais no site
 
-Estado da publicação de 2026-11-06, às 23:51 UTC, com 1.867 perfis. "Perfis" conta os perfis com o identificador da casa, inclusive os fundidos com outra casa.
+Estado da publicação de 2026-11-07, às 01:58 UTC, com 1.867 perfis. "Perfis" conta os perfis com o identificador da casa, inclusive os fundidos com outra casa.
 
 | Casa | Coleta no CI | Perfis | Vínculo com o TSE | Blocos além de mandato e candidaturas |
 |---|---|---|---|---|
@@ -101,15 +101,15 @@ Estado da publicação de 2026-11-06, às 23:51 UTC, com 1.867 perfis. "Perfis" 
 | ALRS (RS) | falha: rede bloqueada | 0 | - | - |
 | ALECE (CE) | ok | 54 | 51 | comissões; despesas a partir da próxima publicação |
 | ALESC (SC) | ok | 40 | 40 | despesas e comissões |
-| ALEGO (GO) | ok | 43 | 43 | comissões e frentes; despesas a partir da próxima publicação |
+| ALEGO (GO) | parcial | 43 | 43 | comissões e frentes e despesas; 17 arquivos mensais ficaram para a próxima execução |
 | ALES (ES) | falha: rede bloqueada | 0 | - | - |
 | ALEPA (PA) | ok, primeira coleta | 41 | 40 | comissões |
 | ALEPE (PE) | falha: rede bloqueada | 0 | - | - |
 | CLDF (DF) | falha: rede bloqueada | 0 | - | - |
-| CMSP (capital) | ok | 55 | 51 | comissões; proposições a partir da próxima publicação |
+| CMSP (capital) | ok | 55 | 51 | comissões e proposições |
 | Câmara do piloto (SAPL) | ok | 50 | 50 | votos, presença, falas, matérias, despesas e comissões |
 
-Nesta publicação, os blocos das casas com adaptador novo ainda saem sem fonte por bloco. A correção (ver "Limitações conhecidas") entra na próxima publicação.
+Desde esta publicação, todo bloco com registro cita fonte e data: conferido em amostras de 15 perfis de ALERJ, ALECE, ALEGO, ALESC, ALEPA, ALBA, ALEP e CMSP, inclusive no `alerj-505`, que saía sem fonte. As despesas da ALECE e da ALERJ e as proposições da ALEP entram na publicação seguinte.
 
 ## Cobertura 2022 a 2026 (ADR-0009)
 
