@@ -148,6 +148,44 @@ Verificação de 2026-11-02, com scripts locais (Playwright e axe-core, fora do 
 - Fluxos de lista, perfil, detalhe, documentos e teclado passam no Chromium, no Firefox e no WebKit, também na versão de produção servida em subcaminho.
 - Nenhuma requisição a terceiros e nenhum erro de console, com a CSP intacta.
 
+## Revisão de UX e UI (ADR-0035 e ADR-0036)
+
+Concluída em 2026-11-07, sem mudar dado, rota nem parâmetro de URL.
+
+| Fase | Entrega | Estado |
+|---|---|---|
+| 1. CSS e tokens | Tokens de cor novos nos dois temas, rótulo de seção único, mínimo de 13 px, alvo de 32 px em filtros e selos clicáveis, barra de despesa com contraste, coluna de leitura de 40 rem nos documentos, degradê na faixa de blocos do celular | concluída |
+| 2. Estrutura | Cabeçalho de uma linha com menu abaixo de 64 rem e dois grupos a partir daí; busca na apresentação da inicial; data dos dados na linha de resultados; esfera à vista no celular; partidos em ordem alfabética só em recortes de até 12; perfil em três níveis; anos no topo de cada bloco; lado a lado corrigido; dados abertos com tabela por estado; estado das coletas com marcador por estado e nome de todas as coletas; links de fonte com texto próprio | concluída |
+| 3. Interações | Link de endereço por bloco, impressão pelo perfil, tema em três opções no menu, sumário fixo dos documentos no celular, busca nas páginas internas, ADR-0036 do lado a lado | concluída |
+
+Também corrigido: o clique no sumário do perfil e dos documentos deixava o bloco ou o título embaixo da faixa fixa do celular.
+O roteador passa a usar o `scroll-padding-top` do CSS como deslocamento.
+
+Medidas no Chromium, com o CSS e o HTML novos sobre o site publicado:
+
+| Medida | Antes | Depois |
+|---|---|---|
+| Altura do cabeçalho em 390 px | 193 px | 61 px |
+| Topo do campo de busca em 390 px | 726 px | 360 px |
+| Topo do campo de busca em 1366 px | 509 px | 331 px |
+| Primeiro bloco do perfil de referência em 390 px | 972 px | 737 px |
+| Chips de filtro na inicial com dados reais | 19 | 8 |
+
+Verificação de 2026-11-07:
+
+- Checagem de tipos dos templates com `ngc --noEmit`, em modo estrito: sem erro.
+- Testes unitários de `rotulos` e `tema` com `node --test`: 20 de 20. Novos: casa legislativa do lado a lado e período dos anos.
+- axe-core (WCAG 2.0 e 2.1, A e AA) sem achados nos trechos novos, sobre o site publicado com dados reais, de 320 a 1366 px, nos dois temas.
+- Sem transbordo horizontal em 320 px em nenhuma rota. Nenhuma requisição a terceiros.
+
+Limitações:
+
+- O build e a suíte E2E (Playwright e axe) não rodaram localmente. O CI roda os dois no próximo push. Os testes mudaram junto com os títulos "Lado a lado" e "Dados abertos".
+- A verificação visual usou o CSS novo e trechos de HTML iguais aos dos templates, sobre o site publicado. Não validado em navegador: rolagem com o deslocamento novo, foco depois de escolher um parlamentar no lado a lado e Esc no menu.
+- Em 1366 px, a busca da inicial ficou a 331 px do topo. A meta do ADR-0035 era abaixo de 300 px.
+- Não validado: teste com pessoas (roteiro no ADR-0035), leitor de tela real, Firefox e WebKit.
+- Fica fora: link de cada coleta para a seção dela em Fontes (ver ADR-0035).
+
 ## Fase 2 (depois da POC)
 
 ### Esfera federal
@@ -304,6 +342,7 @@ Verificação de 2026-11-02, com scripts locais (Playwright e axe-core, fora do 
 18. Comparador de Atuação Parlamentar: concluído em 2026-11-06.
     - Rota `/comparar` no site: dois parlamentares da mesma casa lado a lado, só com dado factual (votações nominais, proposições, órgãos e frentes, despesas).
     - Seleção por busca, com sugestões da mesma UF e da mesma bancada, botão para inverter a ordem e atalho em cada perfil.
+    - Revisto em 2026-11-07 pelo ADR-0036: virou "Lado a lado", aceita só parlamentares da mesma casa, mostra o período de cada número e saiu do menu principal.
 19. Dumps de dados abertos: concluído em 2026-11-06.
     - O `publish` gera `politicos.csv` (todos), `politicos-federal.csv` e `politicos-{uf}.csv`, com um manifest JSON de metadados e contagens. O comando `dumps` refaz os arquivos a partir do `index.json` existente.
     - Rota `/dados-abertos` no site, com downloads diretos, dicionário de dados, citação e a licença CC BY 4.0.
