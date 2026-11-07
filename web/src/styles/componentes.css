@@ -346,6 +346,33 @@
   white-space: normal;
 }
 
+/* Estado das coletas: cada estado tem forma própria (visto, meio círculo, alerta, traço), além da cor. */
+.selo--concluida {
+  padding-left: 0.5rem;
+}
+
+.selo .icone {
+  width: 0.875rem;
+  height: 0.875rem;
+}
+
+.selo--incompleta {
+  padding-left: 0.5rem;
+}
+
+.selo--incompleta::before {
+  content: '';
+  width: 0.625rem;
+  height: 0.625rem;
+  border: 2px solid currentColor;
+  border-radius: 50%;
+  background: linear-gradient(90deg, currentColor 50%, transparent 50%);
+}
+
+.selo--falha {
+  padding-left: 0.5rem;
+}
+
 .selo--partido {
   background: var(--superficie);
   border-color: var(--borda-controle);

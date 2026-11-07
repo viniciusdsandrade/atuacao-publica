@@ -5,9 +5,10 @@ import { catchError, map, of } from 'rxjs';
 
 import { Dados } from '../dados';
 import { Icone } from '../icone/icone';
+import { Execucao } from '../modelo';
 import { data, inteiro } from '../rotulos';
 
-/** O que cada passo de coleta traz. Os identificadores são os da CLI do ETL (`fetch {fonte}`). */
+/** O que cada passo de coleta traz. Os identificadores são os da CLI do ETL (`fetch {fonte}`); os nomes seguem docs/FONTES.md. */
 const NOMES: Record<string, string> = {
   camara: 'Câmara dos Deputados',
   senado: 'Senado Federal',
@@ -18,7 +19,46 @@ const NOMES: Record<string, string> = {
   cgu: 'Portal da Transparência (cartão e viagens da Presidência)',
   agenda: 'Agenda do Presidente da República (Planalto)',
   contrib: 'Registros manuais revisados (contribuições)',
+  alesp: 'Assembleia Legislativa do Estado de São Paulo (ALESP)',
+  executivosp: 'Governo do Estado de São Paulo (agenda, despesas e atos)',
+  almg: 'Assembleia Legislativa do Estado de Minas Gerais (ALMG)',
+  alep: 'Assembleia Legislativa do Estado do Paraná (ALEP)',
+  alba: 'Assembleia Legislativa do Estado da Bahia (ALBA)',
+  alerj: 'Assembleia Legislativa do Estado do Rio de Janeiro (ALERJ)',
+  alrs: 'Assembleia Legislativa do Estado do Rio Grande do Sul (ALRS)',
+  alece: 'Assembleia Legislativa do Estado do Ceará (ALECE)',
+  alesc: 'Assembleia Legislativa do Estado de Santa Catarina (ALESC)',
+  alego: 'Assembleia Legislativa do Estado de Goiás (ALEGO)',
+  ales: 'Assembleia Legislativa do Estado do Espírito Santo (ALES)',
+  alepa: 'Assembleia Legislativa do Estado do Pará (ALEPA)',
+  alepe: 'Assembleia Legislativa do Estado de Pernambuco (ALEPE)',
+  cldf: 'Câmara Legislativa do Distrito Federal (CLDF)',
+  cmsp: 'Câmara Municipal de São Paulo (CMSP)',
 };
+
+/** "Das 24 coletas, 17 concluídas, 2 incompletas e 5 com falha." Só entram os estados que aparecem. */
+function resumoDasColetas(fontes: Execucao['fontes']): string {
+  const conta = (status: string) => fontes.filter((f) => f.status === status).length;
+  const partes: string[] = [];
+  const ok = conta('ok');
+  const parcial = conta('parcial');
+  const falha = conta('falha');
+  const semColeta = conta('nao_executada');
+  if (ok) {
+    partes.push(`${ok} ${ok === 1 ? 'concluída' : 'concluídas'}`);
+  }
+  if (parcial) {
+    partes.push(`${parcial} ${parcial === 1 ? 'incompleta' : 'incompletas'}`);
+  }
+  if (falha) {
+    partes.push(`${falha} com falha`);
+  }
+  if (semColeta) {
+    partes.push(`${semColeta} sem coleta`);
+  }
+  const lista = partes.length > 1 ? `${partes.slice(0, -1).join(', ')} e ${partes[partes.length - 1]}` : (partes[0] ?? '');
+  return `Das ${fontes.length} coletas, ${lista}.`;
+}
 
 /** Estado da última coleta de cada fonte, como o ETL registrou em `_meta/execucao.json`. */
 @Component({
@@ -33,14 +73,15 @@ const NOMES: Record<string, string> = {
     </nav>
     <h1 class="titulo-pagina">Estado das coletas</h1>
     <p class="lead">
-      Cada fonte é coletada em um passo próprio do pipeline de dados. Se uma fonte falha ou fica incompleta, o site mantém
-      os dados da última coleta válida e marca os blocos dela como desatualizados.
+      Cada fonte é coletada numa etapa própria. Se uma coleta falha ou fica incompleta, o site mantém os dados da última
+      coleta válida e avisa nos blocos que dependem dela.
     </p>
 
     @if (resultado(); as r) {
       @if (r.execucao; as e) {
         <p class="meta-pagina">
           Última execução em {{ data(e.terminado_em) }}. {{ inteiro(e.publicados) }} perfis publicados.
+          {{ resumo(e.fontes) }}
         </p>
         <ul class="estado-lista">
           @for (f of e.fontes; track f.fonte) {
@@ -51,13 +92,13 @@ const NOMES: Record<string, string> = {
               </div>
               @switch (f.status) {
                 @case ('ok') {
-                  <span class="selo selo--ativo">Coleta concluída</span>
+                  <span class="selo selo--concluida"><app-icone nome="verificado" [pequeno]="true" /> Coleta concluída</span>
                 }
                 @case ('parcial') {
-                  <span class="selo selo--aviso">Coleta incompleta</span>
+                  <span class="selo selo--aviso selo--incompleta">Coleta incompleta</span>
                 }
                 @case ('falha') {
-                  <span class="selo selo--aviso">Fonte desatualizada</span>
+                  <span class="selo selo--aviso selo--falha"><app-icone nome="alerta" [pequeno]="true" /> Coleta com falha</span>
                 }
                 @case ('nao_executada') {
                   <span class="selo selo--fora">Sem coleta</span>
@@ -128,6 +169,7 @@ export class Estado {
   protected readonly esqueletos = [1, 2, 3, 4, 5];
   protected readonly data = data;
   protected readonly inteiro = inteiro;
+  protected readonly resumo = resumoDasColetas;
 
   protected nome(fonte: string): string {
     return NOMES[fonte] ?? fonte;
