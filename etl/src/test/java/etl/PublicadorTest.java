@@ -24,6 +24,22 @@ class PublicadorTest {
     }
 
     @Test
+    void fontesDoBlocoSaemSemRepeticaoEVemDosRegistrosQuandoFaltam() {
+        JsonNode fonte = Json.FONTE.readTree("{\"fonte_id\": \"x\", \"url_origem\": \"https://exemplo.invalid/a\", \"capturado_em\": \"2026-11-07T00:00:00Z\"}");
+        JsonNode registro = Json.FONTE.readTree("{\"valor\": 1, \"fonte_id\": \"y\", \"url_origem\": \"https://exemplo.invalid/b\","
+                + " \"capturado_em\": \"2026-11-06T00:00:00Z\"}");
+        JsonNode semProveniencia = Json.FONTE.readTree("{\"valor\": 2}");
+
+        // A mesma fonte declarada três vezes fica uma.
+        assertEquals(1, Publicador.fontesDoBloco(List.of(fonte, fonte, fonte), List.of(registro)).size());
+        // Sem fonte declarada, o bloco cita a proveniência dos registros, sem repetir.
+        List<JsonNode> dosRegistros = Publicador.fontesDoBloco(List.of(), List.of(registro, registro, semProveniencia));
+        assertEquals(1, dosRegistros.size());
+        assertEquals("https://exemplo.invalid/b", dosRegistros.getFirst().get("url_origem").stringValue());
+        assertTrue(Publicador.fontesDoBloco(List.of(), List.of(semProveniencia)).isEmpty());
+    }
+
+    @Test
     void todoCargoDoSchemaTemBlocos() {
         // Cargo fora da tabela de blocos sai publicado sem bloco nenhum, nem mandato.
         Path comum = Contexto.acharRaiz(Path.of("").toAbsolutePath()).resolve("schemas/comum.schema.json");

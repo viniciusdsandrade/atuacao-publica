@@ -165,6 +165,8 @@ public final class Publicador {
 
     private final Contexto ctx;
     private final List<Meta.Rejeitado> rejeitados = new ArrayList<>();
+    /** Blocos com registro e sem fonte declarada pelo adaptador, por nome do bloco: as fontes vieram dos registros. */
+    private final Map<String, Integer> blocosSemFonteDeclarada = new TreeMap<>();
     private final Map<String, Meta.Cursor> cursores = new HashMap<>();
 
     public Publicador(Contexto ctx) {
@@ -232,6 +234,9 @@ public final class Publicador {
                 inicio, Instant.now().truncatedTo(java.time.temporal.ChronoUnit.SECONDS), status, publicados.size(), rejeitados);
         gravarValidado("execucao", Meta.pasta(ctx).resolve("execucao.json"), Json.arvore(execucao));
         System.out.println("publish: " + publicados.size() + " perfis publicados, " + aliases.size() + " alias(es), " + rejeitados.size() + " rejeição(ões)");
+        if (!blocosSemFonteDeclarada.isEmpty()) {
+            System.out.println("publish: blocos sem fonte declarada pelo adaptador, com as fontes tiradas dos registros: " + blocosSemFonteDeclarada);
+        }
         rejeitados.stream().limit(10).forEach(r -> System.out.println("publish: rejeitado " + r.arquivo() + ": " + r.motivo()));
         return publicados.isEmpty() ? 1 : 0;
     }
@@ -290,9 +295,30 @@ public final class Publicador {
         return seguros;
     }
 
+    /**
+     * Fontes de um bloco: as declaradas pelo adaptador, sem repetição. Bloco com registro e sem fonte declarada cita a
+     * proveniência dos próprios registros, para que nenhum bloco com dado saia sem fonte e sem data.
+     */
+    static List<JsonNode> fontesDoBloco(List<JsonNode> declaradas, List<JsonNode> registros) {
+        Set<JsonNode> fontes = new LinkedHashSet<>(declaradas);
+        if (fontes.isEmpty()) {
+            for (JsonNode r : registros) {
+                if (r.hasNonNull("fonte_id") && r.hasNonNull("url_origem") && r.hasNonNull("capturado_em")) {
+                    fontes.add(Json.SAIDA.createObjectNode().put("fonte_id", r.get("fonte_id").stringValue())
+                            .put("url_origem", r.get("url_origem").stringValue()).put("capturado_em", r.get("capturado_em").stringValue()));
+                }
+            }
+        }
+        return new ArrayList<>(fontes);
+    }
+
     private ObjectNode bloco(Perfil perfil, String bloco, List<JsonNode> registros, Path pasta) {
         ObjectNode no = Json.SAIDA.createObjectNode();
-        List<JsonNode> fontes = perfil.fontes.getOrDefault(bloco, List.of());
+        List<JsonNode> declaradas = perfil.fontes.getOrDefault(bloco, List.of());
+        List<JsonNode> fontes = fontesDoBloco(declaradas, registros);
+        if (declaradas.isEmpty() && !fontes.isEmpty()) {
+            blocosSemFonteDeclarada.merge(bloco, 1, Integer::sum);
+        }
         ArrayNode listaFontes = no.putArray("fontes");
         Instant atualizado = null;
         for (JsonNode f : fontes) {
