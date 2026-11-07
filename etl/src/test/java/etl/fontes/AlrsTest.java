@@ -61,6 +61,21 @@ class AlrsTest {
     }
 
     @Test
+    void numeroDeProcessoSeiComFormaDeCpfSaiDaMateria() {
+        // Matéria encurtada, com o número SEI do PL 33/2017 no formato em que a página publica.
+        String html = "<tr data-item='&#x7B;&quot;dataVotacao&quot;&#x3A;&quot;10&#x5C;&#x2F;05&#x5C;&#x2F;2022&#x20;00&#x3A;00&quot;,"
+                + "&quot;tipoProjeto&quot;&#x3A;&quot;PL&#x20;&quot;,&quot;numProposicao&quot;&#x3A;33,&quot;anoProposicao&quot;&#x3A;2017,"
+                + "&quot;materia&quot;&#x3A;&quot;Disp&#x5C;u00f5e&#x20;sobre&#x20;o&#x20;tema.&#x20;(SEI&#x20;000005461-01.00&#x5C;&#x2F;21-0)&quot;,"
+                + "&quot;voto&quot;&#x3A;&quot;Sim&quot;&#x7D;'></tr>";
+        Prov prov = new Prov(Alrs.FONTE_VOTOS, Alrs.urlVotos("2144", 2022), Instant.parse("2026-11-07T12:00:00Z"));
+
+        Voto voto = Alrs.votosDaPagina(html, prov).getFirst();
+
+        assertTrue(etl.Guarda.violacoes(voto.descricao()).isEmpty(), voto.descricao());
+        assertTrue(voto.descricao().startsWith("Dispõe sobre o tema. (SEI"));
+    }
+
+    @Test
     void formataNomeComPreposicoesEMaiusculas() {
         assertEquals("Adão Pretto Filho", Alrs.formatarNome("ADÃO PRETTO FILHO"));
         assertEquals("Adolfo Brito", Alrs.formatarNome("ADOLFO BRITO"));

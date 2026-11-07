@@ -21,6 +21,7 @@ import etl.Coleta;
 import etl.Coleta.Politica;
 import etl.Contexto;
 import etl.Fonte;
+import etl.Guarda;
 import etl.Json;
 import etl.Registros;
 import etl.Registros.LinkOficial;
@@ -119,7 +120,8 @@ public final class Alrs implements Fonte {
     /**
      * Votos de uma página anual do deputado. A página só lista o voto dado (Sim ou Não): não informa ausência, e por
      * isso não há bloco de participação. A votação não tem id na fonte: o id junta proposição e data, com um sufixo
-     * quando a mesma proposição tem mais de uma votação no dia.
+     * quando a mesma proposição tem mais de uma votação no dia. Número de processo SEI na matéria ("000005461-01.00/21")
+     * tem a forma de CPF: a sequência sai, para a guarda do publish não descartar o voto.
      */
     static List<Voto> votosDaPagina(String html, Prov prov) {
         List<Voto> votos = new ArrayList<>();
@@ -141,7 +143,7 @@ public final class Alrs implements Fonte {
             String id = tipo + "-" + numero + "-" + ano + "-" + data;
             int vez = vezes.merge(id, 1, Integer::sum);
             votos.add(new Voto(vez == 1 ? id : id + "-" + vez, data, "PLEN", tipo + " " + numero + "/" + ano,
-                    Json.texto(item, "materia"), Json.texto(item, "voto"), null, null, null, null, prov));
+                    Guarda.semCpf(Json.texto(item, "materia")), Json.texto(item, "voto"), null, null, null, null, prov));
         }
         return votos;
     }
