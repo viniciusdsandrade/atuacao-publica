@@ -1,0 +1,55 @@
+{
+  "id": "tse-990000000002",
+  "nome": "PESSOA EXEMPLO DOIS",
+  "cargo_atual": "governador",
+  "esfera": "estadual",
+  "ente": "AC",
+  "uf": "AC",
+  "partido_atual": null,
+  "situacao": "Mandato vigente (eleito em 2022), até 2027-01-06",
+  "em_exercicio": true,
+  "foto_url": null,
+  "ids_externos": {
+    "tse": {
+      "2022": "990000000002"
+    }
+  },
+  "links_oficiais": [],
+  "atualizado_em": "2026-10-30T03:10:00Z",
+  "blocos": {
+    "candidaturas": {
+      "fontes": [],
+      "atualizado_em": null,
+      "desatualizado": true,
+      "total": 1,
+      "registros": [
+        {
+          "eleicao": 2022,
+          "turno": 2,
+          "cargo": "GOVERNADOR",
+          "ente": "AC",
+          "nome_urna": "PESSOA EXEMPLO DOIS",
+          "partido": "PARTIDO",
+          "numero": "99",
+          "situacao_candidatura": "APTO",
+          "resultado": "ELEITO",
+          "bens_total_declarado": null,
+          "plano_de_governo_url": "https://cdn.tse.jus.br/estatistica/sead/odsele/proposta_governo/proposta_governo_2022_AC.zip",
+          "plano_de_governo_arquivo": "AC/2022AC990000000002.pdf",
+          "redes_declaradas": [
+            {
+              "rede": "Site",
+              "url": "campanha.exemplo.invalid",
+              "fonte_id": "tse-cdn",
+              "url_origem": "https://cdn.tse.jus.br/estatistica/sead/odsele/consulta_cand/rede_social_candidato_2022.zip",
+              "capturado_em": "2026-10-30T03:00:00Z"
+            }
+          ],
+          "fonte_id": "tse-cdn",
+          "url_origem": "https://cdn.tse.jus.br/estatistica/sead/odsele/consulta_cand/consulta_cand_2022.zip",
+          "capturado_em": "2026-10-30T03:00:00Z"
+        }
+      ]
+    }
+  }
+}

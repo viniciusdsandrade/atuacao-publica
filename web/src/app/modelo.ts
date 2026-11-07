@@ -74,6 +74,12 @@ export interface DespesaAgregada extends Proveniencia {
   quantidade: number;
 }
 
+/** Rede social ou site declarado ao TSE no registro da candidatura (ADR-0031). */
+export interface RedeDeclarada extends Proveniencia {
+  rede: string;
+  url: string;
+}
+
 export interface LinkOficial extends Proveniencia {
   rotulo: string;
   url: string;

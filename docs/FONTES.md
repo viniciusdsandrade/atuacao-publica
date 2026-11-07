@@ -162,6 +162,7 @@ Os dois arquivos mudam juntos.
 | `bem_candidato/bem_candidato_2022.zip` | 5,4 MB |
 | `bem_candidato/bem_candidato_2026.zip` | 3,8 MB |
 | `proposta_governo/proposta_governo_{ano}_{UF}.zip` | 8 MB a 18 MB por UF |
+| `consulta_cand/rede_social_candidato_{ano}.zip` | 0,6 MB (2018) a 20,2 MB (2024) |
 
 - Cada ZIP de candidatos traz um CSV por UF, `BR` (Presidência) e `BRASIL` (todos).
 - Codificação ISO-8859-1. Separador `;`. Campos de texto entre aspas e campos numéricos sem aspas.
@@ -171,6 +172,9 @@ Os dois arquivos mudam juntos.
 - O 2º turno aparece como uma segunda linha do candidato (`NR_TURNO = 2`).
 - Bens: `SQ_CANDIDATO` e `VR_BEM_CANDIDATO` com vírgula decimal. `DS_BEM_CANDIDATO` pode descrever endereço. Publicamos só o total.
 - Propostas de governo: PDFs dentro do ZIP da UF, com nome `{UF}/{ANO}{UF}{SQ_CANDIDATO}.pdf`.
+- Redes e sites declarados (ADR-0031): `rede_social_candidato_{ano}.zip`, validado em 2026-11-06 para 2018 a 2026. Um CSV por UF e `_BRASIL`. Colunas usadas: `SQ_CANDIDATO`, `NR_ORDEM_REDE_SOCIAL` e `DS_URL`.
+- No arquivo de 2026, a maior parte dos endereços vem toda em maiúsculas (35.244 dos cerca de 55 mil com esquema), e milhares de entradas não são endereço: texto com espaço, "@perfil" solto, palavra sem ponto. De 2018 a 2024, o campo vem quase só com URLs.
+- Parte dos endereços leva a telefone: conversa, link curto e convite de grupo do WhatsApp, Telegram por número. Esses ficam fora na ingestão.
 
 ### `tse-divulgacand`: DivulgaCandContas
 

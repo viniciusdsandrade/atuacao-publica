@@ -103,7 +103,11 @@ public final class Registros {
     public record Candidatura(int eleicao, int turno, String cargo, String ente, String nomeUrna, String partido,
                               String numero, String situacaoCandidatura, String resultado,
                               BigDecimal bensTotalDeclarado, String planoDeGovernoUrl, String planoDeGovernoArquivo,
-                              @JsonUnwrapped Prov prov) {
+                              List<RedeDeclarada> redesDeclaradas, @JsonUnwrapped Prov prov) {
+    }
+
+    /** Rede social ou site que o candidato declarou ao TSE no registro da candidatura (ADR-0031). */
+    public record RedeDeclarada(String rede, String url, @JsonUnwrapped Prov prov) {
     }
 
     public record AtoNormativo(String idFonte, String tipo, String numero, LocalDate data, String nome, String ementa,

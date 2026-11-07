@@ -64,6 +64,13 @@ test.describe('perfil', () => {
     await expect(page.getByText(/Autor na fonte: PESSOA EXEMPLO/)).toBeVisible();
   });
 
+  test('redes e sites declarados ao TSE aparecem no topo com o rótulo de declaração do próprio candidato', async ({ page }) => {
+    await page.goto('/#/politico/tse-990000000010');
+    await expect(page.getByText(/declarados ao TSE pelo próprio candidato, na eleição de 2022/)).toBeVisible();
+    const lista = page.getByRole('list', { name: 'Redes e sites declarados ao TSE' });
+    await expect(lista.getByRole('link', { name: /campanha\.exemplo\.invalid/ })).toHaveAttribute('href', 'https://campanha.exemplo.invalid/');
+  });
+
   test('perfil de vereador da capital abre pela rota direta', async ({ page }) => {
     await page.goto('/#/politico/cmsp-940012');
     await expect(page.getByRole('heading', { level: 1 })).toContainText('Leandro Exemplo');

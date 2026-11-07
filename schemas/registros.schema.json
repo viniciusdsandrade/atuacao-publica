@@ -169,7 +169,19 @@
         "resultado": { "$ref": "comum.schema.json#/$defs/texto_ou_nulo" },
         "bens_total_declarado": { "type": ["number", "null"] },
         "plano_de_governo_url": { "$ref": "comum.schema.json#/$defs/url_ou_nulo" },
-        "plano_de_governo_arquivo": { "$ref": "comum.schema.json#/$defs/texto_ou_nulo" }
+        "plano_de_governo_arquivo": { "$ref": "comum.schema.json#/$defs/texto_ou_nulo" },
+        "redes_declaradas": { "type": "array", "items": { "$ref": "#/$defs/rede_declarada" } }
+      },
+      "unevaluatedProperties": false
+    },
+    "rede_declarada": {
+      "description": "Rede social ou site que o candidato declarou ao TSE no registro da candidatura (ADR-0031). Declaração do próprio político.",
+      "type": "object",
+      "allOf": [{ "$ref": "comum.schema.json#/$defs/proveniencia" }],
+      "required": ["rede", "url"],
+      "properties": {
+        "rede": { "$ref": "comum.schema.json#/$defs/texto" },
+        "url": { "$ref": "comum.schema.json#/$defs/url" }
       },
       "unevaluatedProperties": false
     },

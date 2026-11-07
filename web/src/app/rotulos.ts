@@ -74,7 +74,8 @@ export const NOTAS: Record<string, string> = {
   atos_normativos: 'A fonte não informa quem assinou cada ato.',
   despesas_executivo:
     'Valor pago pelo órgão da prefeitura, somado por mês pelo Tribunal de Contas do Estado. Autarquias, fundações e a Câmara ficam fora. A fonte não informa quem autorizou cada pagamento.',
-  candidaturas: 'O TSE registra a eleição, não o exercício do cargo.',
+  candidaturas:
+    'O TSE registra a eleição, não o exercício do cargo. Redes e sites: endereços declarados pelo próprio candidato no registro da candidatura. O site não confere o conteúdo dessas páginas.',
   emendas:
     'Emendas individuais do parlamentar, por ano do orçamento, com os valores como o Portal da Transparência publica: empenhado, liquidado, pago e restos a pagar. Emendas de bancada, de comissão e de relator não têm autor individual na fonte e ficam fora.',
   agenda_oficial:

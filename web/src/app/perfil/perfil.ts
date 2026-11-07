@@ -7,7 +7,7 @@ import { catchError, combineLatest, map, of, switchMap } from 'rxjs';
 import { Dados } from '../dados';
 import { Icone } from '../icone/icone';
 import { MemoriaLista } from '../lista/memoria-lista';
-import { Bloco, DespesaAgregada, EmendaPorAno, Perfil as PerfilPublicado } from '../modelo';
+import { Bloco, DespesaAgregada, EmendaPorAno, Perfil as PerfilPublicado, RedeDeclarada } from '../modelo';
 import {
   data,
   ePapelLideranca,
@@ -101,6 +101,20 @@ export class Perfil {
         nome: String(r['nome']),
         sigla: typeof r['sigla'] === 'string' ? r['sigla'] : null,
       }));
+  });
+
+  /** Redes e sites da candidatura mais recente que declarou algum ao TSE (ADR-0031). */
+  protected readonly redesDeclaradas = computed(() => {
+    const candidaturas = this.perfil()?.blocos?.['candidaturas']?.registros ?? [];
+    let escolhida: { eleicao: number; redes: RedeDeclarada[] } | null = null;
+    for (const c of candidaturas) {
+      const redes = Array.isArray(c['redes_declaradas']) ? (c['redes_declaradas'] as RedeDeclarada[]) : [];
+      const eleicao = typeof c['eleicao'] === 'number' ? c['eleicao'] : 0;
+      if (redes.length > 0 && (!escolhida || eleicao > escolhida.eleicao)) {
+        escolhida = { eleicao, redes };
+      }
+    }
+    return escolhida;
   });
 
   /** Bloco em leitura, para destacar no sumário. */
@@ -255,6 +269,18 @@ export class Perfil {
   /** Soma de um valor em todos os anos. Cada campo da fonte é somado só com ele mesmo. */
   protected somaDasEmendas(bloco: Bloco, campo: 'valor_empenhado' | 'valor_pago' | 'restos_pagos'): number {
     return (bloco.por_ano ?? []).reduce((soma, a) => soma + a[campo], 0);
+  }
+
+  /** O nome da rede, ou o domínio quando é um site: vários sites não ficam com o mesmo texto de link. */
+  protected rotuloDaRede(rede: RedeDeclarada): string {
+    if (rede.rede !== 'Site') {
+      return rede.rede;
+    }
+    try {
+      return new URL(rede.url).hostname.replace(/^www\./, '');
+    } catch {
+      return rede.rede;
+    }
   }
 
   protected enderecoJson(id: string): string {

@@ -1127,12 +1127,18 @@ final class Vinculo {
             p.tse.put(String.valueOf(linha.get("ano").asInt()), linha.get("sq").stringValue());
             p.fontes.computeIfAbsent("candidaturas", k -> new ArrayList<>());
             JsonNode registro = linha.get("registro");
-            ObjectNode usada = Json.SAIDA.createObjectNode();
-            usada.set("fonte_id", registro.get("fonte_id"));
-            usada.set("url_origem", registro.get("url_origem"));
-            usada.set("capturado_em", registro.get("capturado_em"));
-            if (!p.fontes.get("candidaturas").contains(usada)) {
-                p.fontes.get("candidaturas").add(usada);
+            List<JsonNode> origens = new ArrayList<>();
+            origens.add(registro);
+            // As redes declaradas vêm de outro arquivo do TSE: o bloco cita os dois (ADR-0031).
+            registro.path("redes_declaradas").forEach(origens::add);
+            for (JsonNode origem : origens) {
+                ObjectNode usada = Json.SAIDA.createObjectNode();
+                usada.set("fonte_id", origem.get("fonte_id"));
+                usada.set("url_origem", origem.get("url_origem"));
+                usada.set("capturado_em", origem.get("capturado_em"));
+                if (!p.fontes.get("candidaturas").contains(usada)) {
+                    p.fontes.get("candidaturas").add(usada);
+                }
             }
         }
     }

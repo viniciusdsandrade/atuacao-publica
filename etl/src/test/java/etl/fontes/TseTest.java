@@ -105,6 +105,49 @@ class TseTest {
     }
 
     @Test
+    void enderecoDeclaradoComTelefoneOuEmailNuncaEntra() {
+        // Endereços fictícios. Link de WhatsApp ou Telegram por número leva ao telefone do candidato.
+        assertTrue(Tse.temDadoPessoal("https://wa.me/5511999998888"));
+        assertTrue(Tse.temDadoPessoal("https://api.whatsapp.com/send?phone=5511999998888"));
+        assertTrue(Tse.temDadoPessoal("https://t.me/+5511999998888"));
+        assertTrue(Tse.temDadoPessoal("https://chat.whatsapp.com/ConviteExemplo123"), "convite de grupo mostra o telefone de quem administra");
+        assertTrue(Tse.temDadoPessoal("https://api.whatsapp.com/message/LINKEXEMPLO"));
+        assertTrue(Tse.temDadoPessoal("HTTPS://WA.LINK/EXEMPLO"));
+        assertTrue(Tse.temDadoPessoal("https://exemplo.invalid/contato?fone=+5511999998888"));
+        assertTrue(Tse.temDadoPessoal("mailto:fulano@exemplo.invalid"));
+        assertTrue(Tse.temDadoPessoal("fulano@exemplo.invalid"));
+        assertFalse(Tse.temDadoPessoal("https://www.instagram.com/perfil.exemplo"));
+        assertFalse(Tse.temDadoPessoal("https://www.whatsapp.com/channel/canalExemplo"), "canal público não leva a telefone");
+        assertNull(Tse.enderecoDeclarado("https://wa.me/5511999998888"));
+    }
+
+    @Test
+    void enderecoDeclaradoSemEsquemaGanhaHttpsETextoSemDominioFicaFora() {
+        assertEquals("https://instagram.com/perfil.exemplo", Tse.enderecoDeclarado("instagram.com/perfil.exemplo"));
+        assertEquals("https://www.site-exemplo.com.br", Tse.enderecoDeclarado(" www.site-exemplo.com.br "));
+        assertEquals("http://site-exemplo.com.br/", Tse.enderecoDeclarado("http://site-exemplo.com.br/"), "esquema declarado fica");
+        // O arquivo de 2026 traz endereços todos em maiúsculas: esquema e domínio não diferenciam, o caminho fica como veio.
+        assertEquals("https://www.instagram.com/PERFIL.EXEMPLO", Tse.enderecoDeclarado("HTTPS://WWW.INSTAGRAM.COM/PERFIL.EXEMPLO"));
+        assertEquals("https://site-exemplo.com.br:8080/Pagina?Q=1", Tse.enderecoDeclarado("HTTPS://SITE-EXEMPLO.COM.BR:8080/Pagina?Q=1"));
+        assertNull(Tse.enderecoDeclarado("https://usuario@site-exemplo.com.br/"), "endereço com credencial embutida fica fora");
+        assertNull(Tse.enderecoDeclarado("@perfil.exemplo"), "o site não adivinha a rede");
+        assertNull(Tse.enderecoDeclarado("PERFIL EXEMPLO"));
+        assertNull(Tse.enderecoDeclarado("https://site-exemplo.com.br/a b"));
+        assertNull(Tse.enderecoDeclarado(""));
+    }
+
+    @Test
+    void redeVemDoDominioEODemaisESite() {
+        assertEquals("Instagram", Tse.rede("https://www.instagram.com/perfil.exemplo"));
+        assertEquals("Facebook", Tse.rede("https://m.facebook.com/perfil.exemplo"));
+        assertEquals("X (Twitter)", Tse.rede("https://x.com/perfil_exemplo"));
+        assertEquals("X (Twitter)", Tse.rede("https://twitter.com/perfil_exemplo"));
+        assertEquals("YouTube", Tse.rede("https://youtu.be/exemplo"));
+        assertEquals("Site", Tse.rede("https://naoinstagram.com/perfil"), "domínio parecido não é a rede");
+        assertEquals("Site", Tse.rede("https://www.site-exemplo.com.br"));
+    }
+
+    @Test
     void ueMunicipalTrazOCodigoIbgeDoEnte() {
         assertEquals("3509502", Tse.UES_MUNICIPAIS.get("62910").ibge());
         assertEquals("3550308", Tse.UES_MUNICIPAIS.get("71072").ibge());

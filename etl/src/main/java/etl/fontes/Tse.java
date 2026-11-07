@@ -26,6 +26,7 @@ import etl.Json;
 import etl.Meta;
 import etl.Registros.Candidatura;
 import etl.Registros.Prov;
+import etl.Registros.RedeDeclarada;
 import etl.Texto;
 import tools.jackson.databind.JsonNode;
 
@@ -117,6 +118,9 @@ public final class Tse implements Fonte {
             Politica politica = ano == ultima ? Politica.SEMPRE : Politica.SE_AUSENTE;
             coleta.obter(CDN + "/consulta_cand/consulta_cand_" + ano + ".zip", "consulta_cand_" + ano + ".zip", "application/zip", politica);
             coleta.obter(CDN + "/bem_candidato/bem_candidato_" + ano + ".zip", "bem_candidato_" + ano + ".zip", "application/zip", politica);
+            // Redes e sites declarados (ADR-0031): dado complementar; a falha deixa a fonte parcial, sem derrubar candidaturas.
+            coleta.obterOpcional(CDN + "/consulta_cand/rede_social_candidato_" + ano + ".zip", "rede_social_candidato_" + ano + ".zip",
+                    "application/zip", politica);
         }
         // Propostas de governo: todas as eleições de mandatos executivos cobertos.
         for (int ano : anos) {
@@ -136,6 +140,7 @@ public final class Tse implements Fonte {
     @Override
     public void normalize(Contexto ctx) {
         List<Linha> linhas = new ArrayList<>();
+        ContagemDeRedes contagemDeRedes = new ContagemDeRedes();
         for (int ano : eleicoes(ctx.hoje().getYear())) {
             Coleta.Arquivo arqCand = arquivo(ctx, "consulta_cand_" + ano + ".zip");
             Map<String, Map<String, String>> porSq = new LinkedHashMap<>();
@@ -181,6 +186,7 @@ public final class Tse implements Fonte {
                     }
                 }
             }
+            Map<String, List<RedeDeclarada>> redes = redesDeclaradas(ctx, ano, porSq.keySet(), contagemDeRedes);
             Prov prov = Prov.de("tse-cdn", arqCand.url(), arqCand);
             for (var item : porSq.entrySet()) {
                 Map<String, String> l = item.getValue();
@@ -197,13 +203,162 @@ public final class Tse implements Fonte {
                 }
                 Candidatura registro = new Candidatura(ano, turnos.get(sq), cargo, ente, semNulo(l.get("NM_URNA_CANDIDATO")),
                         semNulo(l.get("SG_PARTIDO")), semNulo(l.get("NR_CANDIDATO")), semNulo(l.get("DS_SITUACAO_CANDIDATURA")),
-                        resultado, bens.get(sq), planoUrl, planoArquivo, prov);
+                        resultado, bens.get(sq), planoUrl, planoArquivo, redes.getOrDefault(sq, List.of()), prov);
                 linhas.add(new Linha(sq, ano, cargo, uf, registro.nomeUrna(), registro.partido(),
                         resultado != null && ELEITO.contains(resultado), registro));
             }
         }
         Json.gravar(ctx.normalizado().resolve("tse").resolve("candidaturas.json"), linhas);
         System.out.println("tse: " + linhas.size() + " candidaturas normalizadas");
+        System.out.println("tse: " + contagemDeRedes.publicados + " endereço(s) de rede ou site declarado(s); "
+                + contagemDeRedes.comDadoPessoal + " fora por telefone, e-mail ou CPF; " + contagemDeRedes.semEndereco
+                + " fora por não ser endereço; " + contagemDeRedes.alemDoLimite + " além do limite de " + LIMITE_DE_REDES
+                + " por candidatura");
+    }
+
+    /** O que entra e o que fica fora dos endereços declarados, para a saída do normalize. */
+    static final class ContagemDeRedes {
+        int publicados;
+        int comDadoPessoal;
+        int semEndereco;
+        int alemDoLimite;
+    }
+
+    /** Redes e sites declarados de cada candidatura coberta, na ordem da fonte e sem repetir endereço (ADR-0031). */
+    static Map<String, List<RedeDeclarada>> redesDeclaradas(Contexto ctx, int ano, Set<String> sqs, ContagemDeRedes contagem) {
+        Map<String, List<RedeDeclarada>> redes = new HashMap<>();
+        Coleta.Arquivo arq = Coleta.metadados(ctx, "tse", "rede_social_candidato_" + ano + ".zip");
+        if (arq == null || !Files.exists(Coleta.caminho(ctx, arq))) {
+            return redes;
+        }
+        Prov prov = Prov.de("tse-cdn", arq.url(), arq);
+        Map<String, List<Map<String, String>>> declarados = new HashMap<>();
+        lerBrasil(Coleta.caminho(ctx, arq), linha -> {
+            if (sqs.contains(linha.get("SQ_CANDIDATO"))) {
+                declarados.computeIfAbsent(linha.get("SQ_CANDIDATO"), k -> new ArrayList<>()).add(linha);
+            }
+        });
+        for (var item : declarados.entrySet()) {
+            List<RedeDeclarada> lista = new ArrayList<>();
+            Set<String> vistos = new HashSet<>();
+            List<Map<String, String>> linhas = item.getValue();
+            linhas.sort(java.util.Comparator.comparingInt(l -> inteiro(l.get("NR_ORDEM_REDE_SOCIAL"), Integer.MAX_VALUE)));
+            for (Map<String, String> linha : linhas) {
+                String bruto = linha.get("DS_URL");
+                if (temDadoPessoal(bruto)) {
+                    contagem.comDadoPessoal++;
+                    continue;
+                }
+                String url = enderecoDeclarado(bruto);
+                if (url == null) {
+                    contagem.semEndereco++;
+                } else if (vistos.add(url.toLowerCase(java.util.Locale.ROOT))) {
+                    lista.add(new RedeDeclarada(rede(url), url, prov));
+                    contagem.publicados++;
+                }
+            }
+            if (lista.size() > LIMITE_DE_REDES) {
+                contagem.alemDoLimite += lista.size() - LIMITE_DE_REDES;
+                contagem.publicados -= lista.size() - LIMITE_DE_REDES;
+                lista = new ArrayList<>(lista.subList(0, LIMITE_DE_REDES));
+            }
+            if (!lista.isEmpty()) {
+                redes.put(item.getKey(), lista);
+            }
+        }
+        return redes;
+    }
+
+    /**
+     * Endereços por candidatura, na ordem declarada. Mediana de 4 e p99 de 15 em 2026-11-06; uma candidatura passava
+     * de 90, a maioria convites de grupo. O limite protege o orçamento de tamanho do perfil (ADR-0001).
+     */
+    static final int LIMITE_DE_REDES = 20;
+
+    /** Domínios das redes mais declaradas. O resto aparece como "Site". */
+    private static final List<Map.Entry<String, List<String>>> REDES = List.of(
+            Map.entry("Instagram", List.of("instagram.com")),
+            Map.entry("Facebook", List.of("facebook.com", "fb.com", "fb.me")),
+            Map.entry("X (Twitter)", List.of("x.com", "twitter.com")),
+            Map.entry("YouTube", List.of("youtube.com", "youtu.be")),
+            Map.entry("TikTok", List.of("tiktok.com")),
+            Map.entry("LinkedIn", List.of("linkedin.com")),
+            Map.entry("Telegram", List.of("t.me", "telegram.me", "telegram.org")),
+            Map.entry("Kwai", List.of("kwai.com")),
+            Map.entry("Threads", List.of("threads.net", "threads.com")),
+            Map.entry("WhatsApp", List.of("whatsapp.com")));
+
+    /** Endereço que leva a telefone ou e-mail: link de Telegram por número, tel:, mailto:, número com DDI. */
+    private static final java.util.regex.Pattern NUMERO_DE_TELEFONE = java.util.regex.Pattern.compile(
+            "(phone=|t\\.me/\\+|tel:|mailto:|(?<![0-9])\\+?55[0-9]{10,11}(?![0-9]))", java.util.regex.Pattern.CASE_INSENSITIVE);
+    private static final java.util.regex.Pattern WHATSAPP = java.util.regex.Pattern.compile(
+            "(wa\\.me|wa\\.link|whatsapp\\.com)", java.util.regex.Pattern.CASE_INSENSITIVE);
+    private static final java.util.regex.Pattern CANAL_DO_WHATSAPP = java.util.regex.Pattern.compile(
+            "(^|[/.])whatsapp\\.com/channel/", java.util.regex.Pattern.CASE_INSENSITIVE);
+    private static final java.util.regex.Pattern DOMINIO = java.util.regex.Pattern.compile(
+            "^(www\\.)?[a-z0-9-]+(\\.[a-z0-9-]+)+(/|$)", java.util.regex.Pattern.CASE_INSENSITIVE);
+
+    /**
+     * Endereço que leva a telefone ou e-mail. No WhatsApp, só o canal não leva: conversa, link curto e convite de grupo
+     * mostram o número, porque quem entra num grupo vê o telefone de quem o administra.
+     */
+    static boolean temDadoPessoal(String bruto) {
+        if (bruto == null) {
+            return false;
+        }
+        if (WHATSAPP.matcher(bruto).find() && !CANAL_DO_WHATSAPP.matcher(bruto).find()) {
+            return true;
+        }
+        return NUMERO_DE_TELEFONE.matcher(bruto).find() || !etl.Guarda.violacoes(bruto).isEmpty();
+    }
+
+    /**
+     * Endereço como o candidato declarou, pronto para publicar, ou null. Sem esquema, ganha https://. Texto que não é
+     * endereço (um "@perfil" solto, por exemplo) fica fora: o site não adivinha a rede. Esquema e domínio vão para
+     * minúsculas, porque não diferenciam maiúsculas (RFC 3986): o arquivo de 2026 traz a maior parte dos endereços todo
+     * em maiúsculas. O caminho fica como a fonte publica.
+     */
+    static String enderecoDeclarado(String bruto) {
+        String t = Texto.vazioParaNulo(bruto);
+        if (t == null || temDadoPessoal(t)) {
+            return null;
+        }
+        t = t.strip();
+        String minusculo = t.toLowerCase(java.util.Locale.ROOT);
+        if (!minusculo.startsWith("http://") && !minusculo.startsWith("https://")) {
+            if (!DOMINIO.matcher(t).find()) {
+                return null;
+            }
+            t = "https://" + t;
+        }
+        if (t.length() > 2048 || t.chars().anyMatch(Character::isWhitespace)) {
+            return null;
+        }
+        try {
+            java.net.URI uri = new java.net.URI(t);
+            String host = uri.getHost();
+            if (host == null || !host.contains(".") || uri.getRawUserInfo() != null) {
+                return null;
+            }
+            String depoisDoDominio = t.substring(t.indexOf("://") + 3 + uri.getRawAuthority().length());
+            return uri.getScheme().toLowerCase(java.util.Locale.ROOT) + "://"
+                    + uri.getRawAuthority().toLowerCase(java.util.Locale.ROOT) + depoisDoDominio;
+        } catch (java.net.URISyntaxException e) {
+            return null;
+        }
+    }
+
+    /** Nome da rede pelo domínio do endereço. */
+    static String rede(String url) {
+        String host = java.net.URI.create(url).getHost().toLowerCase(java.util.Locale.ROOT);
+        for (var rede : REDES) {
+            for (String dominio : rede.getValue()) {
+                if (host.equals(dominio) || host.endsWith("." + dominio)) {
+                    return rede.getKey();
+                }
+            }
+        }
+        return "Site";
     }
 
     /** Lê o CSV com todas as UFs (_BRASIL.csv) dentro do ZIP do TSE. */

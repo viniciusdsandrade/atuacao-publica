@@ -98,6 +98,21 @@
         </li>
       </ul>
 
+      @if (redesDeclaradas(); as declaradas) {
+        <p class="perfil-meta">Redes e sites declarados ao TSE pelo próprio candidato, na eleição de {{ declaradas.eleicao }}:</p>
+        <ul class="perfil-acoes" aria-label="Redes e sites declarados ao TSE">
+          @for (r of declaradas.redes; track r.url) {
+            <li>
+              <a class="botao botao--pequeno botao--discreto" [href]="r.url" rel="noopener noreferrer" target="_blank">
+                {{ rotuloDaRede(r) }}
+                <app-icone nome="externo" [pequeno]="true" />
+                <span class="sr-only">({{ r.url }}, abre em nova aba)</span>
+              </a>
+            </li>
+          }
+        </ul>
+      }
+
       <p class="perfil-meta">
         <span>Situação na fonte: <strong>{{ p.situacao ?? semRegistro }}</strong></span>
         <span>Perfil gerado em {{ data(p.atualizado_em) }}.</span>
