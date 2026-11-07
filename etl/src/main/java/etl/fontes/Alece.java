@@ -21,13 +21,16 @@ import etl.Contexto;
 import etl.Fonte;
 import etl.Guarda;
 import etl.Json;
+import etl.Planilha;
 import etl.Registros;
 import etl.Registros.Despesa;
 import etl.Registros.LinkOficial;
 import etl.Registros.Mandato;
 import etl.Registros.OrgaoOuFrente;
+import etl.Registros.Participacao;
 import etl.Registros.Pessoa;
 import etl.Registros.Prov;
+import etl.Registros.Voto;
 import etl.Texto;
 
 /**
@@ -47,6 +50,8 @@ public final class Alece implements Fonte {
     public static final String URL_DESPESAS = "https://transparencia.al.ce.gov.br/despesas/verba-desempenho-parlamentar/csv";
     /** A fonte não classifica a despesa: a descrição do empenho é texto livre. A categoria é o nome da verba. */
     public static final String CATEGORIA_DESPESAS = "Verba de desempenho parlamentar";
+    public static final String FONTE_VOTACOES = "alece-votacoes";
+    public static final String URL_VOTACOES = "https://transparencia.al.ce.gov.br/consultas-gerais/votacao-nominal";
     /** Primeiro ano das despesas: a 31ª legislatura começa em 2023. */
     static final int PRIMEIRO_ANO_DESPESAS = 2023;
 
@@ -123,6 +128,150 @@ public final class Alece implements Fonte {
                         Politica.porAnoSemanal(ano, ctx.hoje()));
             }
         }
+
+        // Votações nominais: a lista traz a data e a planilha de cada matéria. Planilha publicada não muda.
+        Coleta.Arquivo lista = coleta.obterOpcional(URL_VOTACOES, "votacoes/lista.html", "text/html", Politica.SEMANAL);
+        if (lista != null && lista.bytes() > 0 && Files.exists(Coleta.caminho(ctx, lista))) {
+            for (VotacaoListada v : votacoesDaLista(Texto.lerArquivo(Coleta.caminho(ctx, lista)))) {
+                coleta.obterOpcional(v.planilha(), arquivoDaPlanilha(v.planilha()),
+                        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", Politica.SE_AUSENTE);
+            }
+        }
+    }
+
+    /** Votação nominal da lista pública: sessão, data, matéria e endereço da planilha com os votos. */
+    public record VotacaoListada(String sessao, LocalDate data, String materia, String planilha) {
+    }
+
+    /** Voto de um deputado listado na planilha; {@code voto} nulo quando nenhuma coluna está marcada. */
+    public record VotoNaPlanilha(String deputado, String partido, String voto) {
+    }
+
+    private static final Pattern LINHA_DA_LISTA = Pattern.compile(
+            "<tr>\\s*<td[^>]*>([^<]*)</td>\\s*<td[^>]*>([^<]*)</td>\\s*<td[^>]*>([^<]*)</td>\\s*<td[^>]*>\\s*(\\d{2}/\\d{2}/\\d{4})\\s*</td>"
+                    + "\\s*<td[^>]*>(.*?)</td>\\s*<td[^>]*>(.*?)</td>\\s*</tr>", Pattern.DOTALL);
+    private static final Pattern PLANILHA = Pattern.compile("href=\"(https://[^\"]+/votacao_nominal_materia_csv/[^\"]+\\.xlsx)\"");
+
+    /** Linhas da lista de votações nominais que têm planilha. */
+    public static List<VotacaoListada> votacoesDaLista(String html) {
+        List<VotacaoListada> lista = new ArrayList<>();
+        Matcher m = LINHA_DA_LISTA.matcher(html);
+        while (m.find()) {
+            Matcher planilha = PLANILHA.matcher(m.group(6));
+            if (!planilha.find()) {
+                continue;
+            }
+            String materia = Texto.semEntidades(m.group(5).replaceAll("<[^>]+>", " ")).replaceAll("\\s+", " ").strip();
+            lista.add(new VotacaoListada(Texto.semEntidades(m.group(3)).strip(),
+                    LocalDate.parse(m.group(4), java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy")), materia, planilha.group(1)));
+        }
+        return lista;
+    }
+
+    /**
+     * Votos de uma planilha: um por deputado listado. O cabeçalho "DEPUTADOS" e a linha de baixo dizem a coluna de
+     * SIM, NÃO e ABSTENÇÃO; a marca de presença ou voto remoto, "(P)" ou "(V)", não entra.
+     */
+    public static List<VotoNaPlanilha> votosDaPlanilha(List<Map<String, String>> linhas) {
+        List<VotoNaPlanilha> votos = new ArrayList<>();
+        Map<String, String> rotuloPorColuna = new HashMap<>();
+        boolean cabecalho = false;
+        for (Map<String, String> linha : linhas) {
+            if (!cabecalho) {
+                if ("DEPUTADOS".equalsIgnoreCase(linha.getOrDefault("B", ""))) {
+                    cabecalho = true;
+                }
+                continue;
+            }
+            if (rotuloPorColuna.isEmpty()) {
+                for (var celula : linha.entrySet()) {
+                    String rotulo = Texto.normalizarNome(celula.getValue());
+                    if (rotulo.equals("SIM") || rotulo.equals("NAO") || rotulo.equals("ABSTENCAO")) {
+                        rotuloPorColuna.put(celula.getKey(), rotulo.equals("SIM") ? "Sim" : rotulo.equals("NAO") ? "Não" : "Abstenção");
+                    }
+                }
+                if (!rotuloPorColuna.isEmpty()) {
+                    continue;
+                }
+            }
+            String deputado = linha.get("B");
+            if (deputado == null || !linha.getOrDefault("A", "").matches("\\d+")) {
+                continue;
+            }
+            String voto = null;
+            for (var coluna : rotuloPorColuna.entrySet()) {
+                if (linha.containsKey(coluna.getKey())) {
+                    voto = coluna.getValue();
+                }
+            }
+            votos.add(new VotoNaPlanilha(deputado, linha.get("C"), voto));
+        }
+        return votos;
+    }
+
+    private static String arquivoDaPlanilha(String url) {
+        return "votacoes/" + url.substring(url.lastIndexOf('/') + 1);
+    }
+
+    /** Votos e participação por ano de cada deputado em exercício, pelas planilhas em cache. */
+    private record Votacoes(Map<String, List<Voto>> votos, Map<String, List<Participacao>> participacao, Prov provLista) {
+    }
+
+    private Votacoes votacoesPorSlug(Contexto ctx, List<DeputadoBruto> deputados) {
+        Map<String, String> slugPorNome = new HashMap<>();
+        for (DeputadoBruto d : deputados) {
+            slugPorNome.put(chaveDoNome(formatarNome(d.nome())), d.slug());
+        }
+        Map<String, List<Voto>> votos = new HashMap<>();
+        Map<String, Map<Integer, int[]>> contagem = new HashMap<>();
+        Map<String, Map<Integer, Map<String, Integer>>> porTipo = new HashMap<>();
+        Coleta.Arquivo arqLista = Coleta.metadados(ctx, nome(), "votacoes/lista.html");
+        if (arqLista == null || arqLista.bytes() == 0 || !Files.exists(Coleta.caminho(ctx, arqLista))) {
+            return new Votacoes(votos, Map.of(), null);
+        }
+        Prov provLista = Prov.de(FONTE_VOTACOES, URL_VOTACOES, arqLista);
+        int semPerfil = 0;
+        try {
+            for (VotacaoListada v : votacoesDaLista(Texto.lerArquivo(Coleta.caminho(ctx, arqLista)))) {
+                Coleta.Arquivo arq = Coleta.metadados(ctx, nome(), arquivoDaPlanilha(v.planilha()));
+                if (arq == null || arq.bytes() == 0 || !Files.exists(Coleta.caminho(ctx, arq))) {
+                    continue;
+                }
+                Prov prov = Prov.de(FONTE_VOTACOES, v.planilha(), arq);
+                String numero = v.materia().contains(" - ") ? v.materia().substring(0, v.materia().indexOf(" - ")).strip() : null;
+                for (VotoNaPlanilha voto : votosDaPlanilha(Planilha.linhas(Files.readAllBytes(Coleta.caminho(ctx, arq))))) {
+                    String slug = slugPorNome.get(chaveDoNome(voto.deputado()));
+                    if (slug == null) {
+                        semPerfil++;
+                        continue;
+                    }
+                    String texto = voto.voto() == null ? "Sem voto registrado" : voto.voto();
+                    votos.computeIfAbsent(slug, k -> new ArrayList<>()).add(new Voto(arquivoDaPlanilha(v.planilha()).replace("votacoes/", "").replace(".xlsx", ""),
+                            v.data().toString(), "PLEN", numero, v.materia(), texto, voto.partido(), null, null, null, prov));
+                    int[] n = contagem.computeIfAbsent(slug, k -> new HashMap<>()).computeIfAbsent(v.data().getYear(), k -> new int[2]);
+                    n[0]++;
+                    if (voto.voto() != null) {
+                        n[1]++;
+                    }
+                    porTipo.computeIfAbsent(slug, k -> new HashMap<>()).computeIfAbsent(v.data().getYear(), k -> new java.util.TreeMap<>())
+                            .merge(texto, 1, Integer::sum);
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("alece: erro ao ler votações nominais: " + e.getMessage());
+        }
+        Map<String, List<Participacao>> participacao = new HashMap<>();
+        for (var porDeputado : contagem.entrySet()) {
+            for (var ano : new java.util.TreeMap<>(porDeputado.getValue()).entrySet()) {
+                participacao.computeIfAbsent(porDeputado.getKey(), k -> new ArrayList<>()).add(new Participacao(
+                        String.valueOf(ano.getKey()), ano.getValue()[0], ano.getValue()[1], ano.getValue()[0] - ano.getValue()[1],
+                        porTipo.get(porDeputado.getKey()).get(ano.getKey()), provLista));
+            }
+        }
+        int total = votos.values().stream().mapToInt(List::size).sum();
+        System.out.println("alece: " + total + " votos nominais em " + votos.size() + " deputados; " + semPerfil
+                + " linhas de quem não tem perfil em exercício");
+        return new Votacoes(votos, participacao, provLista);
     }
 
     static String urlDespesas(int ano, int mes) {
@@ -238,6 +387,7 @@ public final class Alece implements Fonte {
         List<Pessoa> pessoas = new ArrayList<>();
         Map<String, List<OrgaoOuFrente>> comissoesPorSlug = extrairComissoes(ctx);
         Map<String, List<Despesa>> despesasPorSlug = despesasPorSlug(ctx, deputados);
+        Votacoes votacoes = votacoesPorSlug(ctx, deputados);
 
         for (DeputadoBruto d : deputados) {
             String slug = d.slug();
@@ -268,6 +418,8 @@ public final class Alece implements Fonte {
             blocosNode.set("mandatos", Json.SAIDA.valueToTree(mandatos));
             blocosNode.set("orgaos_e_frentes", Json.SAIDA.valueToTree(orgaos));
             blocosNode.set("despesas", Json.SAIDA.valueToTree(despesasPorSlug.getOrDefault(slug, List.of())));
+            blocosNode.set("votos", Json.SAIDA.valueToTree(votacoes.votos().getOrDefault(slug, List.of())));
+            blocosNode.set("participacao_votacoes", Json.SAIDA.valueToTree(votacoes.participacao().getOrDefault(slug, List.of())));
             blocosNode.set("fontes", Json.SAIDA.valueToTree(Registros.fontesDosBlocos(blocosNode)));
             Json.gravar(pastaBlocos.resolve(slug + ".json"), blocosNode);
         }

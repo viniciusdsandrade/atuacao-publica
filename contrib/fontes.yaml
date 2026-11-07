@@ -1745,6 +1745,21 @@
   status: validado
   validado_em: 2026-11-07
 
+- id: alece-votacoes
+  nome: Assembleia Legislativa do Estado do Ceará, votações nominais em plenário
+  orgao: Assembleia Legislativa do Estado do Ceará
+  esfera: estadual
+  ente: CE
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://transparencia.al.ce.gov.br/consultas-gerais/votacao-nominal
+  formato: HTML e XLSX
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Só as matérias com votação nominal publicada (61 de 2023 a 2026). Uma planilha por matéria, com o voto de cada deputado pelo nome parlamentar; nome sem perfil em exercício fica fora. Deputado listado sem voto marcado vira sem voto registrado. A marca de voto presencial ou remoto não entra."
+  status: validado
+  validado_em: 2026-11-07
+
 - id: alesc-deputados
   nome: Assembleia Legislativa do Estado de Santa Catarina, deputados estaduais
   orgao: Assembleia Legislativa do Estado de Santa Catarina

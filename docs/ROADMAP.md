@@ -99,7 +99,7 @@ Estado da publicação de 2026-11-07, às 01:58 UTC, com 1.867 perfis. "Perfis" 
 | ALBA (BA) | ok | 63 | 63 | comissões |
 | ALERJ (RJ) | ok | 70 | 70 | despesas a partir da próxima publicação |
 | ALRS (RS) | falha: rede bloqueada | 0 | - | - |
-| ALECE (CE) | ok | 54 | 51 | comissões; despesas a partir da próxima publicação |
+| ALECE (CE) | ok | 54 | 51 | comissões; despesas e votações nominais a partir da próxima publicação |
 | ALESC (SC) | ok | 40 | 40 | despesas e comissões |
 | ALEGO (GO) | parcial | 43 | 43 | comissões e frentes e despesas; 17 arquivos mensais ficaram para a próxima execução |
 | ALES (ES) | falha: rede bloqueada | 0 | - | - |
@@ -332,14 +332,15 @@ Verificação de 2026-11-02, com scripts locais (Playwright e axe-core, fora do 
     - A primeira varredura achou dois defeitos reais, já corrigidos: o nome acessível do botão de tema não continha o texto visível (WCAG 2.5.3) e a tabela rolável de `/dados-abertos` não tinha foco por teclado (WCAG 2.1.1).
 23. Fontes de atuação das assembleias: levantamento de 2026-11-06, ainda sem adaptador.
     - Cada endereço respondeu a requisição real no levantamento. O acesso a partir do exterior só foi testado onde a tabela diz.
-    - Sugestão de ordem: votações da ALECE, proposições da ALMG.
+    - Sugestão de ordem: proposições da ALMG.
+    - Votações da ALECE: implementadas em 2026-11-07 (`alece-votacoes`), com a lista pública e uma planilha XLSX por matéria. No ensaio local, 2.427 votos de 61 votações nos 54 deputados, com participação por ano.
     - Proposições da ALEP: implementadas em 2026-11-07, pela API pública (`alep-proposicoes`), que só aceita o filtro no corpo de um POST. O `Coleta` ganhou `obterPostOpcional` para isso. No ensaio local, 24.238 autorias nos 54 deputados.
     - Votações da ALEP: os XLSX por sessão estão abertos, mas trazem o parlamentar pelo nome civil. A ALEP não publica a correspondência com o nome parlamentar, então ficam sem adaptador.
 
     | Casa | Despesas | Proposições com autor | Votações nominais |
     |---|---|---|---|
     | ALERJ | implementado em 2026-11-07 | o sistema Domino recusa parâmetros de listagem | não encontrado |
-    | ALECE | implementado em 2026-11-07 | HTML paginado, de 350 a 450 páginas | XLSX por matéria, 61 de 2023 a 2026. Respondeu da Azure |
+    | ALECE | implementado em 2026-11-07 | HTML paginado, de 350 a 450 páginas | implementado em 2026-11-07 |
     | ALEGO | implementado em 2026-11-06 | API NoPaper, autor por nome | JSON anual. Parlamentar só por nome, com grafia irregular |
     | ALEP | bloqueado por reCAPTCHA | implementado em 2026-11-07 | ZIP por sessão, sem CAPTCHA, mas o voto vem pelo nome civil, sem correspondência oficial com o perfil |
     | ALMG | implementado; coleta bloqueada no CI | CSV anual, com o id do autor igual ao do perfil | só em texto livre na tramitação |

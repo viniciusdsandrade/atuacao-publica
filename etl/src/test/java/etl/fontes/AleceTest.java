@@ -33,6 +33,42 @@ class AleceTest {
             + "DEP. FULANA DE TAL - SERVICOS POSTAIS;05/2025;2025NE000004;POSTAGEM;11.222.333/0001-81;CORREIO EXEMPLO;20,00\n";
 
     @Test
+    void listaDeVotacoesTrazDataMateriaEPlanilha() {
+        String html = "<tr> <td> 31.ª LEGISLATURA </td> <td> 4.ª SESSÃO LEGISLATIVA </td> <td> 85.ª SESSÃO ORDINÁRIA </td>"
+                + " <td> 03/11/2026 </td> <td> 92/2026 - Autoria do Poder Executivo - Autoriza transferência. </td>"
+                + " <td> <a href=\"https://transparencia.al.ce.gov.br/uploads/votacao_nominal_materia/abc.pdf\"></a>"
+                + " <a href=\"https://transparencia.al.ce.gov.br/uploads/votacao_nominal_materia_csv/abc.xlsx\"></a> </td> </tr>";
+
+        List<Alece.VotacaoListada> lista = Alece.votacoesDaLista(html);
+
+        assertEquals(1, lista.size());
+        assertEquals(java.time.LocalDate.of(2026, 11, 3), lista.getFirst().data());
+        assertEquals("85.ª SESSÃO ORDINÁRIA", lista.getFirst().sessao());
+        assertEquals("92/2026 - Autoria do Poder Executivo - Autoriza transferência.", lista.getFirst().materia());
+        assertEquals("https://transparencia.al.ce.gov.br/uploads/votacao_nominal_materia_csv/abc.xlsx", lista.getFirst().planilha());
+    }
+
+    @Test
+    void planilhaDeVotosDizOVotoPelaColunaMarcada() {
+        List<Map<String, String>> linhas = List.of(
+                Map.of("A", "RELATÓRIO"),
+                Map.of("A", "Nº", "B", "DEPUTADOS", "C", "PARTIDOS", "D", "VOTAÇÃO"),
+                Map.of("D", "SIM", "E", "NÃO", "F", "ABSTENÇÃO"),
+                Map.of("A", "1", "B", "FULANA DE TAL", "C", "AAA", "D", "SIM (P)"),
+                Map.of("A", "2", "B", "SICRANO", "C", "BBB", "E", "NÃO (V)"),
+                Map.of("A", "3", "B", "BELTRANA", "C", "CCC"));
+
+        List<Alece.VotoNaPlanilha> votos = Alece.votosDaPlanilha(linhas);
+
+        assertEquals(3, votos.size());
+        assertEquals("Sim", votos.get(0).voto());
+        assertEquals("AAA", votos.get(0).partido());
+        assertEquals("Não", votos.get(1).voto());
+        // Deputado listado sem coluna marcada: sem voto registrado.
+        assertEquals(null, votos.get(2).voto());
+    }
+
+    @Test
     void verbaDoMesGuardaSoCnpjEDescartaNomeSemPerfil() {
         Prov prov = new Prov(Alece.FONTE_DESPESAS, Alece.urlDespesas(2025, 5), Instant.parse("2026-11-06T12:00:00Z"));
         int[] descartes = {0};

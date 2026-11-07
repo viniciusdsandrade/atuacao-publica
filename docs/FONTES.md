@@ -721,6 +721,16 @@ Validação em 2026-11-03 com o User-Agent do projeto.
 - Na validação: 15.444 lançamentos de 2023 a 2026 nos 54 deputados em exercício, 80% com CNPJ. 1.657 linhas de quem não está em exercício, ou com nome digitado errado, ficaram fora. 673 lançamentos negativos (estornos) entram como vieram.
 - O servidor responde 403 ao User-Agent padrão do curl e 200 ao do projeto. Respondeu a provas nos EUA (Azure e AWS) e no Brasil.
 
+### `alece-votacoes`: votações nominais
+
+- URL base: `https://transparencia.al.ce.gov.br/consultas-gerais/votacao-nominal`. Validação em 2026-11-07.
+- A página lista, numa tabela, legislatura, sessão, data (dd/mm/aaaa) e matéria de cada votação nominal, com um PDF e uma planilha XLSX (`/uploads/votacao_nominal_materia_csv/{id}.xlsx`). O índice em CSV (`votacaoNominalcsv`) não traz a data.
+- A planilha traz sessão, presidente e matéria no topo e depois uma linha por deputado: número, nome parlamentar, partido e o voto marcado numa das colunas SIM, NÃO e ABSTENÇÃO. A marca "(P)" ou "(V)" junto ao voto não entra.
+- Deputado listado sem coluna marcada vira "Sem voto registrado" e conta na participação como votação sem registro.
+- O vínculo usa a mesma chave de nome das despesas (`alece-despesas`).
+- Na validação: 61 votações de 2023 a 2026 e 2.427 votos nos 54 deputados em exercício. 377 linhas de quem não está em exercício ficaram fora.
+- O ETL lê a planilha com `Planilha.java`: só a primeira aba, sem DTD nem entidade externa.
+
 ### `ce-transparencia` e `ce-diario-oficial`: Executivo estadual
 
 - Transparência orçamentária: `https://transparencia.ce.gov.br/`
