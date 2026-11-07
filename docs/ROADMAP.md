@@ -98,7 +98,7 @@ Estado da publicação de 2026-11-06, às 23:51 UTC, com 1.867 perfis. "Perfis" 
 | ALBA (BA) | ok | 63 | 63 | comissões |
 | ALERJ (RJ) | ok | 70 | 70 | nenhum |
 | ALRS (RS) | falha: rede bloqueada | 0 | - | - |
-| ALECE (CE) | ok | 54 | 51 | comissões |
+| ALECE (CE) | ok | 54 | 51 | comissões; despesas a partir da próxima publicação |
 | ALESC (SC) | ok | 40 | 40 | despesas e comissões |
 | ALEGO (GO) | ok | 43 | 43 | comissões e frentes; despesas a partir da próxima publicação |
 | ALES (ES) | falha: rede bloqueada | 0 | - | - |
@@ -295,13 +295,15 @@ Verificação de 2026-11-02, com scripts locais (Playwright e axe-core, fora do 
 19. Dumps de dados abertos: concluído em 2026-11-06.
     - O `publish` gera `politicos.csv` (todos), `politicos-federal.csv` e `politicos-{uf}.csv`, com um manifest JSON de metadados e contagens. O comando `dumps` refaz os arquivos a partir do `index.json` existente.
     - Rota `/dados-abertos` no site, com downloads diretos, dicionário de dados, citação e a licença CC BY 4.0.
-20. Despesas das assembleias estaduais: concluído em 2026-11-06 para a ALESC e a ALEGO. A ALEP está bloqueada por CAPTCHA, e a ALERJ segue sem adaptador (ver item 23).
+20. Despesas das assembleias estaduais: concluído em 2026-11-06 para a ALESC e a ALEGO, e em 2026-11-07 para a ALECE. A ALEP está bloqueada por CAPTCHA, e a ALERJ segue sem adaptador (ver item 23).
     - Fonte `alesc-despesas`: demonstrativos anuais em CSV (2023 a 2026), catalogada em `contrib/fontes.yaml` e `docs/FONTES.md`.
     - Adaptador `Alesc.java` (`AlescTest.java`): 50.169 lançamentos de 2023 a 2026 vinculados aos 40 deputados em exercício, todos com despesas. Cada lançamento traz categoria, favorecido, data de referência e valor. Estorno (valor negativo) entra como veio.
     - Privacidade: a sequência de 11 dígitos do favorecido MEI é removida.
     - Fonte `alego-despesas`: verba indenizatória mensal em JSON, com um detalhe por deputado e mês, de 2023 a 2026. O id do deputado na transparência é o mesmo do perfil.
     - Adaptador `Alego.java` (`AlegoTest.java`): no ensaio local de 2026-11-06, 51.156 lançamentos nos 43 deputados em exercício, 96,6% com o CNPJ do fornecedor. Entra o valor indenizado, com a data do documento. CPF de prestador pessoa física é descartado.
     - A primeira carga tem cerca de 1.800 requisições e leva mais de uma execução do CI. O cache incremental continua de onde parou.
+    - Fonte `alece-despesas`: verba de desempenho parlamentar em CSV mensal, de 2023 a 2026. O deputado vem pelo nome, e o vínculo ignora acento e pontuação.
+    - Adaptador `Alece.java` (`AleceTest.java`): no ensaio local de 2026-11-07, 15.444 lançamentos nos 54 deputados em exercício, 80% com CNPJ. A descrição do empenho é texto livre e não entra; a categoria é o nome da verba. 1.657 linhas de quem não está em exercício ficaram fora.
     - ALEP e ALERJ: ver "Limitações conhecidas".
 21. Segundo município piloto: São Paulo (capital), Câmara Municipal e Prefeitura (ADR-0027): concluído em 2026-11-06.
     - Fontes catalogadas e validadas em `docs/FONTES.md`: serviço SPLegisWS da CMSP (`cmsp-splegisws`), portal institucional (`cmsp-portal`) e Portal da Transparência da Prefeitura (`sp-capital-transparencia`).
@@ -318,12 +320,12 @@ Verificação de 2026-11-02, com scripts locais (Playwright e axe-core, fora do 
     - A primeira varredura achou dois defeitos reais, já corrigidos: o nome acessível do botão de tema não continha o texto visível (WCAG 2.5.3) e a tabela rolável de `/dados-abertos` não tinha foco por teclado (WCAG 2.1.1).
 23. Fontes de atuação das assembleias: levantamento de 2026-11-06, ainda sem adaptador.
     - Cada endereço respondeu a requisição real no levantamento. O acesso a partir do exterior só foi testado onde a tabela diz.
-    - Sugestão de ordem: despesas da ALERJ, despesas e votações da ALECE, votações da ALEP.
+    - Sugestão de ordem: despesas da ALERJ, votações da ALECE, votações da ALEP.
 
     | Casa | Despesas | Proposições com autor | Votações nominais |
     |---|---|---|---|
     | ALERJ | API do DOCIGP, com fornecedor e o id do perfil. Do exterior, só a Azure recebeu resposta | o sistema Domino recusa parâmetros de listagem | não encontrado |
-    | ALECE | CSV mensal da verba de desempenho parlamentar, com credor e CNPJ. Deputado por nome. Respondeu da Azure | HTML paginado, de 350 a 450 páginas | XLSX por matéria, 61 de 2023 a 2026. Respondeu da Azure |
+    | ALECE | implementado em 2026-11-07 | HTML paginado, de 350 a 450 páginas | XLSX por matéria, 61 de 2023 a 2026. Respondeu da Azure |
     | ALEGO | implementado em 2026-11-06 | API NoPaper, autor por nome | JSON anual. Parlamentar só por nome, com grafia irregular |
     | ALEP | bloqueado por reCAPTCHA | API documentada, autor em texto | ZIP por sessão, sem CAPTCHA, com um XLSX por item |
     | ALMG | implementado; coleta bloqueada no CI | CSV anual, com o id do autor igual ao do perfil | só em texto livre na tramitação |

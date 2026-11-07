@@ -1700,6 +1700,21 @@
   status: validado
   validado_em: 2026-11-05
 
+- id: alece-despesas
+  nome: Assembleia Legislativa do Estado do Ceará, verba de desempenho parlamentar
+  orgao: Assembleia Legislativa do Estado do Ceará
+  esfera: estadual
+  ente: CE
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://transparencia.al.ce.gov.br/despesas/verba-desempenho-parlamentar/csv
+  formato: CSV
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Cobre 2023 a 2026, só deputados em exercício, vinculados pelo nome. Nome sem perfil é descartado. A descrição do empenho é texto livre e não entra. CPF de pessoa física é descartado, e CPF no nome do credor é removido. Estorno (valor negativo) entra como veio."
+  status: validado
+  validado_em: 2026-11-07
+
 - id: alesc-deputados
   nome: Assembleia Legislativa do Estado de Santa Catarina, deputados estaduais
   orgao: Assembleia Legislativa do Estado de Santa Catarina

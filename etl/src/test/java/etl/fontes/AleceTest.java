@@ -17,11 +17,48 @@ import org.junit.jupiter.api.io.TempDir;
 import etl.Coleta;
 import etl.Contexto;
 import etl.Json;
+import etl.Registros.Despesa;
 import etl.Registros.OrgaoOuFrente;
 import etl.Registros.Prov;
 import tools.jackson.databind.JsonNode;
 
 class AleceTest {
+
+    /** CSV sintético da verba de desempenho parlamentar, na forma da fonte: linha inicial vazia com BOM e cabeçalho. */
+    private static final String VERBA = "﻿;;;\n"
+            + "DEPUTADO;PERIODO;EMPENHO;DESCRICAO;CNPJ;CREDOR;VALOR\n"
+            + "DEP FULANA DE TAL;05/2025;2025NE000001;SERVICOS DE CONSULTORIA;11.222.333/0001-81;EMPRESA EXEMPLO LTDA;10.000,00\n"
+            + "DEP FULANA DE TAL;05/2025;2025NE000002;REEMBOLSO; INTERNET;123.456.789-01;FULANA DE TAL SILVA;109,75\n"
+            + "DEP SEM PERFIL;05/2025;2025NE000003;COMBUSTIVEL;11.222.333/0001-81;POSTO EXEMPLO;50,00\n"
+            + "DEP. FULANA DE TAL - SERVICOS POSTAIS;05/2025;2025NE000004;POSTAGEM;11.222.333/0001-81;CORREIO EXEMPLO;20,00\n";
+
+    @Test
+    void verbaDoMesGuardaSoCnpjEDescartaNomeSemPerfil() {
+        Prov prov = new Prov(Alece.FONTE_DESPESAS, Alece.urlDespesas(2025, 5), Instant.parse("2026-11-06T12:00:00Z"));
+        int[] descartes = {0};
+
+        Map<String, List<Despesa>> porSlug = Alece.despesasDoMes(VERBA, Map.of("FULANA DE TAL", "fulana-de-tal"), prov, descartes);
+
+        List<Despesa> despesas = porSlug.get("fulana-de-tal");
+        // O complemento " - SERVICOS POSTAIS" junto ao nome não impede o vínculo.
+        assertEquals(3, despesas.size());
+        assertEquals("FULANA DE TAL", Alece.chaveDoNome("DEP. FULANA DE TAL."));
+        assertEquals("DRA SILVANA", Alece.chaveDoNome("Dra. Silvana"));
+        assertEquals("DRA SILVANA", Alece.chaveDoNome("DEP DRA SILVANA POR SOLICITACAO DA DEPUTADA"));
+        Despesa consultoria = despesas.get(0);
+        assertEquals(2025, consultoria.ano());
+        assertEquals(5, consultoria.mes());
+        assertEquals(Alece.CATEGORIA_DESPESAS, consultoria.categoria());
+        assertEquals("11222333000181", consultoria.fornecedorCnpj());
+        assertEquals(new java.math.BigDecimal("10000.00"), consultoria.valor());
+        assertEquals("2025NE000001", consultoria.documentoNumero());
+        // Um ";" na descrição não desloca o valor; o CPF do reembolso não fica.
+        Despesa reembolso = despesas.get(1);
+        assertEquals(new java.math.BigDecimal("109.75"), reembolso.valor());
+        assertEquals(null, reembolso.fornecedorCnpj());
+        assertEquals(1, descartes[0]);
+        assertEquals("https://transparencia.al.ce.gov.br/despesas/verba-desempenho-parlamentar/csv?mes=05&ano=2025", prov.urlOrigem());
+    }
 
     @Test
     void formataNomeComPreposicoesEMaiusculas() {

@@ -1,5 +1,6 @@
 package etl.fontes;
 
+import java.math.BigDecimal;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDate;
@@ -18,8 +19,10 @@ import etl.Coleta;
 import etl.Coleta.Politica;
 import etl.Contexto;
 import etl.Fonte;
+import etl.Guarda;
 import etl.Json;
 import etl.Registros;
+import etl.Registros.Despesa;
 import etl.Registros.LinkOficial;
 import etl.Registros.Mandato;
 import etl.Registros.OrgaoOuFrente;
@@ -40,6 +43,12 @@ public final class Alece implements Fonte {
 
     public static final String SITE = "https://www.al.ce.gov.br";
     public static final String UF = "CE";
+    public static final String FONTE_DESPESAS = "alece-despesas";
+    public static final String URL_DESPESAS = "https://transparencia.al.ce.gov.br/despesas/verba-desempenho-parlamentar/csv";
+    /** A fonte não classifica a despesa: a descrição do empenho é texto livre. A categoria é o nome da verba. */
+    public static final String CATEGORIA_DESPESAS = "Verba de desempenho parlamentar";
+    /** Primeiro ano das despesas: a 31ª legislatura começa em 2023. */
+    static final int PRIMEIRO_ANO_DESPESAS = 2023;
 
     public static final LocalDate INICIO_LEG_31 = LocalDate.of(2023, 2, 1);
     public static final LocalDate FIM_LEG_31 = LocalDate.of(2027, 1, 31);
@@ -105,6 +114,107 @@ public final class Alece implements Fonte {
             String url = SITE + "/comissoes-permanentes/" + comSlug + "/composicao";
             coleta.obterOuVazio(url, "comissoes/" + comSlug + ".html", "text/html", Politica.SEMANAL);
         }
+
+        // Verba de desempenho parlamentar: um CSV por mês. O mês precisa de dois dígitos, ou o CSV vem vazio.
+        for (int ano = PRIMEIRO_ANO_DESPESAS; ano <= ctx.hoje().getYear(); ano++) {
+            int ultimoMes = ano == ctx.hoje().getYear() ? ctx.hoje().getMonthValue() : 12;
+            for (int mes = 1; mes <= ultimoMes; mes++) {
+                coleta.obterOpcional(urlDespesas(ano, mes), arquivoDeDespesas(ano, mes), "text/csv",
+                        Politica.porAnoSemanal(ano, ctx.hoje()));
+            }
+        }
+    }
+
+    static String urlDespesas(int ano, int mes) {
+        return String.format(Locale.ROOT, "%s?mes=%02d&ano=%d", URL_DESPESAS, mes, ano);
+    }
+
+    private static String arquivoDeDespesas(int ano, int mes) {
+        return String.format(Locale.ROOT, "despesas/%d-%02d.csv", ano, mes);
+    }
+
+    /**
+     * Lançamentos de um mês da verba (DEPUTADO;PERIODO;EMPENHO;DESCRICAO;CNPJ;CREDOR;VALOR), por slug do deputado.
+     * O deputado vem pelo nome ("DEP FULANO"); nome sem perfil em exercício fica fora e entra na contagem de descartes.
+     * Só fica CNPJ de 14 dígitos: o CPF de pessoa física, inclusive o do próprio deputado no reembolso, sai.
+     */
+    public static Map<String, List<Despesa>> despesasDoMes(String csv, Map<String, String> slugPorNome, Prov prov, int[] descartes) {
+        Map<String, List<Despesa>> porSlug = new HashMap<>();
+        boolean cabecalho = false;
+        for (String linha : csv.split("\\R")) {
+            String limpa = linha.replace("﻿", "").strip();
+            if (!cabecalho) {
+                cabecalho = limpa.startsWith("DEPUTADO;");
+                continue;
+            }
+            String[] partes = limpa.split(";", -1);
+            if (partes.length < 7) {
+                continue;
+            }
+            // Três campos pela esquerda e três pela direita: um ";" na descrição não desloca o valor.
+            String deputado = partes[0].strip();
+            String periodo = partes[1].strip();
+            String empenho = partes[2].strip();
+            String documento = partes[partes.length - 3].replaceAll("\\D", "");
+            String credor = partes[partes.length - 2].strip();
+            BigDecimal valor = Texto.valor(partes[partes.length - 1]);
+            Matcher mPeriodo = PERIODO_PATTERN.matcher(periodo);
+            if (valor == null || !mPeriodo.matches()) {
+                continue;
+            }
+            String slug = slugPorNome.get(chaveDoNome(deputado));
+            if (slug == null) {
+                descartes[0]++;
+                continue;
+            }
+            porSlug.computeIfAbsent(slug, k -> new ArrayList<>()).add(new Despesa(null, Integer.parseInt(mPeriodo.group(2)),
+                    Integer.parseInt(mPeriodo.group(1)), CATEGORIA_DESPESAS, Guarda.semCpf(credor),
+                    documento.length() == 14 ? documento : null, valor, empenho.isEmpty() ? null : empenho, null, prov));
+        }
+        return porSlug;
+    }
+
+    private static final Pattern PERIODO_PATTERN = Pattern.compile("(\\d{2})/(\\d{4})");
+
+    /**
+     * Chave de vínculo pelo nome: sem o "DEP" da verba, sem pontuação ("Dra." e "DRA" casam) e sem o complemento que a
+     * fonte às vezes junta ao nome (" - SERVICOS POSTAIS", " POR SOLICITACAO DO DEPUTADO"). Erro de digitação não casa.
+     */
+    static String chaveDoNome(String nome) {
+        String texto = nome.replace("﻿", "").replaceFirst("^(?i)DEP\\.?\\s+", "");
+        texto = texto.replaceFirst("\\s+-\\s+.*$", "").replaceFirst("(?i)\\s+POR SOLICITA.*$", "");
+        return Texto.normalizarNome(texto.replaceAll("[^\\p{L}\\s]", " "));
+    }
+
+    /** Despesas de cada deputado em exercício, pelos CSVs mensais em cache. */
+    private Map<String, List<Despesa>> despesasPorSlug(Contexto ctx, List<DeputadoBruto> deputados) {
+        Map<String, String> slugPorNome = new HashMap<>();
+        for (DeputadoBruto d : deputados) {
+            slugPorNome.put(chaveDoNome(formatarNome(d.nome())), d.slug());
+        }
+        Map<String, List<Despesa>> porSlug = new HashMap<>();
+        int[] descartes = {0};
+        int lancamentos = 0;
+        for (int ano = PRIMEIRO_ANO_DESPESAS; ano <= ctx.hoje().getYear(); ano++) {
+            for (int mes = 1; mes <= 12; mes++) {
+                Coleta.Arquivo arq = Coleta.metadados(ctx, nome(), arquivoDeDespesas(ano, mes));
+                if (arq == null || arq.bytes() == 0 || !Files.exists(Coleta.caminho(ctx, arq))) {
+                    continue;
+                }
+                try {
+                    String csv = Texto.lerArquivo(Coleta.caminho(ctx, arq));
+                    for (var item : despesasDoMes(csv, slugPorNome, Prov.de(FONTE_DESPESAS, arq.url(), arq), descartes).entrySet()) {
+                        porSlug.computeIfAbsent(item.getKey(), k -> new ArrayList<>()).addAll(item.getValue());
+                        lancamentos += item.getValue().size();
+                    }
+                } catch (Exception e) {
+                    System.err.println("alece: erro ao ler despesas de " + ano + "-" + mes + ": " + e.getMessage());
+                }
+            }
+        }
+        System.out.println("alece: " + lancamentos + " lançamentos da verba de desempenho parlamentar em " + porSlug.size()
+                + " deputados; " + descartes[0] + " descartados por nome sem perfil de deputado em exercício");
+        return porSlug;
     }
 
     @Override
@@ -127,6 +237,7 @@ public final class Alece implements Fonte {
 
         List<Pessoa> pessoas = new ArrayList<>();
         Map<String, List<OrgaoOuFrente>> comissoesPorSlug = extrairComissoes(ctx);
+        Map<String, List<Despesa>> despesasPorSlug = despesasPorSlug(ctx, deputados);
 
         for (DeputadoBruto d : deputados) {
             String slug = d.slug();
@@ -156,7 +267,7 @@ public final class Alece implements Fonte {
             var blocosNode = Json.SAIDA.createObjectNode();
             blocosNode.set("mandatos", Json.SAIDA.valueToTree(mandatos));
             blocosNode.set("orgaos_e_frentes", Json.SAIDA.valueToTree(orgaos));
-            blocosNode.set("despesas", Json.SAIDA.createArrayNode());
+            blocosNode.set("despesas", Json.SAIDA.valueToTree(despesasPorSlug.getOrDefault(slug, List.of())));
             blocosNode.set("fontes", Json.SAIDA.valueToTree(Registros.fontesDosBlocos(blocosNode)));
             Json.gravar(pastaBlocos.resolve(slug + ".json"), blocosNode);
         }

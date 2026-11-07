@@ -672,6 +672,17 @@ Validação em 2026-11-03 com o User-Agent do projeto.
 - URL base: `https://www.al.ce.gov.br/`
 - Repositório de fotos oficiais dos parlamentares hospedadas em `https://www.al.ce.gov.br/image/`.
 
+### `alece-despesas`: verba de desempenho parlamentar
+
+- URL base: `https://transparencia.al.ce.gov.br/despesas/verba-desempenho-parlamentar/csv?mes={mm}&ano={aaaa}`. CSV com `;`, UTF-8 com BOM. Validação em 2026-11-07.
+- O mês precisa de dois dígitos: com `mes=5`, o CSV vem vazio.
+- Colunas: `DEPUTADO;PERIODO;EMPENHO;DESCRICAO;CNPJ;CREDOR;VALOR`. A primeira linha do arquivo vem vazia, antes do cabeçalho.
+- O deputado vem pelo nome ("DEP FULANO"). O vínculo ignora acento e pontuação e tira o complemento que a fonte às vezes junta ao nome (" - SERVICOS POSTAIS"). Erro de digitação não casa e é descartado.
+- A descrição do empenho é texto livre, um por lançamento, e não vira categoria. A categoria é o nome da verba.
+- A coluna `CNPJ` traz CPF no reembolso a pessoa física, inclusive ao próprio deputado. O CPF é descartado.
+- Na validação: 15.444 lançamentos de 2023 a 2026 nos 54 deputados em exercício, 80% com CNPJ. 1.657 linhas de quem não está em exercício, ou com nome digitado errado, ficaram fora. 673 lançamentos negativos (estornos) entram como vieram.
+- O servidor responde 403 ao User-Agent padrão do curl e 200 ao do projeto. Respondeu a provas nos EUA (Azure e AWS) e no Brasil.
+
 ### `ce-transparencia` e `ce-diario-oficial`: Executivo estadual
 
 - Transparência orçamentária: `https://transparencia.ce.gov.br/`
