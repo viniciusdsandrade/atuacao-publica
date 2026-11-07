@@ -4,6 +4,17 @@
   margin: 0.5rem 0 0.75rem;
 }
 
+/* Linha acima do título que diz de quem é a página (detalhe anual). */
+.sobretitulo {
+  margin: 0.75rem 0 0;
+  color: var(--texto-2);
+  font-weight: 650;
+}
+
+.sobretitulo + .titulo-pagina {
+  margin-top: 0.125rem;
+}
+
 .lead {
   max-width: 62ch;
   color: var(--texto-2);

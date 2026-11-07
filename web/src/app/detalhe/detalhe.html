@@ -11,6 +11,10 @@
   </ol>
 </nav>
 
+<!-- O nome fica fora das migalhas também, porque a impressão esconde as migalhas. -->
+@if (perfil(); as p) {
+  <p class="sobretitulo">{{ p.nome }}</p>
+}
 <h1 class="titulo-pagina">{{ titulo() }}: {{ parametros().ano }}</h1>
 
 @if (arquivos().length > 1) {
