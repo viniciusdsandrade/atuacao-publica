@@ -147,9 +147,9 @@
   formato: CSV em ZIP
   autenticacao: nenhuma
   licenca: null
-  limitacoes: "Uso previsto na fase 2 (cartão de pagamento e viagens a serviço)."
+  limitacoes: "Cartão de pagamento e viagens da Presidência (ADR-0010) e emendas parlamentares individuais (ADR-0030). As URLs de download redirecionam para dadosabertos-download.cgu.gov.br; os ZIPs são regerados pela fonte."
   status: validado
-  validado_em: 2026-10-30
+  validado_em: 2026-11-06
 
 - id: cgu-eagendas
   nome: Controladoria-Geral da União, e-Agendas

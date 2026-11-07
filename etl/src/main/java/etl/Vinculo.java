@@ -74,7 +74,85 @@ final class Vinculo {
             agendaEstadual(ctx, perfis);
             atosEstadual(ctx, perfis);
         }
+        emendas(ctx, perfis);
         return perfis;
+    }
+
+    /**
+     * Emendas individuais ao Orçamento da União (ADR-0030). O código do autor na fonte liga as emendas ao perfil federal
+     * cujo nome é um dos nomes do autor na fonte, sem pontuação. Sem perfil com esse nome, vale o nome de urna de uma
+     * candidatura do perfil. Código com mais de um perfil possível fica fora, como o sem perfil: homônimos não recebem
+     * emenda de outra pessoa.
+     */
+    private static void emendas(Contexto ctx, List<Perfil> perfis) {
+        Path arquivo = ctx.normalizado().resolve("cgu").resolve("emendas.json");
+        if (!Files.exists(arquivo)) {
+            return;
+        }
+        Map<String, Set<Perfil>> porNome = new HashMap<>();
+        Map<String, Set<Perfil>> porNomeDeUrna = new HashMap<>();
+        for (Perfil p : perfis) {
+            if (p.cargos.contains("deputado_federal") || p.cargos.contains("senador")) {
+                if (p.nome != null) {
+                    porNome.computeIfAbsent(semPontos(Texto.normalizarNome(p.nome)), k -> new HashSet<>()).add(p);
+                }
+                for (String nome : nomesDeUrna(p)) {
+                    porNomeDeUrna.computeIfAbsent(nome, k -> new HashSet<>()).add(p);
+                }
+            }
+        }
+        int ligadas = 0;
+        int autoresLigados = 0;
+        int ambiguos = 0;
+        int semPerfil = 0;
+        int foraDoVinculo = 0;
+        for (JsonNode autor : Json.ler(arquivo)) {
+            Set<Perfil> possiveis = perfisDoAutor(autor, porNome);
+            if (possiveis.isEmpty()) {
+                possiveis = perfisDoAutor(autor, porNomeDeUrna);
+            }
+            JsonNode lista = autor.path("emendas");
+            if (possiveis.size() != 1) {
+                if (possiveis.isEmpty()) {
+                    semPerfil++;
+                } else {
+                    ambiguos++;
+                }
+                foraDoVinculo += lista.size();
+                continue;
+            }
+            Perfil p = possiveis.iterator().next();
+            for (JsonNode emenda : lista) {
+                p.bloco("emendas").add(emenda);
+                usarFonte(p, "emendas", Json.SAIDA.createObjectNode().<ObjectNode>set("fonte_id", emenda.get("fonte_id"))
+                        .<ObjectNode>set("url_origem", emenda.get("url_origem")).set("capturado_em", emenda.get("capturado_em")));
+            }
+            ligadas += lista.size();
+            autoresLigados++;
+        }
+        System.out.println("vinculo: " + ligadas + " emenda(s) de " + autoresLigados + " autor(es) ligada(s) a perfis federais; "
+                + (ambiguos + semPerfil) + " autor(es) fora do vínculo (" + ambiguos + " com mais de um perfil possível, " + semPerfil
+                + " sem perfil), com " + foraDoVinculo + " emenda(s)");
+    }
+
+    private static Set<Perfil> perfisDoAutor(JsonNode autor, Map<String, Set<Perfil>> indice) {
+        Set<Perfil> possiveis = new HashSet<>();
+        for (JsonNode nome : autor.path("nomes")) {
+            possiveis.addAll(indice.getOrDefault(semPontos(Texto.normalizarNome(nome.stringValue())), Set.of()));
+        }
+        return possiveis;
+    }
+
+    /** Nomes de urna das candidaturas do perfil, normalizados e sem pontos. */
+    private static Set<String> nomesDeUrna(Perfil p) {
+        Set<String> nomes = new HashSet<>();
+        for (JsonNode candidatura : p.registros.getOrDefault("candidaturas", List.of())) {
+            String urna = Json.texto(candidatura, "nome_urna");
+            if (urna != null) {
+                nomes.add(semPontos(Texto.normalizarNome(urna)));
+            }
+        }
+        return nomes;
     }
 
     /** Chaves do TSE em memória (ADR-0003): candidaturas por CPF e por nome civil com data de nascimento. */

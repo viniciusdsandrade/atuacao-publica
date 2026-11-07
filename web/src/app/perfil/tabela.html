@@ -251,6 +251,29 @@
         </tbody>
       </table>
     }
+    @case ('emendas') {
+      <table role="table" data-cols="8">
+        <caption [class.sr-only]="!legenda()">{{ legenda() || 'Emendas' }}</caption>
+        <thead role="rowgroup"><tr role="row"><th scope="col" role="columnheader">Emenda</th><th scope="col" role="columnheader">Tipo</th><th scope="col" role="columnheader">Localidade</th><th scope="col" role="columnheader">Função e ação</th><th scope="col" role="columnheader">Empenhado</th><th scope="col" role="columnheader">Liquidado</th><th scope="col" role="columnheader">Pago</th><th scope="col" role="columnheader">Restos a pagar pagos</th></tr></thead>
+        <tbody role="rowgroup">
+          @for (r of visiveis(); track $index) {
+            <tr role="row">
+              <td role="cell" data-label="Emenda"><span class="v">
+                Nº {{ texto(r['numero']) }}, código {{ texto(r['codigo']) }}
+                @if (textoOuNulo(r['autor_na_fonte']); as autor) { <br><small>Autor na fonte: {{ autor }}</small> }
+              </span></td>
+              <td role="cell" data-label="Tipo"><span class="v">{{ texto(r['tipo']) }}</span></td>
+              <td role="cell" data-label="Localidade"><span class="v">{{ texto(r['localidade']) }}</span></td>
+              <td role="cell" data-label="Função e ação"><span class="v">{{ texto(r['funcao']) }}: {{ texto(r['acao']) }}</span></td>
+              <td class="numero" role="cell" data-label="Empenhado"><span class="v">{{ moeda(numero(r['valor_empenhado'])) }}</span></td>
+              <td class="numero" role="cell" data-label="Liquidado"><span class="v">{{ moeda(numero(r['valor_liquidado'])) }}</span></td>
+              <td class="numero" role="cell" data-label="Pago"><span class="v">{{ moeda(numero(r['valor_pago'])) }}</span></td>
+              <td class="numero" role="cell" data-label="Restos a pagar pagos"><span class="v">{{ moeda(numero(r['restos_pagos'])) }}</span></td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
     @case ('atos_normativos') {
       <table role="table" data-cols="4">
         <caption [class.sr-only]="!legenda()">{{ legenda() || 'Atos normativos' }}</caption>

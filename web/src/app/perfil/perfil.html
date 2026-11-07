@@ -207,6 +207,58 @@
                     </details>
                   }
                 </div>
+              } @else if (b === 'emendas') {
+                <dl class="estatisticas">
+                  <div class="estatistica">
+                    <dt>Empenhado</dt>
+                    <dd class="numero">{{ moeda(somaDasEmendas(bloco, 'valor_empenhado')) }}</dd>
+                  </div>
+                  <div class="estatistica">
+                    <dt>Pago</dt>
+                    <dd class="numero">{{ moeda(somaDasEmendas(bloco, 'valor_pago')) }}</dd>
+                  </div>
+                  <div class="estatistica">
+                    <dt>Restos a pagar pagos</dt>
+                    <dd class="numero">{{ moeda(somaDasEmendas(bloco, 'restos_pagos')) }}</dd>
+                  </div>
+                </dl>
+                @if (porTipo(bloco).length) {
+                  <div class="tipos">
+                    <p class="tipos-titulo">Por tipo</p>
+                    <ul>
+                      @for (t of porTipo(bloco); track t[0]) {
+                        <li class="selo">{{ t[0] }}: <strong class="numero">{{ inteiro(t[1]) }}</strong></li>
+                      }
+                    </ul>
+                  </div>
+                }
+                <div class="tabela-rolagem" role="region" tabindex="0" aria-label="Emendas por ano do orçamento, tabela rolável">
+                  <table role="table">
+                    <caption>Por ano do orçamento</caption>
+                    <thead role="rowgroup">
+                      <tr role="row">
+                        <th scope="col" role="columnheader">Ano</th>
+                        <th scope="col" role="columnheader">Emendas</th>
+                        <th scope="col" role="columnheader">Empenhado</th>
+                        <th scope="col" role="columnheader">Liquidado</th>
+                        <th scope="col" role="columnheader">Pago</th>
+                        <th scope="col" role="columnheader">Restos a pagar pagos</th>
+                      </tr>
+                    </thead>
+                    <tbody role="rowgroup">
+                      @for (a of emendasPorAno(bloco); track a.ano) {
+                        <tr role="row">
+                          <td role="cell" data-label="Ano"><span class="v">{{ a.ano }}</span></td>
+                          <td role="cell" class="numero" data-label="Emendas"><span class="v">{{ inteiro(a.quantidade) }}</span></td>
+                          <td role="cell" class="numero" data-label="Empenhado"><span class="v">{{ moeda(a.valor_empenhado) }}</span></td>
+                          <td role="cell" class="numero" data-label="Liquidado"><span class="v">{{ moeda(a.valor_liquidado) }}</span></td>
+                          <td role="cell" class="numero" data-label="Pago"><span class="v">{{ moeda(a.valor_pago) }}</span></td>
+                          <td role="cell" class="numero" data-label="Restos a pagar pagos"><span class="v">{{ moeda(a.restos_pagos) }}</span></td>
+                        </tr>
+                      }
+                    </tbody>
+                  </table>
+                </div>
               } @else {
                 @if (porTipo(bloco).length) {
                   <div class="tipos">

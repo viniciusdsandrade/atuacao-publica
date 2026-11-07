@@ -1,0 +1,9 @@
+{
+  "politico_id": "cam-900001",
+  "tipo": "emendas",
+  "ano": 2026,
+  "gerado_em": "2026-11-06T03:10:00Z",
+  "registros": [
+    { "ano": 2026, "codigo": "202690000001", "numero": "0001", "autor_na_fonte": null, "localidade": "CAMPINAS - SP", "funcao": "Saúde", "subfuncao": null, "programa": null, "acao": null, "valor_empenhado": 1000000.00, "valor_liquidado": 300000.00, "valor_pago": 300000.00, "restos_inscritos": 0, "restos_cancelados": 0, "restos_pagos": 0, "fonte_id": "cgu-portal-arquivos", "url_origem": "https://portaldatransparencia.gov.br/download-de-dados/emendas-parlamentares/UNICO", "capturado_em": "2026-11-06T03:00:00Z" }
+  ]
+}

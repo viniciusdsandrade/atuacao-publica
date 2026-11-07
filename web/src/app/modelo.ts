@@ -49,6 +49,19 @@ export interface Bloco<T = Registro> {
   valor_total?: number;
   por_mes?: DespesaAgregada[];
   por_categoria?: DespesaAgregada[];
+  por_ano?: EmendaPorAno[];
+}
+
+/** Soma dos valores das emendas de um ano do orçamento (ADR-0030). */
+export interface EmendaPorAno extends Proveniencia {
+  ano: number;
+  quantidade: number;
+  valor_empenhado: number;
+  valor_liquidado: number;
+  valor_pago: number;
+  restos_inscritos: number;
+  restos_cancelados: number;
+  restos_pagos: number;
 }
 
 export type Registro = Proveniencia & Record<string, unknown>;

@@ -7,7 +7,7 @@ import { catchError, combineLatest, map, of, switchMap } from 'rxjs';
 import { Dados } from '../dados';
 import { Icone } from '../icone/icone';
 import { MemoriaLista } from '../lista/memoria-lista';
-import { Bloco, DespesaAgregada, Perfil as PerfilPublicado } from '../modelo';
+import { Bloco, DespesaAgregada, EmendaPorAno, Perfil as PerfilPublicado } from '../modelo';
 import {
   data,
   ePapelLideranca,
@@ -245,6 +245,16 @@ export class Perfil {
 
   protected categorias(bloco: Bloco, ano: number): DespesaAgregada[] {
     return (bloco.por_categoria ?? []).filter((c) => c.ano === ano).sort((a, b) => b.valor - a.valor);
+  }
+
+  /** Anos do orçamento com emenda, do mais recente ao mais antigo, com as somas publicadas. */
+  protected emendasPorAno(bloco: Bloco): EmendaPorAno[] {
+    return [...(bloco.por_ano ?? [])].sort((a, b) => b.ano - a.ano);
+  }
+
+  /** Soma de um valor em todos os anos. Cada campo da fonte é somado só com ele mesmo. */
+  protected somaDasEmendas(bloco: Bloco, campo: 'valor_empenhado' | 'valor_pago' | 'restos_pagos'): number {
+    return (bloco.por_ano ?? []).reduce((soma, a) => soma + a[campo], 0);
   }
 
   protected enderecoJson(id: string): string {

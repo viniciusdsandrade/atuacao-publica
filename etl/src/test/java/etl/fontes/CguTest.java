@@ -1,6 +1,7 @@
 package etl.fontes;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.math.BigDecimal;
@@ -35,6 +36,49 @@ class CguTest {
         assertEquals("BR", a.ente());
         String json = Json.arvore(agregados).toString();
         assertTrue(!json.contains("Fulano") && !json.contains("Beltrano") && !json.contains("111.111"));
+    }
+
+    private static final String CABECALHO_EMENDAS = "\"Código da Emenda\";\"Ano da Emenda\";\"Tipo de Emenda\";\"Código do Autor da Emenda\";"
+            + "\"Nome do Autor da Emenda\";\"Número da emenda\";\"Localidade de aplicação do recurso\";\"Código Município IBGE\";\"Município\";"
+            + "\"Código UF IBGE\";\"UF\";\"Região\";\"Código Função\";\"Nome Função\";\"Código Subfunção\";\"Nome Subfunção\";\"Código Programa\";"
+            + "\"Nome Programa\";\"Código Ação\";\"Nome Ação\";\"Código Plano Orçamentário\";\"Nome Plano Orçamentário\";\"Valor Empenhado\";"
+            + "\"Valor Liquidado\";\"Valor Pago\";\"Valor Restos A Pagar Inscritos\";\"Valor Restos A Pagar Cancelados\";\"Valor Restos A Pagar Pagos\"\r\n";
+
+    /** Linha sintética do arquivo de emendas, com os campos que o ETL lê; os demais ficam como na fonte. */
+    private static String emenda(String codigo, String ano, String tipo, String autor, String nome, String subfuncao, String empenhado) {
+        return String.join(";", List.of(codigo, ano, tipo, autor, nome, "0001", "CAMPINAS - SP", "3509502", "CAMPINAS", "3500000",
+                "SÃO PAULO", "Sudeste", "10", "Saúde", "301", subfuncao, "5119", "ATENÇÃO PRIMÁRIA À SAÚDE", "2E89",
+                "INCREMENTO TEMPORÁRIO AO CUSTEIO", "0000", "SEM PLANO", empenhado, "100,00", "50,00", "0,00", "0,00", "0,00")
+                .stream().map(c -> "\"" + c + "\"").toList()) + "\r\n";
+    }
+
+    @Test
+    void emendaIndividualDesde2022AgrupaPeloCodigoDoAutorComONomeComoAFonteEscreve() {
+        String csv = CABECALHO_EMENDAS
+                + emenda("202640010001", "2026", "Emenda Individual - Transferências com Finalidade Definida", "4001", "FULANA EXEMPLO", "Atenção básica", "1.234.567,89")
+                + emenda("202540010002", "2025", "Emenda Individual - Transferências Especiais", "4001", "FULANA EXEMPLO", "Sem informação", "500,00")
+                + emenda("202640010003", "2026", "Emenda Individual - Transferências Especiais", "4001",
+                        "PESSOA EXEMPLO (EX-PARLAMENTAR FULANA EXEMPLO, NOS TERMOS DO ART. 78 DA LDO)", "Atenção básica", "10,00")
+                + emenda("202650000001", "2026", "Emenda de Bancada", "5000", "BANCADA DE EXEMPLO", "Atenção básica", "9.999,00")
+                + emenda("202140010009", "2021", "Emenda Individual - Transferências com Finalidade Definida", "4001", "FULANA EXEMPLO", "Atenção básica", "1,00")
+                + emenda("202440020001", "2024", "Emenda Individual - Transferências com Finalidade Definida", "4002", "BELTRANO EXEMPLO", "Atenção básica", "2,00");
+        Prov prov = new Prov(Cgu.FONTE_ID, Cgu.EMENDAS_URL, Instant.parse("2026-11-06T00:00:00Z"));
+
+        List<Cgu.AutorDeEmendas> autores = Cgu.emendasPorAutor(
+                new java.io.ByteArrayInputStream(csv.getBytes(java.nio.charset.StandardCharsets.ISO_8859_1)), prov);
+
+        assertEquals(List.of("4001", "4002"), autores.stream().map(Cgu.AutorDeEmendas::codigo).toList(), "bancada e 2021 ficam fora");
+        Cgu.AutorDeEmendas fulana = autores.getFirst();
+        assertEquals(List.of("FULANA EXEMPLO", "PESSOA EXEMPLO (EX-PARLAMENTAR FULANA EXEMPLO, NOS TERMOS DO ART. 78 DA LDO)"), fulana.nomes());
+        assertEquals(List.of("202640010001", "202640010003", "202540010002"), fulana.emendas().stream().map(Cgu.Emenda::codigo).toList());
+        Cgu.Emenda primeira = fulana.emendas().getFirst();
+        assertNull(primeira.autorNaFonte(), "nome principal do código não se repete no registro");
+        assertEquals(new BigDecimal("1234567.89"), primeira.valorEmpenhado());
+        assertEquals(new BigDecimal("50.00"), primeira.valorPago());
+        assertEquals("CAMPINAS - SP", primeira.localidade());
+        assertEquals("PESSOA EXEMPLO (EX-PARLAMENTAR FULANA EXEMPLO, NOS TERMOS DO ART. 78 DA LDO)", fulana.emendas().get(1).autorNaFonte());
+        assertNull(fulana.emendas().get(2).subfuncao(), "\"Sem informação\" da fonte vira nulo");
+        assertEquals(2025, fulana.emendas().get(2).ano());
     }
 
     @Test

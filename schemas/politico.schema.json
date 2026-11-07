@@ -28,6 +28,7 @@
         "votos": { "$ref": "#/$defs/bloco_votos" },
         "despesas": { "$ref": "#/$defs/bloco_despesas" },
         "proposicoes": { "$ref": "#/$defs/bloco_proposicoes" },
+        "emendas": { "$ref": "#/$defs/bloco_emendas" },
         "discursos": { "$ref": "#/$defs/bloco_discursos" },
         "eventos": { "$ref": "#/$defs/bloco_eventos" },
         "orgaos_e_frentes": { "$ref": "#/$defs/bloco_orgaos" },
@@ -179,6 +180,13 @@
       "allOf": [{ "$ref": "#/$defs/bloco_base" }],
       "required": ["recentes"],
       "properties": { "recentes": { "type": "array", "items": { "$ref": "registros.schema.json#/$defs/ato_normativo" } } },
+      "unevaluatedProperties": false
+    },
+    "bloco_emendas": {
+      "description": "Emendas individuais (ADR-0030): soma por ano no perfil; cada emenda no detalhe do ano.",
+      "allOf": [{ "$ref": "#/$defs/bloco_base" }],
+      "required": ["por_tipo", "por_ano", "arquivos"],
+      "properties": { "por_ano": { "type": "array", "items": { "$ref": "registros.schema.json#/$defs/emenda_por_ano" } } },
       "unevaluatedProperties": false
     }
   }

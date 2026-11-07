@@ -10,6 +10,7 @@ Estado: prova de conceito na esfera federal concluída e piloto municipal em and
 - Votos e participação em votações nominais (Câmara, Senado e câmara municipal do piloto).
 - Despesas da cota parlamentar, por mês e por categoria, com o detalhe de cada lançamento.
 - Proposições de autoria, discursos, eventos com presença registrada, órgãos, comissões e frentes.
+- Emendas individuais ao Orçamento da União de deputados federais e senadores, com os valores do Portal da Transparência.
 - Candidaturas no TSE: resultado, total de bens declarados e plano de governo.
 - Atos do Poder Executivo federal e agenda oficial da Presidência.
 - Posicionamentos declarados, só por contribuição revisada e com snapshot arquivado.
@@ -30,6 +31,7 @@ Piloto municipal: prefeito e vereadores de um município, com dados da câmara (
 |---|---|
 | Voto registrado em votação nominal | "Presença" calculada a partir de votações |
 | Despesa da cota parlamentar, com fornecedor e CNPJ | CPF de fornecedor pessoa física |
+| Emenda individual, com valores empenhado, liquidado e pago | Favorecido pessoa física da emenda |
 | Ementa e situação oficial de proposição | Opinião sobre a proposição |
 | Resumo oficial de discurso | Resumo feito por IA |
 | Declaração no site oficial do mandato, com snapshot | Postagem de terceiros sobre o político |

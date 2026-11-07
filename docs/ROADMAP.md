@@ -53,6 +53,9 @@ Estado real de cada fase. Atualizado ao fechar cada fase.
 - Até 2026-11-02, o bloco de órgãos e frentes saía vazio para deputados e senadores por um erro no nome do campo normalizado. Corrigido.
 - Agenda da Presidência: a primeira carga no CI foi concluída em execuções sucessivas com coleta em lotes de 40 dias. Dias já coletados ficam no cache; dias sem captura no arquivo ficam sem registro ou com cópia anterior preservada em caso de timeout. No site, 5.480 compromissos no presidente vigente (2023 a 2026) e 721 no presidente de 2019 a 2023.
 - Portal da Transparência: o ZIP anual de viagens respondeu 405 intermitente ao runner do GitHub Actions em 2026-11-02 (2024 a 2026). Corrigido com repetição automática em caso de 405; viagens de 2024 a 2026 publicadas no site com passagens e diárias.
+- Emendas parlamentares (ADR-0030): no ensaio local de 2026-11-06, 7 códigos de autor, com 122 emendas, ficaram fora do vínculo. Quatro têm dois perfis com o mesmo nome: "ATILA LIRA" (dois códigos), "MARIANA CARVALHO" e "ELMANO FERRER". Três não casam com nome nem nome de urna de perfil: "REINHOLD STEPHANES JUNIOR", "PROFESSORA DORINHA SEABRA" e "DR. ALLAN GARCES". Correção pendente: tabela de aliases revisada, com fonte oficial.
+- Emendas parlamentares: o arquivo não atribui a um parlamentar as emendas de bancada, de comissão e de relator. Elas ficam fora do perfil.
+- Elmano Férrer tem dois perfis não fundidos: `sen-5531` (senador de 2015 a 2023) e `cam-234406` (deputado desde 2025-11-04). Nome civil e data de nascimento conferem no TSE e no Senado. O vínculo do Senado procura só candidaturas a senador da cobertura, e a eleição dele ao Senado foi em 2014. Não validado: outros casos iguais.
 - Em 2026-11-02 o `publish` do CI parou com "dois perfis com o identificador sapl-3509502-306": um ex-deputado novo no arquivo era o mesmo vereador já publicado, e o vínculo entre casas não os fundiu, porque o TSE mascara o CPF de 2024. Corrigido em dois pontos. O vínculo passa a usar também nome civil e data de nascimento. E o id publicado só passa a um perfil se não for o id derivado de outro, o que vale mesmo quando a fusão falha.
 - A lista da página inicial exibe 48 cartões por vez. A busca do navegador (Ctrl+F) só acha o que está na tela. Use a busca do site.
 - Não validado: leitor de tela real (VoiceOver, NVDA, TalkBack) e aparelhos móveis físicos. A auditoria de acessibilidade foi automatizada e por teclado.
@@ -143,6 +146,16 @@ Verificação de 2026-11-02, com scripts locais (Playwright e axe-core, fora do 
 - Nenhuma requisição a terceiros e nenhum erro de console, com a CSP intacta.
 
 ## Fase 2 (depois da POC)
+
+### Esfera federal
+
+1. Emendas parlamentares individuais (ADR-0030): concluído em 2026-11-06.
+   - Fonte `cgu-portal-arquivos`: ZIP único `emendas-parlamentares/UNICO`, sem chave, com política semanal (ADR-0005).
+   - Bloco `emendas` de deputados federais e senadores: contagem por tipo e soma de cada valor por ano do orçamento no perfil; cada emenda no detalhe do ano.
+   - Ensaio local: 29.558 de 29.680 emendas individuais desde 2022 (99,6%), de 879 códigos de autor, ligadas a perfis federais. Em 815 de 839 perfis com localidade identificável, ao menos 80% das emendas vão para a UF do perfil.
+   - O perfil cresce no máximo 2,6 KB. Os arquivos de detalhe somam cerca de 13 MB ao site.
+   - Testes: parse do CSV latin-1 e agrupamento pelo código do autor (`CguTest`), exemplos de schema, fluxo e WCAG da página de detalhe no E2E.
+   - Fora do vínculo e fora do arquivo: ver "Limitações conhecidas".
 
 ### Esfera estadual e municipal
 

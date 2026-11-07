@@ -30,7 +30,7 @@ Os dois arquivos mudam juntos.
 | `tse-cdn` | TSE, arquivos dos dados abertos (CDN) | T0 | CSV latin-1 e PDF em ZIP | nenhuma | validado | 2026-10-30 |
 | `tse-divulgacand` | TSE, DivulgaCandContas | T0 | JSON | nenhuma | bloqueado | 2026-10-30 |
 | `cgu-portal-api` | CGU, API do Portal da Transparência | T0 | JSON | chave `chave-api-dados` | validado com limitação | 2026-10-30 |
-| `cgu-portal-arquivos` | CGU, downloads do Portal da Transparência | T0 | CSV em ZIP | nenhuma | validado | 2026-10-30 |
+| `cgu-portal-arquivos` | CGU, downloads do Portal da Transparência | T0 | CSV em ZIP | nenhuma | validado | 2026-11-06 |
 | `cgu-eagendas` | CGU, e-Agendas (dados abertos) | T0 | CSV em ZIP | nenhuma | validado com limitação | 2026-10-30 |
 | `planalto-agenda` | Presidência, agenda oficial | T0 | HTML | nenhuma | validado com limitação | 2026-10-30 |
 | `planalto-legislacao` | Presidência, legislação | T0 | HTML | nenhuma | não validado | 2026-10-30 |
@@ -189,6 +189,14 @@ Os dois arquivos mudam juntos.
 - `cpgf/{AAAAMM}`: ZIP de cerca de 300 KB com um CSV (latin-1, ponto e vírgula): órgão superior, órgão, unidade gestora, ano e mês do extrato, CPF mascarado e nome do portador, CNPJ ou CPF e nome do favorecido, transação, data e valor. Na Presidência, em junho de 2025, 1.027 de 1.141 transações vieram como "Informações protegidas por sigilo", com valor e sem data.
 - `viagens/{ano}`: ZIP de cerca de 160 MB com `{ano}_Viagem.csv` (814 mil linhas em 2025), `_Passagem`, `_Trecho` e `_Pagamento`. A viagem traz órgão superior e solicitante, CPF mascarado e nome do viajante, cargo, período, destinos, motivo e valores de diárias, passagens, devolução e outros gastos. O nome do ZIP muda a cada geração (`2025_20260920_Viagens.zip`), e a URL de download não.
 - Velocidade variável: o mesmo ZIP levou mais de 10 minutos numa tentativa e 8 segundos em outra, em 2026-11-02. O mesmo GET às vezes responde 405 e logo depois 200; o cliente HTTP repete a chamada nesse caso.
+- `emendas-parlamentares/UNICO` (ADR-0030): redireciona (302) para `dadosabertos-download.cgu.gov.br/PortalDaTransparencia/saida/emendas-parlamentares/EmendasParlamentares.zip`. Validado em 2026-11-06: 32,5 MB, regerado a cada dia, com `Accept-Ranges`.
+- O ZIP traz `EmendasParlamentares.csv` (94.827 linhas, de 2014 a 2026), `EmendasParlamentares_PorFavorecido.csv` (828.756 linhas) e `EmendasParlamentares_Convenios.csv`.
+- Codificação ISO-8859-1, separador `;`, campos entre aspas, fim de linha CRLF. Decimal com vírgula.
+- Colunas usadas: `Código da Emenda`, `Ano da Emenda`, `Tipo de Emenda`, `Código do Autor da Emenda`, `Nome do Autor da Emenda`, `Número da emenda`, `Localidade de aplicação do recurso`, `Nome Função`, `Nome Subfunção`, `Nome Programa`, `Nome Ação` e os seis valores (`Valor Empenhado`, `Valor Liquidado`, `Valor Pago`, `Valor Restos A Pagar Inscritos`, `Valor Restos A Pagar Cancelados`, `Valor Restos A Pagar Pagos`).
+- Tipos: individual com finalidade definida (80.049 linhas), individual por transferência especial (5.108), de relator (3.892), de bancada (3.588) e de comissão (2.190).
+- Desde 2022, toda emenda individual tem código de emenda e código de autor. Linhas anteriores trazem "Sem informação" no código.
+- O autor vem só por código e nome. O nome muda de grafia entre linhas do mesmo código, e a emenda de ex-parlamentar indicada por outro aparece como "NOVO (EX-PARLAMENTAR ANTIGO, NOS TERMOS ...)".
+- No arquivo de favorecidos, a pessoa física vem com nome e documento mascarado (181.588 linhas). Esse arquivo não é lido.
 
 ### `cgu-eagendas`: e-Agendas
 

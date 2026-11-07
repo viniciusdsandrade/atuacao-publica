@@ -89,6 +89,7 @@ export async function montarDados(raizWeb) {
   }
   const execucao = await lerJson(raizSchemas, 'execucao/execucao.json');
   const detalheDespesas = await lerJson(raizSchemas, 'detalhe/despesas.json');
+  const detalheEmendas = await lerJson(raizSchemas, 'detalhe/emendas.json');
 
   const dados = new Map();
   const perfis = PESSOAS.map((pessoa) => perfilDe(moldes[pessoa.molde], pessoa));
@@ -99,6 +100,11 @@ export async function montarDados(raizWeb) {
         const detalhe = { ...detalheDespesas, politico_id: perfil.id, tipo: bloco, ano: arquivo.ano, registros: bloco === 'despesas' ? detalheDespesas.registros : [] };
         dados.set(arquivo.caminho, gzipSync(JSON.stringify(detalhe)));
       }
+    }
+    for (const arquivo of perfil.blocos.emendas?.arquivos ?? []) {
+      const registros = detalheEmendas.registros.map((r) => ({ ...r, ano: arquivo.ano }));
+      const detalhe = { ...detalheEmendas, politico_id: perfil.id, ano: arquivo.ano, registros };
+      dados.set(arquivo.caminho, gzipSync(JSON.stringify(detalhe)));
     }
   }
   dados.set('index.json', { gerado_em: GERADO_EM, total: perfis.length, politicos: perfis.map(entradaDoIndice), aliases: {} });

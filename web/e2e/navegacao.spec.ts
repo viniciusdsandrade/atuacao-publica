@@ -54,6 +54,16 @@ test.describe('perfil', () => {
     await expect(page.getByRole('navigation', { name: 'Blocos do perfil' })).toBeVisible();
   });
 
+  test('emendas mostram a soma por ano e levam ao detalhe do ano com o autor na fonte', async ({ page }) => {
+    await page.goto('/#/politico/cam-900001');
+    const bloco = page.locator('#bloco-emendas');
+    await expect(bloco.getByRole('heading', { level: 2 })).toContainText('Emendas individuais ao Orçamento da União');
+    await expect(bloco.getByRole('table', { name: 'Por ano do orçamento' })).toContainText('2026');
+    await bloco.getByRole('link', { name: /2026/ }).click();
+    await expect(page).toHaveURL(/#\/politico\/cam-900001\/emendas\/2026$/);
+    await expect(page.getByText(/Autor na fonte: PESSOA EXEMPLO/)).toBeVisible();
+  });
+
   test('perfil de vereador da capital abre pela rota direta', async ({ page }) => {
     await page.goto('/#/politico/cmsp-940012');
     await expect(page.getByRole('heading', { level: 1 })).toContainText('Leandro Exemplo');

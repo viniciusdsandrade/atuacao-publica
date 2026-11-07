@@ -173,6 +173,48 @@
       },
       "unevaluatedProperties": false
     },
+    "emenda": {
+      "description": "Emenda individual ao Orçamento da União, com os valores como o Portal da Transparência publica (ADR-0030).",
+      "type": "object",
+      "allOf": [{ "$ref": "comum.schema.json#/$defs/proveniencia" }],
+      "required": ["ano", "tipo", "codigo", "localidade", "valor_empenhado", "valor_liquidado", "valor_pago"],
+      "properties": {
+        "ano": { "description": "Ano do orçamento da emenda.", "type": "integer", "minimum": 2000 },
+        "tipo": { "$ref": "comum.schema.json#/$defs/texto" },
+        "codigo": { "$ref": "comum.schema.json#/$defs/texto_ou_nulo" },
+        "numero": { "$ref": "comum.schema.json#/$defs/texto_ou_nulo" },
+        "autor_na_fonte": { "description": "Nome do autor na linha, quando difere do nome mais frequente do código do autor.", "$ref": "comum.schema.json#/$defs/texto_ou_nulo" },
+        "localidade": { "$ref": "comum.schema.json#/$defs/texto_ou_nulo" },
+        "funcao": { "$ref": "comum.schema.json#/$defs/texto_ou_nulo" },
+        "subfuncao": { "$ref": "comum.schema.json#/$defs/texto_ou_nulo" },
+        "programa": { "$ref": "comum.schema.json#/$defs/texto_ou_nulo" },
+        "acao": { "$ref": "comum.schema.json#/$defs/texto_ou_nulo" },
+        "valor_empenhado": { "type": ["number", "null"] },
+        "valor_liquidado": { "type": ["number", "null"] },
+        "valor_pago": { "type": ["number", "null"] },
+        "restos_inscritos": { "description": "Restos a pagar inscritos.", "type": ["number", "null"] },
+        "restos_cancelados": { "description": "Restos a pagar cancelados.", "type": ["number", "null"] },
+        "restos_pagos": { "description": "Restos a pagar pagos.", "type": ["number", "null"] }
+      },
+      "unevaluatedProperties": false
+    },
+    "emenda_por_ano": {
+      "description": "Soma dos valores das emendas de um ano do orçamento.",
+      "type": "object",
+      "allOf": [{ "$ref": "comum.schema.json#/$defs/proveniencia" }],
+      "required": ["ano", "quantidade", "valor_empenhado", "valor_liquidado", "valor_pago", "restos_inscritos", "restos_cancelados", "restos_pagos"],
+      "properties": {
+        "ano": { "type": "integer", "minimum": 2000 },
+        "quantidade": { "$ref": "comum.schema.json#/$defs/contagem" },
+        "valor_empenhado": { "$ref": "comum.schema.json#/$defs/valor" },
+        "valor_liquidado": { "$ref": "comum.schema.json#/$defs/valor" },
+        "valor_pago": { "$ref": "comum.schema.json#/$defs/valor" },
+        "restos_inscritos": { "$ref": "comum.schema.json#/$defs/valor" },
+        "restos_cancelados": { "$ref": "comum.schema.json#/$defs/valor" },
+        "restos_pagos": { "$ref": "comum.schema.json#/$defs/valor" }
+      },
+      "unevaluatedProperties": false
+    },
     "posicionamento_declarado": {
       "type": "object",
       "allOf": [

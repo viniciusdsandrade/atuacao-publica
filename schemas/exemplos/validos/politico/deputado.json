@@ -40,6 +40,15 @@
       "por_mes": [ { "ano": 2026, "mes": 3, "categoria": null, "valor": 1500.50, "quantidade": 2, "fonte_id": "camara-arquivos", "url_origem": "https://dadosabertos.camara.leg.br/arquivos/votacoesVotos/json/votacoesVotos-2026.json", "capturado_em": "2026-10-30T03:00:00Z" } ],
       "por_categoria": [ { "ano": 2026, "mes": null, "categoria": "COMBUSTÍVEIS E LUBRIFICANTES.", "valor": 1500.50, "quantidade": 2, "fonte_id": "camara-arquivos", "url_origem": "https://dadosabertos.camara.leg.br/arquivos/votacoesVotos/json/votacoesVotos-2026.json", "capturado_em": "2026-10-30T03:00:00Z" } ]
     },
+    "emendas": {
+      "fontes": [{ "fonte_id": "cgu-portal-arquivos", "url_origem": "https://portaldatransparencia.gov.br/download-de-dados/emendas-parlamentares/UNICO", "capturado_em": "2026-11-06T03:00:00Z" }], "atualizado_em": "2026-11-06T03:00:00Z", "desatualizado": false, "total": 3,
+      "por_tipo": { "Emenda Individual - Transferências Especiais": 1, "Emenda Individual - Transferências com Finalidade Definida": 2 },
+      "por_ano": [
+        { "ano": 2025, "quantidade": 1, "valor_empenhado": 500000.00, "valor_liquidado": 500000.00, "valor_pago": 450000.00, "restos_inscritos": 50000.00, "restos_cancelados": 0, "restos_pagos": 50000.00, "fonte_id": "cgu-portal-arquivos", "url_origem": "https://portaldatransparencia.gov.br/download-de-dados/emendas-parlamentares/UNICO", "capturado_em": "2026-11-06T03:00:00Z" },
+        { "ano": 2026, "quantidade": 2, "valor_empenhado": 1250000.00, "valor_liquidado": 300000.00, "valor_pago": 300000.00, "restos_inscritos": 0, "restos_cancelados": 0, "restos_pagos": 0, "fonte_id": "cgu-portal-arquivos", "url_origem": "https://portaldatransparencia.gov.br/download-de-dados/emendas-parlamentares/UNICO", "capturado_em": "2026-11-06T03:00:00Z" }
+      ],
+      "arquivos": [ { "ano": 2026, "caminho": "politicos/cam-900001/emendas-2026.json.gz", "total": 2 }, { "ano": 2025, "caminho": "politicos/cam-900001/emendas-2025.json.gz", "total": 1 } ]
+    },
     "posicionamentos_declarados": {
       "fontes": [], "atualizado_em": null, "desatualizado": false, "total": 1,
       "registros": [

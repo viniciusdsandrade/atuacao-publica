@@ -28,9 +28,9 @@ public final class Publicador {
 
     /** Mesmos blocos para todos os políticos do mesmo cargo (política editorial). */
     static final Map<String, List<String>> BLOCOS = Map.of(
-            "deputado_federal", List.of("mandatos", "participacao_votacoes", "votos", "despesas", "proposicoes",
+            "deputado_federal", List.of("mandatos", "participacao_votacoes", "votos", "despesas", "proposicoes", "emendas",
                     "discursos", "eventos", "orgaos_e_frentes", "candidaturas", "posicionamentos_declarados"),
-            "senador", List.of("mandatos", "participacao_votacoes", "votos", "despesas", "proposicoes",
+            "senador", List.of("mandatos", "participacao_votacoes", "votos", "despesas", "proposicoes", "emendas",
                     "discursos", "eventos", "orgaos_e_frentes", "candidaturas", "posicionamentos_declarados"),
             "deputado_estadual", List.of("mandatos", "participacao_votacoes", "votos", "despesas", "proposicoes",
                     "discursos", "eventos", "orgaos_e_frentes", "candidaturas", "posicionamentos_declarados"),
@@ -48,8 +48,8 @@ public final class Publicador {
 
     /** Ordem dos blocos no perfil. Quem ocupou mais de um cargo recebe os blocos de todos eles (ADR-0006). */
     private static final List<String> ORDEM_DOS_BLOCOS = List.of("mandatos", "participacao_votacoes", "votos", "despesas",
-            "proposicoes", "discursos", "eventos", "orgaos_e_frentes", "candidaturas", "despesas_executivo", "atos_normativos",
-            "agenda_oficial", "posicionamentos_declarados");
+            "proposicoes", "emendas", "discursos", "eventos", "orgaos_e_frentes", "candidaturas", "despesas_executivo",
+            "atos_normativos", "agenda_oficial", "posicionamentos_declarados");
 
     static List<String> blocosDoPerfil(Perfil perfil) {
         Set<String> cargos = perfil.cargos.isEmpty() ? Set.of(perfil.cargo) : perfil.cargos;
@@ -75,7 +75,10 @@ public final class Publicador {
             "atos_normativos", "data", "agenda_oficial", "data", "despesas", "data");
     /** Fonte da CLI de onde vem cada bloco, para marcar bloco desatualizado quando a coleta falha. */
     private static final Map<String, String> ORIGEM_DO_BLOCO = Map.of("candidaturas", "tse", "atos_normativos", "executivo",
-            "despesas_executivo", "tcesp");
+            "despesas_executivo", "tcesp", "emendas", "cgu");
+    /** Valores de cada emenda, somados por ano no perfil (ADR-0030). */
+    static final List<String> VALORES_DE_EMENDA = List.of("valor_empenhado", "valor_liquidado", "valor_pago", "restos_inscritos",
+            "restos_cancelados", "restos_pagos");
     static final int RECENTES = 20;
     static final List<String> FONTES_CLI = List.of("camara", "senado", "tse", "executivo", "sapl", "tcesp", "cgu", "agenda", "contrib", "alesp", "executivosp", "almg", "alep", "alba", "alerj", "alrs", "alece", "alesc", "alego", "ales", "alepa", "alepe", "cldf", "cmsp");
 
@@ -304,6 +307,8 @@ public final class Publicador {
 
         if (bloco.equals("despesas")) {
             despesas(perfil, registros, no, pasta);
+        } else if (bloco.equals("emendas")) {
+            emendas(perfil, registros, no, pasta);
         } else if (bloco.equals("despesas_executivo")) {
             despesasAgregadas(registros, no);
         } else if (AMOSTRA.containsKey(bloco)) {
@@ -361,6 +366,52 @@ public final class Publicador {
         List<JsonNode> ordenados = new ArrayList<>(registros);
         ordenados.sort(Comparator.comparing((JsonNode r) -> r.get("ano").asInt() * 100 + r.get("mes").asInt()).reversed());
         no.set("arquivos", detalhes(perfil, "despesas", ordenados, pasta));
+    }
+
+    /**
+     * Emendas individuais (ADR-0030): o perfil traz a contagem por tipo e a soma de cada valor por ano. Cada emenda fica
+     * no detalhe do ano, porque um parlamentar chega a mais de cem emendas na cobertura.
+     */
+    private void emendas(Perfil perfil, List<JsonNode> registros, ObjectNode no, Path pasta) {
+        Map<String, Integer> porTipo = new TreeMap<>();
+        Map<Integer, BigDecimal[]> porAno = new TreeMap<>();
+        Map<Integer, JsonNode> provPorAno = new HashMap<>();
+        for (JsonNode r : registros) {
+            porTipo.merge(textoOuPadrao(r, "tipo", "(vazio na fonte)"), 1, Integer::sum);
+            int ano = r.get("ano").asInt();
+            BigDecimal[] somas = porAno.computeIfAbsent(ano, k -> {
+                BigDecimal[] zeros = new BigDecimal[VALORES_DE_EMENDA.size() + 1];
+                java.util.Arrays.fill(zeros, BigDecimal.ZERO);
+                return zeros;
+            });
+            somas[0] = somas[0].add(BigDecimal.ONE);
+            for (int i = 0; i < VALORES_DE_EMENDA.size(); i++) {
+                JsonNode valor = r.get(VALORES_DE_EMENDA.get(i));
+                if (valor != null && valor.isNumber()) {
+                    somas[i + 1] = somas[i + 1].add(valor.decimalValue());
+                }
+            }
+            provPorAno.putIfAbsent(ano, r);
+        }
+        ObjectNode tipos = no.putObject("por_tipo");
+        porTipo.forEach(tipos::put);
+        ArrayNode anos = no.putArray("por_ano");
+        porAno.forEach((ano, somas) -> {
+            ObjectNode a = anos.addObject();
+            a.put("ano", ano);
+            a.put("quantidade", somas[0].intValue());
+            for (int i = 0; i < VALORES_DE_EMENDA.size(); i++) {
+                a.put(VALORES_DE_EMENDA.get(i), somas[i + 1]);
+            }
+            JsonNode exemplo = provPorAno.get(ano);
+            a.set("fonte_id", exemplo.get("fonte_id"));
+            a.set("url_origem", exemplo.get("url_origem"));
+            a.set("capturado_em", exemplo.get("capturado_em"));
+        });
+        List<JsonNode> ordenados = new ArrayList<>(registros);
+        ordenados.sort(Comparator.comparing((JsonNode r) -> r.get("ano").asInt()).reversed()
+                .thenComparing(r -> textoOuVazio(r, "codigo")));
+        no.set("arquivos", detalhes(perfil, "emendas", ordenados, pasta));
     }
 
     /**
@@ -454,7 +505,7 @@ public final class Publicador {
     }
 
     private static Integer ano(JsonNode registro, String bloco) {
-        if (registro.hasNonNull("ano") && bloco.equals("despesas")) {
+        if (registro.hasNonNull("ano") && (bloco.equals("despesas") || bloco.equals("emendas"))) {
             return registro.get("ano").asInt();
         }
         String data = textoOuVazio(registro, CAMPO_DATA.get(bloco));

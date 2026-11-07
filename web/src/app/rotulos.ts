@@ -54,6 +54,7 @@ export const BLOCOS: Record<string, string> = {
   votos: 'Votos',
   despesas: 'Despesas da cota parlamentar',
   proposicoes: 'Proposições de autoria',
+  emendas: 'Emendas individuais ao Orçamento da União',
   discursos: 'Discursos',
   eventos: 'Eventos com presença registrada',
   orgaos_e_frentes: 'Órgãos, comissões e frentes',
@@ -74,6 +75,8 @@ export const NOTAS: Record<string, string> = {
   despesas_executivo:
     'Valor pago pelo órgão da prefeitura, somado por mês pelo Tribunal de Contas do Estado. Autarquias, fundações e a Câmara ficam fora. A fonte não informa quem autorizou cada pagamento.',
   candidaturas: 'O TSE registra a eleição, não o exercício do cargo.',
+  emendas:
+    'Emendas individuais do parlamentar, por ano do orçamento, com os valores como o Portal da Transparência publica: empenhado, liquidado, pago e restos a pagar. Emendas de bancada, de comissão e de relator não têm autor individual na fonte e ficam fora.',
   agenda_oficial:
     'Compromissos como publicados na página de cada dia da agenda oficial. Dia sem página publicada fica sem registro. Participantes como na fonte.',
   posicionamentos_declarados: 'Registros manuais revisados, com snapshot arquivado da fonte.',
@@ -86,6 +89,7 @@ export const BLOCOS_CURTOS: Record<string, string> = {
   votos: 'Votos',
   despesas: 'Despesas da cota',
   proposicoes: 'Proposições',
+  emendas: 'Emendas',
   discursos: 'Discursos',
   eventos: 'Eventos',
   orgaos_e_frentes: 'Órgãos e frentes',

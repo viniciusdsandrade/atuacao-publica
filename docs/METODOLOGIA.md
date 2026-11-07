@@ -105,6 +105,17 @@ Não é presença. É a contagem de votos registrados em votações nominais.
 - **Senado.** `/processo?codigoParlamentarAutor={codigo}`, filtrado por apresentação a partir do início da cobertura (2022-01-01). A listagem não traz temas: o campo fica `null`.
 - **Câmara municipal (piloto).** `materia/materialegislativa?autores={autor}&ano={ano}` do SAPL, por ano da legislatura vigente. O `autor` vem de `base/autor` pelo `object_id` do parlamentar. Entram todos os tipos de matéria, inclusive indicações e requerimentos. Situação: `resultado` da fonte, ou "Em tramitação" e "Tramitação encerrada" pelo campo `em_tramitacao`. Temas ficam vazios: a fonte não classifica.
 
+## Emendas parlamentares (ADR-0030)
+
+- Fonte: `EmendasParlamentares.csv`, no ZIP único `download-de-dados/emendas-parlamentares/UNICO` do Portal da Transparência. Sem chave.
+- Entram as emendas individuais de deputados federais e senadores, dos orçamentos a partir de 2022: transferência com finalidade definida e transferência especial.
+- Emendas de bancada, de comissão e de relator ficam fora. A fonte não as atribui a um parlamentar.
+- Valores como a fonte publica, por emenda: empenhado, liquidado, pago e restos a pagar inscritos, cancelados e pagos. O perfil soma cada campo por ano do orçamento. Um campo nunca é somado a outro.
+- Localidade de aplicação como na fonte: município com UF, estado com "(UF)", "Nacional" ou "MÚLTIPLO".
+- Vínculo com o perfil: pelo código do autor na fonte. O código liga ao deputado ou senador cujo nome é um dos nomes do autor na fonte, sem acento e sem pontuação. Sem perfil com esse nome, vale o nome de urna de uma candidatura do perfil. Código com mais de um perfil possível fica fora.
+- Quando o nome do autor na linha difere do nome mais frequente do código, a emenda mostra o texto da fonte como "Autor na fonte". É o caso da emenda de ex-parlamentar indicada por outro.
+- Favorecidos e convênios não entram: o arquivo de favorecidos traz nome de pessoa física.
+
 ## Discursos
 
 - **Câmara.** `/deputados/{id}/discursos`. Publica tipo, data, fase, sumário oficial e link do texto quando a fonte informa.

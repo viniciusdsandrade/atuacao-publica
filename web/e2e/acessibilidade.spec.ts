@@ -8,6 +8,7 @@ const TAGS_WCAG = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'];
 const ROTAS: Array<[nome: string, caminho: string]> = [
   ['lista', '/'],
   ['perfil de deputado federal', '/#/politico/cam-900001'],
+  ['emendas de um ano', '/#/politico/cam-900001/emendas/2026'],
   ['perfil de vereador da capital', '/#/politico/cmsp-940012'],
   ['perfil de governador', '/#/politico/tse-990000000010'],
   ['comparação', '/#/comparar'],

@@ -5,7 +5,7 @@
   "required": ["politico_id", "tipo", "ano", "gerado_em", "registros"],
   "properties": {
     "politico_id": { "$ref": "comum.schema.json#/$defs/politico_id" },
-    "tipo": { "enum": ["votos", "despesas", "proposicoes", "discursos", "eventos", "atos_normativos", "agenda_oficial"] },
+    "tipo": { "enum": ["votos", "despesas", "proposicoes", "emendas", "discursos", "eventos", "atos_normativos", "agenda_oficial"] },
     "ano": { "type": "integer", "minimum": 2000 },
     "gerado_em": { "$ref": "comum.schema.json#/$defs/instante" },
     "registros": { "type": "array" }
@@ -15,6 +15,7 @@
     { "if": { "properties": { "tipo": { "const": "votos" } } }, "then": { "properties": { "registros": { "items": { "$ref": "registros.schema.json#/$defs/voto" } } } } },
     { "if": { "properties": { "tipo": { "const": "despesas" } } }, "then": { "properties": { "registros": { "items": { "$ref": "registros.schema.json#/$defs/despesa" } } } } },
     { "if": { "properties": { "tipo": { "const": "proposicoes" } } }, "then": { "properties": { "registros": { "items": { "$ref": "registros.schema.json#/$defs/proposicao" } } } } },
+    { "if": { "properties": { "tipo": { "const": "emendas" } } }, "then": { "properties": { "registros": { "items": { "$ref": "registros.schema.json#/$defs/emenda" } } } } },
     { "if": { "properties": { "tipo": { "const": "discursos" } } }, "then": { "properties": { "registros": { "items": { "$ref": "registros.schema.json#/$defs/discurso" } } } } },
     { "if": { "properties": { "tipo": { "const": "eventos" } } }, "then": { "properties": { "registros": { "items": { "$ref": "registros.schema.json#/$defs/evento" } } } } },
     { "if": { "properties": { "tipo": { "const": "atos_normativos" } } }, "then": { "properties": { "registros": { "items": { "$ref": "registros.schema.json#/$defs/ato_normativo" } } } } },

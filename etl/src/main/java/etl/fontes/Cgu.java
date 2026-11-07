@@ -10,6 +10,7 @@ import java.nio.file.Path;
 import java.time.LocalDate;
 import java.time.YearMonth;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -33,10 +34,11 @@ import etl.Texto;
 import tools.jackson.databind.JsonNode;
 
 /**
- * Cartão de pagamento e viagens da Presidência da República, pelos arquivos abertos do Portal da Transparência (ADR-0010).
- * Sem chave: `download-de-dados/cpgf/{AAAAMM}` (um ZIP por mês) e `download-de-dados/viagens/{ano}` (um ZIP por ano).
- * O ETL soma por mês e categoria. Nenhum lançamento individual é publicado: os arquivos trazem nome de portador,
- * de favorecido e de viajante.
+ * Arquivos abertos do Portal da Transparência, sem chave.
+ * Cartão de pagamento e viagens da Presidência da República (ADR-0010): `download-de-dados/cpgf/{AAAAMM}` (um ZIP por mês)
+ * e `download-de-dados/viagens/{ano}` (um ZIP por ano). O ETL soma por mês e categoria. Nenhum lançamento individual é
+ * publicado: os arquivos trazem nome de portador, de favorecido e de viajante.
+ * Emendas parlamentares individuais (ADR-0030): `download-de-dados/emendas-parlamentares/UNICO`, um ZIP com todo o histórico.
  */
 public final class Cgu implements Fonte {
 
@@ -48,9 +50,32 @@ public final class Cgu implements Fonte {
     static final String ENTE = "BR";
     static final String REALIZADA = "Realizada";
 
+    static final String EMENDAS_URL = PORTAL + "/emendas-parlamentares/UNICO";
+    static final String EMENDAS_CAMINHO = "emendas/EmendasParlamentares.zip";
+    static final String EMENDAS_CSV = "EmendasParlamentares.csv";
+    /** Primeiro orçamento coberto: a cobertura começa em 2022-01-01 (ADR-0009). */
+    static final int PRIMEIRO_ANO_DE_EMENDA = 2022;
+    /** Só a emenda individual tem um parlamentar como autor. Bancada, comissão e relator ficam fora (ADR-0030). */
+    static final String TIPO_INDIVIDUAL = "Emenda Individual";
+
     /** Soma de um mês, por categoria. */
     public record Agregado(String ente, int ano, int mes, String categoria, BigDecimal valor, int quantidade,
                            @JsonUnwrapped Prov prov) {
+    }
+
+    /**
+     * Emenda individual ao Orçamento da União, com os valores como o Portal da Transparência publica.
+     * autorNaFonte vem preenchido só quando o nome do autor na linha difere do nome mais frequente do código do autor:
+     * grafia diferente ou emenda de ex-parlamentar indicada por outro, como a fonte escreve.
+     */
+    public record Emenda(int ano, String tipo, String codigo, String numero, String autorNaFonte, String localidade,
+                         String funcao, String subfuncao, String programa, String acao, BigDecimal valorEmpenhado,
+                         BigDecimal valorLiquidado, BigDecimal valorPago, BigDecimal restosInscritos,
+                         BigDecimal restosCancelados, BigDecimal restosPagos, @JsonUnwrapped Prov prov) {
+    }
+
+    /** Emendas de um autor, pelo código do autor na fonte, com os nomes como a fonte os escreve. */
+    public record AutorDeEmendas(String codigo, List<String> nomes, List<Emenda> emendas) {
     }
 
     @Override
@@ -91,6 +116,9 @@ public final class Cgu implements Fonte {
             coleta.obterDerivado(PORTAL + "/viagens/" + ano, "viagens/" + ano + "-presidencia.csv", "application/zip",
                     Politica.porAnoSemanal(ano, ctx.hoje()), (zip, destino) -> filtrarViagens(zip, destino));
         }
+        // Emendas: um ZIP de cerca de 30 MB, regerado a cada dia, com todo o histórico. Renova uma vez por semana, em rodízio.
+        // Falha aqui deixa a fonte parcial, sem derrubar cartão e viagens.
+        coleta.obterOpcional(EMENDAS_URL, EMENDAS_CAMINHO, "application/zip", Politica.SEMANAL);
         coleta.contar("meses", meses.size());
         if (!meses.isEmpty()) {
             coleta.periodo(new Meta.Periodo(meses.getFirst().atDay(1), ctx.hoje()));
@@ -180,6 +208,95 @@ public final class Cgu implements Fonte {
         Json.gravar(ctx.normalizado().resolve("cgu").resolve("despesas.json"), agregados);
         System.out.println("cgu: " + agregados.size() + " agregados de despesa normalizados"
                 + (mesesSemDado > 0 ? ", " + mesesSemDado + " mês(es) de cartão sem arquivo" : ""));
+        normalizarEmendas(ctx);
+    }
+
+    /** Emendas individuais desde o primeiro orçamento coberto, por código do autor. O vínculo com o perfil fica no publish. */
+    static void normalizarEmendas(Contexto ctx) {
+        Coleta.Arquivo arq = Coleta.metadados(ctx, "cgu", EMENDAS_CAMINHO);
+        if (arq == null || arq.bytes() == 0 || !Files.exists(Coleta.caminho(ctx, arq))) {
+            System.out.println("cgu: sem arquivo de emendas para normalizar");
+            return;
+        }
+        Prov prov = Prov.de(FONTE_ID, arq.url(), arq);
+        List<AutorDeEmendas> autores;
+        try (ZipFile arquivo = new ZipFile(Coleta.caminho(ctx, arq).toFile())) {
+            ZipEntry csv = arquivo.getEntry(EMENDAS_CSV);
+            if (csv == null) {
+                throw new IOException("sem " + EMENDAS_CSV + " em " + EMENDAS_CAMINHO);
+            }
+            try (InputStream entrada = arquivo.getInputStream(csv)) {
+                autores = emendasPorAutor(entrada, prov);
+            }
+        } catch (IOException e) {
+            throw new java.io.UncheckedIOException(e);
+        }
+        Json.gravar(ctx.normalizado().resolve("cgu").resolve("emendas.json"), autores);
+        int emendas = autores.stream().mapToInt(a -> a.emendas().size()).sum();
+        System.out.println("cgu: " + emendas + " emendas individuais de " + autores.size() + " autores normalizadas, desde "
+                + PRIMEIRO_ANO_DE_EMENDA);
+    }
+
+    /**
+     * Agrupa as emendas individuais pelo código do autor. O código é estável; o nome muda de grafia entre linhas e,
+     * quando outro parlamentar indica a emenda de um ex-parlamentar, a fonte escreve "NOVO (EX-PARLAMENTAR ANTIGO, ...)".
+     */
+    static List<AutorDeEmendas> emendasPorAutor(InputStream entrada, Prov prov) {
+        Map<String, List<Map<String, String>>> porAutor = new TreeMap<>();
+        Csv.paraCada(entrada, StandardCharsets.ISO_8859_1, 0, linha -> {
+            Integer ano = inteiro(linha.get("Ano da Emenda"));
+            String tipo = semInformacao(linha.get("Tipo de Emenda"));
+            String autor = semInformacao(linha.get("Código do Autor da Emenda"));
+            if (ano != null && ano >= PRIMEIRO_ANO_DE_EMENDA && tipo != null && tipo.startsWith(TIPO_INDIVIDUAL) && autor != null) {
+                porAutor.computeIfAbsent(autor, k -> new ArrayList<>()).add(linha);
+            }
+        });
+        List<AutorDeEmendas> autores = new ArrayList<>();
+        for (var item : porAutor.entrySet()) {
+            Map<String, Integer> nomes = new TreeMap<>();
+            for (Map<String, String> linha : item.getValue()) {
+                String nome = semInformacao(linha.get("Nome do Autor da Emenda"));
+                if (nome != null) {
+                    nomes.merge(nome, 1, Integer::sum);
+                }
+            }
+            String principal = null;
+            int maximo = 0;
+            for (var nome : nomes.entrySet()) {
+                if (nome.getValue() > maximo) {
+                    principal = nome.getKey();
+                    maximo = nome.getValue();
+                }
+            }
+            List<Emenda> emendas = new ArrayList<>();
+            for (Map<String, String> linha : item.getValue()) {
+                String nome = semInformacao(linha.get("Nome do Autor da Emenda"));
+                emendas.add(new Emenda(inteiro(linha.get("Ano da Emenda")), semInformacao(linha.get("Tipo de Emenda")),
+                        semInformacao(linha.get("Código da Emenda")), semInformacao(linha.get("Número da emenda")),
+                        nome == null || nome.equals(principal) ? null : nome,
+                        semInformacao(linha.get("Localidade de aplicação do recurso")),
+                        semInformacao(linha.get("Nome Função")), semInformacao(linha.get("Nome Subfunção")),
+                        semInformacao(linha.get("Nome Programa")), semInformacao(linha.get("Nome Ação")),
+                        Texto.valor(linha.get("Valor Empenhado")), Texto.valor(linha.get("Valor Liquidado")),
+                        Texto.valor(linha.get("Valor Pago")), Texto.valor(linha.get("Valor Restos A Pagar Inscritos")),
+                        Texto.valor(linha.get("Valor Restos A Pagar Cancelados")), Texto.valor(linha.get("Valor Restos A Pagar Pagos")),
+                        prov));
+            }
+            emendas.sort(Comparator.comparingInt(Emenda::ano).reversed()
+                    .thenComparing(e -> e.codigo() == null ? "" : e.codigo()));
+            autores.add(new AutorDeEmendas(item.getKey(), List.copyOf(nomes.keySet()), emendas));
+        }
+        return autores;
+    }
+
+    /** "Sem informação" e "S/I" da fonte viram null: ausência na fonte não é dado. */
+    static String semInformacao(String texto) {
+        String t = Texto.vazioParaNulo(texto);
+        if (t == null) {
+            return null;
+        }
+        t = t.strip();
+        return t.equalsIgnoreCase("Sem informação") || t.equals("S/I") ? null : t;
     }
 
     /** Somas por (ano, mês, categoria), com a quantidade de lançamentos. */
