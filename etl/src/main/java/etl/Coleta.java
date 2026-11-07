@@ -163,6 +163,15 @@ public final class Coleta {
         return obter(url, caminho, accept, politica, true, null, false, cabecalhos);
     }
 
+    /**
+     * Como obterOpcional, para API que só aceita o filtro num corpo JSON (POST). O caminho no cache distingue cada consulta,
+     * e o meta guarda a URL, que é a proveniência.
+     */
+    public Arquivo obterPostOpcional(String url, String corpoJson, String caminho, String accept, Politica politica)
+            throws IOException, InterruptedException {
+        return obter(url, caminho, accept, politica, true, null, false, Map.of(), corpoJson);
+    }
+
     private Arquivo obter(String url, String caminho, String accept, Politica politica, boolean opcional, Derivacao derivacao,
                           boolean propagarNaoEncontrado) throws IOException, InterruptedException {
         return obter(url, caminho, accept, politica, opcional, derivacao, propagarNaoEncontrado, Map.of());
@@ -170,6 +179,12 @@ public final class Coleta {
 
     private Arquivo obter(String url, String caminho, String accept, Politica politica, boolean opcional, Derivacao derivacao,
                           boolean propagarNaoEncontrado, Map<String, String> cabecalhos) throws IOException, InterruptedException {
+        return obter(url, caminho, accept, politica, opcional, derivacao, propagarNaoEncontrado, cabecalhos, null);
+    }
+
+    private Arquivo obter(String url, String caminho, String accept, Politica politica, boolean opcional, Derivacao derivacao,
+                          boolean propagarNaoEncontrado, Map<String, String> cabecalhos, String corpoJson)
+            throws IOException, InterruptedException {
         Path destino = ctx.raw().resolve(fonte).resolve(caminho);
         Path meta = lateral(destino);
         Arquivo emCache = emCache(meta);
@@ -200,11 +215,11 @@ public final class Coleta {
         try {
             Http.Baixado baixado;
             if (derivacao == null) {
-                baixado = ctx.http().baixar(url, destino, accept, cabecalhos);
+                baixado = ctx.http().baixar(url, destino, accept, cabecalhos, corpoJson);
             } else {
                 Path temporario = Files.createTempFile(ctx.raw(), "download-", ".tmp");
                 try {
-                    baixado = ctx.http().baixar(url, temporario, accept, cabecalhos);
+                    baixado = ctx.http().baixar(url, temporario, accept, cabecalhos, corpoJson);
                     Files.createDirectories(destino.getParent());
                     derivacao.derivar(baixado.arquivo(), destino);
                     baixado = new Http.Baixado(destino, baixado.sha256(), baixado.bytes());

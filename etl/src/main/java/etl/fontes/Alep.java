@@ -23,11 +23,13 @@ import etl.Coleta.Politica;
 import etl.Contexto;
 import etl.Fonte;
 import etl.Json;
+import etl.Registros;
 import etl.Registros.FonteUsada;
 import etl.Registros.LinkOficial;
 import etl.Registros.Mandato;
 import etl.Registros.OrgaoOuFrente;
 import etl.Registros.Pessoa;
+import etl.Registros.Proposicao;
 import etl.Registros.Prov;
 import etl.Texto;
 
@@ -45,6 +47,15 @@ public final class Alep implements Fonte {
 
     public static final String SITE = "https://www.assembleia.pr.leg.br";
     public static final String UF = "PR";
+    public static final String FONTE_PROPOSICOES = "alep-proposicoes";
+    /** API documentada da ALEP. O HTTPS do host tem certificado autoassinado; a URL documentada é HTTP. */
+    public static final String API_PROPOSICOES = "http://webservices.assembleia.pr.leg.br/api/public/proposicao/filtrar";
+    /** Primeiro ano das proposições: a 20ª legislatura começa em 2023. */
+    static final int PRIMEIRO_ANO_PROPOSICOES = 2023;
+    /** Nome da autoria que difere do nome e do slug do perfil; cada um corresponde a um único deputado da lista da ALEP. */
+    static final Map<String, String> APELIDOS_DE_AUTORIA = Map.of(
+            "ARILSON CHIORATO", "arilson-maroldi-chiorato",
+            "BAZANA", "pedro-paulo-bazana");
 
     public static final LocalDate INICIO_LEG_20 = LocalDate.of(2023, 2, 1);
     public static final LocalDate FIM_LEG_20 = LocalDate.of(2027, 1, 31);
@@ -93,6 +104,83 @@ public final class Alep implements Fonte {
         // Baixa a página de comissões permanentes e temporárias
         coleta.obterOuVazio(SITE + "/atividade-parlamentar/comissoes-permanentes-e-temporarias",
                 "comissoes.html", "text/html", Politica.SEMANAL);
+
+        // Proposições: a API só aceita o filtro no corpo (POST). Um ano por consulta, sem limite prático de registros.
+        for (int ano = PRIMEIRO_ANO_PROPOSICOES; ano <= ctx.hoje().getYear(); ano++) {
+            coleta.obterPostOpcional(API_PROPOSICOES, "{\"ano\":" + ano + ",\"numeroMaximoRegistro\":50000}",
+                    "proposicoes/" + ano + ".json", "application/json", Politica.porAnoSemanal(ano, ctx.hoje()));
+        }
+    }
+
+    /**
+     * Chave de vínculo da autoria: sem "DEPUTADO" ou "DEPUTADA", sem acento e pontuação, com "DR" e "DRA" por extenso.
+     * Serve para o nome da autoria, o nome do perfil e o slug.
+     */
+    static String chaveDeAutoria(String nome) {
+        String texto = Texto.normalizarNome(nome.replace('-', ' ').replaceAll("[^\\p{L}\\s]", " "));
+        texto = texto.replaceFirst("^DEPUTAD[OA] ", "");
+        return texto.replaceAll("\\bDRA\\b", "DOUTORA").replaceAll("\\bDR\\b", "DOUTOR");
+    }
+
+    /**
+     * Proposições de cada deputado na lista anual da API. A autoria é texto, com os autores separados por vírgula;
+     * só os que casam com um deputado em exercício entram. A ordem na lista vira {@code ordem_assinatura}.
+     */
+    public static Map<String, List<Proposicao>> proposicoesDoAno(JsonNode resposta, Map<String, String> slugPorChave, Prov prov) {
+        Map<String, List<Proposicao>> porSlug = new HashMap<>();
+        for (JsonNode p : resposta.path("lista")) {
+            String autoria = Json.texto(p, "autor");
+            String tipo = Json.texto(p, "tipoProposicao");
+            Integer numero = Json.inteiro(p, "numero");
+            Integer ano = Json.inteiro(p, "ano");
+            if (autoria == null || tipo == null || numero == null || ano == null) {
+                continue;
+            }
+            String recebimento = Json.texto(p, "dataRecebimento");
+            String[] autores = autoria.split(",");
+            Set<String> jaContados = new HashSet<>();
+            for (int i = 0; i < autores.length; i++) {
+                String slug = slugPorChave.get(chaveDeAutoria(autores[i]));
+                if (slug == null || !jaContados.add(slug)) {
+                    continue;
+                }
+                porSlug.computeIfAbsent(slug, k -> new ArrayList<>()).add(new Proposicao(Json.texto(p, "codigo"), tipo, numero,
+                        ano, tipo + " " + numero + "/" + ano, Json.texto(p, "ementa"), Json.texto(p, "status"), null,
+                        recebimento == null || recebimento.length() < 10 ? null : recebimento.substring(0, 10), i + 1, null,
+                        null, prov));
+            }
+        }
+        return porSlug;
+    }
+
+    /** Proposições de cada deputado em exercício, pelas listas anuais em cache. */
+    private static Map<String, List<Proposicao>> proposicoesPorSlug(Contexto ctx, List<DeputadoBruto> deputados) {
+        Map<String, String> slugPorChave = new HashMap<>();
+        for (DeputadoBruto d : deputados) {
+            slugPorChave.put(chaveDeAutoria(formatarNome(d.nome())), d.slug());
+            slugPorChave.putIfAbsent(chaveDeAutoria(d.slug()), d.slug());
+        }
+        Set<String> slugs = new HashSet<>(slugPorChave.values());
+        APELIDOS_DE_AUTORIA.forEach((apelido, slug) -> {
+            if (slugs.contains(slug)) {
+                slugPorChave.putIfAbsent(apelido, slug);
+            }
+        });
+        Map<String, List<Proposicao>> porSlug = new HashMap<>();
+        int total = 0;
+        for (int ano = PRIMEIRO_ANO_PROPOSICOES; ano <= ctx.hoje().getYear(); ano++) {
+            Coleta.Arquivo arq = Coleta.metadados(ctx, "alep", "proposicoes/" + ano + ".json");
+            if (arq == null || arq.bytes() == 0 || !Files.exists(Coleta.caminho(ctx, arq))) {
+                continue;
+            }
+            for (var item : proposicoesDoAno(Json.ler(Coleta.caminho(ctx, arq)), slugPorChave,
+                    Prov.de(FONTE_PROPOSICOES, arq.url(), arq)).entrySet()) {
+                porSlug.computeIfAbsent(item.getKey(), k -> new ArrayList<>()).addAll(item.getValue());
+                total += item.getValue().size();
+            }
+        }
+        System.out.println("alep: " + total + " autorias de proposições em " + porSlug.size() + " deputados");
+        return porSlug;
     }
 
     @Override
@@ -111,6 +199,7 @@ public final class Alep implements Fonte {
 
         List<Pessoa> pessoas = new ArrayList<>();
         Map<String, Acumulado> acumulados = new LinkedHashMap<>();
+        Map<String, List<Proposicao>> proposicoesPorSlug = proposicoesPorSlug(ctx, deputados);
 
         for (DeputadoBruto dep : deputados) {
             String slug = dep.slug();
@@ -164,7 +253,16 @@ public final class Alep implements Fonte {
             blocosNode.set("mandatos", Json.SAIDA.valueToTree(ac.mandatos));
             blocosNode.set("orgaos_e_frentes", Json.SAIDA.valueToTree(ac.orgaos));
             blocosNode.set("despesas", Json.SAIDA.createArrayNode());
-            blocosNode.set("fontes", Json.SAIDA.valueToTree(ac.fontes));
+            List<Proposicao> proposicoes = proposicoesPorSlug.getOrDefault(slug, List.of());
+            blocosNode.set("proposicoes", Json.SAIDA.valueToTree(proposicoes));
+            // As fontes das proposições são as listas anuais que trouxeram os registros.
+            Map<String, List<FonteUsada>> fontes = new LinkedHashMap<>(ac.fontes);
+            var deProposicoes = Registros.fontesDosBlocos(Json.SAIDA.createObjectNode().set("proposicoes",
+                    Json.SAIDA.valueToTree(proposicoes))).get("proposicoes");
+            if (deProposicoes != null) {
+                fontes.put("proposicoes", deProposicoes);
+            }
+            blocosNode.set("fontes", Json.SAIDA.valueToTree(fontes));
             Json.gravar(pastaBlocos.resolve(slug + ".json"), blocosNode);
         }
 

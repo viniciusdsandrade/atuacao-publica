@@ -103,7 +103,15 @@ public final class Http {
     }
 
     public Baixado baixar(String url, Path destino, String accept, Map<String, String> cabecalhos) throws IOException, InterruptedException {
-        HttpResponse<InputStream> resposta = enviar(requisicao(url, accept, "GET", cabecalhos), HttpResponse.BodyHandlers.ofInputStream());
+        return baixar(url, destino, accept, cabecalhos, null);
+    }
+
+    /** Com corpo JSON, a requisição vai por POST: API de consulta que só aceita o filtro no corpo. */
+    public Baixado baixar(String url, Path destino, String accept, Map<String, String> cabecalhos, String corpoJson)
+            throws IOException, InterruptedException {
+        HttpRequest requisicao = corpoJson == null ? requisicao(url, accept, "GET", cabecalhos)
+                : requisicao(url, accept, "POST", cabecalhos, corpoJson);
+        HttpResponse<InputStream> resposta = enviar(requisicao, HttpResponse.BodyHandlers.ofInputStream());
         try (InputStream corpo = resposta.body()) {
             if (resposta.statusCode() == 404 || resposta.statusCode() == 403) {
                 throw new NaoEncontrado("HTTP " + resposta.statusCode() + " em " + url);
@@ -207,17 +215,25 @@ public final class Http {
     }
 
     private HttpRequest requisicao(String url, String accept, String metodo, Map<String, String> cabecalhos) {
+        return requisicao(url, accept, metodo, cabecalhos, null);
+    }
+
+    private HttpRequest requisicao(String url, String accept, String metodo, Map<String, String> cabecalhos, String corpoJson) {
         var builder = HttpRequest.newBuilder(URI.create(url))
                 .timeout(Duration.ofSeconds(120))
                 .header("User-Agent", userAgent)
                 .header("Accept", accept)
                 .header("Accept-Encoding", "gzip");
+        if (corpoJson != null) {
+            builder.header("Content-Type", "application/json");
+        }
         if (cabecalhos != null) {
             for (var entry : cabecalhos.entrySet()) {
                 builder.header(entry.getKey(), entry.getValue());
             }
         }
-        return builder.method(metodo, HttpRequest.BodyPublishers.noBody()).build();
+        return builder.method(metodo, corpoJson == null ? HttpRequest.BodyPublishers.noBody()
+                : HttpRequest.BodyPublishers.ofString(corpoJson)).build();
     }
 
     private <T> HttpResponse<T> enviar(HttpRequest requisicao, HttpResponse.BodyHandler<T> leitor)

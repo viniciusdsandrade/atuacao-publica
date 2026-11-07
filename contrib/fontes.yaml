@@ -1505,6 +1505,21 @@
   status: validado
   validado_em: 2026-11-03
 
+- id: alep-proposicoes
+  nome: Assembleia Legislativa do Estado do Paraná, proposições pela API pública
+  orgao: Assembleia Legislativa do Estado do Paraná
+  esfera: estadual
+  ente: PR
+  categoria: dados
+  nivel_confianca: T0
+  url_base: http://webservices.assembleia.pr.leg.br/api/public/proposicao/filtrar
+  formato: JSON (POST com filtro no corpo)
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Cobre 2023 a 2026. A autoria é texto, com os autores separados por vírgula, vinculada pelo nome parlamentar; autor sem perfil em exercício fica fora. A fonte não diz quem é o autor principal: proponente fica nulo, e a posição na lista vira ordem de assinatura. O HTTPS do host tem certificado autoassinado; a URL documentada é HTTP."
+  status: validado
+  validado_em: 2026-11-07
+
 - id: alba-deputados
   nome: Assembleia Legislativa do Estado da Bahia, deputados estaduais
   orgao: Assembleia Legislativa do Estado da Bahia

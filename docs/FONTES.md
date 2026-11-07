@@ -551,6 +551,7 @@ Validação em 2026-11-03 com o User-Agent do projeto.
 | `alep-transparencia` | ALEP, portal da transparência | T0 | HTML e XLSX | nenhuma | validado | 2026-11-03 |
 | `alep-ressarcimento` | ALEP, verbas de ressarcimento dos deputados | T0 | JSON | reCAPTCHA v3 | bloqueado | 2026-11-06 |
 | `alep-portal` | ALEP, portal institucional e fotos | T0 | HTML e JPG | nenhuma | validado | 2026-11-03 |
+| `alep-proposicoes` | ALEP, proposições pela API pública | T0 | JSON (POST) | nenhuma | validado | 2026-11-07 |
 
 ### `alep-deputados`: catálogo e legislaturas
 
@@ -575,6 +576,21 @@ Validação em 2026-11-03 com o User-Agent do projeto.
 - URL base: `https://transparencia.assembleia.pr.leg.br/receitas-e-despesas/verbas-de-ressarcimento`
 - O script da página (`assets/js/ressarcimento.min.js`) lista os meses em `api/ressarcimento_meses` sem token. A consulta em `api/ressarcimento` (POST) envia `X-Recaptcha-Token` com reCAPTCHA v3. Verificado em 2026-11-06.
 - O ETL não contorna CAPTCHA. Por isso as despesas por deputado da ALEP não são coletadas.
+
+### `alep-proposicoes`: proposições
+
+- URL base: `http://webservices.assembleia.pr.leg.br/api/public/proposicao/filtrar`. POST com o filtro em JSON no corpo, por exemplo `{"ano": 2025, "numeroMaximoRegistro": 50000}`. GET responde 400. Validação em 2026-11-07.
+- Uma consulta traz o ano inteiro: 5.476 proposições em 2025, cerca de 4 MB.
+- Campos usados: `codigo`, `tipoProposicao`, `numero`, `ano`, `ementa`, `status` (TRAMITANDO ou ARQUIVADA), `dataRecebimento` e `autor`. A `siglaTipoProposicao` vem nula, e o tipo fica por extenso.
+- `autor` é texto, com vários autores separados por vírgula ("DEPUTADO FULANO, DEPUTADA BELTRANA"). O vínculo usa o nome parlamentar sem o cargo, sem acento e pontuação, e com "DR" e "DRA" por extenso. Casa com o nome do perfil ou com o slug.
+- Dois autores usam nome diferente do perfil e do slug ("ARILSON CHIORATO" e "BAZANA"). Uma tabela no adaptador liga cada um ao único deputado da lista da ALEP com esse nome.
+- Na validação, 24.238 autorias de 2023 a 2026 nos 54 deputados em exercício. Autores que não são deputados em exercício (Poder Executivo, comissões, ex-deputados) ficam fora.
+- O HTTPS do host tem certificado autoassinado, e a URL documentada é HTTP. Respondeu a provas nos EUA (Azure e AWS) e no Brasil.
+
+### Votações nominais (não implementadas)
+
+- Os arquivos de dados abertos por sessão respondem sem CAPTCHA: `https://transparencia.assembleia.pr.leg.br/api/votacoes/sessoes?ano={ano}&mes={mes}` lista as sessões, e `/api/votacoes/dados-abertos?sessao={id}` aponta um ZIP com um XLSX por item votado. A API exige `Accept: application/json`; sem ele, responde 403.
+- O XLSX traz o voto de cada parlamentar pelo nome civil. A ALEP não publica, nem no portal nem na API, a correspondência entre nome civil e nome parlamentar, e casar por palavras soltas ligaria homônimos parciais. Fica sem adaptador até haver essa correspondência por fonte oficial.
 
 
 ## Fontes da Bahia (ALBA & Governo do Estado)

@@ -95,7 +95,7 @@ Estado da publicação de 2026-11-06, às 23:51 UTC, com 1.867 perfis. "Perfis" 
 |---|---|---|---|---|
 | ALESP (SP) | ok | 153 | 140 | votações em comissão, proposições, despesas e comissões |
 | ALMG (MG) | falha: rede bloqueada | 0 | - | - |
-| ALEP (PR) | ok | 54 | 51 | comissões |
+| ALEP (PR) | ok | 54 | 51 | comissões; proposições a partir da próxima publicação |
 | ALBA (BA) | ok | 63 | 63 | comissões |
 | ALERJ (RJ) | ok | 70 | 70 | despesas a partir da próxima publicação |
 | ALRS (RS) | falha: rede bloqueada | 0 | - | - |
@@ -323,14 +323,16 @@ Verificação de 2026-11-02, com scripts locais (Playwright e axe-core, fora do 
     - A primeira varredura achou dois defeitos reais, já corrigidos: o nome acessível do botão de tema não continha o texto visível (WCAG 2.5.3) e a tabela rolável de `/dados-abertos` não tinha foco por teclado (WCAG 2.1.1).
 23. Fontes de atuação das assembleias: levantamento de 2026-11-06, ainda sem adaptador.
     - Cada endereço respondeu a requisição real no levantamento. O acesso a partir do exterior só foi testado onde a tabela diz.
-    - Sugestão de ordem: votações da ALECE, votações da ALEP.
+    - Sugestão de ordem: votações da ALECE, proposições da ALMG.
+    - Proposições da ALEP: implementadas em 2026-11-07, pela API pública (`alep-proposicoes`), que só aceita o filtro no corpo de um POST. O `Coleta` ganhou `obterPostOpcional` para isso. No ensaio local, 24.238 autorias nos 54 deputados.
+    - Votações da ALEP: os XLSX por sessão estão abertos, mas trazem o parlamentar pelo nome civil. A ALEP não publica a correspondência com o nome parlamentar, então ficam sem adaptador.
 
     | Casa | Despesas | Proposições com autor | Votações nominais |
     |---|---|---|---|
     | ALERJ | implementado em 2026-11-07 | o sistema Domino recusa parâmetros de listagem | não encontrado |
     | ALECE | implementado em 2026-11-07 | HTML paginado, de 350 a 450 páginas | XLSX por matéria, 61 de 2023 a 2026. Respondeu da Azure |
     | ALEGO | implementado em 2026-11-06 | API NoPaper, autor por nome | JSON anual. Parlamentar só por nome, com grafia irregular |
-    | ALEP | bloqueado por reCAPTCHA | API documentada, autor em texto | ZIP por sessão, sem CAPTCHA, com um XLSX por item |
+    | ALEP | bloqueado por reCAPTCHA | implementado em 2026-11-07 | ZIP por sessão, sem CAPTCHA, mas o voto vem pelo nome civil, sem correspondência oficial com o perfil |
     | ALMG | implementado; coleta bloqueada no CI | CSV anual, com o id do autor igual ao do perfil | só em texto livre na tramitação |
     | ALBA | XLSX anual, deputado por nome; fornecedor só no detalhe HTML | API NoPaper, com id de autor diferente do id do portal | não validado |
     | CLDF | portal CKAN, com CPF do deputado e do prestador, que precisa sair | API do PLe, autoria por nome | exige login |

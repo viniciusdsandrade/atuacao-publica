@@ -20,8 +20,44 @@ import etl.Coleta;
 import etl.Contexto;
 import etl.Json;
 import etl.Registros.OrgaoOuFrente;
+import etl.Registros.Proposicao;
+import etl.Registros.Prov;
 
 class AlepTest {
+
+    @Test
+    void chaveDeAutoriaIgnoraCargoTituloEPontuacao() {
+        assertEquals("FULANO DE TAL", Alep.chaveDeAutoria("DEPUTADO FULANO DE TAL"));
+        assertEquals("DOUTORA BELTRANA", Alep.chaveDeAutoria(" DEPUTADA DRA. BELTRANA"));
+        assertEquals("DOUTORA BELTRANA", Alep.chaveDeAutoria("Doutora Beltrana"));
+        assertEquals("LUIS RAIMUNDO CORTI", Alep.chaveDeAutoria("luis-raimundo-corti"));
+    }
+
+    @Test
+    void proposicoesDoAnoFicamComOsAutoresQueSaoDeputadosEmExercicio() {
+        JsonNode resposta = Json.FONTE.readTree("""
+                {"totalRegistrosSemLimitador": 2, "lista": [
+                  {"codigo": 1, "numero": 54, "ano": 2025, "tipoProposicao": "PROJETO DE LEI", "status": "TRAMITANDO",
+                   "ementa": "Concede título de utilidade pública.", "dataRecebimento": "2025-02-17T14:08:35.000+0000",
+                   "autor": "DEPUTADO FULANO DE TAL, DEPUTADA DRA BELTRANA, PODER EXECUTIVO"},
+                  {"codigo": 2, "numero": 7, "ano": 2025, "tipoProposicao": "REQUERIMENTO", "status": "ARQUIVADA",
+                   "ementa": "Requer informações.", "dataRecebimento": "2025-03-01T10:00:00.000+0000",
+                   "autor": "DEPUTADO SICRANO SEM PERFIL"}]}
+                """);
+        Prov prov = new Prov(Alep.FONTE_PROPOSICOES, Alep.API_PROPOSICOES, Instant.parse("2026-11-07T00:00:00Z"));
+
+        Map<String, List<Proposicao>> porSlug = Alep.proposicoesDoAno(resposta,
+                Map.of("FULANO DE TAL", "fulano-de-tal", "DOUTORA BELTRANA", "doutora-beltrana"), prov);
+
+        assertEquals(2, porSlug.size());
+        Proposicao doFulano = porSlug.get("fulano-de-tal").getFirst();
+        assertEquals("PROJETO DE LEI 54/2025", doFulano.identificacao());
+        assertEquals("TRAMITANDO", doFulano.situacao());
+        assertEquals("2025-02-17", doFulano.dataApresentacao());
+        assertEquals(1, doFulano.ordemAssinatura());
+        assertEquals(2, porSlug.get("doutora-beltrana").getFirst().ordemAssinatura());
+        assertEquals(prov, doFulano.prov());
+    }
 
     @Test
     void formataNomeComPreposicoesEMaiusculas() {
