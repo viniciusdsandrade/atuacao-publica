@@ -735,6 +735,17 @@ Validação em 2026-11-03 com o User-Agent do projeto.
 - URL base: `https://portal.al.go.leg.br/`
 - Repositório de fotos oficiais dos parlamentares em alta resolução hospedadas no servidor institucional `https://saba.al.go.leg.br/`.
 
+### `alego-despesas`: verba indenizatória
+
+- URL base: `https://transparencia.al.go.leg.br/api/transparencia/verbas_indenizatorias`. JSON, sem autenticação. Validação em 2026-11-06.
+- Resumo do mês: `.json?ano={ano}&mes={mes}&todos=true`, com `deputado.id`, `valor_apresentado` e `valor_indenizado` por deputado.
+- Detalhe: `/exibir.json?ano={ano}&mes={mes}&deputado_id={id}`. Grupos e subgrupos de despesa, e em cada lançamento o fornecedor (`nome`, `cnpj_cpf`), a data do documento, o número e os valores apresentado e indenizado.
+- O `deputado.id` é o mesmo id do portal institucional (`alego-{id}`).
+- O projeto usa o valor indenizado, que é o que a Casa pagou. Ano e mês são os da verba; a data é a do documento.
+- `/periodos` lista os meses publicados: de 2014 a 2026, com 2026 até setembro na validação.
+- O detalhe traz também o e-mail e as redes do gabinete. O projeto não guarda esses campos.
+- Respondeu a provas nos EUA (Azure e AWS) e no Brasil.
+
 ### `go-transparencia` e `go-diario-oficial`: Executivo estadual
 
 - Transparência orçamentária: `https://www.transparencia.go.gov.br/`

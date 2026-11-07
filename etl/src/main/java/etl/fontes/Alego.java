@@ -1,5 +1,6 @@
 package etl.fontes;
 
+import java.math.BigDecimal;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDate;
@@ -19,14 +20,17 @@ import etl.Coleta;
 import etl.Coleta.Politica;
 import etl.Contexto;
 import etl.Fonte;
+import etl.Guarda;
 import etl.Json;
 import etl.Registros;
+import etl.Registros.Despesa;
 import etl.Registros.LinkOficial;
 import etl.Registros.Mandato;
 import etl.Registros.OrgaoOuFrente;
 import etl.Registros.Pessoa;
 import etl.Registros.Prov;
 import etl.Texto;
+import tools.jackson.databind.JsonNode;
 
 /**
  * Assembleia Legislativa do Estado de Goiás (ALEGO, ADR-0022).
@@ -41,6 +45,10 @@ public final class Alego implements Fonte {
 
     public static final String SITE = "https://portal.al.go.leg.br";
     public static final String URL_DEPUTADOS = "https://portal.al.go.leg.br/deputados/em-exercicio";
+    public static final String FONTE_DESPESAS = "alego-despesas";
+    public static final String URL_DESPESAS = "https://transparencia.al.go.leg.br/api/transparencia/verbas_indenizatorias";
+    /** Primeiro ano das despesas: a 20ª legislatura começa em 2023. */
+    static final int PRIMEIRO_ANO_DESPESAS = 2023;
     public static final String UF = "GO";
 
     public static final LocalDate INICIO_LEG_20 = LocalDate.of(2023, 2, 1);
@@ -129,6 +137,124 @@ public final class Alego implements Fonte {
             String urlCom = SITE + "/comissoes/" + comId;
             coleta.obterOuVazio(urlCom, "comissoes/" + comId + ".html", "text/html", Politica.SEMANAL);
         }
+
+        // Verba indenizatória: o resumo do mês diz quem tem lançamento, e o detalhe traz cada lançamento.
+        // O id do deputado no portal da transparência é o mesmo do portal institucional.
+        Set<String> ids = new HashSet<>();
+        deputados.forEach(d -> ids.add(d.id()));
+        for (int ano = PRIMEIRO_ANO_DESPESAS; ano <= ctx.hoje().getYear(); ano++) {
+            Politica politica = Politica.porAnoSemanal(ano, ctx.hoje());
+            int ultimoMes = ano == ctx.hoje().getYear() ? ctx.hoje().getMonthValue() : 12;
+            for (int mes = 1; mes <= ultimoMes; mes++) {
+                Coleta.Arquivo resumo = coleta.obterOpcional(URL_DESPESAS + ".json?ano=" + ano + "&mes=" + mes + "&todos=true",
+                        arquivoDoResumo(ano, mes), "application/json", politica);
+                if (resumo == null || resumo.bytes() == 0) {
+                    continue;
+                }
+                int anoDoMes = ano;
+                int mesDoAno = mes;
+                // Os deputados do mês em paralelo, no limite de concorrência do cliente HTTP.
+                List<String> falhas = Camara.paraCadaDeputado(deputadosDoResumo(Json.ler(Coleta.caminho(ctx, resumo)), ids),
+                        id -> coleta.obterOpcional(URL_DESPESAS + "/exibir.json?ano=" + anoDoMes + "&mes=" + mesDoAno
+                                + "&deputado_id=" + id, arquivoDoDetalhe(anoDoMes, mesDoAno, id), "application/json", politica));
+                for (String falha : falhas) {
+                    coleta.falhaParcial("despesas", falha);
+                }
+            }
+        }
+    }
+
+    private static String arquivoDoResumo(int ano, int mes) {
+        return String.format(Locale.ROOT, "despesas/%d-%02d.json", ano, mes);
+    }
+
+    private static String arquivoDoDetalhe(int ano, int mes, String id) {
+        return String.format(Locale.ROOT, "despesas/%d-%02d/%s.json", ano, mes, id);
+    }
+
+    /** Ids do resumo mensal que estão entre os deputados em exercício. */
+    static List<String> deputadosDoResumo(JsonNode resumo, Set<String> ids) {
+        List<String> presentes = new ArrayList<>();
+        for (JsonNode linha : resumo) {
+            String id = Json.texto(linha.path("deputado"), "id");
+            if (id != null && ids.contains(id) && !presentes.contains(id)) {
+                presentes.add(id);
+            }
+        }
+        return presentes;
+    }
+
+    /**
+     * Lançamentos de um mês de verba indenizatória. O valor é o indenizado, que é o que a Casa pagou.
+     * O ano e o mês são os da verba; a data é a do documento. CNPJ fica; CPF de prestador pessoa física sai.
+     */
+    public static List<Despesa> despesasDoMes(JsonNode detalhe, Prov prov) {
+        int ano = detalhe.path("ano").asInt();
+        int mes = detalhe.path("mes").asInt();
+        List<Despesa> despesas = new ArrayList<>();
+        for (JsonNode grupo : detalhe.path("grupos")) {
+            String nomeGrupo = semNumeracao(Json.texto(grupo, "descricao"));
+            for (JsonNode subgrupo : grupo.path("subgrupos")) {
+                String nomeSubgrupo = semNumeracao(Json.texto(subgrupo, "descricao"));
+                String categoria = nomeSubgrupo == null || nomeSubgrupo.equalsIgnoreCase("geral") ? nomeGrupo
+                        : nomeGrupo + " - " + nomeSubgrupo;
+                for (JsonNode lancamento : subgrupo.path("lancamentos")) {
+                    JsonNode fornecedor = lancamento.path("fornecedor");
+                    BigDecimal valor = Texto.valor(Json.texto(fornecedor, "valor_indenizado"));
+                    if (valor == null || categoria == null) {
+                        continue;
+                    }
+                    String documento = Json.texto(fornecedor, "cnpj_cpf");
+                    String digitos = documento == null ? "" : documento.replaceAll("\\D", "");
+                    despesas.add(new Despesa(diaDoDocumento(Json.texto(fornecedor, "data")),
+                            ano, mes, categoria, Guarda.semCpf(Json.texto(fornecedor, "nome")),
+                            digitos.length() == 14 ? digitos : null, valor, Json.texto(fornecedor, "numero"), null, prov));
+                }
+            }
+        }
+        return despesas;
+    }
+
+    /** Data do documento ("2024-02-21T00:00:00.000-03:00"), ou null quando a fonte traz outro formato. */
+    static LocalDate diaDoDocumento(String data) {
+        if (data == null || data.length() < 10) {
+            return null;
+        }
+        try {
+            return LocalDate.parse(data.substring(0, 10));
+        } catch (java.time.format.DateTimeParseException e) {
+            return null;
+        }
+    }
+
+    /** "09 - VEÍCULOS" vira "VEÍCULOS". */
+    private static String semNumeracao(String descricao) {
+        if (descricao == null) {
+            return null;
+        }
+        String texto = descricao.replaceFirst("^\\d+\\s*-\\s*", "").replaceAll("\\s+", " ").strip();
+        return texto.isEmpty() ? null : texto;
+    }
+
+    /** Despesas de cada deputado em exercício, pelos detalhes mensais em cache. */
+    private Map<String, List<Despesa>> despesasPorDeputado(Contexto ctx, List<DeputadoBruto> deputados) {
+        Map<String, List<Despesa>> porDeputado = new HashMap<>();
+        int lancamentos = 0;
+        for (int ano = PRIMEIRO_ANO_DESPESAS; ano <= ctx.hoje().getYear(); ano++) {
+            for (int mes = 1; mes <= 12; mes++) {
+                for (DeputadoBruto d : deputados) {
+                    Coleta.Arquivo arq = Coleta.metadados(ctx, nome(), arquivoDoDetalhe(ano, mes, d.id()));
+                    if (arq == null || arq.bytes() == 0 || !Files.exists(Coleta.caminho(ctx, arq))) {
+                        continue;
+                    }
+                    List<Despesa> doMes = despesasDoMes(Json.ler(Coleta.caminho(ctx, arq)), Prov.de(FONTE_DESPESAS, arq.url(), arq));
+                    porDeputado.computeIfAbsent(d.id(), k -> new ArrayList<>()).addAll(doMes);
+                    lancamentos += doMes.size();
+                }
+            }
+        }
+        System.out.println("alego: " + lancamentos + " lançamentos de verba indenizatória em " + porDeputado.size() + " deputados");
+        return porDeputado;
     }
 
     @Override
@@ -150,6 +276,7 @@ public final class Alego implements Fonte {
         }
 
         Map<String, List<OrgaoOuFrente>> comissoesPorDeputado = extrairComissoes(ctx);
+        Map<String, List<Despesa>> despesasPorDeputado = despesasPorDeputado(ctx, deputados);
 
         List<Pessoa> pessoas = new ArrayList<>();
 
@@ -213,7 +340,7 @@ public final class Alego implements Fonte {
             var blocosNode = Json.SAIDA.createObjectNode();
             blocosNode.set("mandatos", Json.SAIDA.valueToTree(mandatos));
             blocosNode.set("orgaos_e_frentes", Json.SAIDA.valueToTree(orgaos));
-            blocosNode.set("despesas", Json.SAIDA.createArrayNode());
+            blocosNode.set("despesas", Json.SAIDA.valueToTree(despesasPorDeputado.getOrDefault(id, List.of())));
             blocosNode.set("fontes", Json.SAIDA.valueToTree(Registros.fontesDosBlocos(blocosNode)));
             Json.gravar(pastaBlocos.resolve(id + ".json"), blocosNode);
         }

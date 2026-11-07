@@ -100,7 +100,7 @@ Estado da publicação de 2026-11-06, às 23:51 UTC, com 1.867 perfis. "Perfis" 
 | ALRS (RS) | falha: rede bloqueada | 0 | - | - |
 | ALECE (CE) | ok | 54 | 51 | comissões |
 | ALESC (SC) | ok | 40 | 40 | despesas e comissões |
-| ALEGO (GO) | ok | 43 | 43 | comissões e frentes |
+| ALEGO (GO) | ok | 43 | 43 | comissões e frentes; despesas a partir da próxima publicação |
 | ALES (ES) | falha: rede bloqueada | 0 | - | - |
 | ALEPA (PA) | ok, primeira coleta | 41 | 40 | comissões |
 | ALEPE (PE) | falha: rede bloqueada | 0 | - | - |
@@ -295,10 +295,13 @@ Verificação de 2026-11-02, com scripts locais (Playwright e axe-core, fora do 
 19. Dumps de dados abertos: concluído em 2026-11-06.
     - O `publish` gera `politicos.csv` (todos), `politicos-federal.csv` e `politicos-{uf}.csv`, com um manifest JSON de metadados e contagens. O comando `dumps` refaz os arquivos a partir do `index.json` existente.
     - Rota `/dados-abertos` no site, com downloads diretos, dicionário de dados, citação e a licença CC BY 4.0.
-20. Despesas das assembleias estaduais: concluído em 2026-11-06 para a ALESC; ALEP e ALERJ não validadas.
+20. Despesas das assembleias estaduais: concluído em 2026-11-06 para a ALESC e a ALEGO. A ALEP está bloqueada por CAPTCHA, e a ALERJ segue sem adaptador (ver item 23).
     - Fonte `alesc-despesas`: demonstrativos anuais em CSV (2023 a 2026), catalogada em `contrib/fontes.yaml` e `docs/FONTES.md`.
     - Adaptador `Alesc.java` (`AlescTest.java`): 50.169 lançamentos de 2023 a 2026 vinculados aos 40 deputados em exercício, todos com despesas. Cada lançamento traz categoria, favorecido, data de referência e valor. Estorno (valor negativo) entra como veio.
     - Privacidade: a sequência de 11 dígitos do favorecido MEI é removida.
+    - Fonte `alego-despesas`: verba indenizatória mensal em JSON, com um detalhe por deputado e mês, de 2023 a 2026. O id do deputado na transparência é o mesmo do perfil.
+    - Adaptador `Alego.java` (`AlegoTest.java`): no ensaio local de 2026-11-06, 51.156 lançamentos nos 43 deputados em exercício, 96,6% com o CNPJ do fornecedor. Entra o valor indenizado, com a data do documento. CPF de prestador pessoa física é descartado.
+    - A primeira carga tem cerca de 1.800 requisições e leva mais de uma execução do CI. O cache incremental continua de onde parou.
     - ALEP e ALERJ: ver "Limitações conhecidas".
 21. Segundo município piloto: São Paulo (capital), Câmara Municipal e Prefeitura (ADR-0027): concluído em 2026-11-06.
     - Fontes catalogadas e validadas em `docs/FONTES.md`: serviço SPLegisWS da CMSP (`cmsp-splegisws`), portal institucional (`cmsp-portal`) e Portal da Transparência da Prefeitura (`sp-capital-transparencia`).

@@ -1805,6 +1805,21 @@
   status: validado
   validado_em: 2026-11-06
 
+- id: alego-despesas
+  nome: Assembleia Legislativa do Estado de Goiás, verba indenizatória dos deputados
+  orgao: Assembleia Legislativa do Estado de Goiás
+  esfera: estadual
+  ente: GO
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://transparencia.al.go.leg.br/api/transparencia/verbas_indenizatorias
+  formato: JSON
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Cobre 2023 a 2026, só deputados em exercício. Um resumo por mês e um detalhe por deputado e mês. O valor é o indenizado. CPF de prestador pessoa física é descartado, e CPF no nome do fornecedor (MEI) é removido."
+  status: validado
+  validado_em: 2026-11-06
+
 - id: ales-deputados
   nome: Assembleia Legislativa do Estado do Espírito Santo, deputados estaduais
   orgao: Assembleia Legislativa do Estado do Espírito Santo

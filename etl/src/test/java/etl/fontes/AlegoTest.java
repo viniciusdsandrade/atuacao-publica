@@ -18,12 +18,64 @@ import org.junit.jupiter.api.io.TempDir;
 import etl.Coleta;
 import etl.Contexto;
 import etl.Json;
+import etl.Registros.Despesa;
 import etl.Registros.OrgaoOuFrente;
 import etl.Registros.Prov;
 import etl.Texto;
 import tools.jackson.databind.JsonNode;
 
 class AlegoTest {
+
+    /** Detalhe mensal sintético da verba indenizatória, na forma da API da transparência. */
+    private static final String DETALHE = """
+            {"id": 1, "ano": 2024, "mes": 3, "deputado": {"id": 808, "nome": "Fulano", "email": "fulano@exemplo.invalid"},
+             "grupos": [
+               {"descricao": "01 - TRANSPORTES", "subgrupos": []},
+               {"descricao": "09 - VEÍCULOS", "subgrupos": [
+                 {"descricao": "1 - COMBUSTÍVEIS E LUBRIFICANTES", "lancamentos": [
+                   {"fornecedor": {"nome": "POSTO EXEMPLO LTDA", "cnpj_cpf": "11.222.333/0001-81",
+                     "data": "2024-02-21T00:00:00.000-03:00", "numero": "521882", "valor_apresentado": "300.0",
+                     "valor_indenizado": "250.5"}}]}]},
+               {"descricao": "02 -  COMUNICAÇÃO, TELEFONE E DADOS", "subgrupos": [
+                 {"descricao": "1 - GERAL", "lancamentos": [
+                   {"fornecedor": {"nome": "FULANO DE TAL 12345678901", "cnpj_cpf": "123.456.789-01",
+                     "data": "2024-03-02T00:00:00.000-03:00", "numero": "7", "valor_apresentado": "450.0",
+                     "valor_indenizado": "450.0"}}]}]}]}
+            """;
+
+    @Test
+    void despesasDoMesUsamOValorIndenizadoESoGuardamCnpj() {
+        Prov prov = new Prov(Alego.FONTE_DESPESAS, Alego.URL_DESPESAS + "/exibir.json?ano=2024&mes=3&deputado_id=808",
+                Instant.parse("2026-11-06T12:00:00Z"));
+
+        List<Despesa> despesas = Alego.despesasDoMes(Json.FONTE.readTree(DETALHE), prov);
+
+        assertEquals(2, despesas.size());
+        Despesa combustivel = despesas.get(0);
+        assertEquals("VEÍCULOS - COMBUSTÍVEIS E LUBRIFICANTES", combustivel.categoria());
+        assertEquals(2024, combustivel.ano());
+        assertEquals(3, combustivel.mes());
+        assertEquals(LocalDate.of(2024, 2, 21), combustivel.data());
+        assertEquals(new java.math.BigDecimal("250.5"), combustivel.valor());
+        assertEquals("11222333000181", combustivel.fornecedorCnpj());
+        assertEquals("521882", combustivel.documentoNumero());
+        assertEquals(prov, combustivel.prov());
+        // Subgrupo "GERAL" não entra na categoria. Prestador pessoa física: sem CPF no campo nem no nome.
+        Despesa telefone = despesas.get(1);
+        assertEquals("COMUNICAÇÃO, TELEFONE E DADOS", telefone.categoria());
+        assertEquals(null, telefone.fornecedorCnpj());
+        assertEquals("FULANO DE TAL", telefone.fornecedorNome());
+        // Data em outro formato não derruba a normalização: fica sem data.
+        assertEquals(null, Alego.diaDoDocumento("21/02/2024"));
+    }
+
+    @Test
+    void resumoDoMesFicaSoComDeputadosEmExercicio() {
+        JsonNode resumo = Json.FONTE.readTree("""
+                [{"deputado": {"id": 808}}, {"deputado": {"id": 6}}, {"deputado": {"id": 137}}, {"deputado": {"id": 808}}]
+                """);
+        assertEquals(List.of("808", "137"), Alego.deputadosDoResumo(resumo, java.util.Set.of("808", "137", "999")));
+    }
 
     @Test
     void formataNomeComPreposicoesEMaiusculas() {
