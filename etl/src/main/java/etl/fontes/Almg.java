@@ -1,7 +1,9 @@
 package etl.fontes;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigDecimal;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDate;
@@ -13,16 +15,21 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import tools.jackson.databind.JsonNode;
 
 import etl.Coleta;
 import etl.Coleta.Politica;
 import etl.Contexto;
+import etl.Csv;
 import etl.Fonte;
 import etl.Guarda;
 import etl.Json;
@@ -32,6 +39,7 @@ import etl.Registros.LinkOficial;
 import etl.Registros.Mandato;
 import etl.Registros.OrgaoOuFrente;
 import etl.Registros.Pessoa;
+import etl.Registros.Proposicao;
 import etl.Registros.Prov;
 import etl.Texto;
 
@@ -46,10 +54,15 @@ public final class Almg implements Fonte {
     public static final String FONTE_DETALHES = "almg-deputados-detalhes";
     public static final String FONTE_DESPESAS = "almg-despesas";
     public static final String FONTE_PORTAL = "almg-portal";
+    public static final String FONTE_PROPOSICOES = "almg-proposicoes";
 
     public static final String UF = "MG";
     public static final String API = "https://dadosabertos.almg.gov.br/api/v2";
     public static final String SITE = "https://www.almg.gov.br";
+    public static final String PROPOSICOES = "https://dadosabertos.almg.gov.br/arquivo/proposicoes/download";
+
+    /** Termo de tema na indexação ("/Tema/Educação/..."). O caractere U+0001 separa um termo do seguinte. */
+    private static final Pattern TEMA = Pattern.compile("(?i)/Tema/([^/\\u0001]+)");
 
     private static final int LEGISLATURA_19 = 19;
     private static final int LEGISLATURA_20 = 20;
@@ -122,6 +135,16 @@ public final class Almg implements Fonte {
                 }
             }
         }
+
+        // Proposições: um CSV por ano. O servidor responde 204, sem corpo, a "Accept: text/csv".
+        for (int ano = INICIO_COBERTURA.getYear(); ano <= ultimoAnoDeProposicoes(ctx); ano++) {
+            coleta.obterOpcional(PROPOSICOES + "?ano=" + ano + "&tipo=CSV", "proposicoes/" + ano + ".csv", "*/*",
+                    Politica.porAnoSemanal(ano, ctx.hoje()));
+        }
+    }
+
+    private static int ultimoAnoDeProposicoes(Contexto ctx) {
+        return Math.min(ctx.hoje().getYear(), FIM_COBERTURA.getYear());
     }
 
     @Override
@@ -184,6 +207,8 @@ public final class Almg implements Fonte {
             processarVerbas(ctx, id, ac);
         }
 
+        processarProposicoes(ctx, acumulados);
+
         // Ordenar pessoas por nome
         pessoas.sort(Comparator.comparing(Pessoa::nome));
 
@@ -196,7 +221,7 @@ public final class Almg implements Fonte {
         for (var e : acumulados.entrySet()) {
             String idStr = e.getKey();
             Acumulado ac = e.getValue();
-            Blocos blocos = new Blocos(ac.mandatos, ac.despesas, ac.orgaos, ac.fontes);
+            Blocos blocos = new Blocos(ac.mandatos, ac.despesas, ac.proposicoes, ac.orgaos, ac.fontes);
             Json.gravar(pastaBlocos.resolve(idStr + ".json"), Json.SAIDA.valueToTree(blocos));
         }
 
@@ -425,15 +450,118 @@ public final class Almg implements Fonte {
         return ld != null ? ld.toString() : null;
     }
 
+    /** Proposições dos CSVs anuais em cache, no acumulado de cada autor que é deputado das legislaturas cobertas. */
+    private static void processarProposicoes(Contexto ctx, Map<String, Acumulado> acumulados) throws IOException {
+        int total = 0;
+        for (int ano = INICIO_COBERTURA.getYear(); ano <= ultimoAnoDeProposicoes(ctx); ano++) {
+            Coleta.Arquivo arq = Coleta.metadados(ctx, "almg", "proposicoes/" + ano + ".csv");
+            if (arq == null || arq.bytes() == 0 || !Files.exists(Coleta.caminho(ctx, arq))) {
+                continue;
+            }
+            Map<String, List<Proposicao>> porAutor;
+            try (InputStream entrada = Json.abrir(Coleta.caminho(ctx, arq))) {
+                porAutor = proposicoesDoCsv(entrada, Prov.de(FONTE_PROPOSICOES, arq.url(), arq));
+            }
+            FonteUsada fonte = FonteUsada.de(FONTE_PROPOSICOES, arq);
+            for (var e : porAutor.entrySet()) {
+                Acumulado ac = acumulados.get(e.getKey());
+                if (ac != null) {
+                    ac.proposicoes.addAll(e.getValue());
+                    ac.fontes.computeIfAbsent("proposicoes", k -> new ArrayList<>()).add(fonte);
+                    total += e.getValue().size();
+                }
+            }
+        }
+        System.out.println("almg: " + total + " autorias de proposições desde " + INICIO_COBERTURA.getYear());
+    }
+
+    /**
+     * Proposições de um CSV anual, por id de autor. A coluna Autores traz, em JSON, o id do deputado na API, que é o
+     * id do perfil. A posição na lista de autores vira {@code ordem_assinatura}. A fonte grafa o mesmo tipo em
+     * maiúsculas ou não: o tipo sai em maiúsculas.
+     */
+    static Map<String, List<Proposicao>> proposicoesDoCsv(InputStream csv, Prov prov) throws IOException {
+        Map<String, List<Proposicao>> porAutor = new HashMap<>();
+        Locale ptBr = Locale.forLanguageTag("pt-BR");
+        Csv.paraCadaComVirgula(csv, StandardCharsets.UTF_8, linha -> {
+            String sigla = preenchido(linha.get("SiglaTipoProposicao"));
+            Integer numero = inteiro(linha.get("Numero"));
+            Integer ano = inteiro(linha.get("Ano"));
+            String autores = preenchido(linha.get("Autores"));
+            if (sigla == null || numero == null || ano == null || autores == null) {
+                return;
+            }
+            String nomeDoTipo = preenchido(linha.get("TipoProposicao"));
+            String tipo = nomeDoTipo == null ? sigla : nomeDoTipo.toUpperCase(ptBr);
+            String identificacao = sigla + " " + numero + "/" + ano;
+            // A fonte quebra a ementa em linhas de largura fixa; a quebra vira espaço.
+            String ementa = preenchido(linha.get("Ementa"));
+            ementa = ementa == null ? null : Guarda.semCpf(ementa.replaceAll("\\s*\\R\\s*", " "));
+            String data = preenchido(linha.get("DataPublicacao"));
+            String url = SITE + "/projetos-de-lei/" + sigla + "/" + numero + "/" + ano;
+            List<String> temas = temas(linha.get("Indexacao"));
+            JsonNode lista = Json.FONTE.readTree(autores);
+            Set<String> jaContados = new HashSet<>();
+            for (int i = 0; i < lista.size(); i++) {
+                JsonNode id = lista.get(i).path("id");
+                if (!id.isIntegralNumber() || !jaContados.add(String.valueOf(id.asLong()))) {
+                    continue;
+                }
+                porAutor.computeIfAbsent(String.valueOf(id.asLong()), k -> new ArrayList<>()).add(new Proposicao(identificacao, tipo,
+                        numero, ano, identificacao, ementa,
+                        preenchido(linha.get("Situacao")), temas, data == null ? null : normalizarDataIso(data), i + 1,
+                        null, url, prov));
+            }
+        });
+        return porAutor;
+    }
+
+    /**
+     * Primeiro nível de cada termo "/Tema/" da indexação, sem repetição. Os outros termos (destinatários, localidade,
+     * tempo) ficam fora. A fonte quebra termo longo em várias linhas; termo novo começa em linha nova com "/Tema/".
+     */
+    static List<String> temas(String indexacao) {
+        if (indexacao == null || indexacao.isBlank()) {
+            return null;
+        }
+        String texto = indexacao.replace("\r", "")
+                .replaceAll("\n(?=/(?i:tema)/)", "\u0001")
+                .replace("/\n", "/")
+                .replace('\n', ' ');
+        Set<String> temas = new LinkedHashSet<>();
+        Matcher m = TEMA.matcher(texto);
+        while (m.find()) {
+            String tema = m.group(1).strip();
+            if (!tema.isEmpty()) {
+                temas.add(tema);
+            }
+        }
+        return temas.isEmpty() ? null : List.copyOf(temas);
+    }
+
+    private static String preenchido(String texto) {
+        return texto == null || texto.isBlank() ? null : texto.strip();
+    }
+
+    private static Integer inteiro(String texto) {
+        try {
+            return texto == null ? null : Integer.valueOf(texto.strip());
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
+
     private static final class Acumulado {
         final List<Mandato> mandatos = new ArrayList<>();
         final List<Despesa> despesas = new ArrayList<>();
+        final List<Proposicao> proposicoes = new ArrayList<>();
         final List<OrgaoOuFrente> orgaos = new ArrayList<>();
         final Map<String, List<FonteUsada>> fontes = new LinkedHashMap<>();
     }
 
     public record Blocos(List<Mandato> mandatos,
                          List<Despesa> despesas,
+                         List<Proposicao> proposicoes,
                          List<OrgaoOuFrente> orgaos_e_frentes,
                          Map<String, List<FonteUsada>> fontes) {
     }

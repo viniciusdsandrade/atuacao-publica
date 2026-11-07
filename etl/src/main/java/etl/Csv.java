@@ -49,6 +49,21 @@ public final class Csv {
         }
     }
 
+    /**
+     * Percorre um CSV com vírgula e aspas dobradas como escape, como o das proposições da ALMG.
+     * Campo entre aspas pode ter quebra de linha. A correção de aspa solta não se aplica: ela supõe ponto e vírgula.
+     */
+    public static void paraCadaComVirgula(InputStream entrada, Charset codificacao, Consumer<Map<String, String>> acao)
+            throws IOException {
+        CsvSchema schema = CsvSchema.emptySchema().withHeader().withColumnSeparator(',');
+        try (MappingIterator<Map<String, String>> linhas = MAPPER.readerForMapOf(String.class).with(schema)
+                .readValues(new InputStreamReader(entrada, codificacao))) {
+            while (linhas.hasNextValue()) {
+                acao.accept(linhas.nextValue());
+            }
+        }
+    }
+
     /** Uma linha no formato das fontes: campos entre aspas, separados por ponto e vírgula, com CRLF. */
     public static void escreverLinha(Writer saida, Iterable<String> valores) throws IOException {
         boolean primeiro = true;

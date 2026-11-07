@@ -519,6 +519,7 @@ Licença Creative Commons Atribuição 4.0 Internacional.
 | `almg-deputados-detalhes` | ALMG, biografia e comissões | T0 | JSON | nenhuma | validado | 2026-11-03 |
 | `almg-despesas` | ALMG, verbas indenizatórias | T0 | JSON | nenhuma | validado | 2026-11-03 |
 | `almg-portal` | ALMG, portal oficial e fotos | T0 | HTML e JPG | nenhuma | validado | 2026-11-03 |
+| `almg-proposicoes` | ALMG, proposições por ano | T0 | CSV | nenhuma | validado | 2026-11-07 |
 
 ### `almg-deputados`: catálogo e legislaturas
 
@@ -543,6 +544,19 @@ Licença Creative Commons Atribuição 4.0 Internacional.
   - `/deputados/{id}/datas?formato=json`: meses de competência fechados.
   - `/deputados/{id}/{ano}/{mes}?formato=json`: prestações de contas individuais com data de emissão, tipo de despesa, valor reembolsado, nome do emitente, documento fiscal e CPF/CNPJ.
 - Proteção de privacidade: o ETL retém apenas CNPJ válido de 14 dígitos e descarta sequências de 11 dígitos referentes a CPFs de pessoas físicas.
+
+### `almg-proposicoes`: proposições
+
+- URL base: `https://dadosabertos.almg.gov.br/arquivo/proposicoes/download?ano={ano}&tipo=CSV`. Um arquivo por ano, de 2,6 MB (2022) a 10 MB (2025). Validação em 2026-11-07.
+- O servidor responde 204, sem corpo, a `Accept: text/csv`. Com `Accept: */*`, entrega o arquivo.
+- CSV em UTF-8, com vírgula e aspas. Campo entre aspas pode ter quebra de linha.
+- Campos usados: `SiglaTipoProposicao`, `TipoProposicao`, `Numero`, `Ano`, `Ementa`, `Indexacao`, `Situacao`, `DataPublicacao` e `Autores`.
+- `Autores` é JSON, com `id`, `nome` e `partido` de cada autor. O `id` é o mesmo do deputado na API. Na validação, todas as 58.861 autorias de 2022 a 2026 casaram com deputados das legislaturas 19 e 20: 108 dos 110 têm proposição.
+- Requerimentos (RQC, RQN e RQO), 85% das 50.478 linhas de 2022 a 2026, vêm sem ementa.
+- Linha sem autor fica fora. É o caso de todas as mensagens, vetos, ofícios, indicações, propostas de ação legislativa e relatórios.
+- Temas: primeiro nível de cada termo `/Tema/` da coluna `Indexacao` (23 áreas, como "Educação" e "Saúde Pública"). Termos de destinatário, localidade e tempo ficam fora.
+- Página oficial de cada proposição: `https://www.almg.gov.br/projetos-de-lei/{sigla}/{numero}/{ano}`. Validada para os 13 tipos do CSV. Número inexistente responde 200 com a página "Erro 404".
+- Recusa conexão de fora do Brasil, como o resto da ALMG (ADR-0029). Entra pela coleta local cifrada (ADR-0034).
 
 ## Assembleia Legislativa do Estado do Paraná (ALEP)
 

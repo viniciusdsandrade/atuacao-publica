@@ -1400,6 +1400,21 @@
   status: validado
   validado_em: 2026-11-03
 
+- id: almg-proposicoes
+  nome: Assembleia Legislativa do Estado de Minas Gerais, proposições por ano
+  orgao: Assembleia Legislativa do Estado de Minas Gerais
+  esfera: estadual
+  ente: MG
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://dadosabertos.almg.gov.br/arquivo/proposicoes/download
+  formato: CSV
+  autenticacao: nenhuma
+  licenca: Creative Commons Atribuição 4.0 Internacional
+  limitacoes: "Um CSV por ano, com o id do deputado na coluna Autores. Requerimentos vêm sem ementa. Responde 204, sem corpo, a Accept text/csv."
+  status: validado
+  validado_em: 2026-11-07
+
 - id: almg-portal
   nome: Assembleia Legislativa do Estado de Minas Gerais, portal institucional e fotos
   orgao: Assembleia Legislativa do Estado de Minas Gerais

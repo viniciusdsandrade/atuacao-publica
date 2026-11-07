@@ -62,7 +62,7 @@ Estado real de cada fase. Atualizado ao fechar cada fase.
 - Não validado: leitor de tela real (VoiceOver, NVDA, TalkBack) e aparelhos móveis físicos. A auditoria de acessibilidade foi automatizada e por teclado.
 - A auditoria de acessibilidade (axe, WCAG 2.1 AA) roda no CI sobre dados sintéticos, só no Chromium e no estado inicial das páginas (ADR-0028). Dado real longo, outros navegadores e estados interativos seguem sem varredura automática.
 - O site só vai ao ar pelo workflow `dados` (agendado ou manual). Mudança só de interface espera a próxima execução.
-- ALMG, ALRS, ALES, ALEPE e CLDF não aceitam conexão do runner do GitHub Actions: a conexão TCP expira. Nenhuma das cinco teve coleta válida no CI até 2026-11-06, e o site não tem perfil dessas casas (issues #5, #6 e #7 para as três primeiras). A coleta local funciona.
+- ALMG, ALRS, ALES, ALEPE e CLDF não aceitam conexão do runner do GitHub Actions: a conexão TCP expira. Nenhuma das cinco teve coleta válida no CI até 2026-11-06 (issues #5, #6 e #7 para as três primeiras). A coleta local funciona. Desde a publicação de 2026-11-07 às 19:04 UTC, as cinco estão no site pela coleta local cifrada (ADR-0034).
 - Teste de 2026-11-06 com provas do Globalping, nos endereços que o ETL usa. Nenhuma das cinco responde à Azure (eastus) nem à AWS (us-east-1).
   - ALRS (API na porta 5000 e portal), ALES e CLDF respondem a todas as redes testadas no Brasil: residenciais e datacenters da AWS, do Google Cloud e da Oracle em São Paulo. ALRS e ALES também respondem à Vultr em São Paulo.
   - A ALMG, em São Paulo, recusa AWS e Oracle e responde a Google Cloud e Vultr. Redes residenciais funcionam.
@@ -71,7 +71,7 @@ Estado real de cada fase. Atualizado ao fechar cada fase.
   - Um proxy numa nuvem no Brasil, fora da AWS e da Oracle, resolve quatro casas. Só um runner em rede residencial resolve as cinco.
   - Caminho escolhido em 2026-11-06: túnel SSH por uma máquina no Google Cloud em São Paulo, para ALMG, ALRS, ALES e CLDF (ADR-0029). O passo do workflow e o script estão prontos. Pendente: o mantenedor criar a máquina e os segredos (`docs/MAINTAINER_CHECKLIST.md`). A ALEPE segue fora.
   - Em 2026-11-07, os endereços alternativos dessas casas também recusaram conexão dos EUA. Enquanto a máquina não existe, as cinco casas vêm da coleta local do mantenedor, enviada ao CI num pacote cifrado (ADR-0034, `scripts/semente-enviar.sh`). Os dados delas atualizam só quando a coleta local roda.
-- A API da ALMG restringe certos recursos como `/proposicoes/pesquisa` (`Access Denied`). Deputados, comissões e verbas indenizatórias são abertos e funcionam via API v2.
+- A API da ALMG restringe certos recursos como `/proposicoes/pesquisa` (`Access Denied`). Deputados, comissões e verbas indenizatórias são abertos e funcionam via API v2. As proposições vêm do CSV anual dos dados abertos (`almg-proposicoes`).
 - ALESC: as despesas dos gabinetes (`alesc-despesas`) cobrem 2023 a 2026 e entram só para os 40 deputados em exercício. Em 2026-11-06, 4.355 de 54.524 linhas não correspondiam a nenhum deles e foram descartadas; a contagem aparece na saída do `normalize`. A fonte não traz CNPJ nem número de documento, e o favorecido vem vazio em cerca de 21% das linhas.
 - ALESC: o favorecido MEI vem como nome e CPF. A sequência de 11 dígitos é removida na normalização (`Guarda.semCpf`), como na Câmara, no Senado, na ALESP e na ALMG.
 - ALEP: a consulta das verbas de ressarcimento por deputado (`api/ressarcimento`) exige reCAPTCHA v3, conforme o script da própria página (2026-11-06). O ETL não contorna CAPTCHA, então essas despesas não são coletadas (`alep-ressarcimento`, bloqueado).
@@ -91,27 +91,27 @@ Estado real de cada fase. Atualizado ao fechar cada fase.
 
 ## Casas estaduais e municipais no site
 
-Estado da publicação de 2026-11-07, às 07:06 UTC, com 1.867 perfis. "Perfis" conta os perfis com o identificador da casa, inclusive os fundidos com outra casa.
+Estado da publicação de 2026-11-07, às 19:04 UTC, com 2.116 perfis. "Perfis" conta os perfis com o identificador da casa, inclusive os fundidos com outra casa.
 
 | Casa | Coleta no CI | Perfis | Vínculo com o TSE | Blocos além de mandato e candidaturas |
 |---|---|---|---|---|
 | ALESP (SP) | ok | 153 | 140 | votações em comissão, proposições, despesas e comissões |
-| ALMG (MG) | falha: rede bloqueada | 0 | - | - |
+| ALMG (MG) | ok, pela coleta local cifrada | 110 | 109 | comissões e despesas (118.453 lançamentos em 107 deputados) |
 | ALEP (PR) | parcial: 4 sessões passaram a responder 404, com cópia anterior | 54 | 51 | comissões, proposições (24.343) e votações nominais (197.815 votos em 51 deputados) |
 | ALBA (BA) | ok | 63 | 63 | comissões |
-| ALERJ (RJ) | ok | 70 | 70 | despesas (30.330 lançamentos em 67 deputados) |
-| ALRS (RS) | falha: rede bloqueada | 0 | - | - |
+| ALERJ (RJ) | parcial: o DOCIGP oscila, com cópia anterior | 70 | 70 | despesas (30.330 lançamentos em 67 deputados) |
+| ALRS (RS) | ok, pela coleta local cifrada | 55 | 54 | comissões |
 | ALECE (CE) | ok | 54 | 51 | comissões, despesas (15.494 lançamentos) e votações nominais (2.439 votos) |
 | ALESC (SC) | ok | 40 | 40 | despesas e comissões |
 | ALEGO (GO) | ok | 43 | 43 | comissões e frentes e despesas (51.156 lançamentos) |
-| ALES (ES) | falha: rede bloqueada | 0 | - | - |
-| ALEPA (PA) | ok, primeira coleta | 41 | 40 | comissões |
-| ALEPE (PE) | falha: rede bloqueada | 0 | - | - |
-| CLDF (DF) | falha: rede bloqueada | 0 | - | - |
+| ALES (ES) | ok, pela coleta local cifrada | 30 | 29 | comissões |
+| ALEPA (PA) | ok | 41 | 40 | comissões |
+| ALEPE (PE) | ok, pela coleta local cifrada | 49 | 49 | comissões |
+| CLDF (DF) | ok, pela coleta local cifrada | 24 | 24 | comissões |
 | CMSP (capital) | ok | 55 | 51 | comissões e proposições (6.547) |
 | Câmara do piloto (SAPL) | ok | 50 | 50 | votos, presença, falas, matérias, despesas e comissões |
 
-Conferido em todos os perfis de ALECE, ALERJ, ALEP, ALEGO, CMSP, ALESC, ALEPA e ALBA: todo bloco com registro cita fonte e data. A exceção foi a participação em votações da ALESP, corrigida em 2026-11-07 (ver "Limitações conhecidas"). Os oito governadores eleitos em 2022 que concorreram a outro cargo saíram de em exercício (ADR-0033), e restam 19 governadores em exercício.
+Conferido nos 841 perfis das 14 casas da tabela, inclusive os fundidos com outra casa: os 4.346 blocos com registro citam fonte e data. A participação em votações da ALESP saía sem fonte até 2026-11-07 (ver "Limitações conhecidas"). Os oito governadores eleitos em 2022 que concorreram a outro cargo saíram de em exercício (ADR-0033), e restam 19 governadores em exercício.
 
 ## Cobertura 2022 a 2026 (ADR-0009)
 
@@ -334,7 +334,7 @@ Verificação de 2026-11-02, com scripts locais (Playwright e axe-core, fora do 
     - A primeira varredura achou dois defeitos reais, já corrigidos: o nome acessível do botão de tema não continha o texto visível (WCAG 2.5.3) e a tabela rolável de `/dados-abertos` não tinha foco por teclado (WCAG 2.1.1).
 23. Fontes de atuação das assembleias: levantamento de 2026-11-06, ainda sem adaptador.
     - Cada endereço respondeu a requisição real no levantamento. O acesso a partir do exterior só foi testado onde a tabela diz.
-    - Sugestão de ordem: proposições da ALMG.
+    - Proposições da ALMG: implementadas em 2026-11-07 (`almg-proposicoes`), pelo CSV anual dos dados abertos, em que o id do autor é o id do perfil. A ALMG recusa conexão de fora do Brasil, e o CSV entra pela coleta local cifrada (ADR-0034). No ensaio local, 58.861 autorias de 2022 a 2026 em 108 dos 110 deputados, com tema da indexação oficial em 84%. Requerimentos vêm sem ementa.
     - Votações da ALECE: implementadas em 2026-11-07 (`alece-votacoes`), com a lista pública e uma planilha XLSX por matéria. No ensaio local, 2.427 votos de 61 votações nos 54 deputados, com participação por ano.
     - Proposições da ALEP: implementadas em 2026-11-07, pela API pública (`alep-proposicoes`), que só aceita o filtro no corpo de um POST. O `Coleta` ganhou `obterPostOpcional` para isso. No ensaio local, 24.238 autorias nos 54 deputados.
     - Votações da ALEP: implementadas em 2026-11-07 (`alep-votacoes`). Os XLSX por sessão trazem o parlamentar pelo nome civil, e a ponte com o perfil é o nome civil da candidatura do TSE ligada a ele. No ensaio local, 197.559 votos de 4.135 itens em 51 dos 54 deputados; os 3 sem vínculo com o TSE ficam sem votos.
@@ -345,7 +345,7 @@ Verificação de 2026-11-02, com scripts locais (Playwright e axe-core, fora do 
     | ALECE | implementado em 2026-11-07 | HTML paginado, de 350 a 450 páginas | implementado em 2026-11-07 |
     | ALEGO | implementado em 2026-11-06 | API NoPaper, autor por nome | JSON anual. Parlamentar só por nome, com grafia irregular |
     | ALEP | bloqueado por reCAPTCHA | implementado em 2026-11-07 | implementado em 2026-11-07, pelo nome civil do TSE |
-    | ALMG | implementado; coleta bloqueada no CI | CSV anual, com o id do autor igual ao do perfil | só em texto livre na tramitação |
+    | ALMG | implementado, pela coleta local cifrada | implementado em 2026-11-07, pela coleta local cifrada | só em texto livre na tramitação |
     | ALBA | XLSX anual, deputado por nome; fornecedor só no detalhe HTML | API NoPaper, com id de autor diferente do id do portal | não validado |
     | CLDF | portal CKAN, com CPF do deputado e do prestador, que precisa sair | API do PLe, autoria por nome | exige login |
     | ALEPE | JSON por deputado e mês, com id próprio | API de dados abertos, que recusa conexão do exterior | só resultado agregado |
