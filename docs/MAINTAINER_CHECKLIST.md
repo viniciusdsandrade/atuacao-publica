@@ -51,6 +51,16 @@ O pipeline de dados não roda e não publica nada até o mantenedor ativar:
 4. Dispare **Actions > dados > Run workflow** para a primeira carga.
 5. Mantenha as issues ligadas no repositório: o pipeline abre uma issue com o rótulo `coleta` quando uma fonte passa de 3 dias sem coleta válida.
 
+## Atualizar a semente da coleta local (ADR-0034)
+
+ALMG, ALRS, ALES, ALEPE e CLDF recusam conexão de fora do Brasil. Enquanto o túnel não estiver ativo, os dados delas vêm da sua rede.
+
+1. Na raiz do repositório, compile o ETL: `cd etl && ./mvnw -q package -DskipTests && cd ..`.
+2. Com o `gh` autenticado, rode `scripts/semente-enviar.sh`. Ele coleta as cinco casas, cifra o cache com uma chave nova e envia o pacote à release `semente-coleta-local`, trocando o segredo `SEMENTE_CHAVE`.
+3. A execução seguinte do `dados` restaura a semente e publica as cinco casas. O relatório mostra a data da coleta local.
+4. Repita quando o alerta de fonte sem coleta válida abrir issue para uma delas, ou quando quiser dados mais novos.
+5. Com o túnel ativo, apague a release (`gh release delete semente-coleta-local --cleanup-tag`) e o segredo.
+
 ## Ativar o túnel pelo Brasil (ADR-0029)
 
 ALMG, ALRS, ALES e CLDF recusam conexão do runner nos EUA. O túnel faz essas coletas saírem por uma máquina no Brasil.

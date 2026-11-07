@@ -55,6 +55,15 @@ jobs:
             data/publicado/index.json
           key: dados-${{ github.run_id }}-${{ github.run_attempt }}
           restore-keys: dados-
+      - name: semente da coleta local para ALMG, ALRS, ALES, ALEPE e CLDF
+        # Essas casas recusam conexão de fora do Brasil. O mantenedor coleta na rede dele e envia o cache cifrado
+        # (ADR-0034). Sem o segredo, o passo não faz nada. As casas restauradas pulam a coleta abaixo.
+        continue-on-error: true
+        timeout-minutes: 5
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SEMENTE_CHAVE: ${{ secrets.SEMENTE_CHAVE }}
+        run: scripts/semente-restaurar.sh
       - name: build do ETL
         working-directory: etl
         run: ./mvnw -B -ntp -q package -DskipTests
@@ -149,7 +158,7 @@ jobs:
         run: java -Xmx2g -jar etl/target/etl.jar fetch executivosp
       - name: fetch almg
         # Assembleia Legislativa do Estado de Minas Gerais: deputados, comissões e verbas indenizatórias.
-        if: env.FONTE == 'todas' || env.FONTE == 'almg'
+        if: (env.FONTE == 'todas' || env.FONTE == 'almg') && !contains(env.SEMENTE, ' almg ')
         continue-on-error: true
         timeout-minutes: 30
         env:
@@ -181,7 +190,7 @@ jobs:
         run: java -Xmx2g -jar etl/target/etl.jar fetch alerj
       - name: fetch alrs
         # Assembleia Legislativa do Estado do Rio Grande do Sul: deputados em exercício e perfis.
-        if: env.FONTE == 'todas' || env.FONTE == 'alrs'
+        if: (env.FONTE == 'todas' || env.FONTE == 'alrs') && !contains(env.SEMENTE, ' alrs ')
         continue-on-error: true
         timeout-minutes: 20
         env:
@@ -213,7 +222,7 @@ jobs:
         run: java -Xmx2g -jar etl/target/etl.jar fetch alego
       - name: fetch ales
         # Assembleia Legislativa do Estado do Espírito Santo: 30 deputados, comissões e perfis.
-        if: env.FONTE == 'todas' || env.FONTE == 'ales'
+        if: (env.FONTE == 'todas' || env.FONTE == 'ales') && !contains(env.SEMENTE, ' ales ')
         continue-on-error: true
         timeout-minutes: 20
         env:
@@ -229,7 +238,7 @@ jobs:
         run: java -Xmx2g -jar etl/target/etl.jar fetch alepa
       - name: fetch alepe
         # Assembleia Legislativa do Estado de Pernambuco: 49 deputados, comissões e perfis.
-        if: env.FONTE == 'todas' || env.FONTE == 'alepe'
+        if: (env.FONTE == 'todas' || env.FONTE == 'alepe') && !contains(env.SEMENTE, ' alepe ')
         continue-on-error: true
         timeout-minutes: 20
         env:
@@ -237,7 +246,7 @@ jobs:
         run: java -Xmx2g -jar etl/target/etl.jar fetch alepe
       - name: fetch cldf
         # Câmara Legislativa do Distrito Federal: 24 deputados distritais, comissões e perfis.
-        if: env.FONTE == 'todas' || env.FONTE == 'cldf'
+        if: (env.FONTE == 'todas' || env.FONTE == 'cldf') && !contains(env.SEMENTE, ' cldf ')
         continue-on-error: true
         timeout-minutes: 20
         env:

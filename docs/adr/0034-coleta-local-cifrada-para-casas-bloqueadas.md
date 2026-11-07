@@ -1,0 +1,41 @@
+# ADR-0034: Coleta local cifrada para as casas que recusam conexão de fora do Brasil
+
+- **Status**: Aceita
+- **Data**: 2026-11-07
+
+## Contexto
+
+ALMG, ALRS, ALES, ALEPE e CLDF não aceitam conexão do runner do GitHub Actions nos EUA (ADR-0029).
+Em 2026-11-07, os endereços alternativos dessas casas também falharam a partir da Azure e da AWS nos EUA: o portal de dados da CLDF, a API do processo legislativo da CLDF, a API NoPaper da ALES, os serviços e os dados abertos da ALEPE, o portal da ALMG e os portais da ALRS.
+Todos responderam a uma rede residencial no Brasil.
+O túnel do ADR-0029 depende de uma máquina em nuvem no Brasil, que o mantenedor adiou.
+O repositório é público, e um asset de release fica público.
+O cache bruto dessas casas tem CPF de fornecedor (verbas da ALMG) e telefone e e-mail de gabinete, que o projeto não publica.
+
+## Decisão
+
+1. O mantenedor coleta as cinco casas na rede dele, com `scripts/semente-enviar.sh`: o próprio ETL baixa, como numa execução comum, e o script empacota o cache bruto e o cursor de cada casa.
+2. O pacote é cifrado com AES-256 (`openssl enc`, PBKDF2 com 200 mil iterações). A chave é aleatória, nova a cada envio, e vai só para o segredo `SEMENTE_CHAVE` do repositório. Ela não é impressa nem gravada em disco.
+3. O pacote cifrado é o asset da release `semente-coleta-local`. O asset sobe antes do segredo: se o envio falhar, o par anterior de asset e chave continua valendo.
+4. No workflow `dados`, `scripts/semente-restaurar.sh` baixa e decifra o pacote antes da normalização. Ele só aceita caminhos do cache e dos cursores das cinco casas. As casas restauradas pulam a coleta no CI, que falharia.
+5. O cursor de cada casa vem na semente. O relatório da execução mostra a data da coleta local, e o alerta de fonte sem coleta válida há mais de três dias avisa quando a semente envelhece.
+6. Quando o túnel do ADR-0029 estiver ativo, a release é apagada e as casas voltam a ser coletadas pelo CI.
+
+## Consequências
+
+- As cinco casas entram no site com o mesmo código de normalização e de publicação das demais.
+- Os dados dessas casas só atualizam quando o mantenedor roda o script.
+- O asset público não revela nada sem a chave.
+
+## Limitações
+
+- A atualização depende de ação manual. Sem ela, os blocos dessas casas envelhecem e o alerta de coleta dispara.
+- A cifra é simétrica e sem assinatura: a integridade do asset depende de só quem escreve no repositório poder trocá-lo.
+- Antes de qualquer mudança de chave, um envio em andamento pode deixar uma execução sem semente. O passo do CI não falha: só não restaura.
+
+## Alternativas consideradas
+
+- Release sem cifra: descartada. O repositório é público, e o cache tem CPF e contatos de gabinete.
+- Enviar o normalizado em vez do bruto: descartada. O normalizado de algumas casas traz nome civil e data de nascimento, que o ADR-0003 mantém só em memória, e o CI deixaria de reproduzir a normalização.
+- Runner na máquina do mantenedor: oferecido em 2026-11-07, não escolhido.
+- Máquina em nuvem no Brasil (ADR-0029): adiada pelo mantenedor.

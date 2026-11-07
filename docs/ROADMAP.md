@@ -70,6 +70,7 @@ Estado real de cada fase. Atualizado ao fechar cada fase.
   - A ALEPA respondeu a todas as redes, nos EUA e no Brasil.
   - Um proxy numa nuvem no Brasil, fora da AWS e da Oracle, resolve quatro casas. Só um runner em rede residencial resolve as cinco.
   - Caminho escolhido em 2026-11-06: túnel SSH por uma máquina no Google Cloud em São Paulo, para ALMG, ALRS, ALES e CLDF (ADR-0029). O passo do workflow e o script estão prontos. Pendente: o mantenedor criar a máquina e os segredos (`docs/MAINTAINER_CHECKLIST.md`). A ALEPE segue fora.
+  - Em 2026-11-07, os endereços alternativos dessas casas também recusaram conexão dos EUA. Enquanto a máquina não existe, as cinco casas vêm da coleta local do mantenedor, enviada ao CI num pacote cifrado (ADR-0034, `scripts/semente-enviar.sh`). Os dados delas atualizam só quando a coleta local roda.
 - A API da ALMG restringe certos recursos como `/proposicoes/pesquisa` (`Access Denied`). Deputados, comissões e verbas indenizatórias são abertos e funcionam via API v2.
 - ALESC: as despesas dos gabinetes (`alesc-despesas`) cobrem 2023 a 2026 e entram só para os 40 deputados em exercício. Em 2026-11-06, 4.355 de 54.524 linhas não correspondiam a nenhum deles e foram descartadas; a contagem aparece na saída do `normalize`. A fonte não traz CNPJ nem número de documento, e o favorecido vem vazio em cerca de 21% das linhas.
 - ALESC: o favorecido MEI vem como nome e CPF. A sequência de 11 dígitos é removida na normalização (`Guarda.semCpf`), como na Câmara, no Senado, na ALESP e na ALMG.
