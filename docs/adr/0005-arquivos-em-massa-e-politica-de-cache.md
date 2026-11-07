@@ -30,6 +30,7 @@ A coleta do Senado levou 3 minutos, a do TSE 1 minuto e a do Executivo 11 segund
 7. No CI, cada fonte roda em passo próprio, com limite de tempo. Fonte lenta não consome o tempo das outras.
 8. O cache do Actions é gravado no fim do job mesmo quando um passo falha ou estoura o limite. Se o processo for encerrado no meio da coleta, o cursor da fonte registra a falha.
 9. Fonte com mais de 3 dias sem coleta válida abre uma issue com o rótulo `coleta`. A issue fecha sozinha quando a coleta volta. A falha de uma fonte não derruba o job, então sem esse alerta ela só apareceria no resumo da execução.
+10. ZIP grande do qual só interessam algumas entradas (prestação de contas do TSE, ADR-0032): ler por requisição Range o fim do arquivo, o diretório central e cada entrada, sem baixar o resto. O cache guarda só o recorte útil da entrada. O meta registra a URL do ZIP com o nome da entrada depois de `#`, o sha256 e o tamanho da entrada descompactada. A entrada é conferida pelo CRC-32 do diretório central. Servidor que ignora o Range (responde 200) vira falha, não download do arquivo inteiro.
 
 ## Consequências
 
@@ -39,6 +40,7 @@ A coleta do Senado levou 3 minutos, a do TSE 1 minuto e a do Executivo 11 segund
 - O cache do GitHub Actions guarda `data/raw` entre execuções. Se o cache sumir, a próxima execução baixa tudo de novo e publica o mesmo resultado.
 - Uma carga que estoura o limite de tempo não se perde: a execução seguinte reaproveita os arquivos de período fechado já baixados.
 - O log de cada passo de coleta mostra o progresso a cada 250 downloads e as tentativas que falharam, por causa.
+- Com o item 10, a primeira carga da prestação de contas baixa cerca de 530 MB das entradas, em vez de cerca de 3,8 GB dos ZIPs inteiros (medido em 2026-11-06). O item 6 pode usar o mesmo caminho para ler só o diretório central.
 
 ## Alternativas consideradas
 

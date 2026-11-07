@@ -6,6 +6,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.io.UncheckedIOException;
+import java.io.Writer;
 import java.nio.charset.Charset;
 import java.util.Map;
 import java.util.function.Consumer;
@@ -46,6 +47,21 @@ public final class Csv {
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
+    }
+
+    /** Uma linha no formato das fontes: campos entre aspas, separados por ponto e vírgula, com CRLF. */
+    public static void escreverLinha(Writer saida, Iterable<String> valores) throws IOException {
+        boolean primeiro = true;
+        for (String valor : valores) {
+            if (!primeiro) {
+                saida.write(';');
+            }
+            saida.write('"');
+            saida.write(valor == null ? "" : valor.replace("\"", "\"\""));
+            saida.write('"');
+            primeiro = false;
+        }
+        saida.write("\r\n");
     }
 
     /**

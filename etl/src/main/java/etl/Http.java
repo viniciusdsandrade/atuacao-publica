@@ -125,6 +125,70 @@ public final class Http {
         }
     }
 
+    /**
+     * Trechos de um recurso por requisição Range, sem compressão de transporte. Servidor que responde 200 em vez de 206
+     * ignorou o Range e mandaria o arquivo inteiro: vira falha, não download silencioso.
+     */
+    public ZipRemoto.Trechos trechos(String url) {
+        return new ZipRemoto.Trechos() {
+            private long tamanho = -1;
+
+            @Override
+            public long tamanho() throws IOException, InterruptedException {
+                if (tamanho < 0) {
+                    HttpResponse<InputStream> resposta = faixa(url, 0, 0);
+                    try (InputStream corpo = resposta.body()) {
+                        corpo.readAllBytes();
+                    }
+                    String intervalo = resposta.headers().firstValue("Content-Range").orElse("");
+                    int barra = intervalo.lastIndexOf('/');
+                    if (barra < 0 || !intervalo.substring(barra + 1).matches("[0-9]+")) {
+                        throw new IOException("resposta sem tamanho total (Content-Range) em " + url);
+                    }
+                    tamanho = Long.parseLong(intervalo.substring(barra + 1));
+                }
+                return tamanho;
+            }
+
+            @Override
+            public byte[] ler(long inicio, long fim) throws IOException, InterruptedException {
+                byte[] corpo;
+                try (InputStream entrada = faixa(url, inicio, fim).body()) {
+                    corpo = entrada.readAllBytes();
+                }
+                if (corpo.length != fim - inicio + 1) {
+                    throw new IOException("trecho incompleto em " + url + ": " + corpo.length + " de " + (fim - inicio + 1) + " bytes");
+                }
+                return corpo;
+            }
+
+            @Override
+            public InputStream abrir(long inicio, long fim) throws IOException, InterruptedException {
+                return faixa(url, inicio, fim).body();
+            }
+        };
+    }
+
+    /** O corpo só é lido depois de conferir o 206: uma resposta 200 traria o arquivo inteiro. */
+    private HttpResponse<InputStream> faixa(String url, long inicio, long fim) throws IOException, InterruptedException {
+        HttpRequest requisicao = HttpRequest.newBuilder(URI.create(url))
+                .timeout(Duration.ofSeconds(120))
+                .header("User-Agent", userAgent)
+                .header("Accept", "*/*")
+                .header("Accept-Encoding", "identity")
+                .header("Range", "bytes=" + inicio + "-" + fim)
+                .GET().build();
+        HttpResponse<InputStream> resposta = enviar(requisicao, HttpResponse.BodyHandlers.ofInputStream());
+        if (resposta.statusCode() == 206) {
+            return resposta;
+        }
+        fechar(resposta);
+        if (resposta.statusCode() == 404 || resposta.statusCode() == 403) {
+            throw new NaoEncontrado("HTTP " + resposta.statusCode() + " em " + url);
+        }
+        throw new IOException("HTTP " + resposta.statusCode() + " em " + url + " (esperado 206 para Range)");
+    }
+
     /** Status HTTP da URL: HEAD e, se o servidor recusar HEAD, GET. Não lança exceção de rede. */
     public int status(String url) throws InterruptedException {
         try {

@@ -1,6 +1,7 @@
 package etl;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
@@ -283,6 +284,70 @@ public final class Coleta {
     private static String grupo(String caminho) {
         int barra = caminho.indexOf('/');
         return barra < 0 ? caminho : caminho.substring(0, barra);
+    }
+
+    /** Recorte de uma entrada descompactada antes de gravar: do CSV grande, só as linhas úteis ficam no cache. */
+    public interface Recorte {
+        void recortar(InputStream entrada, Path destino) throws IOException;
+    }
+
+    /**
+     * Uma entrada de um ZIP grande, lida por Range, sem baixar o ZIP (ADR-0005, item 10). O cache guarda o recorte.
+     * O meta registra a URL do ZIP com o nome da entrada depois de "#", o sha256 e o tamanho da entrada descompactada,
+     * conferida pelo CRC-32 do diretório central. Dado complementar: sem cópia anterior, a falha deixa a fonte parcial.
+     */
+    public Arquivo extrairDoZip(String url, String entrada, String caminho, Politica politica, Recorte recorte)
+            throws IOException, InterruptedException {
+        String origem = url + "#" + entrada;
+        Path destino = ctx.raw().resolve(fonte).resolve(caminho);
+        Path meta = lateral(destino);
+        Arquivo emCache = emCache(meta);
+        if (emCache != null && !origem.equals(emCache.url())) {
+            emCache = null;
+        }
+        if (emCache != null && (politica == Politica.SE_AUSENTE
+                || politica == Politica.SEMANAL && !vencida(caminho, emCache.capturadoEm(), ctx.agora()))) {
+            doCache.incrementAndGet();
+            arquivos.add(emCache);
+            return emCache;
+        }
+        String grupo = grupo(caminho);
+        if (falhas.getOrDefault(grupo, 0) >= LIMITE_DE_FALHAS) {
+            return reserva(grupo, emCache, null);
+        }
+        if (orcamentoEsgotado()) {
+            String motivo = "orçamento de tempo de " + orcamento.toMinutes() + " min esgotado";
+            if (orcamentoAvisado.compareAndSet(false, true)) {
+                System.err.println(fonte + ": " + motivo + "; o restante vem do cache");
+            }
+            return reserva(grupo, emCache, motivo);
+        }
+        Path temporario = destino.resolveSibling(destino.getFileName() + ".parcial");
+        try {
+            ZipRemoto.Trechos trechos = ctx.http().trechos(url);
+            ZipRemoto.Entrada dados = ZipRemoto.entrada(trechos, entrada);
+            Files.createDirectories(destino.getParent());
+            String sha256;
+            try (ZipRemoto.Conferido conferido = ZipRemoto.abrir(trechos, dados)) {
+                recorte.recortar(conferido, temporario);
+                sha256 = conferido.sha256();
+            }
+            Files.move(temporario, destino, java.nio.file.StandardCopyOption.REPLACE_EXISTING,
+                    java.nio.file.StandardCopyOption.ATOMIC_MOVE);
+            Arquivo arquivo = new Arquivo(origem, ctx.relativo(destino), sha256, dados.descomprimido(), ctx.agora());
+            Json.gravar(meta, arquivo, true);
+            arquivos.add(arquivo);
+            baixou();
+            return arquivo;
+        } catch (IOException | RuntimeException e) {
+            // O leitor de CSV embrulha a falha de leitura (CRC-32 que não confere, conexão cortada) em exceção não checada.
+            Files.deleteIfExists(temporario);
+            String mensagem = e.getMessage() == null ? e.getClass().getSimpleName() : e.getMessage();
+            if (falhas.merge(grupo, 1, Integer::sum) <= LIMITE_DE_FALHAS) {
+                System.err.println(fonte + ": falha em " + caminho + ": " + mensagem);
+            }
+            return reserva(grupo, emCache, mensagem);
+        }
     }
 
     /**
