@@ -16,6 +16,7 @@ interface CampanhaDoAno {
   despesas: ContasDeCampanha | null;
 }
 import {
+  casaLegislativa,
   data,
   ePapelLideranca,
   iniciais,
@@ -79,6 +80,11 @@ export class Perfil {
   protected readonly perfil = computed(() => this.estado()?.perfil ?? null);
   protected readonly erro = computed(() => this.estado()?.erro ?? false);
   protected readonly blocos = computed(() => Object.keys(this.perfil()?.blocos ?? {}));
+  /** O atalho para o lado a lado só vale para parlamentares (ADR-0036). */
+  protected readonly eParlamentar = computed(() => {
+    const p = this.perfil();
+    return !!p && casaLegislativa(p.cargo_atual, p.uf, p.ente) !== null;
+  });
   protected readonly situacao = computed(() => {
     const p = this.perfil();
     return p ? situacaoDe(p) : 'exercicio';

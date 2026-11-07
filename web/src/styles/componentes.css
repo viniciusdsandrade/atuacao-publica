@@ -385,6 +385,12 @@ a.selo {
   font-size: 1.5rem;
 }
 
+.avatar--pequeno {
+  width: 2.25rem;
+  height: 2.25rem;
+  font-size: 0.8125rem;
+}
+
 /* Caixas de nota e de aviso. */
 .callout {
   display: flex;

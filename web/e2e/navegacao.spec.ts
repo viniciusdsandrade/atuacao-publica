@@ -93,10 +93,10 @@ test.describe('perfil', () => {
   });
 });
 
-test.describe('comparação', () => {
-  test('compara dois parlamentares lado a lado', async ({ page }) => {
+test.describe('lado a lado', () => {
+  test('põe dois parlamentares da mesma casa lado a lado', async ({ page }) => {
     await page.goto('/#/comparar');
-    await expect(page.getByRole('heading', { level: 1 })).toContainText('Comparação Parlamentar');
+    await expect(page.getByRole('heading', { level: 1 })).toContainText('Lado a lado');
 
     await page.getByLabel('Escolha o primeiro parlamentar:').fill('Ana');
     await page.getByRole('button', { name: /Ana Exemplo/ }).click();

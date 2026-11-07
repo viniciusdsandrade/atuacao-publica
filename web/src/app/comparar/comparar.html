@@ -1,335 +1,271 @@
-<div class="comparar-pagina">
-  <header class="comparar-intro">
-    <nav class="migalhas" aria-label="Você está em">
-      <ol>
-        <li><a routerLink="/">Políticos</a></li>
-        <li aria-current="page">Comparação parlamentar</li>
-      </ol>
-    </nav>
-    <div class="comparar-titulo-faixa">
-      <div>
-        <h1 class="titulo-pagina">Comparação Parlamentar</h1>
-        <p class="lead">
-          Compare lado a lado e de forma estritamente factual a atuação pública, votações, colegiados e despesas de dois parlamentares.
-        </p>
-      </div>
-      @if (p1() && p2()) {
-        <button type="button" class="botao botao--secundario" (click)="inverter()" title="Inverter os lados da comparação">
-          <app-icone nome="comparar" [pequeno]="true" />
-          Inverter posições
-        </button>
-      }
-    </div>
-  </header>
+<nav class="migalhas" aria-label="Você está em">
+  <ol>
+    <li><a routerLink="/" [queryParams]="consulta">Políticos</a></li>
+    <li aria-current="page">Lado a lado</li>
+  </ol>
+</nav>
 
-  <section class="comparar-seletores" aria-label="Seleção dos parlamentares">
-    <!-- Seletor 1 -->
-    <div class="comparar-seletor-card painel">
-      <h2 class="sr-only">Primeiro parlamentar</h2>
-      @if (p1(); as pol1) {
-        <div class="comparar-escolhido">
-          <span class="avatar" aria-hidden="true">{{ iniciais(pol1.nome) }}</span>
-          <div class="comparar-escolhido-info">
-            <a class="comparar-escolhido-nome" [routerLink]="['/politico', pol1.id]">{{ pol1.nome }}</a>
-            <span class="comparar-escolhido-meta">
-              {{ rotuloCargo(pol1.cargo_atual) }}
-              @if (rotuloLocal(pol1.esfera, pol1.ente, pol1.uf); as local) {
-                · {{ local }}
-              }
-              · Partido: {{ pol1.partido_atual ?? 'sem registro' }}
-            </span>
-          </div>
-          <button type="button" class="botao botao--discreto botao--pequeno" (click)="remover(1)" title="Trocar parlamentar 1">
-            <app-icone nome="fechar" [pequeno]="true" />
-            <span class="sr-only">Trocar</span>
-          </button>
-        </div>
-      } @else {
-        <div class="comparar-busca">
-          <label for="busca-pol-1" class="comparar-busca-label">Escolha o primeiro parlamentar:</label>
-          <div class="comparar-busca-campo">
-            <app-icone nome="busca" [pequeno]="true" />
-            <input
-              id="busca-pol-1"
-              type="search"
-              placeholder="Digite o nome ou partido..."
-              [value]="busca1()"
-              (input)="busca1.set($any($event.target).value)"
-            />
-          </div>
-          @if (resultadosBusca1().length > 0) {
-            <ul class="comparar-resultados-lista" role="listbox">
-              @for (item of resultadosBusca1(); track item.id) {
-                <li>
-                  <button type="button" class="comparar-resultado-item" (click)="selecionar(1, item)">
-                    <span class="avatar avatar--pequeno" aria-hidden="true">{{ iniciais(item.nome) }}</span>
-                    <span class="comparar-resultado-texto">
-                      <strong>{{ item.nome }}</strong>
-                      <small>{{ rotuloCargo(item.cargo) }} ({{ item.uf ?? '' }}) · {{ item.partido ?? 'sem partido' }}</small>
-                    </span>
-                  </button>
-                </li>
-              }
-            </ul>
-          }
-        </div>
-      }
-    </div>
-
-    <!-- Seletor 2 -->
-    <div class="comparar-seletor-card painel">
-      <h2 class="sr-only">Segundo parlamentar</h2>
-      @if (p2(); as pol2) {
-        <div class="comparar-escolhido">
-          <span class="avatar" aria-hidden="true">{{ iniciais(pol2.nome) }}</span>
-          <div class="comparar-escolhido-info">
-            <a class="comparar-escolhido-nome" [routerLink]="['/politico', pol2.id]">{{ pol2.nome }}</a>
-            <span class="comparar-escolhido-meta">
-              {{ rotuloCargo(pol2.cargo_atual) }}
-              @if (rotuloLocal(pol2.esfera, pol2.ente, pol2.uf); as local) {
-                · {{ local }}
-              }
-              · Partido: {{ pol2.partido_atual ?? 'sem registro' }}
-            </span>
-          </div>
-          <button type="button" class="botao botao--discreto botao--pequeno" (click)="remover(2)" title="Trocar parlamentar 2">
-            <app-icone nome="fechar" [pequeno]="true" />
-            <span class="sr-only">Trocar</span>
-          </button>
-        </div>
-      } @else {
-        <div class="comparar-busca">
-          <label for="busca-pol-2" class="comparar-busca-label">Escolha o segundo parlamentar:</label>
-          <div class="comparar-busca-campo">
-            <app-icone nome="busca" [pequeno]="true" />
-            <input
-              id="busca-pol-2"
-              type="search"
-              placeholder="Digite o nome ou partido..."
-              [value]="busca2()"
-              (input)="busca2.set($any($event.target).value)"
-            />
-          </div>
-          @if (resultadosBusca2().length > 0) {
-            <p class="comparar-sugestoes-titulo">{{ busca2() ? 'Resultados:' : 'Sugestões da mesma bancada/UF:' }}</p>
-            <ul class="comparar-resultados-lista" role="listbox">
-              @for (item of resultadosBusca2(); track item.id) {
-                <li>
-                  <button type="button" class="comparar-resultado-item" (click)="selecionar(2, item)">
-                    <span class="avatar avatar--pequeno" aria-hidden="true">{{ iniciais(item.nome) }}</span>
-                    <span class="comparar-resultado-texto">
-                      <strong>{{ item.nome }}</strong>
-                      <small>{{ rotuloCargo(item.cargo) }} ({{ item.uf ?? '' }}) · {{ item.partido ?? 'sem partido' }}</small>
-                    </span>
-                  </button>
-                </li>
-              }
-            </ul>
-          }
-        </div>
-      }
-    </div>
-  </section>
-
-  <!-- Painel de Comparação Lado a Lado -->
+<div class="lado-topo">
+  <div>
+    <h1 class="titulo-pagina">Lado a lado</h1>
+    <p class="lead">
+      Dois parlamentares da mesma casa, com os mesmos blocos do perfil e o período de cada número. O site não ordena nem
+      pontua ninguém.
+    </p>
+  </div>
   @if (p1() && p2()) {
-    @let pol1 = p1()!;
-    @let pol2 = p2()!;
-
-    <section class="comparar-grade" aria-label="Dados comparativos">
-      <!-- Seção: Identificação Institucional -->
-      <div class="comparar-bloco painel">
-        <h2 class="comparar-bloco-titulo">Identificação Institucional</h2>
-        <div class="comparar-duas-colunas">
-          <div class="comparar-col">
-            <h3>{{ pol1.nome }}</h3>
-            <p class="comparar-dado"><strong>Cargo:</strong> {{ rotuloCargo(pol1.cargo_atual) }}</p>
-            <p class="comparar-dado"><strong>Local:</strong> {{ rotuloLocal(pol1.esfera, pol1.ente, pol1.uf) || 'Federal' }}</p>
-            <p class="comparar-dado"><strong>Partido:</strong> {{ pol1.partido_atual ?? semRegistro }}</p>
-            <p class="comparar-dado"><strong>Situação:</strong> <span class="selo selo--ativo">{{ SITUACOES[situacaoDe(pol1)] }}</span></p>
-          </div>
-          <div class="comparar-col">
-            <h3>{{ pol2.nome }}</h3>
-            <p class="comparar-dado"><strong>Cargo:</strong> {{ rotuloCargo(pol2.cargo_atual) }}</p>
-            <p class="comparar-dado"><strong>Local:</strong> {{ rotuloLocal(pol2.esfera, pol2.ente, pol2.uf) || 'Federal' }}</p>
-            <p class="comparar-dado"><strong>Partido:</strong> {{ pol2.partido_atual ?? semRegistro }}</p>
-            <p class="comparar-dado"><strong>Situação:</strong> <span class="selo selo--ativo">{{ SITUACOES[situacaoDe(pol2)] }}</span></p>
-          </div>
-        </div>
-      </div>
-
-      <!-- Seção: Votações Nominais -->
-      <div class="comparar-bloco painel">
-        <h2 class="comparar-bloco-titulo">Participação em Votações Nominais</h2>
-        <div class="comparar-duas-colunas">
-          <div class="comparar-col">
-            <dl class="comparar-estats">
-              <div>
-                <dt>Votações registradas</dt>
-                <dd class="numero">{{ inteiro(totalVotacoes(pol1)) }}</dd>
-              </div>
-            </dl>
-            @if (votosPorTipo(pol1).length > 0) {
-              <ul class="comparar-lista-pills">
-                @for (v of votosPorTipo(pol1); track v[0]) {
-                  <li><span class="selo">{{ v[0] }}: <strong>{{ inteiro(v[1]) }}</strong></span></li>
-                }
-              </ul>
-            } @else {
-              <p class="vazio">{{ semRegistro }}</p>
-            }
-          </div>
-          <div class="comparar-col">
-            <dl class="comparar-estats">
-              <div>
-                <dt>Votações registradas</dt>
-                <dd class="numero">{{ inteiro(totalVotacoes(pol2)) }}</dd>
-              </div>
-            </dl>
-            @if (votosPorTipo(pol2).length > 0) {
-              <ul class="comparar-lista-pills">
-                @for (v of votosPorTipo(pol2); track v[0]) {
-                  <li><span class="selo">{{ v[0] }}: <strong>{{ inteiro(v[1]) }}</strong></span></li>
-                }
-              </ul>
-            } @else {
-              <p class="vazio">{{ semRegistro }}</p>
-            }
-          </div>
-        </div>
-      </div>
-
-      <!-- Seção: Proposições de Autoria -->
-      <div class="comparar-bloco painel">
-        <h2 class="comparar-bloco-titulo">Proposições de Autoria</h2>
-        <div class="comparar-duas-colunas">
-          <div class="comparar-col">
-            <dl class="comparar-estats">
-              <div>
-                <dt>Total de proposições</dt>
-                <dd class="numero">{{ inteiro(totalProposicoes(pol1)) }}</dd>
-              </div>
-            </dl>
-            @if (proposicoesPorTipo(pol1).length > 0) {
-              <ul class="comparar-lista-pills">
-                @for (t of proposicoesPorTipo(pol1).slice(0, 6); track t[0]) {
-                  <li><span class="selo">{{ t[0] }}: <strong>{{ inteiro(t[1]) }}</strong></span></li>
-                }
-              </ul>
-            } @else {
-              <p class="vazio">{{ semRegistro }}</p>
-            }
-          </div>
-          <div class="comparar-col">
-            <dl class="comparar-estats">
-              <div>
-                <dt>Total de proposições</dt>
-                <dd class="numero">{{ inteiro(totalProposicoes(pol2)) }}</dd>
-              </div>
-            </dl>
-            @if (proposicoesPorTipo(pol2).length > 0) {
-              <ul class="comparar-lista-pills">
-                @for (t of proposicoesPorTipo(pol2).slice(0, 6); track t[0]) {
-                  <li><span class="selo">{{ t[0] }}: <strong>{{ inteiro(t[1]) }}</strong></span></li>
-                }
-              </ul>
-            } @else {
-              <p class="vazio">{{ semRegistro }}</p>
-            }
-          </div>
-        </div>
-      </div>
-
-      <!-- Seção: Órgãos, Comissões e Lideranças -->
-      <div class="comparar-bloco painel">
-        <h2 class="comparar-bloco-titulo">Colegiados e Lideranças</h2>
-        <div class="comparar-duas-colunas">
-          <div class="comparar-col">
-            <dl class="comparar-estats">
-              <div>
-                <dt>Total de participações</dt>
-                <dd class="numero">{{ inteiro(totalColegiados(pol1)) }}</dd>
-              </div>
-            </dl>
-            @if (liderancas(pol1).length > 0) {
-              <p class="comparar-subtitulo">Cargos de comando:</p>
-              <ul class="comparar-lista-pills">
-                @for (l of liderancas(pol1); track l.nome) {
-                  <li>
-                    <span class="selo selo--lideranca">
-                      <strong>{{ l.papel }}:</strong> {{ l.sigla || l.nome }}
-                    </span>
-                  </li>
-                }
-              </ul>
-            }
-          </div>
-          <div class="comparar-col">
-            <dl class="comparar-estats">
-              <div>
-                <dt>Total de participações</dt>
-                <dd class="numero">{{ inteiro(totalColegiados(pol2)) }}</dd>
-              </div>
-            </dl>
-            @if (liderancas(pol2).length > 0) {
-              <p class="comparar-subtitulo">Cargos de comando:</p>
-              <ul class="comparar-lista-pills">
-                @for (l of liderancas(pol2); track l.nome) {
-                  <li>
-                    <span class="selo selo--lideranca">
-                      <strong>{{ l.papel }}:</strong> {{ l.sigla || l.nome }}
-                    </span>
-                  </li>
-                }
-              </ul>
-            }
-          </div>
-        </div>
-      </div>
-
-      <!-- Seção: Cota Parlamentar / Despesas -->
-      <div class="comparar-bloco painel">
-        <h2 class="comparar-bloco-titulo">Despesas da Cota Parlamentar</h2>
-        <div class="comparar-duas-colunas">
-          <div class="comparar-col">
-            <dl class="comparar-estats">
-              <div>
-                <dt>Total liquidado</dt>
-                <dd class="numero">{{ moeda(totalDespesas(pol1)) }}</dd>
-              </div>
-              <div>
-                <dt>Lançamentos</dt>
-                <dd class="numero">{{ inteiro(qtdDespesas(pol1)) }}</dd>
-              </div>
-            </dl>
-          </div>
-          <div class="comparar-col">
-            <dl class="comparar-estats">
-              <div>
-                <dt>Total liquidado</dt>
-                <dd class="numero">{{ moeda(totalDespesas(pol2)) }}</dd>
-              </div>
-              <div>
-                <dt>Lançamentos</dt>
-                <dd class="numero">{{ inteiro(qtdDespesas(pol2)) }}</dd>
-              </div>
-            </dl>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <footer class="comparar-rodape-nota" role="note">
-      <app-icone nome="info" />
-      <span>
-        Os dados acima vêm diretamente das fontes oficiais de cada casa legislativa e refletem o período catalogado.
-        O site Atuação Pública não produz rankings nem juízos de valor sobre parlamentares.
-      </span>
-    </footer>
-  } @else {
-    <div class="comparar-vazio painel">
-      <app-icone nome="info" />
-      <p>Selecione dois parlamentares nos campos acima para comparar sua atuação legislativa lado a lado.</p>
-    </div>
+    <button type="button" class="botao botao--pequeno" (click)="inverter()">
+      <app-icone nome="comparar" [pequeno]="true" />
+      Trocar os lados
+    </button>
   }
 </div>
+
+<section class="lado-seletores" aria-label="Seleção dos parlamentares">
+  @for (lado of LADOS; track lado) {
+    <div class="lado-seletor painel">
+      <h2 class="sr-only">{{ lado === 1 ? 'Primeiro' : 'Segundo' }} parlamentar</h2>
+      @if (perfilDoLado(lado); as p) {
+        <div class="lado-escolhido">
+          <span class="avatar" aria-hidden="true">{{ iniciais(p.nome) }}</span>
+          <div class="lado-escolhido-info">
+            <a class="lado-escolhido-nome" [routerLink]="['/politico', p.id]">{{ p.nome }}</a>
+            <span class="lado-escolhido-meta">
+              {{ rotuloCargo(p.cargo_atual) }}
+              @if (rotuloLocal(p.esfera, p.ente, p.uf); as local) {
+                · {{ local }}
+              }
+              · Partido: {{ p.partido_atual ?? 'sem registro na fonte' }}
+            </span>
+          </div>
+          <button type="button" class="botao botao--discreto botao--pequeno" (click)="remover(lado)">
+            <app-icone nome="fechar" [pequeno]="true" />
+            Trocar <span class="sr-only">{{ p.nome }}</span>
+          </button>
+        </div>
+      } @else if (carregando(lado)) {
+        <p class="sr-only" role="status">Carregando o perfil.</p>
+        <div class="lado-escolhido" aria-hidden="true">
+          <span class="esqueleto avatar"></span>
+          <span class="esqueleto esqueleto--texto lado-esqueleto"></span>
+        </div>
+      } @else {
+        @if (idSemPerfil(lado); as id) {
+          <p class="callout callout--aviso" role="alert">
+            <app-icone nome="alerta" />
+            <span>Não há perfil publicado com o identificador <code>{{ id }}</code>. Escolha outro parlamentar.</span>
+          </p>
+        }
+        <div class="campo">
+          <label [for]="'busca-pol-' + lado">Escolha o {{ ordinal(lado) }} parlamentar:</label>
+          <div class="busca">
+            <app-icone class="icone-busca" nome="busca" />
+            <input
+              [id]="'busca-pol-' + lado"
+              class="controle"
+              type="search"
+              placeholder="Nome ou partido"
+              autocomplete="off"
+              enterkeyhint="search"
+              [value]="busca(lado)"
+              (input)="digitar(lado, $event)"
+            />
+          </div>
+        </div>
+        <p class="sr-only" role="status">{{ anuncio(lado) }}</p>
+        @if (opcoes(lado); as opcoes) {
+          @if (opcoes.length) {
+            @if (!busca(lado).trim()) {
+              <p class="rotulo-secao">Mesma casa e mesma UF, em ordem alfabética</p>
+            }
+            <ul class="lado-resultados" [attr.aria-label]="'Opções para o ' + ordinal(lado) + ' parlamentar'">
+              @for (item of opcoes; track item.id) {
+                <li>
+                  <button type="button" class="lado-resultado" (click)="selecionar(lado, item)">
+                    <span class="avatar avatar--pequeno" aria-hidden="true">{{ iniciais(item.nome) }}</span>
+                    <span class="lado-resultado-texto">
+                      <strong>{{ item.nome }}</strong>
+                      <small>
+                        {{ rotuloCargo(item.cargo) }}@if (item.uf) { ({{ item.uf }}) } · {{ item.partido ?? 'partido sem registro na fonte' }}
+                      </small>
+                    </span>
+                  </button>
+                </li>
+              }
+            </ul>
+          } @else if (busca(lado).trim()) {
+            <p class="lado-vazio">
+              Nenhum parlamentar com esse nome{{ perfilDoLado(lado === 1 ? 2 : 1) ? ' na mesma casa' : '' }}. A busca ignora acento e
+              maiúscula.
+            </p>
+          }
+        }
+      }
+    </div>
+  }
+</section>
+
+@if (resumos(); as rs) {
+  <section id="lado-a-lado" class="lado-grade" aria-label="Dados comparativos" tabindex="-1">
+    <div class="lado-bloco painel">
+      <h2>Identificação</h2>
+      <div class="lado-colunas">
+        @for (r of rs; track $index) {
+          <div class="lado-coluna">
+            <h3>{{ r.perfil.nome }}</h3>
+            <dl class="lado-dados">
+              <div><dt>Cargo</dt><dd>{{ rotuloCargo(r.perfil.cargo_atual) }}</dd></div>
+              <div><dt>Local</dt><dd>{{ r.local || semRegistro }}</dd></div>
+              <div><dt>Partido</dt><dd>{{ r.perfil.partido_atual ?? semRegistro }}</dd></div>
+              <div>
+                <dt>Situação</dt>
+                <dd>
+                  @switch (r.situacao) {
+                    @case ('exercicio') {
+                      <span class="selo selo--ativo">{{ SITUACOES.exercicio }}</span>
+                    }
+                    @case ('posse') {
+                      <span class="selo selo--posse">{{ SITUACOES.posse }}</span>
+                    }
+                    @default {
+                      <span class="selo selo--fora">{{ SITUACOES.fora }}</span>
+                    }
+                  }
+                </dd>
+              </div>
+            </dl>
+          </div>
+        }
+      </div>
+    </div>
+
+    @if (rs[0].votacoes || rs[1].votacoes) {
+      <div class="lado-bloco painel">
+        <h2>{{ tituloDoBloco('participacao_votacoes') }}</h2>
+        <p class="nota-bloco">{{ notaDoBloco('participacao_votacoes') }}</p>
+        <div class="lado-colunas">
+          @for (r of rs; track $index) {
+            <div class="lado-coluna">
+              <h3>{{ r.perfil.nome }}</h3>
+              @if (r.votacoes; as v) {
+                <dl class="lado-numeros">
+                  <div><dt>Votos registrados</dt><dd class="numero">{{ inteiro(v.votos) }}</dd></div>
+                  @if (v.nominais !== null) {
+                    <div><dt>Votações nominais</dt><dd class="numero">{{ inteiro(v.nominais) }}</dd></div>
+                  }
+                  <div><dt>Período</dt><dd>{{ v.periodo || semRegistro }}</dd></div>
+                </dl>
+                @if (v.porValor.length) {
+                  <ul class="lado-tipos" aria-label="Votos por valor registrado na fonte">
+                    @for (t of v.porValor; track t[0]) {
+                      <li class="selo">{{ t[0] }}: <strong class="numero">{{ inteiro(t[1]) }}</strong></li>
+                    }
+                  </ul>
+                }
+              } @else {
+                <p class="vazio">{{ semRegistro }}</p>
+              }
+            </div>
+          }
+        </div>
+      </div>
+    }
+
+    @if (rs[0].proposicoes || rs[1].proposicoes) {
+      <div class="lado-bloco painel">
+        <h2>{{ tituloDoBloco('proposicoes') }}</h2>
+        <div class="lado-colunas">
+          @for (r of rs; track $index) {
+            <div class="lado-coluna">
+              <h3>{{ r.perfil.nome }}</h3>
+              @if (r.proposicoes; as pr) {
+                <dl class="lado-numeros">
+                  <div><dt>Proposições</dt><dd class="numero">{{ inteiro(pr.total) }}</dd></div>
+                  <div><dt>Período</dt><dd>{{ pr.periodo || semRegistro }}</dd></div>
+                </dl>
+                @if (pr.porTipo.length) {
+                  <ul class="lado-tipos" aria-label="Proposições por tipo">
+                    @for (t of pr.porTipo; track t[0]) {
+                      <li class="selo">{{ t[0] }}: <strong class="numero">{{ inteiro(t[1]) }}</strong></li>
+                    }
+                  </ul>
+                }
+              } @else {
+                <p class="vazio">{{ semRegistro }}</p>
+              }
+            </div>
+          }
+        </div>
+      </div>
+    }
+
+    @if (rs[0].colegiados || rs[1].colegiados) {
+      <div class="lado-bloco painel">
+        <h2>{{ tituloDoBloco('orgaos_e_frentes') }}</h2>
+        <div class="lado-colunas">
+          @for (r of rs; track $index) {
+            <div class="lado-coluna">
+              <h3>{{ r.perfil.nome }}</h3>
+              @if (r.colegiados; as c) {
+                <dl class="lado-numeros">
+                  <div><dt>Participações</dt><dd class="numero">{{ inteiro(c.total) }}</dd></div>
+                </dl>
+                @if (c.liderancas.length) {
+                  <p class="rotulo-secao">Lideranças em andamento</p>
+                  <ul class="lado-tipos">
+                    @for (l of c.liderancas; track $index) {
+                      <li class="selo selo--lideranca"><strong>{{ l.papel }}:</strong> {{ l.sigla || l.nome }}</li>
+                    }
+                  </ul>
+                }
+              } @else {
+                <p class="vazio">{{ semRegistro }}</p>
+              }
+            </div>
+          }
+        </div>
+      </div>
+    }
+
+    @if (rs[0].despesas || rs[1].despesas) {
+      <div class="lado-bloco painel">
+        <h2>{{ tituloDoBloco('despesas', rs[0].perfil.esfera) }}</h2>
+        <p class="nota-bloco">{{ notaDoBloco('despesas') }}</p>
+        <div class="lado-colunas">
+          @for (r of rs; track $index) {
+            <div class="lado-coluna">
+              <h3>{{ r.perfil.nome }}</h3>
+              @if (r.despesas; as d) {
+                <dl class="lado-numeros">
+                  <div><dt>Total no período</dt><dd class="numero">{{ moeda(d.valor) }}</dd></div>
+                  <div><dt>Lançamentos</dt><dd class="numero">{{ inteiro(d.lancamentos) }}</dd></div>
+                  <div><dt>Período</dt><dd>{{ d.periodo || semRegistro }}</dd></div>
+                </dl>
+              } @else {
+                <p class="vazio">{{ semRegistro }}</p>
+              }
+            </div>
+          }
+        </div>
+      </div>
+    }
+  </section>
+
+  <p class="nota-pagina lado-nota" role="note">
+    <app-icone nome="info" [pequeno]="true" />
+    <span>
+      Os números vêm das fontes oficiais de cada casa e valem para o período indicado em cada bloco. Períodos diferentes
+      não se comparam. Os detalhes de cada número estão no perfil e na <a routerLink="/metodologia">Metodologia</a>.
+    </span>
+  </p>
+} @else if (impedimento(); as motivo) {
+  <p class="callout callout--aviso" role="note">
+    <app-icone nome="alerta" />
+    <span>{{ motivo }}</span>
+  </p>
+} @else if (!p1() && !p2() && !carregando(1) && !carregando(2)) {
+  <div class="caixa-vazia">
+    <app-icone nome="comparar" />
+    <p>Escolha dois parlamentares da mesma casa para ver os mesmos blocos lado a lado, com o período de cada número.</p>
+  </div>
+}

@@ -115,6 +115,36 @@ export const SITUACOES: Record<Situacao, string> = {
   fora: 'Fora de exercício',
 };
 
+/**
+ * Casa legislativa do cargo, ou null quando o cargo não é de parlamentar.
+ * O lado a lado só põe lado a lado dois parlamentares da mesma casa (ADR-0036).
+ */
+export function casaLegislativa(cargo: string, uf: string | null | undefined, ente: string | null | undefined): string | null {
+  switch (cargo) {
+    case 'deputado_federal':
+      return 'camara-dos-deputados';
+    case 'senador':
+      return 'senado';
+    case 'deputado_estadual':
+    case 'deputado_distrital':
+      return uf ? `assembleia-${uf}` : null;
+    case 'vereador':
+      return ente ? `camara-municipal-${ente}` : null;
+    default:
+      return null;
+  }
+}
+
+/** Primeiro e último ano de uma lista: "2022 a 2026", ou o ano sozinho. Vazio quando não há ano. */
+export function periodoDosAnos(anos: number[]): string {
+  if (anos.length === 0) {
+    return '';
+  }
+  const de = Math.min(...anos);
+  const ate = Math.max(...anos);
+  return de === ate ? String(de) : `${de} a ${ate}`;
+}
+
 /** Em exercício, aguardando posse ou fora de exercício (ADR-0006). */
 export function situacaoDe(p: { em_exercicio: boolean; situacao: string | null }): Situacao {
   if (p.em_exercicio) {

@@ -83,12 +83,14 @@
             </a>
           </li>
         }
-        <li>
-          <a class="botao botao--pequeno botao--discreto" [routerLink]="['/comparar']" [queryParams]="{ p1: p.id }">
-            <app-icone nome="comparar" [pequeno]="true" />
-            Comparar atuação
-          </a>
-        </li>
+        @if (eParlamentar()) {
+          <li>
+            <a class="botao botao--pequeno botao--discreto" [routerLink]="['/comparar']" [queryParams]="{ p1: p.id }">
+              <app-icone nome="comparar" [pequeno]="true" />
+              Lado a lado
+            </a>
+          </li>
+        }
         <li>
           <a class="botao botao--pequeno botao--discreto" [href]="enderecoJson(p.id)" rel="noopener" target="_blank">
             <app-icone nome="documento" [pequeno]="true" />

@@ -4,6 +4,8 @@ import assert from 'node:assert/strict';
 import {
   CARGOS,
   ESFERAS,
+  casaLegislativa,
+  periodoDosAnos,
   ENTES_MUNICIPAIS,
   rotuloCargo,
   rotuloEsfera,
@@ -51,6 +53,25 @@ test('ePapelLideranca identifica cargos de comando em colegiados', () => {
   assert.equal(ePapelLideranca('Suplente'), false);
   assert.equal(ePapelLideranca('Membro'), false);
   assert.equal(ePapelLideranca(null), false);
+});
+
+test('casaLegislativa junta só parlamentares da mesma casa', () => {
+  assert.equal(casaLegislativa('deputado_federal', 'SP', 'BR'), casaLegislativa('deputado_federal', 'RJ', 'BR'));
+  assert.notEqual(casaLegislativa('deputado_federal', 'SP', 'BR'), casaLegislativa('senador', 'SP', 'BR'));
+  assert.equal(casaLegislativa('deputado_estadual', 'SP', 'SP'), casaLegislativa('deputado_estadual', 'SP', 'SP'));
+  assert.notEqual(casaLegislativa('deputado_estadual', 'SP', 'SP'), casaLegislativa('deputado_estadual', 'SC', 'SC'));
+  assert.notEqual(casaLegislativa('vereador', 'SP', '3550308'), casaLegislativa('vereador', 'SP', '3509502'));
+  assert.equal(casaLegislativa('deputado_distrital', 'DF', 'DF'), 'assembleia-DF');
+  assert.equal(casaLegislativa('governador', 'SP', 'SP'), null);
+  assert.equal(casaLegislativa('presidente', null, 'BR'), null);
+  assert.equal(casaLegislativa('prefeito', 'SP', '3550308'), null);
+  assert.equal(casaLegislativa('deputado_estadual', null, null), null);
+});
+
+test('periodoDosAnos mostra o primeiro e o último ano', () => {
+  assert.equal(periodoDosAnos([2024, 2022, 2026]), '2022 a 2026');
+  assert.equal(periodoDosAnos([2025]), '2025');
+  assert.equal(periodoDosAnos([]), '');
 });
 
 test('rotuloEsfera mapeia esferas corretamente', () => {

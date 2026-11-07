@@ -11,7 +11,7 @@ const ROTAS: Array<[nome: string, caminho: string]> = [
   ['emendas de um ano', '/#/politico/cam-900001/emendas/2026'],
   ['perfil de vereador da capital', '/#/politico/cmsp-940012'],
   ['perfil de governador', '/#/politico/tse-990000000010'],
-  ['comparação', '/#/comparar'],
+  ['lado a lado', '/#/comparar'],
   ['dados abertos', '/#/dados-abertos'],
   ['estado das coletas', '/#/estado'],
   ['metodologia', '/#/metodologia'],
