@@ -252,10 +252,15 @@ public final class Alesp implements Fonte {
         for (var e : acumulados.entrySet()) {
             String matricula = e.getKey();
             Acumulado ac = e.getValue();
-            List<Participacao> part = participacao(ac.participacao,
-                    ac.fontes.getOrDefault("votos", List.of()).isEmpty() ? null
-                            : new Prov(FONTE_COMISSOES_VOTACOES, REPO + "/processo_legislativo/comissoes_permanentes_votacoes.xml",
-                            ctx.agora()));
+            // Cada registro acrescentava a mesma fonte de novo: fica uma vez por bloco.
+            ac.fontes.replaceAll((bloco, lista) -> List.copyOf(new java.util.LinkedHashSet<>(lista)));
+            // A participação sai dos mesmos votos: cita o arquivo de votações, com a data de captura dele.
+            List<FonteUsada> deVotos = ac.fontes.getOrDefault("votos", List.of());
+            List<Participacao> part = participacao(ac.participacao, deVotos.isEmpty() ? null
+                    : new Prov(deVotos.getFirst().fonteId(), deVotos.getFirst().urlOrigem(), deVotos.getFirst().capturadoEm()));
+            if (!part.isEmpty() && !deVotos.isEmpty()) {
+                ac.fontes.put("participacao_votacoes", deVotos);
+            }
             Blocos blocos = new Blocos(ac.mandatos, part, ac.votos, ac.despesas, ac.proposicoes, ac.orgaos, ac.fontes);
             Json.gravar(pastaBlocos.resolve(matricula + ".json"), Json.SAIDA.valueToTree(blocos));
         }
