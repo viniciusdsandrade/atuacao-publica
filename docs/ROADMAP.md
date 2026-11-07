@@ -80,6 +80,7 @@ Estado real de cada fase. Atualizado ao fechar cada fase.
 - CMSP: a fonte deixa cargo antigo da Mesa sem data de fim quando há sucessor. Em cargo exclusivo (Mesa, presidência e vice-presidência de comissão), vale o de início mais recente entre os vereadores em exercício.
 - Capital: a eleição de 2020 não entra, porque o eleito prefeito deixou o cargo em 2021 e a regra de mandato do projeto supõe os quatro anos do eleito. A despesa do Executivo também não: a API do TCE-SP devolve lista vazia para a capital, e o Diário Oficial da Cidade respondeu 403 à requisição direta.
 - Até 2026-11-06, nove adaptadores (ALECE, ALEGO, ALEPE, ALERJ, ALEPA, ALES, ALRS, ALESC e CLDF) gravavam o bloco `fontes` como lista, e o `Vinculo` lê um objeto por bloco. Os perfis dessas casas saíam com os blocos sem fonte e com `atualizado_em` nulo (verificado no perfil `alerj-505` publicado). Corrigido: as fontes de cada bloco vêm da proveniência dos registros (`Registros.fontesDosBlocos`), e o `Vinculo` interrompe o `publish` se receber uma lista. No ensaio local das treze casas, nenhum bloco com registro ficou sem fonte.
+- Até 2026-11-07, a ALESP repetia a mesma fonte a cada registro (um perfil citava 2.106 vezes o mesmo arquivo de despesas), e o bloco de participação em votações saía sem fonte. Corrigido no adaptador. O `publish` passou a tirar fontes repetidas de qualquer bloco e, se um adaptador não declarar a fonte de um bloco com registro, a citar a proveniência dos registros, com o caso contado no log.
 - Até 2026-11-06, o cargo `deputado_distrital` não estava na tabela de blocos do `Publicador`, e os perfis da CLDF saíam sem bloco nenhum, nem mandato. Corrigido, com um teste que confere os blocos de todo cargo do schema.
 
 
@@ -89,27 +90,27 @@ Estado real de cada fase. Atualizado ao fechar cada fase.
 
 ## Casas estaduais e municipais no site
 
-Estado da publicação de 2026-11-07, às 01:58 UTC, com 1.867 perfis. "Perfis" conta os perfis com o identificador da casa, inclusive os fundidos com outra casa.
+Estado da publicação de 2026-11-07, às 07:06 UTC, com 1.867 perfis. "Perfis" conta os perfis com o identificador da casa, inclusive os fundidos com outra casa.
 
 | Casa | Coleta no CI | Perfis | Vínculo com o TSE | Blocos além de mandato e candidaturas |
 |---|---|---|---|---|
 | ALESP (SP) | ok | 153 | 140 | votações em comissão, proposições, despesas e comissões |
 | ALMG (MG) | falha: rede bloqueada | 0 | - | - |
-| ALEP (PR) | ok | 54 | 51 | comissões; proposições e votações nominais a partir da próxima publicação |
+| ALEP (PR) | parcial: 4 sessões passaram a responder 404, com cópia anterior | 54 | 51 | comissões, proposições (24.343) e votações nominais (197.815 votos em 51 deputados) |
 | ALBA (BA) | ok | 63 | 63 | comissões |
-| ALERJ (RJ) | ok | 70 | 70 | despesas a partir da próxima publicação |
+| ALERJ (RJ) | ok | 70 | 70 | despesas (30.330 lançamentos em 67 deputados) |
 | ALRS (RS) | falha: rede bloqueada | 0 | - | - |
-| ALECE (CE) | ok | 54 | 51 | comissões; despesas e votações nominais a partir da próxima publicação |
+| ALECE (CE) | ok | 54 | 51 | comissões, despesas (15.494 lançamentos) e votações nominais (2.439 votos) |
 | ALESC (SC) | ok | 40 | 40 | despesas e comissões |
-| ALEGO (GO) | parcial | 43 | 43 | comissões e frentes e despesas; 17 arquivos mensais ficaram para a próxima execução |
+| ALEGO (GO) | ok | 43 | 43 | comissões e frentes e despesas (51.156 lançamentos) |
 | ALES (ES) | falha: rede bloqueada | 0 | - | - |
 | ALEPA (PA) | ok, primeira coleta | 41 | 40 | comissões |
 | ALEPE (PE) | falha: rede bloqueada | 0 | - | - |
 | CLDF (DF) | falha: rede bloqueada | 0 | - | - |
-| CMSP (capital) | ok | 55 | 51 | comissões e proposições |
+| CMSP (capital) | ok | 55 | 51 | comissões e proposições (6.547) |
 | Câmara do piloto (SAPL) | ok | 50 | 50 | votos, presença, falas, matérias, despesas e comissões |
 
-Desde esta publicação, todo bloco com registro cita fonte e data: conferido em amostras de 15 perfis de ALERJ, ALECE, ALEGO, ALESC, ALEPA, ALBA, ALEP e CMSP, inclusive no `alerj-505`, que saía sem fonte. As despesas da ALECE e da ALERJ e as proposições da ALEP entram na publicação seguinte.
+Conferido em todos os perfis de ALECE, ALERJ, ALEP, ALEGO, CMSP, ALESC, ALEPA e ALBA: todo bloco com registro cita fonte e data. A exceção foi a participação em votações da ALESP, corrigida em 2026-11-07 (ver "Limitações conhecidas"). Os oito governadores eleitos em 2022 que concorreram a outro cargo saíram de em exercício (ADR-0033), e restam 19 governadores em exercício.
 
 ## Cobertura 2022 a 2026 (ADR-0009)
 
