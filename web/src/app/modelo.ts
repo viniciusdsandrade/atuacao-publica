@@ -74,6 +74,33 @@ export interface DespesaAgregada extends Proveniencia {
   quantidade: number;
 }
 
+/** Soma de uma categoria da prestação de contas (ADR-0032). */
+export interface SomaDeCampanha {
+  categoria: string;
+  valor: number;
+  quantidade: number;
+}
+
+export interface FornecedorDeCampanha {
+  nome: string | null;
+  cnpj: string;
+  valor: number;
+  quantidade: number;
+}
+
+/** Receitas ou despesas contratadas de uma candidatura, como publicadas no bloco financiamento_campanha. */
+export interface ContasDeCampanha extends Proveniencia {
+  eleicao: number;
+  cargo: string;
+  tipo: 'receitas' | 'despesas contratadas';
+  total: number;
+  quantidade: number;
+  por_fonte?: SomaDeCampanha[];
+  por_origem?: SomaDeCampanha[];
+  por_tipo?: SomaDeCampanha[];
+  maiores_fornecedores?: FornecedorDeCampanha[];
+}
+
 /** Rede social ou site declarado ao TSE no registro da candidatura (ADR-0031). */
 export interface RedeDeclarada extends Proveniencia {
   rede: string;

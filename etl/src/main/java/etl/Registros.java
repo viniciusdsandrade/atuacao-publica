@@ -110,6 +110,25 @@ public final class Registros {
     public record RedeDeclarada(String rede, String url, @JsonUnwrapped Prov prov) {
     }
 
+    /** Soma de uma categoria da prestação de contas, com a quantidade de lançamentos. */
+    public record Soma(String categoria, BigDecimal valor, int quantidade) {
+    }
+
+    /** Fornecedor pessoa jurídica de campanha, pelo CNPJ. Pessoa física nunca aparece por nome. */
+    public record FornecedorDeCampanha(String nome, String cnpj, BigDecimal valor, int quantidade) {
+    }
+
+    /** Receitas da campanha de uma candidatura, somadas por fonte e por origem (ADR-0032). */
+    public record ReceitasDeCampanha(int eleicao, String cargo, String tipo, BigDecimal total, int quantidade,
+                                     List<Soma> porFonte, List<Soma> porOrigem, @JsonUnwrapped Prov prov) {
+    }
+
+    /** Despesas contratadas da campanha de uma candidatura, por tipo, com os maiores fornecedores com CNPJ (ADR-0032). */
+    public record DespesasDeCampanha(int eleicao, String cargo, String tipo, BigDecimal total, int quantidade,
+                                     List<Soma> porTipo, List<FornecedorDeCampanha> maioresFornecedores,
+                                     @JsonUnwrapped Prov prov) {
+    }
+
     public record AtoNormativo(String idFonte, String tipo, String numero, LocalDate data, String nome, String ementa,
                                @JsonUnwrapped Prov prov) {
     }

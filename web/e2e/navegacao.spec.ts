@@ -64,6 +64,16 @@ test.describe('perfil', () => {
     await expect(page.getByText(/Autor na fonte: PESSOA EXEMPLO/)).toBeVisible();
   });
 
+  test('financiamento de campanha abre a eleição com receitas por fonte e fornecedores com CNPJ', async ({ page }) => {
+    await page.goto('/#/politico/cam-900001');
+    const bloco = page.locator('#bloco-financiamento_campanha');
+    await expect(bloco.getByRole('heading', { level: 2 })).toContainText('Financiamento de campanha');
+    // O primeiro summary do bloco é o da proveniência; a eleição é a sanfona de cada ano.
+    await bloco.locator('details.ano-despesa > summary').first().click();
+    await expect(bloco.getByRole('table', { name: 'Receitas por fonte em 2026' })).toContainText('FUNDO ESPECIAL');
+    await expect(bloco.getByRole('table', { name: 'Maiores fornecedores com CNPJ em 2026' })).toContainText('99999999000199');
+  });
+
   test('redes e sites declarados ao TSE aparecem no topo com o rótulo de declaração do próprio candidato', async ({ page }) => {
     await page.goto('/#/politico/tse-990000000010');
     await expect(page.getByText(/declarados ao TSE pelo próprio candidato, na eleição de 2022/)).toBeVisible();

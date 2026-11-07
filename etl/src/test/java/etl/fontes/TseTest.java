@@ -5,9 +5,12 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import etl.Registros.Prov;
 
 import org.junit.jupiter.api.Test;
 
@@ -145,6 +148,100 @@ class TseTest {
         assertEquals("YouTube", Tse.rede("https://youtu.be/exemplo"));
         assertEquals("Site", Tse.rede("https://naoinstagram.com/perfil"), "domínio parecido não é a rede");
         assertEquals("Site", Tse.rede("https://www.site-exemplo.com.br"));
+    }
+
+    @Test
+    void prestacaoDeContasLeOCsvBrasilNaEleicaoGeralEODaUfDosMunicipiosNaMunicipal() {
+        assertEquals(List.of("receitas_candidatos_2026_BRASIL.csv", "despesas_contratadas_candidatos_2026_BRASIL.csv"),
+                Tse.entradasDeContas(2026));
+        assertEquals(List.of("receitas_candidatos_2024_SP.csv", "despesas_contratadas_candidatos_2024_SP.csv"),
+                Tse.entradasDeContas(2024));
+        // Município novo fora de SP precisa de outro recorte da prestação de contas.
+        for (var municipio : Tse.UES_MUNICIPAIS.values()) {
+            assertTrue(municipio.ibge().startsWith("35"), "município fora de SP: " + municipio.ibge());
+        }
+    }
+
+    @Test
+    void recorteGuardaSoLinhasCobertasEColunasUsadasSemDocumentoNemNomeDePessoaFisica(@org.junit.jupiter.api.io.TempDir java.nio.file.Path pasta)
+            throws Exception {
+        String csv = "\"SQ_CANDIDATO\";\"SQ_DESPESA\";\"DS_ORIGEM_DESPESA\";\"NR_CPF_CNPJ_FORNECEDOR\";\"NM_FORNECEDOR\";\"NM_FORNECEDOR_RFB\";"
+                + "\"VR_DESPESA_CONTRATADA\";\"NR_CPF_CANDIDATO\";\"DS_COR_RACA\"\r\n"
+                + "\"250000000001\";\"1\";\"Despesas com pessoal\";\"12345678909\";\"PESSOA FORNECEDORA EXEMPLO\";\"#NULO\";\"100,00\";\"98765432100\";\"COR\"\r\n"
+                + "\"250000000001\";\"2\";\"Publicidade\";\"99999999000199\";\"GRAFICA EXEMPLO LTDA\";\"GRAFICA EXEMPLO\";\"50,00\";\"98765432100\";\"COR\"\r\n"
+                + "\"250000000002\";\"3\";\"Publicidade\";\"99999999000199\";\"GRAFICA EXEMPLO LTDA\";\"GRAFICA EXEMPLO\";\"70,00\";\"11111111111\";\"COR\"\r\n";
+        java.nio.file.Path destino = pasta.resolve("despesas.csv.gz");
+
+        Tse.recortarCandidaturas(new java.io.ByteArrayInputStream(csv.getBytes(java.nio.charset.StandardCharsets.ISO_8859_1)), destino,
+                java.util.Set.of("250000000001"), Tse.COLUNAS_DE_DESPESA);
+
+        String recorte;
+        try (var entrada = new java.util.zip.GZIPInputStream(java.nio.file.Files.newInputStream(destino))) {
+            recorte = new String(entrada.readAllBytes(), java.nio.charset.StandardCharsets.ISO_8859_1);
+        }
+        String[] linhas = recorte.split("\r\n");
+        assertEquals(3, linhas.length, "cabeçalho e as duas despesas da candidatura coberta");
+        assertEquals("\"250000000001\";\"1\";\"Despesas com pessoal\";\"\";\"\";\"\";\"100,00\"", linhas[1]);
+        assertTrue(linhas[2].contains("99999999000199") && linhas[2].contains("GRAFICA EXEMPLO"));
+        assertFalse(recorte.contains("12345678909") || recorte.contains("PESSOA FORNECEDORA") || recorte.contains("98765432100")
+                || recorte.contains("COR"), "CPF, nome de pessoa física e colunas não usadas ficam fora do cache");
+    }
+
+    private static Map<String, String> receita(String id, String fonte, String origem, String valor) {
+        return Map.of("SQ_RECEITA", id, "DS_FONTE_RECEITA", fonte, "DS_ORIGEM_RECEITA", origem, "VR_RECEITA", valor,
+                "NR_CPF_CNPJ_DOADOR", "12345678909", "NM_DOADOR", "PESSOA DOADORA EXEMPLO");
+    }
+
+    private static Map<String, String> despesa(String id, String tipo, String documento, String nome, String valor) {
+        return Map.of("SQ_DESPESA", id, "DS_ORIGEM_DESPESA", tipo, "NR_CPF_CNPJ_FORNECEDOR", documento, "NM_FORNECEDOR", nome,
+                "NM_FORNECEDOR_RFB", "#NULO", "VR_DESPESA_CONTRATADA", valor);
+    }
+
+    @Test
+    void receitasSomamPorFonteEOrigemSemNomeNemCpfDeDoador() {
+        Tse.Somas somas = new Tse.Somas();
+        somas.receita(receita("1", "FUNDO ESPECIAL", "Recursos de partido político", "1.000,00"));
+        somas.receita(receita("2", "OUTROS RECURSOS", "Recursos de pessoas físicas", "200,50"));
+        somas.receita(receita("2", "OUTROS RECURSOS", "Recursos de pessoas físicas", "200,50"));
+        somas.receita(receita("3", "#NULO", "Recursos de pessoas físicas", "99,50"));
+        Prov prov = new Prov("tse-cdn", "https://exemplo.invalid/contas.zip#receitas.csv", java.time.Instant.parse("2026-11-06T00:00:00Z"));
+
+        var receitas = somas.receitas(2026, "DEPUTADO FEDERAL", prov);
+
+        assertEquals(new BigDecimal("1300.00"), receitas.total());
+        assertEquals(3, receitas.quantidade(), "a receita repetida (mesmo SQ_RECEITA) conta uma vez");
+        assertEquals("FUNDO ESPECIAL", receitas.porFonte().getFirst().categoria());
+        assertEquals("(vazio na fonte)", receitas.porFonte().getLast().categoria());
+        assertEquals(new BigDecimal("300.00"), receitas.porOrigem().stream()
+                .filter(s -> s.categoria().equals("Recursos de pessoas físicas")).findFirst().orElseThrow().valor());
+        String json = etl.Json.arvore(receitas).toString();
+        assertFalse(json.contains("12345678909") || json.contains("PESSOA DOADORA"), "doador pessoa física não sai");
+    }
+
+    @Test
+    void despesasListamSoFornecedorComCnpjComONomeSemCpf() {
+        Tse.Somas somas = new Tse.Somas();
+        somas.despesa(despesa("1", "Publicidade por materiais impressos", "99999999000199", "GRAFICA EXEMPLO LTDA", "500,00"));
+        somas.despesa(despesa("2", "Publicidade por materiais impressos", "99999999000199", "GRAFICA EXEMPLO LTDA", "250,00"));
+        somas.despesa(despesa("3", "Despesas com pessoal", "12345678909", "PESSOA FORNECEDORA EXEMPLO", "1.000,00"));
+        somas.despesa(despesa("4", "Serviços prestados por terceiros", "88888888000188", "FULANO EXEMPLO 12345678909", "10,00"));
+        for (int i = 0; i < 12; i++) {
+            somas.despesa(despesa("x" + i, "Despesas com transporte", String.format("%014d", 1000 + i), "TRANSPORTE " + i, "1,00"));
+        }
+        Prov prov = new Prov("tse-cdn", "https://exemplo.invalid/contas.zip#despesas.csv", java.time.Instant.parse("2026-11-06T00:00:00Z"));
+
+        var despesas = somas.despesas(2026, "DEPUTADO FEDERAL", prov);
+
+        assertEquals(new BigDecimal("1772.00"), despesas.total());
+        assertEquals(16, despesas.quantidade());
+        assertEquals(Tse.MAIORES_FORNECEDORES, despesas.maioresFornecedores().size());
+        var primeiro = despesas.maioresFornecedores().getFirst();
+        assertEquals("99999999000199", primeiro.cnpj());
+        assertEquals(new BigDecimal("750.00"), primeiro.valor());
+        assertEquals("FULANO EXEMPLO", despesas.maioresFornecedores().get(1).nome(), "CPF no nome do MEI é removido");
+        String json = etl.Json.arvore(despesas).toString();
+        assertFalse(json.contains("12345678909") || json.contains("PESSOA FORNECEDORA"), "fornecedor pessoa física não sai por nome");
+        assertEquals(new BigDecimal("1000.00"), despesas.porTipo().getFirst().valor(), "a soma por tipo inclui a pessoa física");
     }
 
     @Test

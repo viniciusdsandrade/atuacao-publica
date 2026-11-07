@@ -33,6 +33,7 @@
         "eventos": { "$ref": "#/$defs/bloco_eventos" },
         "orgaos_e_frentes": { "$ref": "#/$defs/bloco_orgaos" },
         "candidaturas": { "$ref": "#/$defs/bloco_candidaturas" },
+        "financiamento_campanha": { "$ref": "#/$defs/bloco_financiamento" },
         "despesas_executivo": { "$ref": "#/$defs/bloco_despesas" },
         "posicionamentos_declarados": { "$ref": "#/$defs/bloco_posicionamentos" },
         "agenda_oficial": { "$ref": "#/$defs/bloco_agenda" },
@@ -180,6 +181,18 @@
       "allOf": [{ "$ref": "#/$defs/bloco_base" }],
       "required": ["recentes"],
       "properties": { "recentes": { "type": "array", "items": { "$ref": "registros.schema.json#/$defs/ato_normativo" } } },
+      "unevaluatedProperties": false
+    },
+    "bloco_financiamento": {
+      "description": "Receitas e despesas contratadas de campanha de cada candidatura do perfil (ADR-0032).",
+      "allOf": [{ "$ref": "#/$defs/bloco_base" }],
+      "required": ["registros"],
+      "properties": {
+        "registros": {
+          "type": "array",
+          "items": { "anyOf": [{ "$ref": "registros.schema.json#/$defs/receitas_de_campanha" }, { "$ref": "registros.schema.json#/$defs/despesas_de_campanha" }] }
+        }
+      },
       "unevaluatedProperties": false
     },
     "bloco_emendas": {

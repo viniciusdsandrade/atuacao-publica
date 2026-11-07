@@ -59,6 +59,7 @@ export const BLOCOS: Record<string, string> = {
   eventos: 'Eventos com presença registrada',
   orgaos_e_frentes: 'Órgãos, comissões e frentes',
   candidaturas: 'Candidaturas',
+  financiamento_campanha: 'Financiamento de campanha',
   posicionamentos_declarados: 'Posicionamentos declarados',
   agenda_oficial: 'Agenda oficial',
   atos_normativos: 'Atos do Poder Executivo federal no período do mandato',
@@ -76,6 +77,8 @@ export const NOTAS: Record<string, string> = {
     'Valor pago pelo órgão da prefeitura, somado por mês pelo Tribunal de Contas do Estado. Autarquias, fundações e a Câmara ficam fora. A fonte não informa quem autorizou cada pagamento.',
   candidaturas:
     'O TSE registra a eleição, não o exercício do cargo. Redes e sites: endereços declarados pelo próprio candidato no registro da candidatura. O site não confere o conteúdo dessas páginas.',
+  financiamento_campanha:
+    'Receitas e despesas contratadas declaradas na prestação de contas ao TSE, somadas por categoria. Fonte e origem são dois recortes do mesmo total. Doadores e fornecedores pessoa física entram só nas somas, sem nome.',
   emendas:
     'Emendas individuais do parlamentar, por ano do orçamento, com os valores como o Portal da Transparência publica: empenhado, liquidado, pago e restos a pagar. Emendas de bancada, de comissão e de relator não têm autor individual na fonte e ficam fora.',
   agenda_oficial:
@@ -95,6 +98,7 @@ export const BLOCOS_CURTOS: Record<string, string> = {
   eventos: 'Eventos',
   orgaos_e_frentes: 'Órgãos e frentes',
   candidaturas: 'Candidaturas',
+  financiamento_campanha: 'Financiamento',
   posicionamentos_declarados: 'Posicionamentos declarados',
   agenda_oficial: 'Agenda oficial',
   atos_normativos: 'Atos normativos',

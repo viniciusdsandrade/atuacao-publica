@@ -185,6 +185,61 @@
       },
       "unevaluatedProperties": false
     },
+    "soma_de_campanha": {
+      "description": "Soma de uma categoria da prestação de contas, com a quantidade de lançamentos.",
+      "type": "object",
+      "required": ["categoria", "valor", "quantidade"],
+      "properties": {
+        "categoria": { "$ref": "comum.schema.json#/$defs/texto" },
+        "valor": { "$ref": "comum.schema.json#/$defs/valor" },
+        "quantidade": { "$ref": "comum.schema.json#/$defs/contagem" }
+      },
+      "additionalProperties": false
+    },
+    "fornecedor_de_campanha": {
+      "description": "Fornecedor pessoa jurídica, pelo CNPJ. Pessoa física nunca aparece por nome nem por CPF (ADR-0032).",
+      "type": "object",
+      "required": ["nome", "cnpj", "valor", "quantidade"],
+      "properties": {
+        "nome": { "$ref": "comum.schema.json#/$defs/texto_ou_nulo" },
+        "cnpj": { "type": "string", "pattern": "^[0-9]{14}$" },
+        "valor": { "$ref": "comum.schema.json#/$defs/valor" },
+        "quantidade": { "$ref": "comum.schema.json#/$defs/contagem" }
+      },
+      "additionalProperties": false
+    },
+    "receitas_de_campanha": {
+      "description": "Receitas da campanha de uma candidatura, somadas por fonte e por origem (ADR-0032). As duas listas repartem o mesmo total.",
+      "type": "object",
+      "allOf": [{ "$ref": "comum.schema.json#/$defs/proveniencia" }],
+      "required": ["eleicao", "cargo", "tipo", "total", "quantidade", "por_fonte", "por_origem"],
+      "properties": {
+        "eleicao": { "type": "integer", "minimum": 1990 },
+        "cargo": { "$ref": "comum.schema.json#/$defs/texto" },
+        "tipo": { "const": "receitas" },
+        "total": { "$ref": "comum.schema.json#/$defs/valor" },
+        "quantidade": { "$ref": "comum.schema.json#/$defs/contagem" },
+        "por_fonte": { "type": "array", "items": { "$ref": "#/$defs/soma_de_campanha" } },
+        "por_origem": { "type": "array", "items": { "$ref": "#/$defs/soma_de_campanha" } }
+      },
+      "unevaluatedProperties": false
+    },
+    "despesas_de_campanha": {
+      "description": "Despesas contratadas da campanha de uma candidatura, por tipo, com os maiores fornecedores com CNPJ (ADR-0032).",
+      "type": "object",
+      "allOf": [{ "$ref": "comum.schema.json#/$defs/proveniencia" }],
+      "required": ["eleicao", "cargo", "tipo", "total", "quantidade", "por_tipo", "maiores_fornecedores"],
+      "properties": {
+        "eleicao": { "type": "integer", "minimum": 1990 },
+        "cargo": { "$ref": "comum.schema.json#/$defs/texto" },
+        "tipo": { "const": "despesas contratadas" },
+        "total": { "$ref": "comum.schema.json#/$defs/valor" },
+        "quantidade": { "$ref": "comum.schema.json#/$defs/contagem" },
+        "por_tipo": { "type": "array", "items": { "$ref": "#/$defs/soma_de_campanha" } },
+        "maiores_fornecedores": { "type": "array", "maxItems": 10, "items": { "$ref": "#/$defs/fornecedor_de_campanha" } }
+      },
+      "unevaluatedProperties": false
+    },
     "emenda": {
       "description": "Emenda individual ao Orçamento da União, com os valores como o Portal da Transparência publica (ADR-0030).",
       "type": "object",

@@ -163,6 +163,7 @@ Os dois arquivos mudam juntos.
 | `bem_candidato/bem_candidato_2026.zip` | 3,8 MB |
 | `proposta_governo/proposta_governo_{ano}_{UF}.zip` | 8 MB a 18 MB por UF |
 | `consulta_cand/rede_social_candidato_{ano}.zip` | 0,6 MB (2018) a 20,2 MB (2024) |
+| `prestacao_contas/prestacao_de_contas_eleitorais_candidatos_{ano}.zip` | 306 MB (2018) a 1,33 GB (2024), lido por Range |
 
 - Cada ZIP de candidatos traz um CSV por UF, `BR` (Presidência) e `BRASIL` (todos).
 - Codificação ISO-8859-1. Separador `;`. Campos de texto entre aspas e campos numéricos sem aspas.
@@ -175,6 +176,11 @@ Os dois arquivos mudam juntos.
 - Redes e sites declarados (ADR-0031): `rede_social_candidato_{ano}.zip`, validado em 2026-11-06 para 2018 a 2026. Um CSV por UF e `_BRASIL`. Colunas usadas: `SQ_CANDIDATO`, `NR_ORDEM_REDE_SOCIAL` e `DS_URL`.
 - No arquivo de 2026, a maior parte dos endereços vem toda em maiúsculas (35.244 dos cerca de 55 mil com esquema), e milhares de entradas não são endereço: texto com espaço, "@perfil" solto, palavra sem ponto. De 2018 a 2024, o campo vem quase só com URLs.
 - Parte dos endereços leva a telefone: conversa, link curto e convite de grupo do WhatsApp, Telegram por número. Esses ficam fora na ingestão.
+- Prestação de contas (ADR-0032): validada em 2026-11-06 para 2018 a 2026. O ZIP de 2022 mudou em 2026-11-01, e os de 2018 e 2020 mudaram de tamanho desde setembro: a fonte republica anos fechados.
+- Cada ZIP traz, por UF e `_BRASIL`, `receitas_candidatos`, `receitas_candidatos_doador_originario`, `despesas_contratadas_candidatos` e `despesas_pagas_candidatos`. Layout igual de 2018 a 2026: 60 colunas nas receitas e 53 nas despesas contratadas.
+- A CDN aceita Range (`Accept-Ranges: bytes`). O ETL lê só receitas e despesas contratadas: `_BRASIL` na eleição geral e `_SP` na municipal. Na primeira carga, cerca de 530 MB das entradas, contra cerca de 3,8 GB dos ZIPs.
+- Colunas usadas: `SQ_CANDIDATO`, `SQ_RECEITA`, `DS_FONTE_RECEITA`, `DS_ORIGEM_RECEITA` e `VR_RECEITA`; `SQ_DESPESA`, `DS_ORIGEM_DESPESA`, `NR_CPF_CNPJ_FORNECEDOR`, `NM_FORNECEDOR`, `NM_FORNECEDOR_RFB` e `VR_DESPESA_CONTRATADA`.
+- As linhas trazem nome e CPF de doador e de fornecedor pessoa física, CPF do candidato e do vice, gênero e cor ou raça do candidato. Nenhum desses campos entra no cache nem no site.
 
 ### `tse-divulgacand`: DivulgaCandContas
 

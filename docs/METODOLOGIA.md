@@ -151,6 +151,17 @@ Não é presença. É a contagem de votos registrados em votações nominais.
 - O topo do perfil mostra os endereços da candidatura mais recente que declarou algum, com o ano da eleição. O endereço é o declarado naquela eleição: a conta pode ter mudado depois.
 - **Piloto municipal.** Eleições de 2020 e 2024 (`consulta_cand` e `bem_candidato`), filtradas pelo município piloto. O SAPL não publica CPF: a candidatura mais recente com o mesmo nome civil ou nome de urna normalizado, dentro do município, serve de ponte; as demais eleições da pessoa vêm pelo CPF dessa candidatura, em memória, como nas outras casas. Planos de governo municipais: só a partir de 2022, como no federal; 2020 fica sem plano.
 
+## Financiamento de campanha (ADR-0032)
+
+- Fonte: prestação de contas eleitorais dos candidatos, do TSE. Entradas de receitas e de despesas contratadas: CSV `_BRASIL` na eleição geral e `_SP` na municipal.
+- Candidaturas: as mesmas do bloco de candidaturas, ligadas ao perfil pela chave `SQ_CANDIDATO`.
+- Receitas: total, quantidade e soma por fonte (`DS_FONTE_RECEITA`: Fundo Especial, Fundo Partidário, outros recursos) e por origem (`DS_ORIGEM_RECEITA`). Fonte e origem repartem o mesmo total: o site não soma uma com a outra.
+- Despesas contratadas: total, quantidade e soma por tipo (`DS_ORIGEM_DESPESA`), com os até 10 maiores fornecedores com CNPJ pelo valor contratado.
+- Cada receita e cada despesa contam uma vez, pela chave da fonte (`SQ_RECEITA` e `SQ_DESPESA`). Valores como a fonte registra.
+- Doador e fornecedor pessoa física entram só nas somas. Nome e CPF nunca são publicados. Fornecedor com CNPJ aparece pelo nome da Receita Federal, quando a fonte traz, sem a sequência de CPF do nome de MEI.
+- Ficam fora: despesas pagas (regime de caixa) e doador originário.
+- A eleição mais recente renova por semana: a prestação final chega até o 30º dia depois da eleição, ou até o 20º depois do segundo turno, e ainda pode ser retificada.
+
 ## Executivo
 
 - **Mandatos.** Datas de início e fim vêm de `contrib/mandatos.yaml`, com proveniência na EC 111/2021: eleitos em 2022 tomaram posse em 2023-01-01; os mandatos vão até 2027-01-05 (Presidente) e 2027-01-06 (governadores).

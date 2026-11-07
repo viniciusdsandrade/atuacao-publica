@@ -1,6 +1,7 @@
 package etl.fontes;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
@@ -133,14 +134,211 @@ public final class Tse implements Fonte {
                         "propostas/" + ano + "_" + uf + ".json", Politica.SE_AUSENTE);
             }
         }
+        // Prestação de contas (ADR-0032): só receitas e despesas contratadas, lidas por Range do ZIP de centenas de MB,
+        // e só as linhas das candidaturas cobertas. A eleição mais recente renova por semana: as contas chegam depois do pleito.
+        for (int ano : anos) {
+            Coleta.Arquivo candidaturas = Coleta.metadados(ctx, "tse", "consulta_cand_" + ano + ".zip");
+            if (candidaturas == null || !Files.exists(Coleta.caminho(ctx, candidaturas))) {
+                continue;
+            }
+            Set<String> cobertas = new HashSet<>();
+            lerBrasil(Coleta.caminho(ctx, candidaturas), l -> {
+                if (cargoValido(l)) {
+                    cobertas.add(l.get("SQ_CANDIDATO"));
+                }
+            });
+            Politica politicaDasContas = ano == ultima ? Politica.SEMANAL : Politica.SE_AUSENTE;
+            List<String> entradas = entradasDeContas(ano);
+            coleta.extrairDoZip(zipDeContas(ano), entradas.get(0), recorteDeContas(entradas.get(0)), politicaDasContas,
+                    (dados, destino) -> recortarCandidaturas(dados, destino, cobertas, COLUNAS_DE_RECEITA));
+            coleta.extrairDoZip(zipDeContas(ano), entradas.get(1), recorteDeContas(entradas.get(1)), politicaDasContas,
+                    (dados, destino) -> recortarCandidaturas(dados, destino, cobertas, COLUNAS_DE_DESPESA));
+        }
         coleta.contar("eleicoes", anos.size());
         coleta.periodo(new Meta.Periodo(java.time.LocalDate.of(anos.getFirst(), 1, 1), ctx.hoje()));
+    }
+
+    /** Todos os municípios cobertos ficam em SP (UES_MUNICIPAIS): a eleição municipal lê só o CSV dessa UF. */
+    static final String UF_DOS_MUNICIPIOS = "SP";
+    static final String RECEITAS = "receitas";
+    static final String DESPESAS = "despesas contratadas";
+    /** Maiores fornecedores com CNPJ por candidatura, pelo valor contratado. */
+    static final int MAIORES_FORNECEDORES = 10;
+
+    static String zipDeContas(int ano) {
+        return CDN + "/prestacao_contas/prestacao_de_contas_eleitorais_candidatos_" + ano + ".zip";
+    }
+
+    /** Eleição geral: o CSV _BRASIL. Eleição municipal (ano múltiplo de 4): o CSV da UF dos municípios cobertos. */
+    static List<String> entradasDeContas(int ano) {
+        String recorte = ano % 4 == 0 ? UF_DOS_MUNICIPIOS : "BRASIL";
+        return List.of("receitas_candidatos_" + ano + "_" + recorte + ".csv",
+                "despesas_contratadas_candidatos_" + ano + "_" + recorte + ".csv");
+    }
+
+    /** Colunas que o normalize usa. As demais (CPF e nome de doador, CPF do candidato e do vice, gênero, cor) não entram no cache. */
+    static final List<String> COLUNAS_DE_RECEITA = List.of("SQ_CANDIDATO", "SQ_RECEITA", "DS_FONTE_RECEITA", "DS_ORIGEM_RECEITA",
+            "VR_RECEITA");
+    static final List<String> COLUNAS_DE_DESPESA = List.of("SQ_CANDIDATO", "SQ_DESPESA", "DS_ORIGEM_DESPESA",
+            "NR_CPF_CNPJ_FORNECEDOR", "NM_FORNECEDOR", "NM_FORNECEDOR_RFB", "VR_DESPESA_CONTRATADA");
+
+    static String recorteDeContas(String entrada) {
+        return "prestacao_contas/" + entrada + ".gz";
+    }
+
+    /**
+     * Do CSV da prestação de contas, só as linhas das candidaturas cobertas e só as colunas usadas, compactado.
+     * Fornecedor pessoa física fica sem documento e sem nome já no cache: só o valor e o tipo da despesa contam.
+     * Na eleição geral, quase todo candidato a deputado é coberto: sem o corte de colunas, o recorte passaria de 4 GB.
+     */
+    static void recortarCandidaturas(InputStream dados, Path destino, Set<String> cobertas, List<String> colunas) throws IOException {
+        try (java.io.Writer saida = new java.io.BufferedWriter(new java.io.OutputStreamWriter(
+                new java.util.zip.GZIPOutputStream(Files.newOutputStream(destino), 65536), StandardCharsets.ISO_8859_1))) {
+            Csv.escreverLinha(saida, colunas);
+            Csv.paraCada(dados, StandardCharsets.ISO_8859_1, 0, linha -> {
+                if (!cobertas.contains(linha.get("SQ_CANDIDATO"))) {
+                    return;
+                }
+                boolean pessoaFisica = linha.containsKey("NR_CPF_CNPJ_FORNECEDOR") && Texto.cnpj(linha.get("NR_CPF_CNPJ_FORNECEDOR")) == null;
+                List<String> valores = new ArrayList<>(colunas.size());
+                for (String coluna : colunas) {
+                    boolean identifica = pessoaFisica && (coluna.equals("NR_CPF_CNPJ_FORNECEDOR") || coluna.startsWith("NM_FORNECEDOR"));
+                    valores.add(identifica ? "" : linha.get(coluna));
+                }
+                try {
+                    Csv.escreverLinha(saida, valores);
+                } catch (IOException e) {
+                    throw new UncheckedIOException(e);
+                }
+            });
+        }
+    }
+
+    /**
+     * Receitas e despesas contratadas de cada candidatura coberta, somadas por categoria (ADR-0032). Doador e fornecedor
+     * pessoa física nunca saem por nome nem por CPF: entram só nas somas. Fornecedor com CNPJ sai pelo nome e pelo CNPJ.
+     */
+    static Map<String, List<Object>> financiamento(Contexto ctx, int ano, Map<String, Map<String, String>> candidaturas) {
+        Map<String, List<Object>> porSq = new HashMap<>();
+        List<String> entradas = entradasDeContas(ano);
+        Coleta.Arquivo receitas = Coleta.metadados(ctx, "tse", recorteDeContas(entradas.get(0)));
+        Coleta.Arquivo despesas = Coleta.metadados(ctx, "tse", recorteDeContas(entradas.get(1)));
+        if (receitas != null && Files.exists(Coleta.caminho(ctx, receitas))) {
+            Prov prov = Prov.de("tse-cdn", receitas.url(), receitas);
+            Map<String, Somas> somas = new HashMap<>();
+            lerCsv(Coleta.caminho(ctx, receitas), l -> {
+                if (candidaturas.containsKey(l.get("SQ_CANDIDATO"))) {
+                    somas.computeIfAbsent(l.get("SQ_CANDIDATO"), k -> new Somas()).receita(l);
+                }
+            });
+            somas.forEach((sq, s) -> porSq.computeIfAbsent(sq, k -> new ArrayList<>())
+                    .add(s.receitas(ano, candidaturas.get(sq).get("DS_CARGO"), prov)));
+        }
+        if (despesas != null && Files.exists(Coleta.caminho(ctx, despesas))) {
+            Prov prov = Prov.de("tse-cdn", despesas.url(), despesas);
+            Map<String, Somas> somas = new HashMap<>();
+            lerCsv(Coleta.caminho(ctx, despesas), l -> {
+                if (candidaturas.containsKey(l.get("SQ_CANDIDATO"))) {
+                    somas.computeIfAbsent(l.get("SQ_CANDIDATO"), k -> new Somas()).despesa(l);
+                }
+            });
+            somas.forEach((sq, s) -> porSq.computeIfAbsent(sq, k -> new ArrayList<>())
+                    .add(s.despesas(ano, candidaturas.get(sq).get("DS_CARGO"), prov)));
+        }
+        return porSq;
+    }
+
+    private static void lerCsv(Path arquivo, Consumer<Map<String, String>> acao) {
+        try (InputStream entrada = new java.util.zip.GZIPInputStream(Files.newInputStream(arquivo), 65536)) {
+            Csv.paraCada(entrada, StandardCharsets.ISO_8859_1, 0, acao);
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+
+    /** Somas de uma candidatura. Cada receita (SQ_RECEITA) e cada despesa (SQ_DESPESA) conta uma vez. */
+    static final class Somas {
+        private final Set<String> vistas = new HashSet<>();
+        private BigDecimal total = BigDecimal.ZERO;
+        private int quantidade;
+        private final Map<String, BigDecimal[]> porFonte = new HashMap<>();
+        private final Map<String, BigDecimal[]> porOrigem = new HashMap<>();
+        private final Map<String, BigDecimal[]> porTipo = new HashMap<>();
+        private final Map<String, BigDecimal[]> porFornecedor = new HashMap<>();
+        private final Map<String, String> nomeDoFornecedor = new HashMap<>();
+
+        void receita(Map<String, String> l) {
+            BigDecimal valor = Texto.valor(l.get("VR_RECEITA"));
+            if (valor == null || !primeira(l.get("SQ_RECEITA"))) {
+                return;
+            }
+            total = total.add(valor);
+            quantidade++;
+            somar(porFonte, categoria(l.get("DS_FONTE_RECEITA")), valor);
+            somar(porOrigem, categoria(l.get("DS_ORIGEM_RECEITA")), valor);
+        }
+
+        void despesa(Map<String, String> l) {
+            BigDecimal valor = Texto.valor(l.get("VR_DESPESA_CONTRATADA"));
+            if (valor == null || !primeira(l.get("SQ_DESPESA"))) {
+                return;
+            }
+            total = total.add(valor);
+            quantidade++;
+            somar(porTipo, categoria(l.get("DS_ORIGEM_DESPESA")), valor);
+            String cnpj = Texto.cnpj(l.get("NR_CPF_CNPJ_FORNECEDOR"));
+            if (cnpj != null) {
+                somar(porFornecedor, cnpj, valor);
+                String nome = semNulo(l.get("NM_FORNECEDOR_RFB"));
+                nomeDoFornecedor.putIfAbsent(cnpj, etl.Guarda.semCpf(nome != null ? nome : semNulo(l.get("NM_FORNECEDOR"))));
+            }
+        }
+
+        /** Sem identificador na linha, a linha conta: só um identificador repetido indica a mesma receita ou despesa. */
+        private boolean primeira(String id) {
+            String chave = semNulo(id);
+            return chave == null || vistas.add(chave);
+        }
+
+        etl.Registros.ReceitasDeCampanha receitas(int ano, String cargo, Prov prov) {
+            return new etl.Registros.ReceitasDeCampanha(ano, cargo, RECEITAS, total, quantidade, lista(porFonte), lista(porOrigem), prov);
+        }
+
+        etl.Registros.DespesasDeCampanha despesas(int ano, String cargo, Prov prov) {
+            List<etl.Registros.FornecedorDeCampanha> fornecedores = new ArrayList<>();
+            porFornecedor.forEach((cnpj, s) -> fornecedores.add(
+                    new etl.Registros.FornecedorDeCampanha(nomeDoFornecedor.get(cnpj), cnpj, s[0], s[1].intValue())));
+            fornecedores.sort(java.util.Comparator.comparing(etl.Registros.FornecedorDeCampanha::valor).reversed()
+                    .thenComparing(etl.Registros.FornecedorDeCampanha::cnpj));
+            return new etl.Registros.DespesasDeCampanha(ano, cargo, DESPESAS, total, quantidade, lista(porTipo),
+                    List.copyOf(fornecedores.subList(0, Math.min(MAIORES_FORNECEDORES, fornecedores.size()))), prov);
+        }
+
+        private static String categoria(String valor) {
+            String v = semNulo(valor);
+            return v == null ? "(vazio na fonte)" : v;
+        }
+
+        private static void somar(Map<String, BigDecimal[]> mapa, String chave, BigDecimal valor) {
+            BigDecimal[] s = mapa.computeIfAbsent(chave, k -> new BigDecimal[] {BigDecimal.ZERO, BigDecimal.ZERO});
+            s[0] = s[0].add(valor);
+            s[1] = s[1].add(BigDecimal.ONE);
+        }
+
+        /** Categorias do maior valor para o menor; empate pelo nome. */
+        private static List<etl.Registros.Soma> lista(Map<String, BigDecimal[]> mapa) {
+            List<etl.Registros.Soma> lista = new ArrayList<>();
+            mapa.forEach((categoria, s) -> lista.add(new etl.Registros.Soma(categoria, s[0], s[1].intValue())));
+            lista.sort(java.util.Comparator.comparing(etl.Registros.Soma::valor).reversed().thenComparing(etl.Registros.Soma::categoria));
+            return lista;
+        }
     }
 
     @Override
     public void normalize(Contexto ctx) {
         List<Linha> linhas = new ArrayList<>();
         ContagemDeRedes contagemDeRedes = new ContagemDeRedes();
+        Map<String, List<Object>> financiamento = new java.util.TreeMap<>();
         for (int ano : eleicoes(ctx.hoje().getYear())) {
             Coleta.Arquivo arqCand = arquivo(ctx, "consulta_cand_" + ano + ".zip");
             Map<String, Map<String, String>> porSq = new LinkedHashMap<>();
@@ -187,6 +385,7 @@ public final class Tse implements Fonte {
                 }
             }
             Map<String, List<RedeDeclarada>> redes = redesDeclaradas(ctx, ano, porSq.keySet(), contagemDeRedes);
+            financiamento.putAll(financiamento(ctx, ano, porSq));
             Prov prov = Prov.de("tse-cdn", arqCand.url(), arqCand);
             for (var item : porSq.entrySet()) {
                 Map<String, String> l = item.getValue();
@@ -209,7 +408,9 @@ public final class Tse implements Fonte {
             }
         }
         Json.gravar(ctx.normalizado().resolve("tse").resolve("candidaturas.json"), linhas);
-        System.out.println("tse: " + linhas.size() + " candidaturas normalizadas");
+        Json.gravar(ctx.normalizado().resolve("tse").resolve("financiamento.json"), financiamento);
+        System.out.println("tse: " + linhas.size() + " candidaturas normalizadas; " + financiamento.size()
+                + " com prestação de contas na fonte");
         System.out.println("tse: " + contagemDeRedes.publicados + " endereço(s) de rede ou site declarado(s); "
                 + contagemDeRedes.comDadoPessoal + " fora por telefone, e-mail ou CPF; " + contagemDeRedes.semEndereco
                 + " fora por não ser endereço; " + contagemDeRedes.alemDoLimite + " além do limite de " + LIMITE_DE_REDES

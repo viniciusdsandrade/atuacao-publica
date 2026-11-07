@@ -12,6 +12,7 @@ Estado: prova de conceito na esfera federal concluída e piloto municipal em and
 - Proposições de autoria, discursos, eventos com presença registrada, órgãos, comissões e frentes.
 - Emendas individuais ao Orçamento da União de deputados federais e senadores, com os valores do Portal da Transparência.
 - Candidaturas no TSE: resultado, total de bens declarados, plano de governo e endereços de redes e sites declarados pelo candidato.
+- Financiamento de campanha no TSE: receitas por fonte e por origem, despesas contratadas por tipo e os maiores fornecedores com CNPJ.
 - Atos do Poder Executivo federal e agenda oficial da Presidência.
 - Posicionamentos declarados, só por contribuição revisada e com snapshot arquivado.
 
@@ -37,6 +38,7 @@ Piloto municipal: prefeito e vereadores de um município, com dados da câmara (
 | Declaração no site oficial do mandato, com snapshot | Postagem de terceiros sobre o político |
 | Resultado eleitoral e total de bens declarados (TSE) | Descrição de cada bem |
 | Endereço de rede ou site declarado ao TSE | Conteúdo da rede social, link que leva a telefone |
+| Receita e despesa de campanha somadas por categoria, fornecedor com CNPJ | Nome ou CPF de doador e de fornecedor pessoa física |
 | Ato normativo e veto do Executivo federal | Notícia sobre o ato |
 | Agenda oficial publicada pelo Planalto, com snapshot | Agenda divulgada pela imprensa |
 

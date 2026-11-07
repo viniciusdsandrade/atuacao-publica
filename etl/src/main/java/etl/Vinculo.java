@@ -75,7 +75,38 @@ final class Vinculo {
             atosEstadual(ctx, perfis);
         }
         emendas(ctx, perfis);
+        financiamento(ctx, perfis);
         return perfis;
+    }
+
+    /**
+     * Receitas e despesas de campanha (ADR-0032) de cada candidatura já ligada ao perfil, pelo SQ_CANDIDATO.
+     * Da eleição mais recente para a mais antiga; em cada eleição, receitas antes de despesas.
+     */
+    private static void financiamento(Contexto ctx, List<Perfil> perfis) {
+        Path arquivo = ctx.normalizado().resolve("tse").resolve("financiamento.json");
+        if (!Files.exists(arquivo)) {
+            return;
+        }
+        JsonNode porCandidatura = Json.ler(arquivo);
+        int comContas = 0;
+        for (Perfil p : perfis) {
+            List<JsonNode> registros = new ArrayList<>();
+            for (String sq : p.tse.values()) {
+                porCandidatura.path(sq).forEach(registros::add);
+            }
+            if (registros.isEmpty()) {
+                continue;
+            }
+            registros.sort(java.util.Comparator.comparingInt((JsonNode r) -> r.get("eleicao").asInt()).reversed());
+            for (JsonNode registro : registros) {
+                p.bloco("financiamento_campanha").add(registro);
+                usarFonte(p, "financiamento_campanha", Json.SAIDA.createObjectNode().<ObjectNode>set("fonte_id", registro.get("fonte_id"))
+                        .<ObjectNode>set("url_origem", registro.get("url_origem")).set("capturado_em", registro.get("capturado_em")));
+            }
+            comContas++;
+        }
+        System.out.println("vinculo: financiamento de campanha em " + comContas + " perfil(is)");
     }
 
     /**

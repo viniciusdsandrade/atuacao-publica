@@ -40,6 +40,19 @@
       "por_mes": [ { "ano": 2026, "mes": 3, "categoria": null, "valor": 1500.50, "quantidade": 2, "fonte_id": "camara-arquivos", "url_origem": "https://dadosabertos.camara.leg.br/arquivos/votacoesVotos/json/votacoesVotos-2026.json", "capturado_em": "2026-10-30T03:00:00Z" } ],
       "por_categoria": [ { "ano": 2026, "mes": null, "categoria": "COMBUSTÍVEIS E LUBRIFICANTES.", "valor": 1500.50, "quantidade": 2, "fonte_id": "camara-arquivos", "url_origem": "https://dadosabertos.camara.leg.br/arquivos/votacoesVotos/json/votacoesVotos-2026.json", "capturado_em": "2026-10-30T03:00:00Z" } ]
     },
+    "financiamento_campanha": {
+      "fontes": [{ "fonte_id": "tse-cdn", "url_origem": "https://cdn.tse.jus.br/estatistica/sead/odsele/prestacao_contas/prestacao_de_contas_eleitorais_candidatos_2026.zip#receitas_candidatos_2026_BRASIL.csv", "capturado_em": "2026-11-06T03:00:00Z" }, { "fonte_id": "tse-cdn", "url_origem": "https://cdn.tse.jus.br/estatistica/sead/odsele/prestacao_contas/prestacao_de_contas_eleitorais_candidatos_2026.zip#despesas_contratadas_candidatos_2026_BRASIL.csv", "capturado_em": "2026-11-06T03:00:00Z" }], "atualizado_em": "2026-11-06T03:00:00Z", "desatualizado": false, "total": 2,
+      "registros": [
+        { "eleicao": 2026, "cargo": "DEPUTADO FEDERAL", "tipo": "receitas", "total": 900000.00, "quantidade": 12,
+          "por_fonte": [ { "categoria": "FUNDO ESPECIAL", "valor": 800000.00, "quantidade": 2 }, { "categoria": "OUTROS RECURSOS", "valor": 100000.00, "quantidade": 10 } ],
+          "por_origem": [ { "categoria": "Recursos de partido político", "valor": 800000.00, "quantidade": 2 }, { "categoria": "Recursos de pessoas físicas", "valor": 100000.00, "quantidade": 10 } ],
+          "fonte_id": "tse-cdn", "url_origem": "https://cdn.tse.jus.br/estatistica/sead/odsele/prestacao_contas/prestacao_de_contas_eleitorais_candidatos_2026.zip#receitas_candidatos_2026_BRASIL.csv", "capturado_em": "2026-11-06T03:00:00Z" },
+        { "eleicao": 2026, "cargo": "DEPUTADO FEDERAL", "tipo": "despesas contratadas", "total": 850000.00, "quantidade": 30,
+          "por_tipo": [ { "categoria": "Publicidade por materiais impressos", "valor": 500000.00, "quantidade": 5 }, { "categoria": "Despesas com pessoal", "valor": 350000.00, "quantidade": 25 } ],
+          "maiores_fornecedores": [ { "nome": "GRAFICA EXEMPLO LTDA", "cnpj": "99999999000199", "valor": 500000.00, "quantidade": 5 } ],
+          "fonte_id": "tse-cdn", "url_origem": "https://cdn.tse.jus.br/estatistica/sead/odsele/prestacao_contas/prestacao_de_contas_eleitorais_candidatos_2026.zip#despesas_contratadas_candidatos_2026_BRASIL.csv", "capturado_em": "2026-11-06T03:00:00Z" }
+      ]
+    },
     "emendas": {
       "fontes": [{ "fonte_id": "cgu-portal-arquivos", "url_origem": "https://portaldatransparencia.gov.br/download-de-dados/emendas-parlamentares/UNICO", "capturado_em": "2026-11-06T03:00:00Z" }], "atualizado_em": "2026-11-06T03:00:00Z", "desatualizado": false, "total": 3,
       "por_tipo": { "Emenda Individual - Transferências Especiais": 1, "Emenda Individual - Transferências com Finalidade Definida": 2 },

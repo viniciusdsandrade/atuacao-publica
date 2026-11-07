@@ -222,6 +222,69 @@
                     </details>
                   }
                 </div>
+              } @else if (b === 'financiamento_campanha') {
+                <div class="anos-despesa">
+                  @for (c of campanhas(bloco); track c.eleicao) {
+                    <details class="ano-despesa sanfona">
+                      <summary>
+                        <span class="ano-despesa-ano">{{ c.eleicao }}</span>
+                        <span class="ano-despesa-valor">{{ c.cargo }}</span>
+                        <span class="ano-despesa-valor numero">Receitas: {{ moeda(c.receitas?.total) }}</span>
+                        <span class="ano-despesa-qtd numero">Despesas contratadas: {{ moeda(c.despesas?.total) }}</span>
+                      </summary>
+                      @for (t of tabelasDaCampanha(c); track t.titulo) {
+                        @if (t.linhas.length) {
+                          <div class="tabela-rolagem" role="region" tabindex="0" [attr.aria-label]="t.titulo + ' em ' + c.eleicao + ', tabela rolável'">
+                            <table role="table">
+                              <caption>{{ t.titulo }} em {{ c.eleicao }}</caption>
+                              <thead role="rowgroup">
+                                <tr role="row">
+                                  <th scope="col" role="columnheader">{{ t.coluna }}</th>
+                                  <th scope="col" role="columnheader">Valor</th>
+                                  <th scope="col" role="columnheader">Lançamentos</th>
+                                </tr>
+                              </thead>
+                              <tbody role="rowgroup">
+                                @for (s of t.linhas; track s.categoria) {
+                                  <tr role="row">
+                                    <td role="cell" [attr.data-label]="t.coluna"><span class="v">{{ s.categoria }}</span></td>
+                                    <td role="cell" class="numero" data-label="Valor"><span class="v">{{ moeda(s.valor) }}</span></td>
+                                    <td role="cell" class="numero" data-label="Lançamentos"><span class="v">{{ inteiro(s.quantidade) }}</span></td>
+                                  </tr>
+                                }
+                              </tbody>
+                            </table>
+                          </div>
+                        }
+                      }
+                      @if (c.despesas?.maiores_fornecedores?.length) {
+                        <div class="tabela-rolagem" role="region" tabindex="0" [attr.aria-label]="'Maiores fornecedores com CNPJ em ' + c.eleicao + ', tabela rolável'">
+                          <table role="table">
+                            <caption>Maiores fornecedores com CNPJ em {{ c.eleicao }}</caption>
+                            <thead role="rowgroup">
+                              <tr role="row">
+                                <th scope="col" role="columnheader">Fornecedor</th>
+                                <th scope="col" role="columnheader">CNPJ</th>
+                                <th scope="col" role="columnheader">Valor contratado</th>
+                                <th scope="col" role="columnheader">Lançamentos</th>
+                              </tr>
+                            </thead>
+                            <tbody role="rowgroup">
+                              @for (f of c.despesas?.maiores_fornecedores ?? []; track f.cnpj) {
+                                <tr role="row">
+                                  <td role="cell" data-label="Fornecedor"><span class="v">{{ f.nome ?? semRegistro }}</span></td>
+                                  <td role="cell" data-label="CNPJ"><span class="v"><code>{{ f.cnpj }}</code></span></td>
+                                  <td role="cell" class="numero" data-label="Valor contratado"><span class="v">{{ moeda(f.valor) }}</span></td>
+                                  <td role="cell" class="numero" data-label="Lançamentos"><span class="v">{{ inteiro(f.quantidade) }}</span></td>
+                                </tr>
+                              }
+                            </tbody>
+                          </table>
+                        </div>
+                      }
+                    </details>
+                  }
+                </div>
               } @else if (b === 'emendas') {
                 <dl class="estatisticas">
                   <div class="estatistica">

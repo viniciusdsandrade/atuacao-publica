@@ -158,6 +158,15 @@ Verificação de 2026-11-02, com scripts locais (Playwright e axe-core, fora do 
    - Testes: parse do CSV latin-1 e agrupamento pelo código do autor (`CguTest`), exemplos de schema, fluxo e WCAG da página de detalhe no E2E.
    - Fora do vínculo e fora do arquivo: ver "Limitações conhecidas".
 
+### Eleições (TSE)
+
+1. Financiamento de campanha (ADR-0032): concluído em 2026-11-06.
+   - Fonte `tse-dados-abertos`: prestação de contas de 2018 a 2026, só receitas e despesas contratadas, lidas por Range (ADR-0005, item 10). A primeira carga baixa cerca de 530 MB, contra cerca de 3,8 GB dos ZIPs.
+   - O cache guarda o recorte das candidaturas cobertas, só com as colunas usadas e sem documento nem nome de pessoa física: 64 MB.
+   - Bloco `financiamento_campanha` em todos os cargos: receitas por fonte e por origem, despesas contratadas por tipo e os maiores fornecedores com CNPJ, por eleição.
+   - Ensaio local: 1.800 dos 1.867 perfis com o bloco preenchido. Na eleição de 2026, 1.428 perfis com receitas, num total de R$ 3,09 bilhões.
+   - Testes: leitura de ZIP por Range com CRC-32 (`ZipRemotoTest`), recorte e somas sem pessoa física (`TseTest`), exemplos de schema, fluxo e WCAG no E2E.
+
 ### Esfera estadual e municipal
 
 1. Piloto municipal: prefeitura e câmara de vereadores, com um adaptador por fonte.

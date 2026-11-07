@@ -29,27 +29,27 @@ public final class Publicador {
     /** Mesmos blocos para todos os políticos do mesmo cargo (política editorial). */
     static final Map<String, List<String>> BLOCOS = Map.of(
             "deputado_federal", List.of("mandatos", "participacao_votacoes", "votos", "despesas", "proposicoes", "emendas",
-                    "discursos", "eventos", "orgaos_e_frentes", "candidaturas", "posicionamentos_declarados"),
+                    "discursos", "eventos", "orgaos_e_frentes", "candidaturas", "financiamento_campanha", "posicionamentos_declarados"),
             "senador", List.of("mandatos", "participacao_votacoes", "votos", "despesas", "proposicoes", "emendas",
-                    "discursos", "eventos", "orgaos_e_frentes", "candidaturas", "posicionamentos_declarados"),
+                    "discursos", "eventos", "orgaos_e_frentes", "candidaturas", "financiamento_campanha", "posicionamentos_declarados"),
             "deputado_estadual", List.of("mandatos", "participacao_votacoes", "votos", "despesas", "proposicoes",
-                    "discursos", "eventos", "orgaos_e_frentes", "candidaturas", "posicionamentos_declarados"),
+                    "discursos", "eventos", "orgaos_e_frentes", "candidaturas", "financiamento_campanha", "posicionamentos_declarados"),
             "deputado_distrital", List.of("mandatos", "participacao_votacoes", "votos", "despesas", "proposicoes",
-                    "discursos", "eventos", "orgaos_e_frentes", "candidaturas", "posicionamentos_declarados"),
+                    "discursos", "eventos", "orgaos_e_frentes", "candidaturas", "financiamento_campanha", "posicionamentos_declarados"),
             "vereador", List.of("mandatos", "participacao_votacoes", "votos", "despesas", "proposicoes",
-                    "discursos", "eventos", "orgaos_e_frentes", "candidaturas", "posicionamentos_declarados"),
-            "presidente", List.of("mandatos", "candidaturas", "despesas_executivo", "atos_normativos", "agenda_oficial",
+                    "discursos", "eventos", "orgaos_e_frentes", "candidaturas", "financiamento_campanha", "posicionamentos_declarados"),
+            "presidente", List.of("mandatos", "candidaturas", "financiamento_campanha", "despesas_executivo", "atos_normativos", "agenda_oficial",
                     "posicionamentos_declarados"),
-            "governador", List.of("mandatos", "candidaturas", "despesas_executivo", "atos_normativos", "agenda_oficial",
+            "governador", List.of("mandatos", "candidaturas", "financiamento_campanha", "despesas_executivo", "atos_normativos", "agenda_oficial",
                     "posicionamentos_declarados"),
-            "prefeito", List.of("mandatos", "candidaturas", "despesas_executivo", "atos_normativos", "agenda_oficial",
+            "prefeito", List.of("mandatos", "candidaturas", "financiamento_campanha", "despesas_executivo", "atos_normativos", "agenda_oficial",
                     "posicionamentos_declarados"),
-            "vice_prefeito", List.of("mandatos", "candidaturas", "posicionamentos_declarados"));
+            "vice_prefeito", List.of("mandatos", "candidaturas", "financiamento_campanha", "posicionamentos_declarados"));
 
     /** Ordem dos blocos no perfil. Quem ocupou mais de um cargo recebe os blocos de todos eles (ADR-0006). */
     private static final List<String> ORDEM_DOS_BLOCOS = List.of("mandatos", "participacao_votacoes", "votos", "despesas",
-            "proposicoes", "emendas", "discursos", "eventos", "orgaos_e_frentes", "candidaturas", "despesas_executivo",
-            "atos_normativos", "agenda_oficial", "posicionamentos_declarados");
+            "proposicoes", "emendas", "discursos", "eventos", "orgaos_e_frentes", "candidaturas", "financiamento_campanha",
+            "despesas_executivo", "atos_normativos", "agenda_oficial", "posicionamentos_declarados");
 
     static List<String> blocosDoPerfil(Perfil perfil) {
         Set<String> cargos = perfil.cargos.isEmpty() ? Set.of(perfil.cargo) : perfil.cargos;
@@ -75,7 +75,7 @@ public final class Publicador {
             "atos_normativos", "data", "agenda_oficial", "data", "despesas", "data");
     /** Fonte da CLI de onde vem cada bloco, para marcar bloco desatualizado quando a coleta falha. */
     private static final Map<String, String> ORIGEM_DO_BLOCO = Map.of("candidaturas", "tse", "atos_normativos", "executivo",
-            "despesas_executivo", "tcesp", "emendas", "cgu");
+            "despesas_executivo", "tcesp", "emendas", "cgu", "financiamento_campanha", "tse");
     /** Valores de cada emenda, somados por ano no perfil (ADR-0030). */
     static final List<String> VALORES_DE_EMENDA = List.of("valor_empenhado", "valor_liquidado", "valor_pago", "restos_inscritos",
             "restos_cancelados", "restos_pagos");

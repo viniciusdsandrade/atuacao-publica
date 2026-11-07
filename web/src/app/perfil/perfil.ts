@@ -7,7 +7,14 @@ import { catchError, combineLatest, map, of, switchMap } from 'rxjs';
 import { Dados } from '../dados';
 import { Icone } from '../icone/icone';
 import { MemoriaLista } from '../lista/memoria-lista';
-import { Bloco, DespesaAgregada, EmendaPorAno, Perfil as PerfilPublicado, RedeDeclarada } from '../modelo';
+import { Bloco, ContasDeCampanha, DespesaAgregada, EmendaPorAno, Perfil as PerfilPublicado, RedeDeclarada, SomaDeCampanha } from '../modelo';
+
+interface CampanhaDoAno {
+  eleicao: number;
+  cargo: string;
+  receitas: ContasDeCampanha | null;
+  despesas: ContasDeCampanha | null;
+}
 import {
   data,
   ePapelLideranca,
@@ -269,6 +276,30 @@ export class Perfil {
   /** Soma de um valor em todos os anos. Cada campo da fonte é somado só com ele mesmo. */
   protected somaDasEmendas(bloco: Bloco, campo: 'valor_empenhado' | 'valor_pago' | 'restos_pagos'): number {
     return (bloco.por_ano ?? []).reduce((soma, a) => soma + a[campo], 0);
+  }
+
+  /** Receitas e despesas de cada eleição, da mais recente para a mais antiga (ADR-0032). */
+  protected campanhas(bloco: Bloco): CampanhaDoAno[] {
+    const porEleicao = new Map<number, CampanhaDoAno>();
+    for (const r of (bloco.registros ?? []) as unknown as ContasDeCampanha[]) {
+      const campanha = porEleicao.get(r.eleicao) ?? { eleicao: r.eleicao, cargo: r.cargo, receitas: null, despesas: null };
+      if (r.tipo === 'receitas') {
+        campanha.receitas = r;
+      } else {
+        campanha.despesas = r;
+      }
+      porEleicao.set(r.eleicao, campanha);
+    }
+    return [...porEleicao.values()].sort((a, b) => b.eleicao - a.eleicao);
+  }
+
+  /** As somas por categoria de uma eleição, uma tabela por recorte. */
+  protected tabelasDaCampanha(c: CampanhaDoAno): { titulo: string; coluna: string; linhas: SomaDeCampanha[] }[] {
+    return [
+      { titulo: 'Receitas por fonte', coluna: 'Fonte', linhas: c.receitas?.por_fonte ?? [] },
+      { titulo: 'Receitas por origem', coluna: 'Origem', linhas: c.receitas?.por_origem ?? [] },
+      { titulo: 'Despesas contratadas por tipo', coluna: 'Tipo', linhas: c.despesas?.por_tipo ?? [] },
+    ];
   }
 
   /** O nome da rede, ou o domínio quando é um site: vários sites não ficam com o mesmo texto de link. */
