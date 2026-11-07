@@ -6,8 +6,10 @@
   gap: 1rem;
 }
 
+/* A coluna de texto fica em --largura-leitura (cerca de 70 caracteres por linha); 5rem são as margens internas. */
 .doc-artigo {
   min-width: 0;
+  max-width: calc(var(--largura-leitura) + 5rem);
   padding: 1.25rem;
   border: 1px solid var(--borda);
   border-radius: var(--r-3);
@@ -21,9 +23,22 @@
   gap: 0.75rem;
 }
 
-/* Sumário: botão que abre a lista no celular; coluna fixa no computador. */
+/* Sumário: faixa fixa no alto da tela no celular e no tablet, com botão que abre a lista; coluna fixa no computador. */
 .doc-sumario {
+  position: sticky;
+  top: 0;
+  z-index: 5;
   min-width: 0;
+  margin-inline: -1rem;
+  padding: 0.5rem 1rem;
+  border-bottom: 1px solid var(--borda);
+  background: color-mix(in srgb, var(--fundo) 94%, transparent);
+  backdrop-filter: blur(6px);
+}
+
+/* A faixa fixa cobre o topo da janela: o foco e os títulos param abaixo dela. */
+html:has(.doc-sumario) {
+  scroll-padding-top: 4.5rem;
 }
 
 .doc-sumario-botao {
@@ -33,7 +48,9 @@
 
 .doc-sumario-lista {
   display: none;
+  max-height: min(60vh, 28rem);
   margin-top: 0.5rem;
+  overflow-y: auto;
   padding: 0.75rem;
   border: 1px solid var(--borda);
   border-radius: var(--r-3);
@@ -111,7 +128,6 @@
   margin: 2.5rem 0 0.75rem;
   padding-top: 1.5rem;
   border-top: 1px solid var(--borda);
-  scroll-margin-top: 1rem;
 }
 
 .prosa h1 + h2,
@@ -121,7 +137,6 @@
 
 .prosa h3 {
   margin: 1.75rem 0 0.5rem;
-  scroll-margin-top: 1rem;
 }
 
 .prosa p,
@@ -224,11 +239,20 @@
   .doc-artigo {
     padding: 2rem 2.5rem;
   }
+
+  .doc-sumario {
+    margin-inline: -1.5rem;
+    padding-inline: 1.5rem;
+  }
 }
 
 @media (min-width: 64rem) {
+  html:has(.doc-sumario) {
+    scroll-padding-top: 1rem;
+  }
+
   .doc-pagina {
-    grid-template-columns: 16rem minmax(0, 52rem);
+    grid-template-columns: 16rem minmax(0, calc(var(--largura-leitura) + 5rem));
     align-items: start;
     gap: 2rem;
   }
@@ -246,11 +270,13 @@
     position: sticky;
     top: 1rem;
     max-height: calc(100vh - 2rem);
+    margin: 0;
     padding: 0.75rem;
     overflow-y: auto;
     border: 1px solid var(--borda);
     border-radius: var(--r-3);
     background: var(--superficie);
+    backdrop-filter: none;
   }
 
   .doc-sumario-botao {
@@ -259,8 +285,10 @@
 
   .doc-sumario-lista {
     display: block;
+    max-height: none;
     margin: 0;
     padding: 0;
+    overflow: visible;
     border: 0;
   }
 

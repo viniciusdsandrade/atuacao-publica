@@ -1,3 +1,4 @@
+import { ViewportScroller } from '@angular/common';
 import { Component, ElementRef, Injector, afterNextRender, inject, signal, viewChild } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
@@ -19,6 +20,12 @@ import {
 /** Caminho da rota sem parâmetros de consulta nem fragmento. */
 function caminhoDe(url: string): string {
   return url.split(/[?#]/)[0] || '/';
+}
+
+/** Espaço livre no alto da janela, como o CSS declara em `scroll-padding-top` (faixas fixas do perfil e dos documentos). */
+function deslocamentoDoTopo(): number {
+  const valor = parseFloat(getComputedStyle(document.documentElement).scrollPaddingTop);
+  return Number.isFinite(valor) ? valor : 0;
 }
 
 @Component({
@@ -73,6 +80,10 @@ export class App {
 
   constructor() {
     aplicarTemaNoDocumento(this.tema());
+
+    // O roteador rola até o fragmento com window.scrollTo, que ignora scroll-padding. Sem isso, o bloco
+    // ou o título escolhido fica embaixo da faixa fixa do celular.
+    inject(ViewportScroller).setOffset(() => [0, deslocamentoDoTopo()]);
 
     // Troca de página move o foco ao conteúdo, como um carregamento novo faria.
     // Mudar só filtro, fragmento ou carga inicial não mexe no foco.
