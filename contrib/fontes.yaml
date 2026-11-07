@@ -1970,6 +1970,21 @@
   status: validado
   validado_em: 2026-11-06
 
+- id: ales-proposicoes
+  nome: Assembleia Legislativa do Estado do Espírito Santo, proposições pela API NoPaper
+  orgao: Assembleia Legislativa do Estado do Espírito Santo
+  esfera: estadual
+  ente: ES
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://www3.al.es.gov.br/api/publico/proposicao/
+  formato: JSON
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Por tipo e ano, em páginas de 20. Autor só por nome. Cada item traz a tramitação inteira, de 5 a 20 KB. Item com campo nulo faz a página inteira responder erro: o ETL refaz item a item, e 52 itens de 2022 e 2023 não abrem. Recusa conexão de fora do Brasil."
+  status: validado
+  validado_em: 2026-11-07
+
 - id: alepa-deputados
   nome: Assembleia Legislativa do Estado do Pará, deputados estaduais
   orgao: Assembleia Legislativa do Estado do Pará

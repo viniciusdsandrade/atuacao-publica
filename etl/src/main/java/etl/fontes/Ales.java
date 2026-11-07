@@ -16,16 +16,20 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import tools.jackson.databind.JsonNode;
+
 import etl.Coleta;
 import etl.Coleta.Politica;
 import etl.Contexto;
 import etl.Fonte;
+import etl.Guarda;
 import etl.Json;
 import etl.Registros;
 import etl.Registros.LinkOficial;
 import etl.Registros.Mandato;
 import etl.Registros.OrgaoOuFrente;
 import etl.Registros.Pessoa;
+import etl.Registros.Proposicao;
 import etl.Registros.Prov;
 import etl.Texto;
 
@@ -39,6 +43,17 @@ public final class Ales implements Fonte {
     public static final String FONTE_DEPUTADOS = "ales-deputados";
     public static final String FONTE_DETALHES = "ales-deputados-detalhes";
     public static final String FONTE_PORTAL = "ales-portal";
+    public static final String FONTE_PROPOSICOES = "ales-proposicoes";
+
+    public static final String API_PROPOSICOES = "https://www3.al.es.gov.br/api/publico/proposicao/";
+    static final int PRIMEIRO_ANO_PROPOSICOES = 2022;
+    /** Tipos de autoria parlamentar. A consulta sem tipo, em página grande, quebra no servidor. */
+    static final List<String> SIGLAS_DE_PROPOSICAO = List.of("PL", "PLC", "PEC", "PR", "PDL", "IND", "REQ");
+    /**
+     * Cada item traz a tramitação inteira, e o tempo do servidor cresce com o número de itens: 200 levam cerca de 20 s.
+     * Página pequena limita o refazer item a item quando um item com defeito derruba a página.
+     */
+    static final int TAMANHO_DA_PAGINA = 20;
 
     public static final String SITE = "https://www.al.es.gov.br";
     public static final String URL_DEPUTADOS = "https://www.al.es.gov.br/Deputado/Lista";
@@ -140,6 +155,167 @@ public final class Ales implements Fonte {
             String urlCom = SITE + "/Comissao/" + comSlug;
             coleta.obterOuVazio(urlCom, "comissoes/" + comSlug + ".html", "text/html", Politica.SEMANAL);
         }
+
+        // Proposições: API NoPaper, por tipo e ano.
+        for (int ano = PRIMEIRO_ANO_PROPOSICOES; ano <= ctx.hoje().getYear(); ano++) {
+            Politica politica = Politica.porAnoSemanal(ano, ctx.hoje());
+            for (String sigla : SIGLAS_DE_PROPOSICAO) {
+                respostasDoAno(sigla, ano, (url, caminho) -> {
+                    Coleta.Arquivo arq = coleta.obterOpcional(url, caminho, "application/json", politica);
+                    return arq == null || !Files.exists(Coleta.caminho(ctx, arq)) ? null
+                            : new Resposta(Json.ler(Coleta.caminho(ctx, arq)), arq);
+                });
+            }
+        }
+    }
+
+    /** Resposta da API em cache, com o arquivo que dá a proveniência. */
+    record Resposta(JsonNode corpo, Coleta.Arquivo arquivo) {
+    }
+
+    /** Busca de uma consulta: na coleta, baixa ou usa o cache; na normalização, só lê o cache. Sem cópia, null. */
+    interface Leitor {
+        Resposta ler(String url, String caminho) throws Exception;
+    }
+
+    /**
+     * Respostas válidas de um tipo no ano, página a página. Quando um item tem campo nulo, a API responde 200 com
+     * {@code {"erro": true}} para a página inteira: essa página é refeita item a item, e só o item com defeito fica
+     * fora. O número de páginas sai do total da primeira resposta válida.
+     */
+    static List<Resposta> respostasDoAno(String sigla, int ano, Leitor leitor) throws Exception {
+        List<Resposta> validas = new ArrayList<>();
+        int total = -1;
+        for (int pagina = 1; pagina <= (total < 0 ? 1 : paginas(total)); pagina++) {
+            Resposta resposta = leitor.ler(urlDaPagina(sigla, ano, pagina, TAMANHO_DA_PAGINA), caminhoDaPagina(sigla, ano, pagina));
+            if (resposta == null) {
+                continue;
+            }
+            if (valida(resposta)) {
+                validas.add(resposta);
+                total = total < 0 ? resposta.corpo().path("total").asInt(0) : total;
+                continue;
+            }
+            int primeiro = (pagina - 1) * TAMANHO_DA_PAGINA + 1;
+            for (int item = primeiro; item < primeiro + TAMANHO_DA_PAGINA && (total < 0 || item <= total); item++) {
+                Resposta doItem = leitor.ler(urlDaPagina(sigla, ano, item, 1), caminhoDoItem(sigla, ano, item));
+                if (doItem != null && valida(doItem)) {
+                    validas.add(doItem);
+                    total = total < 0 ? doItem.corpo().path("total").asInt(0) : total;
+                }
+            }
+        }
+        return validas;
+    }
+
+    static boolean valida(Resposta resposta) {
+        return resposta.corpo().path("Data").isArray() && !resposta.corpo().path("erro").asBoolean(false);
+    }
+
+    static String urlDaPagina(String sigla, int ano, int pagina, int quantidade) {
+        return API_PROPOSICOES + "?pag=" + pagina + "&qtd=" + quantidade + "&ano=" + ano + "&sigla=" + sigla;
+    }
+
+    private static String caminhoDaPagina(String sigla, int ano, int pagina) {
+        return "proposicoes/" + sigla + "-" + ano + "-" + pagina + ".json";
+    }
+
+    private static String caminhoDoItem(String sigla, int ano, int item) {
+        return "proposicoes/" + sigla + "-" + ano + "-item-" + item + ".json";
+    }
+
+    static int paginas(int total) {
+        return (total + TAMANHO_DA_PAGINA - 1) / TAMANHO_DA_PAGINA;
+    }
+
+    /** Chave de vínculo da autoria: nome sem acento e sem pontuação, em maiúsculas. Serve ao autor e ao perfil. */
+    static String chaveDeAutoria(String nome) {
+        String chave = Texto.normalizarNome(nome.replaceAll("[^\\p{L}\\s]", " "));
+        return GRAFIAS_DE_AUTORIA.getOrDefault(chave, chave);
+    }
+
+    /**
+     * Autoria grafada de outro jeito que o perfil, com um só deputado possível na lista da ALES: um erro de digitação e
+     * um nome completo, registrado no gabinete do próprio deputado.
+     */
+    private static final Map<String, String> GRAFIAS_DE_AUTORIA = Map.of(
+            "ENGENHERIO JOSE ESMERALDO", "ENGENHEIRO JOSE ESMERALDO",
+            "FABIO DUARTE DE ALMEIDA", "FABIO DUARTE");
+
+    /** Proposições de cada deputado em exercício, pelas páginas em cache. */
+    private static Map<String, List<Proposicao>> proposicoesPorId(Contexto ctx, Map<String, String> idPorChave) {
+        Map<String, List<Proposicao>> porId = new HashMap<>();
+        int total = 0;
+        Leitor doCache = (url, caminho) -> {
+            Coleta.Arquivo arq = Coleta.metadados(ctx, "ales", caminho);
+            // Cópia de outra consulta no mesmo caminho (outro tamanho de página) não vale.
+            if (arq == null || arq.bytes() == 0 || !url.equals(arq.url()) || !Files.exists(Coleta.caminho(ctx, arq))) {
+                return null;
+            }
+            return new Resposta(Json.ler(Coleta.caminho(ctx, arq)), arq);
+        };
+        for (int ano = PRIMEIRO_ANO_PROPOSICOES; ano <= ctx.hoje().getYear(); ano++) {
+            for (String sigla : SIGLAS_DE_PROPOSICAO) {
+                // Página de outra coleta pode repetir item: o id decide.
+                Set<String> vistos = new HashSet<>();
+                List<Resposta> respostas;
+                try {
+                    respostas = respostasDoAno(sigla, ano, doCache);
+                } catch (Exception e) {
+                    throw new IllegalStateException("ales: falha ao ler proposições " + sigla + " de " + ano, e);
+                }
+                for (Resposta r : respostas) {
+                    Prov prov = Prov.de(FONTE_PROPOSICOES, r.arquivo().url(), r.arquivo());
+                    for (var e : proposicoesDaPagina(r.corpo(), idPorChave, prov).entrySet()) {
+                        for (Proposicao p : e.getValue()) {
+                            if (vistos.add(e.getKey() + "|" + p.idFonte())) {
+                                porId.computeIfAbsent(e.getKey(), k -> new ArrayList<>()).add(p);
+                                total++;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        System.out.println("ales: " + total + " autorias de proposições em " + porId.size() + " deputados");
+        return porId;
+    }
+
+    /**
+     * Proposições de uma página da API, por id do deputado. O autor vem pelo nome ({@code AutorRequerenteDados}); só
+     * entra o nome igual ao de um deputado em exercício, sem acento e sem pontuação. O gabinete não serve de vínculo:
+     * há proposição cujo autor não é o titular do gabinete.
+     */
+    static Map<String, List<Proposicao>> proposicoesDaPagina(JsonNode resposta, Map<String, String> idPorChave, Prov prov) {
+        Map<String, List<Proposicao>> porId = new HashMap<>();
+        for (JsonNode p : resposta.path("Data")) {
+            String id = Json.texto(p, "id");
+            String sigla = Json.texto(p, "sigla");
+            Integer numero = Json.inteiro(p, "numero");
+            Integer ano = Json.inteiro(p, "ano");
+            if (id == null || sigla == null || numero == null || ano == null) {
+                continue;
+            }
+            List<String> autores = new ArrayList<>();
+            autores.add(Json.texto(p.path("AutorRequerenteDados"), "nomeRazao"));
+            for (JsonNode coautor : p.path("CoAutores")) {
+                autores.add(coautor.isObject() ? Json.texto(coautor, "nomeRazao") : coautor.isString() ? coautor.stringValue() : null);
+            }
+            String ementa = Json.texto(p, "assunto");
+            String arquivo = Json.texto(p, "arquivo");
+            Set<String> jaContados = new HashSet<>();
+            for (int i = 0; i < autores.size(); i++) {
+                String deputado = autores.get(i) == null ? null : idPorChave.get(chaveDeAutoria(autores.get(i)));
+                if (deputado == null || !jaContados.add(deputado)) {
+                    continue;
+                }
+                porId.computeIfAbsent(deputado, k -> new ArrayList<>()).add(new Proposicao(id, Json.texto(p, "tipo"), numero, ano,
+                        sigla + " " + numero + "/" + ano, ementa == null ? null : Guarda.semCpf(ementa.replaceAll("\\s+", " ")),
+                        Json.texto(p, "situacao"), null, Texto.dataBr(Json.texto(p, "data")), i + 1, null,
+                        arquivo != null && arquivo.startsWith("https://") ? arquivo : null, prov));
+            }
+        }
+        return porId;
     }
 
     @Override
@@ -167,6 +343,11 @@ public final class Ales implements Fonte {
         }
 
         Map<String, List<OrgaoOuFrente>> comissoesPorDeputado = extrairComissoes(ctx, idPorNomeNorm);
+        Map<String, String> idPorChaveDeAutoria = new HashMap<>();
+        for (DeputadoBruto d : deputados) {
+            idPorChaveDeAutoria.put(chaveDeAutoria(formatarNome(d.nome())), d.id());
+        }
+        Map<String, List<Proposicao>> proposicoesPorDeputado = proposicoesPorId(ctx, idPorChaveDeAutoria);
 
         List<Pessoa> pessoas = new ArrayList<>();
 
@@ -227,6 +408,7 @@ public final class Ales implements Fonte {
             blocosNode.set("mandatos", Json.SAIDA.valueToTree(mandatos));
             blocosNode.set("orgaos_e_frentes", Json.SAIDA.valueToTree(orgaos));
             blocosNode.set("despesas", Json.SAIDA.createArrayNode());
+            blocosNode.set("proposicoes", Json.SAIDA.valueToTree(proposicoesPorDeputado.getOrDefault(id, List.of())));
             blocosNode.set("fontes", Json.SAIDA.valueToTree(Registros.fontesDosBlocos(blocosNode)));
             Json.gravar(pastaBlocos.resolve(id + ".json"), blocosNode);
         }

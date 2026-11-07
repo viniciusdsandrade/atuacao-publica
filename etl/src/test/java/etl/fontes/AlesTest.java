@@ -19,11 +19,73 @@ import etl.Coleta;
 import etl.Contexto;
 import etl.Json;
 import etl.Registros.OrgaoOuFrente;
+import etl.Registros.Proposicao;
 import etl.Registros.Prov;
 import etl.Texto;
 import tools.jackson.databind.JsonNode;
 
 class AlesTest {
+
+    @Test
+    void proposicaoFicaComODeputadoAutorPeloNomeSemAcento() {
+        // Dado sintético no formato da API NoPaper, sem a tramitação.
+        JsonNode pagina = Json.FONTE.readTree("""
+                {"total": 3, "message": "success", "Data": [
+                  {"id": 1001, "sigla": "PL", "tipo": "Projeto de Lei", "numero": "690", "ano": "2024",
+                   "assunto": "Dispõe sobre a capacitação\\r\\n de comissários de bordo", "data": "31/12/2024 19:28:04",
+                   "situacao": "Tramitando", "arquivo": "https://www3.al.es.gov.br/Arquivo/Documents/PL/1001.pdf",
+                   "AutorRequerenteDados": {"nomeRazao": "Sérgio Exemplo", "setor": "Gab. Dep. Sergio Exemplo"}, "CoAutores": null},
+                  {"id": 1002, "sigla": "REQ", "tipo": "Requerimento                    ", "numero": "12", "ano": "2024",
+                   "assunto": "Requer informações", "data": "02/02/2024 10:00:00", "situacao": "Arquivado", "arquivo": "",
+                   "AutorRequerenteDados": {"nomeRazao": "Outra Pessoa", "setor": "Gab. Dep. Sergio Exemplo"}, "CoAutores": null},
+                  {"id": 1003, "sigla": "PL", "tipo": "Projeto de Lei", "numero": "5", "ano": "2024", "assunto": "Mensagem",
+                   "data": "05/01/2024 09:00:00", "situacao": "Tramitando", "arquivo": null,
+                   "AutorRequerenteDados": {"nomeRazao": "GOVERNADOR DO ESTADO", "setor": "Secretaria de Estado de Governo"}}
+                ]}
+                """);
+        Map<String, String> idPorChave = Map.of(Ales.chaveDeAutoria("Sergio Exemplo"), "999");
+        Prov prov = new Prov(Ales.FONTE_PROPOSICOES, Ales.urlDaPagina("PL", 2024, 1, 20), Instant.parse("2026-11-07T12:00:00Z"));
+
+        Map<String, List<Proposicao>> porId = Ales.proposicoesDaPagina(pagina, idPorChave, prov);
+
+        assertEquals(1, porId.size());
+        List<Proposicao> doDeputado = porId.get("999");
+        assertEquals(1, doDeputado.size(), "o gabinete não liga a proposição de outro autor ao titular");
+        Proposicao pl = doDeputado.getFirst();
+        assertEquals("1001", pl.idFonte());
+        assertEquals("PL 690/2024", pl.identificacao());
+        assertEquals("Dispõe sobre a capacitação de comissários de bordo", pl.ementa());
+        assertEquals("Tramitando", pl.situacao());
+        assertEquals("2024-12-31", pl.dataApresentacao());
+        assertEquals("https://www3.al.es.gov.br/Arquivo/Documents/PL/1001.pdf", pl.urlTexto());
+        assertEquals(1, pl.ordemAssinatura());
+        assertEquals(Ales.chaveDeAutoria("Engenheiro José Esmeraldo"), Ales.chaveDeAutoria("Engenherio José Esmeraldo"));
+        assertEquals(Ales.chaveDeAutoria("Fábio Duarte"), Ales.chaveDeAutoria("Fábio Duarte de Almeida"));
+    }
+
+    @Test
+    void paginaComItemDefeituosoEhRefeitaItemAItem() throws Exception {
+        // 45 itens: a página 2 volta com erro por causa do item 24, como o PL 124 de 2022 na validação.
+        java.util.List<String> pedidos = new java.util.ArrayList<>();
+        Ales.Leitor leitor = (url, caminho) -> {
+            pedidos.add(caminho);
+            boolean erro = caminho.endsWith("-2.json") || caminho.endsWith("-item-24.json");
+            String corpo = erro ? "{\"erro\":true,\"mensagem\":\"Nullable object must have a value.\"}"
+                    : "{\"total\":45,\"Data\":[]}";
+            return new Ales.Resposta(Json.FONTE.readTree(corpo), new Coleta.Arquivo(url, caminho, "x", 10, Instant.EPOCH));
+        };
+
+        List<Ales.Resposta> validas = Ales.respostasDoAno("PL", 2022, leitor);
+
+        assertEquals(3, Ales.paginas(45));
+        assertEquals(2 + 19, validas.size(), "páginas 1 e 3, e os itens 21 a 40 menos o 24");
+        assertEquals(1 + 1 + 20 + 1, pedidos.size());
+        assertTrue(pedidos.contains("proposicoes/PL-2022-item-21.json"));
+        assertTrue(pedidos.contains("proposicoes/PL-2022-item-40.json"));
+        assertTrue(pedidos.contains("proposicoes/PL-2022-3.json"));
+        assertEquals("https://www3.al.es.gov.br/api/publico/proposicao/?pag=24&qtd=1&ano=2022&sigla=PL",
+                Ales.urlDaPagina("PL", 2022, 24, 1));
+    }
 
     @Test
     void geraSlugSemAcentosEEspacos() {

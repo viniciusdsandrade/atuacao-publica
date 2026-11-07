@@ -860,6 +860,20 @@ Validação em 2026-11-03 com o User-Agent do projeto.
 - URL base: `https://www.al.es.gov.br/`
 - Repositório de fotos oficiais dos parlamentares em alta resolução hospedadas no portal institucional `/appdata/anexos_internet/portal/deputados/`.
 
+### `ales-proposicoes`: proposições
+
+- URL base: `https://www3.al.es.gov.br/api/publico/proposicao/?pag={n}&qtd=20&ano={ano}&sigla={sigla}`. API NoPaper. Validação em 2026-11-07.
+- Entram os tipos de autoria parlamentar: PL, PLC, PEC, PR, PDL, IND e REQ. Em 2024: 696 PL, 1.699 indicações, 140 PDL, 63 requerimentos, 58 PLC, 24 PR e 2 PEC. O ano tem 8.386 itens de todos os tipos, como pareceres e boletins de votação.
+- Campos usados: `id`, `sigla`, `tipo`, `numero`, `ano`, `assunto` (ementa), `data`, `situacao` (Tramitando, Arquivado ou Apensado), `arquivo` (PDF do texto) e `AutorRequerenteDados.nomeRazao`. Nas amostras, `CoAutores` veio sempre nulo.
+- Cada item traz a tramitação inteira, de 5 a 20 KB. O tempo do servidor cresce com o número de itens: a página de 200 leva cerca de 20 s.
+- Quando um item tem campo nulo, a API responde 200 com `{"erro": true, "mensagem": "Nullable object must have a value."}` para a página inteira. Em 2022, o PL na posição 124 derrubava a página. O ETL usa página de 20 e refaz a página com erro item a item (`qtd=1`); só o item com defeito fica fora. A consulta sem tipo, em página grande, também responde erro.
+- O autor vem pelo nome. O vínculo usa o nome sem acento e sem pontuação, igual ao nome do perfil. O gabinete (`setor`) não serve de vínculo: há proposição cujo autor não é o titular do gabinete.
+- Duas grafias diferem do perfil e têm um só deputado possível: "Engenherio José Esmeraldo", com erro de digitação, e "Fábio Duarte de Almeida", nome completo registrado no gabinete do próprio deputado. Uma tabela no adaptador liga as duas.
+- Na validação, 17.273 itens distintos de 2022 a 2026 nos sete tipos. 12.311 são de deputado em exercício, e os 30 têm proposição. Os outros 4.962 são de comissões, do Governador, de ex-deputados e de suplentes.
+- 29 páginas vieram com erro e foram refeitas item a item. 52 itens não abrem nem sozinhos e ficam fora: 26 PL, 11 PR, 8 PDL e 5 PLC de 2023, e um PL e um PR de 2022.
+- A primeira coleta levou 36 minutos. Depois, só o ano corrente atualiza, uma vez por semana.
+- Recusa conexão de fora do Brasil (ADR-0029). Entra pela coleta local cifrada (ADR-0034).
+
 ### `es-transparencia` e `es-dioe`: Executivo estadual
 
 - Transparência orçamentária: `https://transparencia.es.gov.br/`
