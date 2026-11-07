@@ -77,7 +77,7 @@
           }
         </div>
       </div>
-      <div class="segmentos so-largo" role="radiogroup" aria-labelledby="rotulo-esfera">
+      <div class="segmentos" role="radiogroup" aria-labelledby="rotulo-esfera">
         <span id="rotulo-esfera" class="campo-rotulo">Esfera</span>
         <div class="segmentos-lista">
           @for (s of segmentosEsfera(); track s.valor) {
@@ -89,7 +89,7 @@
         </div>
       </div>
       @if (filtros().esfera === 'estadual') {
-        <div class="segmentos segmentos--uf" role="radiogroup" aria-labelledby="rotulo-uf-chips">
+        <div class="segmentos segmentos--uf so-largo" role="radiogroup" aria-labelledby="rotulo-uf-chips">
           <span id="rotulo-uf-chips" class="campo-rotulo">Estado (UF)</span>
           <div class="segmentos-lista">
             @for (u of segmentosUf(); track u.valor) {
@@ -101,9 +101,9 @@
           </div>
         </div>
       }
-      @if (segmentosPartido().length > 2) {
+      @if (segmentosPartido().length) {
         <div class="segmentos segmentos--partido" role="radiogroup" aria-labelledby="rotulo-partido-chips">
-          <span id="rotulo-partido-chips" class="campo-rotulo">Maiores bancadas</span>
+          <span id="rotulo-partido-chips" class="campo-rotulo">Partidos neste recorte</span>
           <div class="segmentos-lista">
             @for (p of segmentosPartido(); track p.valor) {
               <label class="segmento">
@@ -130,16 +130,6 @@
         }
       </button>
       <div id="filtros-extras" class="filtros-extras" [class.aberto]="extrasAbertos()">
-        <div class="campo so-celular">
-          <label for="esfera">Esfera</label>
-          <div class="selecao">
-            <select id="esfera" class="controle" (change)="alterar({ esfera: valor($event) })">
-              @for (s of segmentosEsfera(); track s.valor) {
-                <option [value]="s.valor" [selected]="s.valor === filtros().esfera">{{ s.rotulo }} ({{ inteiro(s.total) }})</option>
-              }
-            </select>
-          </div>
-        </div>
         <div class="campo">
           <label for="cargo">Cargo</label>
           <div class="selecao">

@@ -24,6 +24,8 @@ import { MemoriaLista } from './memoria-lista';
 
 /** Quantos cartões entram a cada "Mostrar mais". */
 const LOTE = 48;
+/** Acima disto, o partido fica só na lista de seleção (ADR-0035). */
+const MAXIMO_CHIPS_PARTIDO = 12;
 const LIMITE_MOSTRAR = 5000;
 const ORDEM_ESFERAS = ['federal', 'estadual', 'municipal'];
 const ORDEM_CARGOS = [
@@ -215,6 +217,10 @@ export class Lista {
     ];
   });
 
+  /**
+   * Chips de partido só quando o recorte tem de 2 a 12 partidos, sempre em ordem alfabética (ADR-0035).
+   * Botão só para as maiores bancadas seria ranking: acima do limite, o partido fica na lista de seleção.
+   */
   protected readonly segmentosPartido = computed(() => {
     const base = this.semPartido();
     const contagem = new Map<string, number>();
@@ -224,17 +230,16 @@ export class Lista {
       }
     }
     const selecionado = this.filtros().partido;
-    const top = [...contagem.entries()]
-      .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], 'pt-BR'))
-      .slice(0, 10);
-
-    if (selecionado && !top.some(([sigla]) => sigla === selecionado)) {
-      top.push([selecionado, contagem.get(selecionado) ?? 0]);
+    if (selecionado && !contagem.has(selecionado)) {
+      contagem.set(selecionado, 0);
     }
-
+    if (contagem.size < 2 || contagem.size > MAXIMO_CHIPS_PARTIDO) {
+      return [];
+    }
+    const siglas = [...contagem.keys()].sort((a, b) => a.localeCompare(b, 'pt-BR'));
     return [
       { valor: '', rotulo: 'Todos os partidos', total: base.length },
-      ...top.map(([sigla, total]) => ({ valor: sigla, rotulo: sigla, total })),
+      ...siglas.map((sigla) => ({ valor: sigla, rotulo: sigla, total: contagem.get(sigla) ?? 0 })),
     ];
   });
 
@@ -277,7 +282,8 @@ export class Lista {
 
   protected readonly extrasAtivos = computed(() => {
     const f = this.filtros();
-    return [f.esfera, f.cargo, f.uf, f.partido].filter(Boolean).length;
+    // A esfera fica à vista em todas as larguras; "Mais filtros" conta só o que está dentro dele.
+    return [f.cargo, f.uf, f.partido].filter(Boolean).length;
   });
 
   /** Números do índice para o herói. Contagens simples, iguais para todos. */
