@@ -173,15 +173,15 @@ Medidas no Chromium, com o CSS e o HTML novos sobre o site publicado:
 
 Verificação de 2026-11-07:
 
-- Checagem de tipos dos templates com `ngc --noEmit`, em modo estrito: sem erro.
-- Testes unitários de `rotulos` e `tema` com `node --test`: 20 de 20. Novos: casa legislativa do lado a lado e período dos anos.
-- axe-core (WCAG 2.0 e 2.1, A e AA) sem achados nos trechos novos, sobre o site publicado com dados reais, de 320 a 1366 px, nos dois temas.
-- Sem transbordo horizontal em 320 px em nenhuma rota. Nenhuma requisição a terceiros.
+- Antes do push: checagem de tipos dos templates com `ngc --noEmit`, em modo estrito, sem erro. Testes unitários de `rotulos` e `tema`: 20 de 20. Novos: casa legislativa do lado a lado e período dos anos.
+- CI do commit `0fe78e0`: build, testes unitários e E2E com axe passaram (69 testes, 1 pulado: o de teclado no celular emulado).
+- Publicado no mesmo dia pelo workflow `dados`, com a fonte `contrib` e as demais do cache.
+- No site publicado, no Chromium: axe-core (WCAG 2.0 e 2.1, A e AA) sem achados em 10 rotas, em 390 e 1366 px, nos dois temas.
+- No site publicado: Esc fecha o menu e devolve o foco ao botão; o título do bloco e o do documento param abaixo da faixa fixa; o foco vai ao lado a lado montado; a busca do cabeçalho leva à lista com `?q=`.
+- Sem transbordo horizontal em 320 px em nenhuma rota. Nenhuma requisição a terceiros e nenhum erro de console.
 
 Limitações:
 
-- O build e a suíte E2E (Playwright e axe) não rodaram localmente. O CI roda os dois no próximo push. Os testes mudaram junto com os títulos "Lado a lado" e "Dados abertos".
-- A verificação visual usou o CSS novo e trechos de HTML iguais aos dos templates, sobre o site publicado. Não validado em navegador: rolagem com o deslocamento novo, foco depois de escolher um parlamentar no lado a lado e Esc no menu.
 - Em 1366 px, a busca da inicial ficou a 331 px do topo. A meta do ADR-0035 era abaixo de 300 px.
 - Não validado: teste com pessoas (roteiro no ADR-0035), leitor de tela real, Firefox e WebKit.
 - Fica fora: link de cada coleta para a seção dela em Fontes (ver ADR-0035).
