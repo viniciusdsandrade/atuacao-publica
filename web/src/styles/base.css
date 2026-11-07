@@ -5,30 +5,30 @@
 :root {
   color-scheme: light dark;
 
-  --fundo: #f4f6f8;
+  --fundo: #eef1f4;
   --superficie: #ffffff;
-  --superficie-2: #eef1f5;
-  --superficie-3: #e4e9ef;
-  --texto: #141a21;
-  --texto-2: #424e5c;
-  --texto-3: #566170;
-  --borda: #d5dbe3;
-  --borda-controle: #727f8e;
-  --destaque: #1f4e79;
-  --destaque-forte: #163b5d;
-  --destaque-suave: #e3edf8;
+  --superficie-2: #e7ebf0;
+  --superficie-3: #d9dfe6;
+  --texto: #121820;
+  --texto-2: #3b4754;
+  --texto-3: #56626f;
+  --borda: #c6ced7;
+  --borda-controle: #66727f;
+  --destaque: #1b4d7e;
+  --destaque-forte: #143a60;
+  --destaque-suave: #dfe9f4;
   --sobre-destaque: #ffffff;
   --aviso: #7a4100;
-  --aviso-fundo: #fff4e0;
-  --aviso-borda: #e3b867;
+  --aviso-fundo: #fcf1dc;
+  --aviso-borda: #d8ab5a;
   --foco: #0a58ca;
-  --barra: #9db8d6;
+  --barra: #4f78a5;
 
   --fonte: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
   --fonte-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
 
   --largura: 72rem;
-  --largura-leitura: 46rem;
+  --largura-leitura: 40rem;
 
   --r-1: 0.375rem;
   --r-2: 0.625rem;
@@ -43,24 +43,24 @@
 @media (prefers-color-scheme: dark) {
   :root:not([data-tema='claro']) {
     color-scheme: dark;
-    --fundo: #0e1216;
-    --superficie: #151a20;
-    --superficie-2: #1c232b;
-    --superficie-3: #252e38;
-    --texto: #e7ebf0;
-    --texto-2: #b6c0cb;
+    --fundo: #0e1317;
+    --superficie: #161c23;
+    --superficie-2: #1e262f;
+    --superficie-3: #29323c;
+    --texto: #e9edf2;
+    --texto-2: #bac4cf;
     --texto-3: #9aa6b3;
-    --borda: #2a333d;
-    --borda-controle: #728090;
-    --destaque: #8ab4e8;
-    --destaque-forte: #b3d0f5;
-    --destaque-suave: #1b2c42;
-    --sobre-destaque: #0e1216;
+    --borda: #303a45;
+    --borda-controle: #7b8999;
+    --destaque: #90b9ea;
+    --destaque-forte: #b9d4f5;
+    --destaque-suave: #1c2e46;
+    --sobre-destaque: #0e1317;
     --aviso: #f0b45b;
     --aviso-fundo: #2b2113;
     --aviso-borda: #6b5128;
     --foco: #8ab4f8;
-    --barra: #3d5c82;
+    --barra: #6d93c2;
     --sombra-1: 0 1px 2px rgb(0 0 0 / 0.4);
     --sombra-2: 0 8px 24px rgb(0 0 0 / 0.5);
   }
@@ -69,24 +69,24 @@
 /* Tema escuro forçado manualmente */
 :root[data-tema='escuro'] {
   color-scheme: dark;
-  --fundo: #0e1216;
-  --superficie: #151a20;
-  --superficie-2: #1c232b;
-  --superficie-3: #252e38;
-  --texto: #e7ebf0;
-  --texto-2: #b6c0cb;
+  --fundo: #0e1317;
+  --superficie: #161c23;
+  --superficie-2: #1e262f;
+  --superficie-3: #29323c;
+  --texto: #e9edf2;
+  --texto-2: #bac4cf;
   --texto-3: #9aa6b3;
-  --borda: #2a333d;
-  --borda-controle: #728090;
-  --destaque: #8ab4e8;
-  --destaque-forte: #b3d0f5;
-  --destaque-suave: #1b2c42;
-  --sobre-destaque: #0e1216;
+  --borda: #303a45;
+  --borda-controle: #7b8999;
+  --destaque: #90b9ea;
+  --destaque-forte: #b9d4f5;
+  --destaque-suave: #1c2e46;
+  --sobre-destaque: #0e1317;
   --aviso: #f0b45b;
   --aviso-fundo: #2b2113;
   --aviso-borda: #6b5128;
   --foco: #8ab4f8;
-  --barra: #3d5c82;
+  --barra: #6d93c2;
   --sombra-1: 0 1px 2px rgb(0 0 0 / 0.4);
   --sombra-2: 0 8px 24px rgb(0 0 0 / 0.5);
 }
@@ -94,24 +94,24 @@
 /* Tema claro forçado manualmente (sobrepõe dark mode do sistema) */
 :root[data-tema='claro'] {
   color-scheme: light;
-  --fundo: #f4f6f8;
+  --fundo: #eef1f4;
   --superficie: #ffffff;
-  --superficie-2: #eef1f5;
-  --superficie-3: #e4e9ef;
-  --texto: #141a21;
-  --texto-2: #424e5c;
-  --texto-3: #566170;
-  --borda: #d5dbe3;
-  --borda-controle: #727f8e;
-  --destaque: #1f4e79;
-  --destaque-forte: #163b5d;
-  --destaque-suave: #e3edf8;
+  --superficie-2: #e7ebf0;
+  --superficie-3: #d9dfe6;
+  --texto: #121820;
+  --texto-2: #3b4754;
+  --texto-3: #56626f;
+  --borda: #c6ced7;
+  --borda-controle: #66727f;
+  --destaque: #1b4d7e;
+  --destaque-forte: #143a60;
+  --destaque-suave: #dfe9f4;
   --sobre-destaque: #ffffff;
   --aviso: #7a4100;
-  --aviso-fundo: #fff4e0;
-  --aviso-borda: #e3b867;
+  --aviso-fundo: #fcf1dc;
+  --aviso-borda: #d8ab5a;
   --foco: #0a58ca;
-  --barra: #9db8d6;
+  --barra: #4f78a5;
   --sombra-1: 0 1px 2px rgb(15 23 32 / 0.06), 0 1px 1px rgb(15 23 32 / 0.04);
   --sombra-2: 0 8px 24px rgb(15 23 32 / 0.1);
 }
