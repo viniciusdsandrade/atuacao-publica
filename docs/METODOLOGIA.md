@@ -10,6 +10,7 @@ As fontes estão descritas em `docs/FONTES.md`.
 - **Situação.** Cada perfil diz se a pessoa está em exercício. A situação mostrada é a do papel principal:
   - deputado e senador: a situação informada pela casa legislativa (por exemplo, `Exercício`);
   - presidente e governador: "Mandato vigente" ou "Mandato encerrado em {data}". O TSE registra a eleição; o exercício é deduzido das datas legais de posse. Renúncia ou sucessão entram por contribuição com fonte T0;
+  - chefe do Executivo com candidatura a outro cargo na eleição seguinte, no próprio TSE: "Deixou o cargo para concorrer a {cargo}". O mandato termina no prazo de renúncia, seis meses antes do pleito (Constituição, art. 14, § 6º), e o texto avisa que o TSE não informa a data exata (ADR-0033);
   - eleito que ainda não tomou posse: "Eleito em {ano}; posse prevista em {data}";
   - eleito que a casa ainda não registra em exercício depois da data de posse: "Eleito em {ano}; sem registro de exercício".
 - **Ausência.** Campo sem valor na fonte é `null` no JSON e "sem registro na fonte" na tela.
@@ -165,7 +166,7 @@ Não é presença. É a contagem de votos registrados em votações nominais.
 ## Executivo
 
 - **Mandatos.** Datas de início e fim vêm de `contrib/mandatos.yaml`, com proveniência na EC 111/2021: eleitos em 2022 tomaram posse em 2023-01-01; os mandatos vão até 2027-01-05 (Presidente) e 2027-01-06 (governadores).
-- **Governadores.** O TSE registra a eleição, não o exercício do cargo. Renúncia, afastamento ou sucessão dependem de ato estadual. Correção desse tipo entra por contribuição com fonte T0 (diário oficial do estado).
+- **Governadores.** O TSE registra a eleição, não o exercício do cargo. Renúncia, afastamento ou sucessão dependem de ato estadual. Correção desse tipo entra por contribuição com fonte T0 (diário oficial do estado). A exceção é a candidatura a outro cargo, que o próprio TSE registra e que obriga a renúncia (ADR-0033).
 - **Atos normativos.** Leis, leis complementares, medidas provisórias e decretos de `/legislacao/lista` do Senado, e vetos de `/materia/vetos/{ano}`, publicados no período do mandato. A fonte não informa quem assinou cada ato. O bloco se chama "atos do Poder Executivo federal no período do mandato".
 - **Agenda oficial (ADR-0011).** Página de cada dia da agenda do Planalto, no endereço dado por `contrib/mandatos.yaml`. Dia com 404 fica sem registro. Para o mandato de 2019 a 2023, a página vem da captura do Internet Archive do próprio dia. Cada compromisso publica data, hora, título literal, local e participantes como na fonte. Registro manual com snapshot continua aceito e não repete compromisso coletado.
 - **Cartão de pagamento e viagens da Presidência (ADR-0010).** Bloco `despesas_executivo` do presidente, pelos arquivos abertos do Portal da Transparência: `cpgf/{AAAAMM}` (um por mês do mandato) e `viagens/{ano}`. Entra só o órgão 20101, Presidência da República. Cartão: `VALOR TRANSAÇÃO` somado por ano e mês do extrato e por unidade gestora; transação sob sigilo entra pelo valor. Viagens: só as realizadas, no mês da data de início, em diárias (menos devolução), passagens e outros gastos. Portador, favorecido e viajante nunca são lidos. Os 6 meses mais recentes do cartão e o ano corrente de viagens renovam toda semana.

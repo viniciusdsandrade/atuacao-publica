@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
@@ -1200,11 +1201,24 @@ final class Vinculo {
                 String uf = Json.texto(c, "uf");
                 String esfera = cargo.equals("presidente") ? "federal" : (municipal ? "municipal" : "estadual");
                 String ente = cargo.equals("presidente") ? "BR" : (municipal ? enteDaRegra : uf);
-                p.papel(cargo, esfera, ente, cargo.equals("presidente") ? null : uf, Json.texto(c, "partido"), fase.situacao(),
-                        fase.prioridade(), inicio);
+                // Candidatura a outro cargo na eleição seguinte: o mandato acaba no prazo de renúncia (ADR-0033).
+                Fase faseDoEleito = fase;
+                LocalDate fimDoEleito = fim;
+                // A Constituição exige a renúncia do chefe do Executivo; o vice não precisa renunciar para concorrer.
+                boolean chefe = cargo.equals("presidente") || cargo.equals("governador") || cargo.equals("prefeito");
+                JsonNode outroCargo = chefe ? candidaturaAOutroCargo(c, eleicao + 4, candidaturas, ligacoes.chaves()) : null;
+                LocalDate prazo = prazoDeRenuncia(eleicao + 4);
+                if (outroCargo != null && prazo.isAfter(inicio) && prazo.isBefore(fim) && !ctx.hoje().isBefore(prazo)) {
+                    fimDoEleito = prazo;
+                    faseDoEleito = new Fase("Deixou o cargo para concorrer a " + Json.texto(outroCargo, "cargo").toLowerCase(Locale.ROOT)
+                            + " em " + (eleicao + 4) + " (eleito em " + eleicao + "). A Constituição exige a renúncia até " + prazo
+                            + " (art. 14, § 6º); o TSE não informa a data exata.", Perfil.FORA_DE_EXERCICIO);
+                }
+                p.papel(cargo, esfera, ente, cargo.equals("presidente") ? null : uf, Json.texto(c, "partido"), faseDoEleito.situacao(),
+                        faseDoEleito.prioridade(), inicio);
                 ObjectNode mandato = Json.SAIDA.createObjectNode();
                 mandato.put("cargo", cargo).put("esfera", esfera).put("ente", ente).put("uf", cargo.equals("presidente") ? null : uf)
-                        .put("inicio", inicio.toString()).put("fim", fim.toString()).put("situacao", fase.situacao())
+                        .put("inicio", inicio.toString()).put("fim", fimDoEleito.toString()).put("situacao", faseDoEleito.situacao())
                         .putNull("condicao").putNull("legislatura").put("eleicao", eleicao);
                 for (String campo : List.of("texto_oficial", "fonte_id", "url_origem", "snapshot_url", "capturado_em", "contribuidor")) {
                     mandato.set(campo, regra.get(campo));
@@ -1212,6 +1226,12 @@ final class Vinculo {
                 p.bloco("mandatos").add(mandato);
                 usarFonte(p, "mandatos", Json.SAIDA.createObjectNode().<ObjectNode>set("fonte_id", regra.get("fonte_id"))
                         .<ObjectNode>set("url_origem", regra.get("url_origem")).set("capturado_em", regra.get("capturado_em")));
+                if (!fimDoEleito.equals(fim)) {
+                    // A candidatura do TSE é a evidência do fim antecipado: entra entre as fontes do bloco.
+                    JsonNode registro = outroCargo.path("registro");
+                    usarFonte(p, "mandatos", Json.SAIDA.createObjectNode().<ObjectNode>set("fonte_id", registro.get("fonte_id"))
+                            .<ObjectNode>set("url_origem", registro.get("url_origem")).set("capturado_em", registro.get("capturado_em")));
+                }
                 if (esfera.equals("estadual") || esfera.equals("municipal")) {
                     for (Catalogo.Item item : catalogo.linksDaUf(ente)) {
                         if (item.validadoEm() != null) {
@@ -1284,6 +1304,42 @@ final class Vinculo {
             }
         }
         return novos;
+    }
+
+    /**
+     * Candidatura da mesma pessoa a outro cargo na eleição indicada, ou null. A pessoa é a do CPF ou, sem ele, a do nome
+     * civil com a data de nascimento (ADR-0003). Reeleição para o mesmo cargo não conta.
+     */
+    static JsonNode candidaturaAOutroCargo(JsonNode eleito, int eleicao, List<JsonNode> candidaturas, Map<String, Tse.Chave> chaves) {
+        Tse.Chave chave = chaves.get(eleito.get("sq").stringValue());
+        if (chave == null) {
+            return null;
+        }
+        String cargo = Json.texto(eleito, "cargo");
+        for (JsonNode c : candidaturas) {
+            if (c.get("ano").asInt() != eleicao || cargo == null || cargo.equals(Json.texto(c, "cargo"))) {
+                continue;
+            }
+            Tse.Chave outra = chaves.get(c.get("sq").stringValue());
+            if (outra == null) {
+                continue;
+            }
+            boolean mesmoCpf = chave.cpf() != null && chave.cpf().equals(outra.cpf());
+            boolean mesmaPessoa = pessoa(chave) != null && pessoa(chave).equals(pessoa(outra));
+            if (mesmoCpf || mesmaPessoa) {
+                return c;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Prazo de renúncia do chefe do Executivo que concorre a outro cargo: seis meses antes do primeiro turno, que é no
+     * primeiro domingo de outubro (CF, art. 14, § 6º, e art. 77).
+     */
+    static LocalDate prazoDeRenuncia(int eleicao) {
+        return LocalDate.of(eleicao, 10, 1).with(java.time.temporal.TemporalAdjusters.firstInMonth(java.time.DayOfWeek.SUNDAY))
+                .minusMonths(6);
     }
 
     /** Fase de um mandato com datas de contrib/mandatos.yaml, no intervalo [inicio, fim). */
