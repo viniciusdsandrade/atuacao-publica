@@ -14,16 +14,20 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import tools.jackson.databind.JsonNode;
+
 import etl.Coleta;
 import etl.Coleta.Politica;
 import etl.Contexto;
 import etl.Fonte;
+import etl.Guarda;
 import etl.Json;
 import etl.Registros;
 import etl.Registros.LinkOficial;
 import etl.Registros.Mandato;
 import etl.Registros.OrgaoOuFrente;
 import etl.Registros.Pessoa;
+import etl.Registros.Proposicao;
 import etl.Registros.Prov;
 import etl.Texto;
 
@@ -37,6 +41,15 @@ public final class Cldf implements Fonte {
     public static final String FONTE_DEPUTADOS = "cldf-deputados";
     public static final String FONTE_DETALHES = "cldf-deputados-detalhes";
     public static final String FONTE_PORTAL = "cldf-portal";
+    public static final String FONTE_PROPOSICOES = "cldf-proposicoes";
+
+    public static final String API_PROPOSICOES = "https://ple.cl.df.gov.br/pleservico/api/public/proposicao/filter";
+    /** Página da proposição no PLe, que carrega o item por /pleservico/api/public/proposicao/{id}/detalhe. */
+    public static final String PAGINA_PROPOSICAO = "https://ple.cl.df.gov.br/#/proposicao/";
+    static final int PRIMEIRO_ANO_PROPOSICOES = 2022;
+    /** Maior página que a API entrega: pedido maior volta com 2.000 itens. */
+    static final int TAMANHO_DA_PAGINA = 2000;
+    private static final Pattern NUMERO_E_ANO = Pattern.compile("(\\d+)/(\\d{4})$");
 
     public static final String SITE = "https://www.cl.df.gov.br";
     public static final String URL_DEPUTADOS = "https://www.cl.df.gov.br/deputados-2023-2026";
@@ -79,6 +92,38 @@ public final class Cldf implements Fonte {
         }
 
         coleta.obterOuVazio(URL_COMISSOES, "comissoes.html", "text/html", Politica.SEMANAL);
+
+        // Proposições: o PLe só filtra por POST. O campo "last" vem sempre falso, e a página além do total responde 500:
+        // o número de páginas sai do total da primeira. A ordem por id mantém as páginas estáveis entre coletas.
+        for (int ano = PRIMEIRO_ANO_PROPOSICOES; ano <= ctx.hoje().getYear(); ano++) {
+            Politica politica = Politica.porAnoSemanal(ano, ctx.hoje());
+            Coleta.Arquivo primeira = coleta.obterPostOpcional(urlDaPagina(0), corpoDoAno(ano), caminhoDaPagina(ano, 0),
+                    "application/json", politica);
+            if (primeira == null || !Files.exists(Coleta.caminho(ctx, primeira))) {
+                continue;
+            }
+            int paginas = paginas(Json.ler(Coleta.caminho(ctx, primeira)).path("totalElements").asInt(0));
+            for (int pagina = 1; pagina < paginas; pagina++) {
+                coleta.obterPostOpcional(urlDaPagina(pagina), corpoDoAno(ano), caminhoDaPagina(ano, pagina),
+                        "application/json", politica);
+            }
+        }
+    }
+
+    static String urlDaPagina(int pagina) {
+        return API_PROPOSICOES + "?page=" + pagina + "&size=" + TAMANHO_DA_PAGINA + "&sort=id,asc";
+    }
+
+    private static String corpoDoAno(int ano) {
+        return "{\"ano\":" + ano + "}";
+    }
+
+    private static String caminhoDaPagina(int ano, int pagina) {
+        return "proposicoes/" + ano + "-" + pagina + ".json";
+    }
+
+    static int paginas(int total) {
+        return (total + TAMANHO_DA_PAGINA - 1) / TAMANHO_DA_PAGINA;
     }
 
     @Override
@@ -100,6 +145,11 @@ public final class Cldf implements Fonte {
         }
 
         Map<String, List<OrgaoOuFrente>> comissoesPorNome = extrairComissoes(ctx);
+        Set<String> chavesDosDeputados = new HashSet<>();
+        for (DeputadoBruto d : deputados) {
+            chavesDosDeputados.add(normalizarChaveNome(d.nome()));
+        }
+        Map<String, List<Proposicao>> proposicoesPorNome = proposicoesPorChave(ctx, chavesDosDeputados);
 
         List<Pessoa> pessoas = new ArrayList<>();
 
@@ -167,6 +217,7 @@ public final class Cldf implements Fonte {
             blocosNode.set("mandatos", Json.SAIDA.valueToTree(mandatos));
             blocosNode.set("orgaos_e_frentes", Json.SAIDA.valueToTree(orgaos));
             blocosNode.set("despesas", Json.SAIDA.createArrayNode());
+            blocosNode.set("proposicoes", Json.SAIDA.valueToTree(proposicoesPorNome.getOrDefault(chaveNome, List.of())));
             blocosNode.set("fontes", Json.SAIDA.valueToTree(Registros.fontesDosBlocos(blocosNode)));
             if (biografia != null) {
                 blocosNode.put("biografia", biografia);
@@ -343,6 +394,78 @@ public final class Cldf implements Fonte {
         return raw.replaceAll("^(?:Deputado|Deputada)\\s+", "")
                 .replaceAll("\\s+", " ")
                 .trim();
+    }
+
+    /** Proposições de cada deputado em exercício, pela chave do nome, a partir das páginas em cache. */
+    private static Map<String, List<Proposicao>> proposicoesPorChave(Contexto ctx, Set<String> chavesDosDeputados) {
+        Map<String, List<Proposicao>> porChave = new HashMap<>();
+        int total = 0;
+        for (int ano = PRIMEIRO_ANO_PROPOSICOES; ano <= ctx.hoje().getYear(); ano++) {
+            // O total da primeira página vale para o ano todo. Página de uma coleta anterior pode repetir item: o id decide.
+            int paginas = 1;
+            Set<String> vistos = new HashSet<>();
+            for (int pagina = 0; pagina < paginas; pagina++) {
+                Coleta.Arquivo arq = Coleta.metadados(ctx, "cldf", caminhoDaPagina(ano, pagina));
+                if (arq == null || arq.bytes() == 0 || !Files.exists(Coleta.caminho(ctx, arq))) {
+                    continue;
+                }
+                JsonNode resposta = Json.ler(Coleta.caminho(ctx, arq));
+                if (pagina == 0) {
+                    paginas = paginas(resposta.path("totalElements").asInt(0));
+                }
+                for (var e : proposicoesDaPagina(resposta, chavesDosDeputados,
+                        Prov.de(FONTE_PROPOSICOES, arq.url(), arq)).entrySet()) {
+                    for (Proposicao p : e.getValue()) {
+                        if (vistos.add(e.getKey() + "|" + p.idFonte())) {
+                            porChave.computeIfAbsent(e.getKey(), k -> new ArrayList<>()).add(p);
+                            total++;
+                        }
+                    }
+                }
+            }
+        }
+        System.out.println("cldf: " + total + " autorias de proposições em " + porChave.size() + " deputados");
+        return porChave;
+    }
+
+    /**
+     * Proposições de uma página da API, pela chave do nome de cada autor. A autoria é texto, com os autores separados
+     * por vírgula e às vezes repetidos; só entra quem é "Deputado" ou "Deputada" com nome de deputado em exercício.
+     * A posição na autoria vira {@code ordem_assinatura}. A etapa da tramitação vira a situação, como a fonte escreve.
+     */
+    static Map<String, List<Proposicao>> proposicoesDaPagina(JsonNode resposta, Set<String> chavesDosDeputados, Prov prov) {
+        Map<String, List<Proposicao>> porChave = new HashMap<>();
+        for (JsonNode p : resposta.path("content")) {
+            String id = Json.texto(p, "id");
+            String identificacao = Texto.vazioParaNulo(Json.texto(p, "siglaNumeroAno"));
+            String autoria = Json.texto(p, "autoria");
+            Matcher numeroEAno = identificacao == null ? null : NUMERO_E_ANO.matcher(identificacao);
+            if (id == null || autoria == null || numeroEAno == null || !numeroEAno.find()) {
+                continue;
+            }
+            String ementa = Texto.vazioParaNulo(Json.texto(p, "ementa"));
+            List<String> temas = new ArrayList<>();
+            for (String tema : (Json.texto(p, "temaNome") == null ? "" : Json.texto(p, "temaNome")).split("#")) {
+                if (!tema.isBlank()) {
+                    temas.add(tema.strip());
+                }
+            }
+            String[] autores = autoria.split(",");
+            Set<String> jaContados = new HashSet<>();
+            for (int i = 0; i < autores.length; i++) {
+                String autor = autores[i].strip();
+                String chave = normalizarChaveNome(autor);
+                if (!autor.matches("^Deputad[oa] .*") || !chavesDosDeputados.contains(chave) || !jaContados.add(chave)) {
+                    continue;
+                }
+                porChave.computeIfAbsent(chave, k -> new ArrayList<>()).add(new Proposicao(id, Json.texto(p, "tipoProposicao"),
+                        Integer.valueOf(numeroEAno.group(1)), Integer.valueOf(numeroEAno.group(2)), identificacao,
+                        ementa == null ? null : Guarda.semCpf(ementa.replaceAll("\\s+", " ")), Json.texto(p, "etapa"),
+                        temas.isEmpty() ? null : temas, Json.texto(p, "dataLeitura"), i + 1, null,
+                        PAGINA_PROPOSICAO + id + "/consultar", prov));
+            }
+        }
+        return porChave;
     }
 
     public static String normalizarChaveNome(String nome) {

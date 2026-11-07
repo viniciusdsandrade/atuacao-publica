@@ -10,6 +10,7 @@ import java.nio.file.Path;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -18,10 +19,57 @@ import etl.Coleta;
 import etl.Contexto;
 import etl.Json;
 import etl.Registros.OrgaoOuFrente;
+import etl.Registros.Proposicao;
 import etl.Registros.Prov;
 import tools.jackson.databind.JsonNode;
 
 class CldfTest {
+
+    @Test
+    void paginasSaemDoTotalPorqueOCampoLastVemSempreFalso() {
+        assertEquals(0, Cldf.paginas(0));
+        assertEquals(1, Cldf.paginas(2000));
+        assertEquals(3, Cldf.paginas(4931));
+        assertEquals("https://ple.cl.df.gov.br/pleservico/api/public/proposicao/filter?page=2&size=2000&sort=id,asc",
+                Cldf.urlDaPagina(2));
+    }
+
+    @Test
+    void proposicaoFicaComCadaDeputadoDaAutoria() {
+        // Dado sintético no formato da API do PLe.
+        JsonNode pagina = Json.FONTE.readTree("""
+                {"totalElements": 3, "last": false, "content": [
+                  {"id": 101, "tipoProposicao": "Indicação", "siglaNumeroAno": "IND 10/2024",
+                   "ementa": "Sugere ao Poder Executivo a reforma\\nda escola.\\n\\n", "autoria": "Deputada Doutora Jane, Comissão de Economia, Orçamento e Finanças, Deputado João Cardoso , Deputada Doutora Jane",
+                   "etapa": "Apresentação", "temaNome": "#Educação#Urbanismo#", "dataLeitura": "2024-03-05"},
+                  {"id": 102, "tipoProposicao": "Projeto de Lei", "siglaNumeroAno": "PL 20/2024", "ementa": "Institui o dia estadual de exemplo.",
+                   "autoria": "Deputado Ex Distrital", "etapa": "Comissões", "temaNome": "#Outro#", "dataLeitura": "2024-04-01"},
+                  {"id": 103, "tipoProposicao": "Proc", "siglaNumeroAno": "PROC 3/2024", "ementa": "Prestação de contas.",
+                   "autoria": "Poder Executivo", "etapa": "Apresentação", "temaNome": "#Outro#", "dataLeitura": "2024-05-01"}
+                ]}
+                """);
+        Set<String> chaves = Set.of(Cldf.normalizarChaveNome("Doutora Jane"), Cldf.normalizarChaveNome("João Cardoso"));
+        Prov prov = new Prov(Cldf.FONTE_PROPOSICOES, Cldf.urlDaPagina(0), Instant.parse("2026-11-07T12:00:00Z"));
+
+        Map<String, List<Proposicao>> porChave = Cldf.proposicoesDaPagina(pagina, chaves, prov);
+
+        assertEquals(2, porChave.size(), "ex-deputado e Poder Executivo ficam fora");
+        List<Proposicao> daJane = porChave.get(Cldf.normalizarChaveNome("Doutora Jane"));
+        assertEquals(1, daJane.size(), "autor repetido na autoria conta uma vez");
+        Proposicao ind = daJane.getFirst();
+        assertEquals("101", ind.idFonte());
+        assertEquals("IND 10/2024", ind.identificacao());
+        assertEquals(10, ind.numero());
+        assertEquals(2024, ind.ano());
+        assertEquals("Sugere ao Poder Executivo a reforma da escola.", ind.ementa());
+        assertEquals("Apresentação", ind.situacao());
+        assertEquals(List.of("Educação", "Urbanismo"), ind.temas());
+        assertEquals("2024-03-05", ind.dataApresentacao());
+        assertEquals("https://ple.cl.df.gov.br/#/proposicao/101/consultar", ind.urlTexto());
+        assertEquals(1, ind.ordemAssinatura());
+        assertEquals(4, porChave.get(Cldf.normalizarChaveNome("João Cardoso")).getFirst().ordemAssinatura(),
+                "a ordem conta a posição na autoria, com a vírgula do nome da comissão");
+    }
 
     @Test
     void normalizaPartidoEUrlFoto() {

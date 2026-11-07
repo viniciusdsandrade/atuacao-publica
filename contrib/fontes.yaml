@@ -2105,6 +2105,21 @@
   status: validado
   validado_em: 2026-11-06
 
+- id: cldf-proposicoes
+  nome: Câmara Legislativa do Distrito Federal, proposições pela API pública do PLe
+  orgao: Câmara Legislativa do Distrito Federal
+  esfera: estadual
+  ente: DF
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://ple.cl.df.gov.br/pleservico/api/public/proposicao/filter
+  formato: JSON (POST)
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Filtro só por POST, em páginas de até 2.000 itens. O campo last vem sempre falso e a página além do total responde 500. Autoria só por nome. Recusa conexão de fora do Brasil."
+  status: validado
+  validado_em: 2026-11-07
+
 
 
 

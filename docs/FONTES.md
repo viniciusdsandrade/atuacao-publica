@@ -941,6 +941,18 @@ Validação em 2026-11-03 com o User-Agent do projeto.
 - URL base: `https://www.cl.df.gov.br/`
 - Repositório de fotos oficiais dos parlamentares em alta resolução hospedadas no portal em `/documents/`.
 
+### `cldf-proposicoes`: proposições
+
+- URL base: `https://ple.cl.df.gov.br/pleservico/api/public/proposicao/filter?page={n}&size=2000&sort=id,asc`. POST com o filtro no corpo, por exemplo `{"ano": 2024}`. Validação em 2026-11-07.
+- A página tem no máximo 2.000 itens. O campo `last` vem sempre falso, e a página além do total responde 500. O ETL calcula o número de páginas pelo `totalElements` da primeira. Com a ordem por `id`, as páginas de 2022 a 2026 não repetem item, e a soma bate com o total.
+- Itens por ano: 3.339 (2022), 6.903 (2023), 4.931 (2024), 4.921 (2025) e 3.133 (2026, até a validação).
+- Campos usados: `id`, `tipoProposicao`, `siglaNumeroAno`, `ementa`, `autoria`, `etapa`, `temaNome` e `dataLeitura`. A lista não traz situação: a etapa da tramitação entra como situação, como a fonte escreve. Os temas vêm entre `#` ("#Educação#Urbanismo#").
+- `autoria` é texto, com os autores separados por vírgula e às vezes repetidos. Só entra autor "Deputado" ou "Deputada" cujo nome, sem o cargo e sem acento, é o de um deputado em exercício. Os 24 casaram. Nome de comissão com vírgula conta como dois autores na `ordem_assinatura`.
+- Na validação, 26.090 autorias de 2022 a 2026. As de 15 ex-deputados, do Poder Executivo, da Mesa e das comissões ficam fora. Uma autoria grafa "Roosevelt Vilela Pires", nome diferente do perfil, e também fica fora.
+- Página oficial de cada proposição: `https://ple.cl.df.gov.br/#/proposicao/{id}/consultar`. É o link que a própria aplicação do PLe monta, lido no código dela. Os dados vêm de `.../api/public/proposicao/{id}/detalhe`, que respondeu 200 com o item.
+- A aplicação usa reCAPTCHA só na verificação de autenticidade de documento. A consulta de proposições não pede token.
+- Recusa conexão de fora do Brasil (ADR-0029). Entra pela coleta local cifrada (ADR-0034).
+
 ### `df-transparencia` e `df-dodf`: Executivo distrital
 
 - Transparência orçamentária: `https://www.transparencia.df.gov.br/`
