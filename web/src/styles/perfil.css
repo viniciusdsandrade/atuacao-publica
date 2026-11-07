@@ -12,7 +12,7 @@ app-proveniencia {
 .perfil-topo {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  gap: 1rem;
+  gap: 0.875rem;
   margin-bottom: 1.25rem;
   padding: 1.25rem;
 }
@@ -85,6 +85,62 @@ app-proveniencia {
   color: var(--texto-2);
   font-weight: 600;
 }
+
+/* Redes declaradas: links em linha, mais leves que os botões das páginas oficiais. */
+.perfil-redes {
+  display: grid;
+  gap: 0.125rem;
+}
+
+.perfil-links,
+.perfil-ferramentas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 1rem;
+  list-style: none;
+}
+
+.perfil-links a,
+.perfil-ferramentas a,
+.perfil-ferramentas button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  min-height: 2rem;
+  font-size: 0.9375rem;
+  font-weight: 600;
+}
+
+/* Ferramentas: ações discretas, com cara de link e alvo de 32 px. */
+.perfil-ferramentas a,
+.perfil-ferramentas button {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--destaque);
+  font-family: inherit;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.perfil-ferramentas a:hover,
+.perfil-ferramentas button:hover {
+  text-decoration: underline;
+  text-underline-offset: 0.18em;
+}
+
+/* Terceiro nível: situação na fonte, data e ferramentas (lado a lado, JSON, impressão). */
+.perfil-rodape {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem 1rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--borda);
+}
+
+
 
 /* Sumário: faixa fixa no alto da tela no celular e no tablet; barra lateral no computador. */
 .perfil-corpo {

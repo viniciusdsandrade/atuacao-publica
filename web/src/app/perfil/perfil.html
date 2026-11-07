@@ -65,60 +65,76 @@
         </p>
       }
 
-      <ul class="perfil-acoes">
-        @for (l of p.links_oficiais; track $index) {
-          <li>
-            <a class="botao botao--pequeno" [href]="l.url" rel="noopener noreferrer" target="_blank">
-              {{ l.rotulo }}
-              <app-icone nome="externo" [pequeno]="true" />
-              <span class="sr-only">(abre em nova aba)</span>
-            </a>
-          </li>
-        }
-        @if (p.foto_url) {
-          <li>
-            <a class="botao botao--pequeno" [href]="p.foto_url" rel="noopener noreferrer" target="_blank">
-              Foto oficial (abre o site da fonte)
-              <app-icone nome="externo" [pequeno]="true" />
-            </a>
-          </li>
-        }
-        @if (eParlamentar()) {
-          <li>
-            <a class="botao botao--pequeno botao--discreto" [routerLink]="['/comparar']" [queryParams]="{ p1: p.id }">
-              <app-icone nome="comparar" [pequeno]="true" />
-              Lado a lado
-            </a>
-          </li>
-        }
-        <li>
-          <a class="botao botao--pequeno botao--discreto" [href]="enderecoJson(p.id)" rel="noopener" target="_blank">
-            <app-icone nome="documento" [pequeno]="true" />
-            Dados abertos deste perfil (JSON)
-            <span class="sr-only">(abre em nova aba)</span>
-          </a>
-        </li>
-      </ul>
-
-      @if (redesDeclaradas(); as declaradas) {
-        <p class="perfil-meta">Redes e sites declarados ao TSE pelo próprio candidato, na eleição de {{ declaradas.eleicao }}:</p>
-        <ul class="perfil-acoes" aria-label="Redes e sites declarados ao TSE">
-          @for (r of declaradas.redes; track r.url) {
+      <!-- Segundo nível: páginas oficiais. Terceiro: redes declaradas e ferramentas, mais discretas. -->
+      @if (p.links_oficiais.length || p.foto_url) {
+        <ul class="perfil-acoes" aria-label="Páginas oficiais">
+          @for (l of p.links_oficiais; track $index) {
             <li>
-              <a class="botao botao--pequeno botao--discreto" [href]="r.url" rel="noopener noreferrer" target="_blank">
-                {{ rotuloDaRede(r) }}
+              <a class="botao botao--pequeno" [href]="l.url" rel="noopener noreferrer" target="_blank">
+                {{ l.rotulo }}
                 <app-icone nome="externo" [pequeno]="true" />
-                <span class="sr-only">({{ r.url }}, abre em nova aba)</span>
+                <span class="sr-only">(abre em nova aba)</span>
+              </a>
+            </li>
+          }
+          @if (p.foto_url) {
+            <li>
+              <a class="botao botao--pequeno" [href]="p.foto_url" rel="noopener noreferrer" target="_blank">
+                Foto oficial (abre o site da fonte)
+                <app-icone nome="externo" [pequeno]="true" />
+                <span class="sr-only">(abre em nova aba)</span>
               </a>
             </li>
           }
         </ul>
       }
 
-      <p class="perfil-meta">
-        <span>Situação na fonte: <strong>{{ p.situacao ?? semRegistro }}</strong></span>
-        <span>Perfil gerado em {{ data(p.atualizado_em) }}.</span>
-      </p>
+      @if (redesDeclaradas(); as declaradas) {
+        <div class="perfil-redes">
+          <p class="perfil-meta">Redes e sites declarados ao TSE pelo próprio candidato, na eleição de {{ declaradas.eleicao }}:</p>
+          <ul class="perfil-links" aria-label="Redes e sites declarados ao TSE">
+            @for (r of declaradas.redes; track r.url) {
+              <li>
+                <a [href]="r.url" rel="noopener noreferrer" target="_blank">
+                  {{ rotuloDaRede(r) }}
+                  <app-icone nome="externo" [pequeno]="true" />
+                  <span class="sr-only">({{ r.url }}, abre em nova aba)</span>
+                </a>
+              </li>
+            }
+          </ul>
+        </div>
+      }
+
+      <div class="perfil-rodape">
+        <p class="perfil-meta">
+          <span>Situação na fonte: <strong>{{ p.situacao ?? semRegistro }}</strong></span>
+          <span>Perfil gerado em {{ data(p.atualizado_em) }}.</span>
+        </p>
+        <ul class="perfil-ferramentas" aria-label="Mais opções do perfil">
+          @if (eParlamentar()) {
+            <li>
+              <a [routerLink]="['/comparar']" [queryParams]="{ p1: p.id }">
+                <app-icone nome="comparar" [pequeno]="true" />
+                Lado a lado
+              </a>
+            </li>
+          }
+          <li>
+            <a [href]="enderecoJson(p.id)" rel="noopener" target="_blank">
+              <app-icone nome="documento" [pequeno]="true" />
+              JSON do perfil
+              <span class="sr-only">(abre em nova aba)</span>
+            </a>
+          </li>
+          <li>
+            <button type="button" (click)="imprimir()">
+              <app-icone nome="imprimir" [pequeno]="true" />
+              Imprimir ou salvar em PDF
+            </button>
+          </li>
+        </ul>
+      </div>
     </header>
 
     <div class="perfil-corpo">

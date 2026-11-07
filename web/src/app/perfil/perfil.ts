@@ -323,4 +323,9 @@ export class Perfil {
   protected enderecoJson(id: string): string {
     return this.dados.enderecoDoPerfil(id);
   }
+
+  /** A folha de impressão (impressao.css) já tira menus e mostra o endereço de cada fonte. */
+  protected imprimir(): void {
+    window.print();
+  }
 }
