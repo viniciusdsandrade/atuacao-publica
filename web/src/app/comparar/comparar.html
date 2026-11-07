@@ -73,13 +73,13 @@
           </div>
         </div>
         <p class="sr-only" role="status">{{ anuncio(lado) }}</p>
-        @if (opcoes(lado); as opcoes) {
-          @if (opcoes.length) {
+        @if (opcoes(lado); as lista) {
+          @if (lista.length) {
             @if (!busca(lado).trim()) {
               <p class="rotulo-secao">Mesma casa e mesma UF, em ordem alfabética</p>
             }
             <ul class="lado-resultados" [attr.aria-label]="'Opções para o ' + ordinal(lado) + ' parlamentar'">
-              @for (item of opcoes; track item.id) {
+              @for (item of lista; track item.id) {
                 <li>
                   <button type="button" class="lado-resultado" (click)="selecionar(lado, item)">
                     <span class="avatar avatar--pequeno" aria-hidden="true">{{ iniciais(item.nome) }}</span>

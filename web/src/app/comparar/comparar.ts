@@ -158,6 +158,13 @@ export class Comparar {
   private readonly indice = toSignal(this.dados.indice$.pipe(catchError(() => of(null))));
   private readonly parametros = toSignal(this.rota.queryParamMap);
 
+  /** Nome e partido de cada político do índice, sem acento nem caixa, calculados uma vez por índice. */
+  private readonly chaves = computed(() => (this.indice()?.politicos ?? []).map((p) => chaveDeBusca(`${p.nome} ${p.partido ?? ''}`)));
+  private readonly opcoesPorLado = { 1: computed(() => this.calcularOpcoes(1)), 2: computed(() => this.calcularOpcoes(2)) };
+
+  /** Para onde o foco vai quando o elemento aparecer: o campo de um lado ou o lado a lado montado. */
+  private readonly alvoDoFoco = signal<NumeroDoLado | 'grade' | null>(null);
+
   /** Identificador antigo (fusão de perfis) vira o vigente pelo índice. */
   private readonly lados = toSignal(
     combineLatest([this.rota.queryParamMap, this.dados.indice$.pipe(catchError(() => of(null)))]).pipe(
@@ -212,6 +219,28 @@ export class Comparar {
       const p1 = this.p1();
       const p2 = this.p2();
       titulo.setTitle(p1 && p2 ? `${p1.nome} e ${p2.nome} lado a lado · Atuação Pública` : 'Lado a lado · Atuação Pública');
+    });
+
+    // O campo e o lado a lado só existem depois da navegação e da carga do perfil: o foco espera por eles.
+    effect(() => {
+      const alvo = this.alvoDoFoco();
+      if (alvo === null) {
+        return;
+      }
+      if (alvo === 'grade' && this.impedimento()) {
+        this.alvoDoFoco.set(null);
+        return;
+      }
+      const pronto = alvo === 'grade' ? this.resumos() !== null : !this.perfilDoLado(alvo) && !this.carregando(alvo);
+      if (pronto) {
+        afterNextRender(
+          () => {
+            document.getElementById(alvo === 'grade' ? 'lado-a-lado' : `busca-pol-${alvo}`)?.focus();
+            this.alvoDoFoco.set(null);
+          },
+          { injector: this.injector },
+        );
+      }
     });
   }
 
@@ -274,6 +303,10 @@ export class Comparar {
    * Sempre na ordem do índice, que é alfabética.
    */
   protected opcoes(lado: NumeroDoLado): EntradaIndice[] {
+    return this.opcoesPorLado[lado]();
+  }
+
+  private calcularOpcoes(lado: NumeroDoLado): EntradaIndice[] {
     const indice = this.indice();
     if (!indice) {
       return [];
@@ -287,9 +320,8 @@ export class Comparar {
       return casaDeP !== null && p.id !== outroId && (!casa || casaDeP === casa);
     };
     if (termos.length > 0) {
-      return indice.politicos
-        .filter((p) => daCasa(p) && termos.every((t) => chaveDeBusca(`${p.nome} ${p.partido ?? ''}`).includes(t)))
-        .slice(0, RESULTADOS);
+      const chaves = this.chaves();
+      return indice.politicos.filter((p, i) => daCasa(p) && termos.every((t) => chaves[i].includes(t))).slice(0, RESULTADOS);
     }
     if (!outroPerfil || !casa) {
       return [];
@@ -308,21 +340,16 @@ export class Comparar {
 
   protected selecionar(lado: NumeroDoLado, item: EntradaIndice): void {
     this.buscas[lado].set('');
+    const outro = this.outro(lado);
     const ids = { 1: this.idDoParametro(1), 2: this.idDoParametro(2), [lado]: item.id };
-    this.navegar(ids[1], ids[2]);
     // O campo some quando o perfil entra: o foco vai ao campo do outro lado, se ainda vazio, ou ao lado a lado.
-    afterNextRender(
-      () => {
-        const proximo = document.getElementById(`busca-pol-${this.outro(lado)}`) ?? document.getElementById('lado-a-lado');
-        proximo?.focus();
-      },
-      { injector: this.injector },
-    );
+    this.alvoDoFoco.set(this.perfilDoLado(outro) || this.carregando(outro) ? 'grade' : outro);
+    this.navegar(ids[1], ids[2]);
   }
 
   protected remover(lado: NumeroDoLado): void {
+    this.alvoDoFoco.set(lado);
     this.navegar(lado === 1 ? '' : this.idDoParametro(1), lado === 2 ? '' : this.idDoParametro(2));
-    afterNextRender(() => document.getElementById(`busca-pol-${lado}`)?.focus(), { injector: this.injector });
   }
 
   protected inverter(): void {
