@@ -19,7 +19,6 @@ import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -217,7 +216,7 @@ public final class Alepe implements Fonte {
         Thread.sleep(PAUSA_DA_VARREDURA_FINAL);
         int seguemVazios = 0;
         for (Pendente p : pendentes) {
-            Coleta.Arquivo atual = confirmandoVazio(nova -> coleta.obterOpcional(p.url(), p.caminho(), "application/json", nova),
+            Coleta.Arquivo atual = Confirmacao.confirmandoVazio(nova -> coleta.obterOpcional(p.url(), p.caminho(), "application/json", nova),
                     p.politica(), arq -> vazia(ctx, arq), coleta.obterOpcional(p.url(), p.caminho(), "application/json", p.politica()),
                     TENTATIVAS_DA_LISTA_VAZIA, PAUSA_ENTRE_CONFIRMACOES);
             if (vazia(ctx, atual)) {
@@ -273,32 +272,12 @@ public final class Alepe implements Fonte {
         if (!confirmar) {
             return primeira;
         }
-        Coleta.Arquivo confirmada = confirmandoVazio(nova -> coleta.obterOpcional(url, caminho, "application/json", nova), politica,
+        Coleta.Arquivo confirmada = Confirmacao.confirmandoVazio(nova -> coleta.obterOpcional(url, caminho, "application/json", nova), politica,
                 arq -> vazia(ctx, arq), primeira, TENTATIVAS_DA_LISTA_VAZIA, PAUSA_ENTRE_CONFIRMACOES);
         if (vazia(ctx, confirmada)) {
             pendentes.add(new Pendente(url, caminho, politica));
         }
         return confirmada;
-    }
-
-    /** Uma consulta ao servidor com a política dada. */
-    interface Busca {
-        Coleta.Arquivo buscar(Politica politica) throws Exception;
-    }
-
-    /**
-     * Refaz a consulta, sempre pela rede, enquanto a resposta for vazia, até o limite de tentativas. A primeira
-     * tentativa já foi feita. Devolve a última resposta: vazia só se todas vieram vazias.
-     */
-    static Coleta.Arquivo confirmandoVazio(Busca busca, Politica politica, Predicate<Coleta.Arquivo> vazio, Coleta.Arquivo primeira,
-                                           int tentativas, Duration pausa) throws Exception {
-        Coleta.Arquivo atual = primeira;
-        for (int feitas = 1; feitas < tentativas && vazio.test(atual); feitas++) {
-            Thread.sleep(pausa);
-            Coleta.Arquivo nova = busca.buscar(Politica.SEMPRE);
-            atual = nova != null ? nova : atual;
-        }
-        return atual;
     }
 
     private static String arquivoDasRubricas(int ano) {
