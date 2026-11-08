@@ -820,6 +820,14 @@ Validação em 2026-11-03 com o User-Agent do projeto.
 - Privacidade: o favorecido MEI vem como nome e CPF. O ETL remove a sequência de 11 dígitos (`Guarda.semCpf`). A coluna `trecho` não é usada.
 - A fonte não traz CNPJ nem número de documento, e o favorecido vem vazio em cerca de 21% das linhas.
 
+### `alesc-proposicoes`: proposições dos deputados estaduais
+
+- URL base: `https://portalelegis.alesc.sc.gov.br/proposicoes/processo-legislativo?iniciativa={slug}&page={p}`
+- Ingestão das listagens em HTML paginadas do portal e-Legis para os 40 parlamentares da 20ª legislatura (2023–2027).
+- Mapeamento de apelidos e patentes institucionais de iniciativa (`SLUG_PARA_INICIATIVA`) para garantir 100% de cobertura dos deputados em exercício.
+- Paginador interrompe a coleta de páginas anteriores assim que a última data da listagem for anterior ao início da legislatura (01/02/2023), economizando requisições.
+- Extração de tipo, número, ano, identificação oficial, data de apresentação, ementa, situação e autores com detecção de proponente principal.
+
 ### `sc-transparencia` e `sc-diario-oficial`: Executivo estadual
 
 - Transparência orçamentária: `https://www.transparencia.sc.gov.br/`

@@ -23,6 +23,7 @@ import etl.Contexto;
 import etl.Json;
 import etl.Registros.Despesa;
 import etl.Registros.OrgaoOuFrente;
+import etl.Registros.Proposicao;
 import etl.Registros.Prov;
 import etl.Texto;
 import tools.jackson.databind.JsonNode;
@@ -255,6 +256,113 @@ class AlescTest {
         assertEquals(3, jerry.get(0).mes());
 
         assertNull(despesas.get("alex-brasil").get(0).fornecedorNome());
+    }
+
+    @Test
+    void mapeiaIniciativasEFormatosDeProposicao() {
+        assertEquals("lunelli", Alesc.iniciativaParaSlug("antidio-lunelli"));
+        assertEquals("pedro-baldissera", Alesc.iniciativaParaSlug("padre-pedro-baldissera"));
+        assertEquals("vicente-caropreso", Alesc.iniciativaParaSlug("dr-vicente-caropreso"));
+        assertEquals("altair-silva", Alesc.iniciativaParaSlug("altair-silva"));
+
+        assertEquals("Projeto de Lei", Alesc.nomeTipo("PL"));
+        assertEquals("Projeto de Lei Complementar", Alesc.nomeTipo("PLC"));
+        assertEquals("Projeto de Decreto Legislativo", Alesc.nomeTipo("PDL"));
+        assertEquals("Proposta de Emenda Constitucional", Alesc.nomeTipo("PEC"));
+        assertEquals("Projeto de Resolução", Alesc.nomeTipo("PR"));
+
+        assertTrue(Alesc.slugCasaComAutor("altair-silva", "DEPUTADO ALTAIR SILVA"));
+        assertTrue(Alesc.slugCasaComAutor("padre-pedro-baldissera", "DEPUTADO PADRE PEDRO BALDISSERA"));
+        assertTrue(Alesc.slugCasaComAutor("dr-vicente-caropreso", "DEPUTADO DR. VICENTE CAROPRESO"));
+        assertTrue(Alesc.slugCasaComAutor("ana-campagnolo", "DEPUTADA ANA CAMPAGNOLO"));
+
+        String htmlAntigo = """
+                <div class="card card-alesc mb-3">
+                  <div class="row">
+                    <div class="col-lg-2 text-lg-end fw-bold no-wrap">Entrada</div>
+                    <div class="col-lg-10">05/06/2008</div>
+                  </div>
+                </div>
+                """;
+        assertTrue(Alesc.devePararPaginacaoDoHtml(htmlAntigo));
+
+        String htmlAtual = """
+                <div class="card card-alesc mb-3">
+                  <div class="row">
+                    <div class="col-lg-2 text-lg-end fw-bold no-wrap">Entrada</div>
+                    <div class="col-lg-10">07/10/2026</div>
+                  </div>
+                </div>
+                """;
+        org.junit.jupiter.api.Assertions.assertFalse(Alesc.devePararPaginacaoDoHtml(htmlAtual));
+    }
+
+    @Test
+    void extraiProposicoesDeFragmentoHtml() {
+        String html = """
+                <div class="card card-alesc mb-3">
+                    <div class="card-body">
+                        <h4 class="card-title">
+                            <a href="/proposicoes/NQeb8">PL./0640/2026</a>
+                        </h4>
+                        <p class="mb-1 fst-italic" style="-webkit-line-clamp: 3;">Altera a Lei Estadual nº 19.720, para incluir município.</p>
+                        <div>
+                            <div class="row">
+                                <div class="col-lg-2 text-lg-end fw-bold no-wrap">Entrada</div>
+                                <div class="col-lg-10">07/10/2026</div>
+                            </div>
+                            <div class="row">
+                                <div class="col-lg-2 text-lg-end fw-bold">Autoria</div>
+                                <div class="col-lg-10"><ul class="m-0 list-unstyled"><li>Deputado Altair Silva</li><li>Deputado Dr. Vicente Caropreso</li></ul></div>
+                            </div>
+                            <div class="row">
+                                <div class="col-lg-2 text-lg-end fw-bold">Situação atual</div>
+                                <div class="col-lg-10">Aguardando apreciação pela Comissão</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card card-alesc mb-3">
+                    <div class="card-body">
+                        <h4 class="card-title">
+                            <a href="/proposicoes/ABC12">PL./0001/2020</a>
+                        </h4>
+                        <p class="mb-1 fst-italic">Proposição de mandato anterior.</p>
+                        <div>
+                            <div class="row">
+                                <div class="col-lg-2 text-lg-end fw-bold no-wrap">Entrada</div>
+                                <div class="col-lg-10">10/02/2020</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                """;
+
+        Prov prov = new Prov("alesc-proposicoes", "https://portalelegis.alesc.sc.gov.br/proposicoes/processo-legislativo?iniciativa=altair-silva&page=1", Instant.parse("2026-11-08T12:00:00Z"));
+        List<Proposicao> props = Alesc.extrairProposicoesDoHtml(html, "altair-silva", prov);
+
+        // A segunda proposição é de 2020 (anterior a 2023), então é descartada da 20ª legislatura
+        assertEquals(1, props.size());
+
+        Proposicao p1 = props.get(0);
+        assertEquals("NQeb8", p1.idFonte());
+        assertEquals("PL./0640/2026", p1.identificacao());
+        assertEquals("Projeto de Lei", p1.tipo());
+        assertEquals(640, p1.numero());
+        assertEquals(2026, p1.ano());
+        assertEquals("2026-10-07", p1.dataApresentacao());
+        assertEquals("Altera a Lei Estadual nº 19.720, para incluir município.", p1.ementa());
+        assertEquals("Aguardando apreciação pela Comissão", p1.situacao());
+        assertEquals(1, p1.ordemAssinatura());
+        assertTrue(p1.proponente());
+        assertEquals("https://portalelegis.alesc.sc.gov.br/proposicoes/NQeb8", p1.urlTexto());
+        assertEquals(prov, p1.prov());
+
+        // Testando segundo autor
+        List<Proposicao> propsAutor2 = Alesc.extrairProposicoesDoHtml(html, "dr-vicente-caropreso", prov);
+        assertEquals(1, propsAutor2.size());
+        assertEquals(2, propsAutor2.get(0).ordemAssinatura());
+        org.junit.jupiter.api.Assertions.assertFalse(propsAutor2.get(0).proponente());
     }
 
     private static void gravarMetadado(Path dir, String arquivo, String url) throws IOException {

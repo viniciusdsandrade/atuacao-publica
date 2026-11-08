@@ -26,6 +26,7 @@ import etl.Registros.LinkOficial;
 import etl.Registros.Mandato;
 import etl.Registros.OrgaoOuFrente;
 import etl.Registros.Pessoa;
+import etl.Registros.Proposicao;
 import etl.Registros.Prov;
 import etl.Texto;
 
@@ -40,11 +41,14 @@ public final class Alesc implements Fonte {
     public static final String FONTE_DETALHES = "alesc-deputados-detalhes";
     public static final String FONTE_PORTAL = "alesc-portal";
     public static final String FONTE_DESPESAS = "alesc-despesas";
+    public static final String FONTE_PROPOSICOES = "alesc-proposicoes";
 
     public static final String SITE = "https://www.alesc.sc.gov.br";
     public static final String URL_DEPUTADOS = "https://www.alesc.sc.gov.br/deputados/";
     public static final String URL_COMISSOES = "https://portalelegis.alesc.sc.gov.br/comissoes-permanentes";
     public static final String URL_DESPESAS = "https://transparencia.alesc.sc.gov.br/gabinetes-parlamentares/csv/";
+    public static final String URL_ELEGIS = "https://portalelegis.alesc.sc.gov.br";
+    public static final String URL_PROPOSICOES = "https://portalelegis.alesc.sc.gov.br/proposicoes/processo-legislativo";
     public static final String UF = "SC";
 
     public static final LocalDate INICIO_LEG_20 = LocalDate.of(2023, 2, 1);
@@ -75,6 +79,35 @@ public final class Alesc implements Fonte {
 
     public static final Pattern DD_PATTERN = Pattern.compile(
             "<dd>([^<]+)</dd>");
+
+    public static final Pattern TOTAL_ITEMS_PATTERN = Pattern.compile(
+            "Exibindo\\s+\\d+\\s*-\\s*\\d+\\s+de\\s+([0-9.]+)", Pattern.CASE_INSENSITIVE);
+
+    public static final Pattern TITULO_PROPOSICAO_PATTERN = Pattern.compile(
+            "<h4 class=\"card-title\">\\s*<a href=\"/proposicoes/([^\"]+)\">([^<]+)</a>", Pattern.DOTALL);
+
+    public static final Pattern EMENTA_PATTERN = Pattern.compile(
+            "<p class=\"mb-1 fst-italic\"[^>]*>(.*?)</p>", Pattern.DOTALL);
+
+    public static final Pattern ENTRADA_PATTERN = Pattern.compile(
+            ">Entrada</div>\\s*<div[^>]*>([0-9/]+)</div>", Pattern.DOTALL);
+
+    public static final Pattern SITUACAO_PATTERN = Pattern.compile(
+            ">Situação atual</div>\\s*<div[^>]*>([^<]+)</div>", Pattern.DOTALL);
+
+    public static final Pattern AUTORIA_PATTERN = Pattern.compile(
+            ">Autoria</div>\\s*<div[^>]*>(.*?)</div>\\s*</div>", Pattern.DOTALL);
+
+    public static final Pattern LI_PATTERN = Pattern.compile("<li>([^<]+)</li>");
+
+    public static final Pattern IDENTIFICACAO_PATTERN = Pattern.compile(
+            "([A-Za-z]+)\\.?/0*(\\d+)/(\\d{4})");
+
+    private static final Map<String, String> SLUG_PARA_INICIATIVA = Map.of(
+            "antidio-lunelli", "lunelli",
+            "padre-pedro-baldissera", "pedro-baldissera",
+            "dr-vicente-caropreso", "vicente-caropreso"
+    );
 
     private static final Set<String> PREPOSICOES = Set.of("de", "da", "do", "das", "dos", "del", "e");
 
@@ -136,6 +169,26 @@ public final class Alesc implements Fonte {
         for (int ano = 2023; ano <= 2026; ano++) {
             coleta.obterOuVazio(URL_DESPESAS + ano, "despesas/" + ano + ".csv", "text/csv", Politica.porAno(ano, ctx.hoje()));
         }
+
+        // Proposições da 20ª legislatura por iniciativa (e-Legis)
+        for (DeputadoBruto d : deputados) {
+            String inic = iniciativaParaSlug(d.slug());
+            int p = 1;
+            while (true) {
+                String url = URL_PROPOSICOES + "?iniciativa=" + inic + "&page=" + p;
+                String nomeArquivo = arquivoDeProposicoes(d.slug(), p);
+                coleta.obterOuVazio(url, nomeArquivo, "text/html", Politica.SEMANAL);
+                Coleta.Arquivo arq = Coleta.metadados(ctx, nome(), nomeArquivo);
+                if (arq == null || arq.bytes() == 0) {
+                    break;
+                }
+                Path caminho = Coleta.caminho(ctx, arq);
+                if (!Files.exists(caminho) || devePararPaginacao(caminho)) {
+                    break;
+                }
+                p++;
+            }
+        }
     }
 
     @Override
@@ -165,6 +218,7 @@ public final class Alesc implements Fonte {
 
         Map<String, List<OrgaoOuFrente>> comissoesPorSlug = extrairComissoes(ctx, slugPorNomeNorm);
         Map<String, List<Despesa>> despesasPorSlug = extrairDespesas(ctx, slugPorNomeNorm);
+        Map<String, List<Proposicao>> proposicoesPorSlug = extrairProposicoes(ctx, deputados);
 
         List<Pessoa> pessoas = new ArrayList<>();
 
@@ -193,11 +247,13 @@ public final class Alesc implements Fonte {
 
             List<OrgaoOuFrente> orgaos = comissoesPorSlug.getOrDefault(slug, List.of());
             List<Despesa> despesas = despesasPorSlug.getOrDefault(slug, List.of());
+            List<Proposicao> proposicoes = proposicoesPorSlug.getOrDefault(slug, List.of());
 
             var blocosNode = Json.SAIDA.createObjectNode();
             blocosNode.set("mandatos", Json.SAIDA.valueToTree(mandatos));
             blocosNode.set("orgaos_e_frentes", Json.SAIDA.valueToTree(orgaos));
             blocosNode.set("despesas", Json.SAIDA.valueToTree(despesas));
+            blocosNode.set("proposicoes", Json.SAIDA.valueToTree(proposicoes));
             blocosNode.set("fontes", Json.SAIDA.valueToTree(Registros.fontesDosBlocos(blocosNode)));
             Json.gravar(pastaBlocos.resolve(slug + ".json"), blocosNode);
         }
@@ -499,5 +555,218 @@ public final class Alesc implements Fonte {
         }
         tokens.add(sb.toString().trim().replaceAll("^\"|\"$", ""));
         return tokens.toArray(new String[0]);
+    }
+
+    public static String arquivoDeProposicoes(String slug, int pagina) {
+        return String.format(Locale.ROOT, "proposicoes/%s-%d.html", slug, pagina);
+    }
+
+    public static String iniciativaParaSlug(String slug) {
+        if (slug == null) {
+            return null;
+        }
+        return SLUG_PARA_INICIATIVA.getOrDefault(slug, slug);
+    }
+
+    public static String nomeTipo(String sigla) {
+        if (sigla == null || sigla.isBlank()) {
+            return null;
+        }
+        return switch (sigla.toUpperCase(Locale.ROOT)) {
+            case "PL" -> "Projeto de Lei";
+            case "PLC" -> "Projeto de Lei Complementar";
+            case "PDL" -> "Projeto de Decreto Legislativo";
+            case "PEC" -> "Proposta de Emenda Constitucional";
+            case "PR" -> "Projeto de Resolução";
+            case "MP" -> "Medida Provisória";
+            case "PSA" -> "Proposta de Sustação de Ato";
+            case "REP" -> "Representação";
+            case "SL" -> "Sugestão Legislativa";
+            default -> sigla;
+        };
+    }
+
+    public static boolean devePararPaginacao(Path caminho) {
+        try {
+            String html = Texto.lerArquivo(caminho);
+            return devePararPaginacaoDoHtml(html);
+        } catch (Exception e) {
+            return true;
+        }
+    }
+
+    public static boolean devePararPaginacaoDoHtml(String html) {
+        if (html == null || html.isBlank()) {
+            return true;
+        }
+        if (!html.contains("<div class=\"card card-alesc mb-3\">")) {
+            return true;
+        }
+        Matcher mData = ENTRADA_PATTERN.matcher(html);
+        String ultimaData = null;
+        while (mData.find()) {
+            ultimaData = mData.group(1);
+        }
+        if (ultimaData != null) {
+            try {
+                LocalDate dt = LocalDate.parse(ultimaData, DATA_BR);
+                if (dt.isBefore(INICIO_LEG_20)) {
+                    return true;
+                }
+            } catch (Exception ignored) {
+            }
+        }
+        return false;
+    }
+
+    public static boolean slugCasaComAutor(String slug, String normAutor) {
+        if (slug == null || normAutor == null) {
+            return false;
+        }
+        String cleanAutor = normAutor.replaceAll("^(?i)(DEPUTAD[OA]|DR\\.?|DRA\\.?|PROFESSOR[A]?|PADRE|SARGENTO)\\s+", "").trim();
+        String slugNorm = Texto.normalizarNome(slug.replace("-", " "));
+        String cleanSlug = slugNorm.replaceAll("^(?i)(DR\\.?|DRA\\.?|PROFESSOR[A]?|PADRE|SARGENTO)\\s+", "").trim();
+        return cleanAutor.equals(cleanSlug) || cleanAutor.equals(slugNorm)
+                || cleanAutor.contains(cleanSlug) || cleanSlug.contains(cleanAutor);
+    }
+
+    public static Map<String, List<Proposicao>> extrairProposicoes(Contexto ctx, List<DeputadoBruto> deputados) {
+        Map<String, List<Proposicao>> resultado = new HashMap<>();
+        int total = 0;
+        for (DeputadoBruto d : deputados) {
+            String slug = d.slug();
+            String inic = iniciativaParaSlug(slug);
+            int p = 1;
+            while (true) {
+                String nomeArquivo = arquivoDeProposicoes(slug, p);
+                Coleta.Arquivo arq = Coleta.metadados(ctx, "alesc", nomeArquivo);
+                if (arq == null) {
+                    break;
+                }
+                Path caminho = Coleta.caminho(ctx, arq);
+                if (!Files.exists(caminho)) {
+                    break;
+                }
+                try {
+                    String html = Texto.lerArquivo(caminho);
+                    String urlOrigem = URL_PROPOSICOES + "?iniciativa=" + inic + "&page=" + p;
+                    Prov prov = Prov.de(FONTE_PROPOSICOES, urlOrigem, arq);
+                    List<Proposicao> props = extrairProposicoesDoHtml(html, slug, prov);
+                    resultado.computeIfAbsent(slug, k -> new ArrayList<>()).addAll(props);
+                    total += props.size();
+                    if (devePararPaginacaoDoHtml(html)) {
+                        break;
+                    }
+                } catch (Exception e) {
+                    System.err.println("alesc: erro ao ler " + nomeArquivo + ": " + e.getMessage());
+                    break;
+                }
+                p++;
+            }
+        }
+        System.out.println("alesc: " + total + " proposições da 20ª legislatura em " + resultado.size() + " deputados");
+        return resultado;
+    }
+
+    public static List<Proposicao> extrairProposicoesDoHtml(String html, String slug, Prov prov) {
+        if (html == null || html.isBlank()) {
+            return List.of();
+        }
+        List<Proposicao> lista = new ArrayList<>();
+        String marker = "<div class=\"card card-alesc mb-3\">";
+        int pos = 0;
+        while (true) {
+            int start = html.indexOf(marker, pos);
+            if (start == -1) {
+                break;
+            }
+            int nextStart = html.indexOf(marker, start + marker.length());
+            String cardHtml;
+            if (nextStart == -1) {
+                int end = html.indexOf("<ul class=\"pagination\"", start);
+                if (end == -1) {
+                    end = html.indexOf("</main>", start);
+                }
+                cardHtml = end != -1 ? html.substring(start, end) : html.substring(start);
+                pos = html.length();
+            } else {
+                cardHtml = html.substring(start, nextStart);
+                pos = nextStart;
+            }
+
+            Matcher mTitulo = TITULO_PROPOSICAO_PATTERN.matcher(cardHtml);
+            if (!mTitulo.find()) {
+                continue;
+            }
+            String idFonte = mTitulo.group(1).trim();
+            String identificacao = Texto.semEntidades(mTitulo.group(2).trim());
+
+            String ementa = null;
+            Matcher mEmenta = EMENTA_PATTERN.matcher(cardHtml);
+            if (mEmenta.find()) {
+                ementa = Guarda.semCpf(Texto.semEntidades(mEmenta.group(1).trim()));
+            }
+
+            LocalDate data = null;
+            Matcher mData = ENTRADA_PATTERN.matcher(cardHtml);
+            if (mData.find()) {
+                try {
+                    data = LocalDate.parse(mData.group(1).trim(), DATA_BR);
+                } catch (Exception ignored) {
+                }
+            }
+
+            // Ignorar proposições anteriores ao início da 20ª legislatura
+            if (data != null && data.isBefore(INICIO_LEG_20)) {
+                continue;
+            }
+
+            String situacao = null;
+            Matcher mSit = SITUACAO_PATTERN.matcher(cardHtml);
+            if (mSit.find()) {
+                situacao = Texto.semEntidades(mSit.group(1).trim());
+            }
+
+            String sigla = null;
+            Integer numero = null;
+            Integer ano = data != null ? data.getYear() : null;
+            Matcher mId = IDENTIFICACAO_PATTERN.matcher(identificacao);
+            if (mId.find()) {
+                sigla = mId.group(1);
+                try {
+                    numero = Integer.parseInt(mId.group(2));
+                    ano = Integer.parseInt(mId.group(3));
+                } catch (Exception ignored) {
+                }
+            }
+
+            String tipo = nomeTipo(sigla);
+            String dataApresentacao = data != null ? data.toString() : null;
+            String urlOficial = URL_ELEGIS + "/proposicoes/" + idFonte;
+
+            int ordemAssinatura = 1;
+            boolean proponente = true;
+            Matcher mAutores = AUTORIA_PATTERN.matcher(cardHtml);
+            if (mAutores.find()) {
+                List<String> nomesAutores = new ArrayList<>();
+                Matcher mLi = LI_PATTERN.matcher(mAutores.group(1));
+                while (mLi.find()) {
+                    nomesAutores.add(Texto.normalizarNome(Texto.semEntidades(mLi.group(1).trim())));
+                }
+                for (int i = 0; i < nomesAutores.size(); i++) {
+                    String normAutor = nomesAutores.get(i);
+                    if (slugCasaComAutor(slug, normAutor)) {
+                        ordemAssinatura = i + 1;
+                        proponente = (i == 0);
+                        break;
+                    }
+                }
+            }
+
+            lista.add(new Proposicao(
+                    idFonte, tipo, numero, ano, identificacao, ementa, situacao,
+                    null, dataApresentacao, ordemAssinatura, proponente, urlOficial, prov));
+        }
+        return lista;
     }
 }

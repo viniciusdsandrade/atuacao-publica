@@ -1910,6 +1910,21 @@
   status: validado
   validado_em: 2026-11-06
 
+- id: alesc-proposicoes
+  nome: Assembleia Legislativa do Estado de Santa Catarina, proposições dos deputados
+  orgao: Assembleia Legislativa do Estado de Santa Catarina
+  esfera: estadual
+  ente: SC
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://portalelegis.alesc.sc.gov.br/proposicoes/processo-legislativo
+  formato: HTML
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Proposições da 20ª legislatura (2023 a 2026) extraídas do portal e-Legis paginado por iniciativa. Apenas proposições com data igual ou superior ao início da 20ª legislatura (01/02/2023)."
+  status: validado
+  validado_em: 2026-11-08
+
 - id: alego-deputados
   nome: Assembleia Legislativa do Estado de Goiás, deputados estaduais
   orgao: Assembleia Legislativa do Estado de Goiás
