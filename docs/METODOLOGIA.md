@@ -50,12 +50,20 @@ Não é presença. É a contagem de votos registrados em votações nominais.
 6. `sem_registro`: a fonte lista só quem teve voto lançado. O campo fica `null`.
 7. Voto sem registro de votação ou sem item votado na coleta fica fora. A quantidade aparece na saída do `normalize`.
 
+### ALEGO
+
+1. Universo: JSON anual de detalhes (`/api/transparencia/votacoes.json?todos=true&ano={ano}&tipo=detalhes`), um arquivo por ano da 20ª legislatura (2023–2026).
+2. Vínculo: nome do parlamentar na pauta, sem acento, sem pontuação, sem título e sem patente.
+3. Entram os blocos `votos` e `participacao_votacoes`.
+
 ### Limites
 
 - Votação simbólica não tem voto individual e fica fora.
 - As casas registram ausência de forma diferente. Os números das casas não são comparáveis entre si.
 - No piloto municipal, a orientação de partido e de governo fica `null`: a fonte não publica orientação.
 - Na ALRS, a fonte lista só o voto dado (Sim ou Não), por deputado e ano. Sem ausência registrada, o perfil tem os votos e não tem bloco de participação.
+- Na ALES, as votações nominais saem só em boletim PDF. O ETL não lê PDF.
+- Na ALEPA, as votações saem só por callback DevExpress, sem HTML estático nem endpoint aberto.
 
 ## Orientação de voto
 
@@ -100,6 +108,7 @@ Não é presença. É a contagem de votos registrados em votações nominais.
 - ALRS e ALES não publicam fornecedor nem nota. Cada linha é um total por categoria (ALRS) ou por produto (ALES) em um mês, sem CNPJ. Não é uma nota fiscal, e o total do deputado é a soma dessas linhas.
 - ALES: o valor é o solicitado pelo gabinete.
 - ALEPE: documento com total e sem nota entra como uma linha, na categoria "Sem detalhamento na fonte".
+- CLDF: os arquivos de verbas indenizatórias do CKAN não entram. Os formatos de data misturam dia e mês, número serial de planilha e texto; em 2026, 112 datas têm dia e mês indistinguíveis. O projeto não adivinha a data.
 
 ### Minimização
 
@@ -111,6 +120,8 @@ Não é presença. É a contagem de votos registrados em votações nominais.
 
 - **Câmara.** Arquivos `proposicoesAutores` dos anos da legislatura, filtrados pelo deputado. Tipo, número, ano, ementa, situação e link vêm de `proposicoes`. Temas vêm de `proposicoesTemas`. O campo `ordem_assinatura` e o campo `proponente` vêm da fonte.
 - **Senado.** `/processo?codigoParlamentarAutor={codigo}`, filtrado por apresentação a partir do início da cobertura (2022-01-01). A listagem não traz temas: o campo fica `null`.
+- **ALECE.** Listagens HTML paginadas da 31ª legislatura (2023–2026). Tipos: projeto de lei (PL), indicação (PI), decreto legislativo (PDL), lei complementar (PLC), emenda constitucional (PEC) e resolução (PR). O autor vem pelo nome. Sequência de 11 dígitos na ementa (CPF) é removida.
+- **ALESC.** Portal e-Legis paginado por iniciativa parlamentar. Cobre a 20ª legislatura, a partir de 2023-02-01. O que é anterior fica fora. Autoria e proponente vêm da listagem; o slug da iniciativa no portal pode ser o apelido ou o título parlamentar.
 - **Câmara municipal (piloto).** `materia/materialegislativa?autores={autor}&ano={ano}` do SAPL, por ano da legislatura vigente. O `autor` vem de `base/autor` pelo `object_id` do parlamentar. Entram todos os tipos de matéria, inclusive indicações e requerimentos. Situação: `resultado` da fonte, ou "Em tramitação" e "Tramitação encerrada" pelo campo `em_tramitacao`. Temas ficam vazios: a fonte não classifica.
 
 ## Emendas parlamentares (ADR-0030)

@@ -82,7 +82,7 @@ Estado real de cada fase. Atualizado ao fechar cada fase.
 - ALESC: as despesas dos gabinetes (`alesc-despesas`) cobrem 2023 a 2026 e entram só para os 40 deputados em exercício. Em 2026-11-06, 4.355 de 54.524 linhas não correspondiam a nenhum deles e foram descartadas; a contagem aparece na saída do `normalize`. A fonte não traz CNPJ nem número de documento, e o favorecido vem vazio em cerca de 21% das linhas.
 - ALESC: o favorecido MEI vem como nome e CPF. A sequência de 11 dígitos é removida na normalização (`Guarda.semCpf`), como na Câmara, no Senado, na ALESP e na ALMG.
 - ALEP: a consulta das verbas de ressarcimento por deputado (`api/ressarcimento`) exige reCAPTCHA v3, conforme o script da própria página (2026-11-06). O ETL não contorna CAPTCHA, então essas despesas não são coletadas (`alep-ressarcimento`, bloqueado).
-- ALERJ: as despesas vêm da API do DOCIGP desde 2026-11-07 (`alerj-docigp`). Três deputados em exercício não constam do DOCIGP. A conexão oscila: a Azure (eastus) recebeu resposta, e a AWS nos EUA e o Google Cloud e a Oracle em São Paulo não. Se o runner falhar, a fonte fica parcial.
+- ALERJ: as despesas vêm da API do DOCIGP desde 2026-11-07 (`alerj-docigp`). Três deputados em exercício tinham `remote_id` nulo no DOCIGP e ficavam de fora. Em 2026-11-08 o adaptador passou a ligá-los por um mapa fixo desses ids e a ler o envelope `data` ou `rows`, cobrindo os 70 deputados em exercício. A conexão oscila: a Azure (eastus) recebeu resposta, e a AWS nos EUA e o Google Cloud e a Oracle em São Paulo não. Se o runner falhar, a fonte fica parcial.
 - CMSP (capital): só vereadores em exercício entram. Os 9 suplentes sem exercício e quem deixou a vereança na legislatura ficam fora. O serviço não tem voto nominal por vereador, e os perfis ficam sem votações e sem foto. As proposições cobrem, desde 2022, só o que está em tramitação, virou lei ou foi vetado: o serviço não informa o autor do projeto encerrado sem virar lei, nem separa autor de coautor.
 - CMSP: 4 dos 55 vereadores ficaram sem vínculo com o TSE porque o nome parlamentar difere do nome de urna (por exemplo, uma palavra só). O vínculo ignora só a pontuação ("Jr.", "Dra."), porque casar por palavras soltas ligaria homônimos parciais e atribuiria candidaturas e bens a outra pessoa.
 - CMSP: a fonte deixa cargo antigo da Mesa sem data de fim quando há sucessor. Em cargo exclusivo (Mesa, presidência e vice-presidência de comissão), vale o de início mais recente entre os vereadores em exercício.
@@ -397,21 +397,26 @@ Limitações:
     - Cotas parlamentares da ALES: implementadas em 2026-11-08 (`ales-cotas`), pela API do portal de transparência (`CotasParlamentaresNovoTable`), por gabinete e mês. Os valores vêm agregados por produto e mês, sem identificação de fornecedor nem documento. O vínculo com o perfil é feito pelo nome do titular do gabinete. Entra pela coleta local cifrada (ADR-0034). No site e no ensaio local, 3.108 cotas por produto e mês de 2022 a 2026 nos 30 deputados, totalizando R$ 7.724.090,96, sem divergências de soma.
     - Proposições da ALRS: implementadas em 2026-11-08 (`alrs-proposicoes`), pela página de proposições por deputado no portal da Assembleia (`/deputados/{id}/proposicoes`). Entra pela coleta local cifrada. No site e no ensaio local, 4.507 proposições de 2022 a 2026 nos 55 deputados (todos com ao menos uma proposição).
     - Despesas da ALRS: implementadas em 2026-11-08 (`alrs-gastos`), pelo portal da transparência por deputado, ano e mês (`/parlamentares/gastos/pesquisa`). A fonte traz o total mensal por categoria (23 categorias), sem fornecedor nem documento. Entra pela coleta local cifrada. No site e no ensaio local, 27.684 lançamentos mensais por categoria de 2022 a 2026 nos 55 deputados, somando R$ 35.820.754,75 (4 meses com divergência de centavos entre o total e as parcelas na própria fonte).
+    - Proposições da ALECE: implementadas em 2026-11-08 (`alece-proposicoes`), pelas listagens HTML paginadas da 31ª legislatura (2023–2026), cobrindo PL, PI, PDL, PLC, PEC e PR. O autor vem pelo nome. Sequência de 11 dígitos na ementa (CPF) é removida.
+    - Votações nominais da ALEGO: implementadas em 2026-11-08 (`alego-votacoes`), pelo JSON anual de detalhes (`/api/transparencia/votacoes.json?todos=true&ano={ano}&tipo=detalhes`). O parlamentar vem pelo nome, sem título e sem patente. Entram os blocos `votos` e `participacao_votacoes`.
+    - Proposições da ALESC: implementadas em 2026-11-08 (`alesc-proposicoes`), pelo e-Legis paginado por iniciativa (`/proposicoes/processo-legislativo?iniciativa={slug}`), da 20ª legislatura a partir de 2023-02-01. Autoria e proponente vêm da listagem. O que é anterior fica fora.
+    - Despesas da ALERJ: em 2026-11-08, o adaptador passou a cobrir os 70 deputados em exercício quando o `remote_id` do DOCIGP é nulo, com mapa fixo desses ids e leitura do envelope `data` ou `rows`.
+    - Túnel pelo Brasil (ADR-0029): `scripts/tunel-brasil.sh` e o checklist de manutenção passaram a encaminhar também `transparencia.al.rs.gov.br:443`, `www3.al.es.gov.br:443` e `ple.cl.df.gov.br:443`.
 
     | Casa | Despesas | Proposições com autor | Votações nominais |
     |---|---|---|---|
-    | ALERJ | implementado em 2026-11-07 | o sistema Domino recusa parâmetros de listagem | não encontrado |
-    | ALECE | implementado em 2026-11-07 | HTML paginado, de 350 a 450 páginas | implementado em 2026-11-07 |
-    | ALEGO | implementado em 2026-11-06 | API NoPaper, autor por nome | JSON anual. Parlamentar só por nome, com grafia irregular |
+    | ALERJ | implementado em 2026-11-07; fallback dos 70 em exercício em 2026-11-08 | o sistema Domino recusa parâmetros de listagem | não encontrado |
+    | ALECE | implementado em 2026-11-07 | implementado em 2026-11-08 | implementado em 2026-11-07 |
+    | ALEGO | implementado em 2026-11-06 | API NoPaper, autor por nome | implementado em 2026-11-08 |
     | ALEP | bloqueado por reCAPTCHA | implementado em 2026-11-07 | implementado em 2026-11-07, pelo nome civil do TSE |
     | ALMG | implementado, pela coleta local cifrada | implementado em 2026-11-07, pela coleta local cifrada | só em texto livre na tramitação |
     | ALBA | XLSX anual, deputado por nome; fornecedor só no detalhe HTML | API NoPaper, com id de autor diferente do id do portal | não validado |
-    | CLDF | testado em 2026-11-07 e não implementado: ver a nota abaixo da tabela | implementado em 2026-11-07, pela coleta local cifrada | exige login |
+    | CLDF | testado em 2026-11-07 e não implementado: data ambígua nos arquivos do CKAN | implementado em 2026-11-07, pela coleta local cifrada | exige login |
     | ALEPE | implementado em 2026-11-07, pela coleta local cifrada | implementado em 2026-11-07, pela coleta local cifrada | só resultado agregado |
     | ALES | implementado em 2026-11-08, pela coleta local cifrada | implementado em 2026-11-07, pela coleta local cifrada | boletins em PDF |
     | ALRS | implementado em 2026-11-08, pela coleta local cifrada | implementado em 2026-11-08, pela coleta local cifrada | implementado em 2026-11-07, pela coleta local cifrada |
-    | ALESC | implementado | HTML paginado | não validado |
-    | ALEPA | painel interno de BI, sem fornecedor | callback de componente, paginação não validada | HTML por votação |
+    | ALESC | implementado em 2026-11-06 | implementado em 2026-11-08 | não validado |
+    | ALEPA | painel interno de BI, sem fornecedor | callback de componente, paginação não validada | callback DevExpress, sem endpoint aberto |
 
 ### Redes sociais
 
