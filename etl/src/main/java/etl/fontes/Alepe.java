@@ -5,6 +5,7 @@ import java.io.InputStream;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.math.BigDecimal;
+import java.time.Duration;
 import java.nio.file.Path;
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
@@ -16,6 +17,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -58,6 +60,10 @@ public final class Alepe implements Fonte {
     static final String URL_DEPUTADOS_DA_VERBA = "https://www.alepe.pe.gov.br/servicos/transparencia/dep/deputados.php?leg=-16";
     /** A verba indenizatória atual, com rubricas por ano, começa em maio de 2022. */
     static final int PRIMEIRO_ANO_DESPESAS = 2022;
+    static final Duration INTERVALO_DA_VERBA = Duration.ofMillis(900);
+    /** Consultas para aceitar uma lista vazia da verba: a primeira e duas confirmações. */
+    static final int TENTATIVAS_DA_LISTA_VAZIA = 3;
+    private static final Duration PAUSA_ENTRE_CONFIRMACOES = Duration.ofSeconds(3);
 
     public static final String API_PROPOSICOES = "https://dadosabertos.alepe.pe.gov.br/api/v1/proposicoes/";
     /** Página da proposição no sistema oficial, que carrega o item pela API com o mesmo docid e tipoprop. */
@@ -178,6 +184,9 @@ public final class Alepe implements Fonte {
         if (lista == null || !Files.exists(Coleta.caminho(ctx, lista))) {
             return;
         }
+        // O servidor responde 200 com lista vazia, em vez de erro, quando recebe consultas demais: no ritmo padrão de
+        // 4 por segundo, 7% dos documentos e 39 de 74 listas de meses vieram vazios e foram guardados assim.
+        ctx.http().respeitar("www.alepe.pe.gov.br", INTERVALO_DA_VERBA);
         List<String> ids = new ArrayList<>(idsDoPortalPorSlug(Json.ler(Coleta.caminho(ctx, lista)), slugPorChave(deputados)).values());
         for (int ano = PRIMEIRO_ANO_DESPESAS; ano <= ctx.hoje().getYear(); ano++) {
             coleta.obterOpcional(API_VERBAS + "verbaindenizatoria-rubricas.php?ano=" + ano, arquivoDasRubricas(ano),
@@ -192,8 +201,8 @@ public final class Alepe implements Fonte {
     private static void coletarVerbasDoDeputado(Contexto ctx, Coleta coleta, String id) throws Exception {
         for (int ano = PRIMEIRO_ANO_DESPESAS; ano <= ctx.hoje().getYear(); ano++) {
             Politica politica = Politica.porAnoSemanal(ano, ctx.hoje());
-            Coleta.Arquivo meses = coleta.obterOpcional(API_VERBAS + "verbaindenizatoria-dep-meses.php?dep=" + id + "&ano=" + ano,
-                    arquivoDosMeses(id, ano), "application/json", politica);
+            Coleta.Arquivo meses = obterConfirmandoVazio(ctx, coleta, API_VERBAS + "verbaindenizatoria-dep-meses.php?dep=" + id
+                    + "&ano=" + ano, arquivoDosMeses(id, ano), politica, true);
             if (meses == null || !Files.exists(Coleta.caminho(ctx, meses))) {
                 continue;
             }
@@ -202,20 +211,57 @@ public final class Alepe implements Fonte {
                 if (mes < 1 || mes > 12) {
                     continue;
                 }
-                Coleta.Arquivo documentos = coleta.obterOpcional(API_VERBAS + "verbaindenizatoria.php?dep=" + id + "&ano=" + ano
-                        + "&mes=" + mes, arquivoDosDocumentos(id, ano, mes), "application/json", politica);
+                // Mês que a lista de meses traz tem documento: lista vazia aqui também é resposta de servidor sobrecarregado.
+                Coleta.Arquivo documentos = obterConfirmandoVazio(ctx, coleta, API_VERBAS + "verbaindenizatoria.php?dep=" + id
+                        + "&ano=" + ano + "&mes=" + mes, arquivoDosDocumentos(id, ano, mes), politica, true);
                 if (documentos == null || !Files.exists(Coleta.caminho(ctx, documentos))) {
                     continue;
                 }
                 for (JsonNode documento : Json.ler(Coleta.caminho(ctx, documentos))) {
                     String docid = Json.texto(documento, "docid");
                     if (docid != null) {
-                        coleta.obterOpcional(API_VERBAS + "verbaindenizatorianotas.php?docid=" + docid, arquivoDasNotas(docid),
-                                "application/json", politica);
+                        BigDecimal total = Texto.valor(Json.texto(documento, "total"));
+                        obterConfirmandoVazio(ctx, coleta, API_VERBAS + "verbaindenizatorianotas.php?docid=" + docid,
+                                arquivoDasNotas(docid), politica, total != null && total.signum() > 0);
                     }
                 }
             }
         }
+    }
+
+    /**
+     * Busca o arquivo e, se vier lista vazia onde deveria haver dado, consulta de novo ({@code confirmar}). Vale também
+     * para a lista vazia já guardada em coletas anteriores: ela é refeita antes de ser aceita.
+     */
+    private static Coleta.Arquivo obterConfirmandoVazio(Contexto ctx, Coleta coleta, String url, String caminho, Politica politica,
+                                                        boolean confirmar) throws Exception {
+        Coleta.Arquivo primeira = coleta.obterOpcional(url, caminho, "application/json", politica);
+        if (!confirmar) {
+            return primeira;
+        }
+        return confirmandoVazio(nova -> coleta.obterOpcional(url, caminho, "application/json", nova), politica,
+                arq -> arq != null && Files.exists(Coleta.caminho(ctx, arq)) && Json.ler(Coleta.caminho(ctx, arq)).isEmpty(),
+                primeira, TENTATIVAS_DA_LISTA_VAZIA, PAUSA_ENTRE_CONFIRMACOES);
+    }
+
+    /** Uma consulta ao servidor com a política dada. */
+    interface Busca {
+        Coleta.Arquivo buscar(Politica politica) throws Exception;
+    }
+
+    /**
+     * Refaz a consulta, sempre pela rede, enquanto a resposta for vazia, até o limite de tentativas. A primeira
+     * tentativa já foi feita. Devolve a última resposta: vazia só se todas vieram vazias.
+     */
+    static Coleta.Arquivo confirmandoVazio(Busca busca, Politica politica, Predicate<Coleta.Arquivo> vazio, Coleta.Arquivo primeira,
+                                           int tentativas, Duration pausa) throws Exception {
+        Coleta.Arquivo atual = primeira;
+        for (int feitas = 1; feitas < tentativas && vazio.test(atual); feitas++) {
+            Thread.sleep(pausa);
+            Coleta.Arquivo nova = busca.buscar(Politica.SEMPRE);
+            atual = nova != null ? nova : atual;
+        }
+        return atual;
     }
 
     private static String arquivoDasRubricas(int ano) {
