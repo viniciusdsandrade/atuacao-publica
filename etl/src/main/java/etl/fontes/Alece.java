@@ -29,6 +29,7 @@ import etl.Registros.Mandato;
 import etl.Registros.OrgaoOuFrente;
 import etl.Registros.Participacao;
 import etl.Registros.Pessoa;
+import etl.Registros.Proposicao;
 import etl.Registros.Prov;
 import etl.Registros.Voto;
 import etl.Texto;
@@ -52,6 +53,11 @@ public final class Alece implements Fonte {
     public static final String CATEGORIA_DESPESAS = "Verba de desempenho parlamentar";
     public static final String FONTE_VOTACOES = "alece-votacoes";
     public static final String URL_VOTACOES = "https://transparencia.al.ce.gov.br/consultas-gerais/votacao-nominal";
+    public static final String FONTE_PROPOSICOES = "alece-proposicoes";
+    public static final String URL_PROPOSICOES = "https://www2.al.ce.gov.br/legislativo/proposicoes/numero.php";
+    public static final List<String> TABELAS_PROPOSICOES = List.of(
+            "projeto_lei", "projeto_indi", "projeto_decre", "projeto_compl", "projeto_emen", "projeto_reso");
+    public static final List<String> OPCOES_PROPOSICOES = List.of("T", "D");
     /** Primeiro ano das despesas: a 31ª legislatura começa em 2023. */
     static final int PRIMEIRO_ANO_DESPESAS = 2023;
 
@@ -67,6 +73,18 @@ public final class Alece implements Fonte {
             "href=\"https://www\\.al\\.ce\\.gov\\.br/deputados/([^\"]+)\">\\s*([^<]+)</a>");
     private static final Pattern PARTIDO_PATTERN = Pattern.compile(
             "class=\"deputado_card--partido[^\"]*\">\\s*([^<]+)\\s*</p>");
+
+    private static final Pattern PAGINACAO_PROPOSICOES_PATTERN = Pattern.compile(
+            "P(?:&aacute;|á)gina 1 de ([0-9]+):", Pattern.CASE_INSENSITIVE);
+
+    private static final Pattern ITEM_PROPOSICAO_PATTERN = Pattern.compile(
+            "N&ordm;\\s*do\\s*Proj\\.:</b></font><br><font[^>]*>([^<]+)</font></td>\\s*"
+            + "<td[^>]*><font[^>]*><b>Autor:</b></font><br><font[^>]*>([^<]+)</font></td>\\s*"
+            + "<td[^>]*><font[^>]*><b>Entrada:</b></font><br><font[^>]*>([^<]+)</font></td>.*?"
+            + "Ementa:</b></font><br><font[^>]*><a\\s+href=[\"']([^\"']*)[\"']>([^<]+)</a>",
+            Pattern.DOTALL | Pattern.CASE_INSENSITIVE);
+
+    private static final Pattern DATA_ENTRADA_PATTERN = Pattern.compile("(\\d{2})\\.(\\d{2})\\.(\\d{2})");
 
     public static final List<String> COMISSOES_SLUGS = List.of(
             "agropecuaria",
@@ -135,6 +153,23 @@ public final class Alece implements Fonte {
             for (VotacaoListada v : votacoesDaLista(Texto.lerArquivo(Coleta.caminho(ctx, lista)))) {
                 coleta.obterOpcional(v.planilha(), arquivoDaPlanilha(v.planilha()),
                         "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", Politica.SE_AUSENTE);
+            }
+        }
+
+        // Proposições por tabela e opção (tramitando/deliberado): a página 1 traz o total de páginas.
+        for (String tabela : TABELAS_PROPOSICOES) {
+            for (String opcao : OPCOES_PROPOSICOES) {
+                String urlP1 = String.format(Locale.ROOT, "%s?nome=31_legislatura&tabela=%s&opcao=%s&absolutepage=1",
+                        URL_PROPOSICOES, tabela, opcao);
+                Coleta.Arquivo arqP1 = coleta.obterOpcional(urlP1, arquivoDeProposicoes(tabela, opcao, 1), "text/html",
+                        Politica.SEMANAL);
+                int totalPaginas = arqP1 != null ? totalPaginasDeProposicoes(ctx, arqP1) : 0;
+                for (int p = 2; p <= totalPaginas; p++) {
+                    String urlP = String.format(Locale.ROOT, "%s?nome=31_legislatura&tabela=%s&opcao=%s&absolutepage=%d",
+                            URL_PROPOSICOES, tabela, opcao, p);
+                    coleta.obterOpcional(urlP, arquivoDeProposicoes(tabela, opcao, p), "text/html",
+                            Politica.SEMANAL);
+                }
             }
         }
     }
@@ -366,6 +401,167 @@ public final class Alece implements Fonte {
         return porSlug;
     }
 
+    public static String siglaTipo(String tabela) {
+        return switch (tabela) {
+            case "projeto_lei" -> "PL";
+            case "projeto_indi" -> "PI";
+            case "projeto_decre" -> "PDL";
+            case "projeto_compl" -> "PLC";
+            case "projeto_emen" -> "PEC";
+            case "projeto_reso" -> "PR";
+            default -> "PROP";
+        };
+    }
+
+    public static String nomeTipo(String tabela) {
+        return switch (tabela) {
+            case "projeto_lei" -> "Projeto de Lei";
+            case "projeto_indi" -> "Projeto de Indicação";
+            case "projeto_decre" -> "Projeto de Decreto Legislativo";
+            case "projeto_compl" -> "Projeto de Lei Complementar";
+            case "projeto_emen" -> "Proposta de Emenda Constitucional";
+            case "projeto_reso" -> "Projeto de Resolução";
+            default -> "Proposição";
+        };
+    }
+
+    public static String arquivoDeProposicoes(String tabela, String opcao, int pagina) {
+        return String.format(Locale.ROOT, "proposicoes/%s-%s-%d.html", tabela, opcao, pagina);
+    }
+
+    public static int totalPaginasDeProposicoes(Contexto ctx, Coleta.Arquivo arq) {
+        if (arq == null || arq.bytes() == 0 || !Files.exists(Coleta.caminho(ctx, arq))) {
+            return 0;
+        }
+        try {
+            String html = Texto.lerArquivo(Coleta.caminho(ctx, arq));
+            return totalPaginasDoHtml(html);
+        } catch (Exception e) {
+            return 1;
+        }
+    }
+
+    public static int totalPaginasDoHtml(String html) {
+        if (html == null) {
+            return 0;
+        }
+        Matcher m = PAGINACAO_PROPOSICOES_PATTERN.matcher(html);
+        if (m.find()) {
+            try {
+                return Integer.parseInt(m.group(1));
+            } catch (Exception ignored) {
+            }
+        }
+        return html.contains("N&ordm; do Proj") ? 1 : 0;
+    }
+
+    public record ProposicaoBruta(String numeroCompleto, String autor, String dataEntrada, String urlTramitacao, String ementa) {
+    }
+
+    public static List<ProposicaoBruta> extrairProposicoesDoHtml(String html) {
+        if (html == null || html.isBlank()) {
+            return List.of();
+        }
+        List<ProposicaoBruta> lista = new ArrayList<>();
+        Matcher m = ITEM_PROPOSICAO_PATTERN.matcher(html);
+        while (m.find()) {
+            lista.add(new ProposicaoBruta(
+                    m.group(1).trim(),
+                    Texto.semEntidades(m.group(2).trim()),
+                    m.group(3).trim(),
+                    m.group(4).trim(),
+                    Texto.semEntidades(m.group(5).trim())));
+        }
+        return lista;
+    }
+
+    public static Map<String, List<Proposicao>> proposicoesPorSlug(Contexto ctx, List<DeputadoBruto> deputados) {
+        Map<String, String> slugPorNome = new HashMap<>();
+        for (DeputadoBruto d : deputados) {
+            slugPorNome.put(chaveDoNome(d.nome()), d.slug());
+        }
+
+        Map<String, List<Proposicao>> porSlug = new HashMap<>();
+        Set<String> chavesUnicasPorSlug = new HashSet<>();
+        int total = 0;
+        int semPerfil = 0;
+
+        for (String tabela : TABELAS_PROPOSICOES) {
+            String tipo = nomeTipo(tabela);
+            String sigla = siglaTipo(tabela);
+            for (String opcao : OPCOES_PROPOSICOES) {
+                String situacao = opcao.equals("T") ? "Tramitando" : "Deliberado";
+                Coleta.Arquivo arqP1 = Coleta.metadados(ctx, "alece", arquivoDeProposicoes(tabela, opcao, 1));
+                int totalPaginas = arqP1 != null ? totalPaginasDeProposicoes(ctx, arqP1) : 0;
+                for (int p = 1; p <= totalPaginas; p++) {
+                    Coleta.Arquivo arq = Coleta.metadados(ctx, "alece", arquivoDeProposicoes(tabela, opcao, p));
+                    if (arq == null || arq.bytes() == 0 || !Files.exists(Coleta.caminho(ctx, arq))) {
+                        continue;
+                    }
+                    try {
+                        String html = Texto.lerArquivo(Coleta.caminho(ctx, arq));
+                        Prov prov = Prov.de(FONTE_PROPOSICOES, arq.url(), arq);
+                        for (ProposicaoBruta pb : extrairProposicoesDoHtml(html)) {
+                            Integer numero = null;
+                            Integer ano = null;
+                            String numStr = pb.numeroCompleto();
+                            if (numStr.contains("/")) {
+                                String[] partes = numStr.split("/");
+                                try {
+                                    numero = Integer.parseInt(partes[0].trim());
+                                    int a = Integer.parseInt(partes[1].trim());
+                                    ano = a < 100 ? 2000 + a : a;
+                                } catch (Exception ignored) {
+                                }
+                            }
+                            String dataApresentacao = null;
+                            Matcher mData = DATA_ENTRADA_PATTERN.matcher(pb.dataEntrada());
+                            if (mData.matches()) {
+                                dataApresentacao = String.format(Locale.ROOT, "20%s-%s-%s",
+                                        mData.group(3), mData.group(2), mData.group(1));
+                            }
+                            String identificacao = sigla + " " + (numero != null ? numero : pb.numeroCompleto())
+                                    + (ano != null ? "/" + ano : "");
+                            String idFonte = tabela + "-" + (numero != null ? numero : pb.numeroCompleto().replace('/', '-'))
+                                    + (ano != null ? "-" + ano : "");
+                            String ementa = Guarda.semCpf(pb.ementa());
+                            String link = pb.urlTramitacao().isBlank() ? null : pb.urlTramitacao();
+
+                            String[] autores = pb.autor().replace(" e ", ",").split(",");
+                            for (int i = 0; i < autores.length; i++) {
+                                String autorNome = autores[i].trim();
+                                if (autorNome.isEmpty()) {
+                                    continue;
+                                }
+                                String chave = chaveDoNome(autorNome);
+                                if ("JULIOCESAR FILHO".equals(chave)) {
+                                    chave = "JULIO CESAR FILHO";
+                                }
+                                String slug = slugPorNome.get(chave);
+                                if (slug == null) {
+                                    semPerfil++;
+                                    continue;
+                                }
+                                String chaveUnica = slug + "|" + idFonte;
+                                if (chavesUnicasPorSlug.add(chaveUnica)) {
+                                    porSlug.computeIfAbsent(slug, k -> new ArrayList<>()).add(new Proposicao(
+                                            idFonte, tipo, numero, ano, identificacao, ementa, situacao,
+                                            null, dataApresentacao, i + 1, i == 0, link, prov));
+                                    total++;
+                                }
+                            }
+                        }
+                    } catch (Exception e) {
+                        System.err.println("alece: erro ao ler proposicoes de " + tabela + "-" + opcao + "-" + p + ": " + e.getMessage());
+                    }
+                }
+            }
+        }
+        System.out.println("alece: " + total + " proposições em " + porSlug.size() + " deputados; "
+                + semPerfil + " autorias de quem não é deputado em exercício");
+        return porSlug;
+    }
+
     @Override
     public void normalize(Contexto ctx) {
         List<DeputadoBruto> deputados = extrairDeputados(ctx);
@@ -388,6 +584,7 @@ public final class Alece implements Fonte {
         Map<String, List<OrgaoOuFrente>> comissoesPorSlug = extrairComissoes(ctx);
         Map<String, List<Despesa>> despesasPorSlug = despesasPorSlug(ctx, deputados);
         Votacoes votacoes = votacoesPorSlug(ctx, deputados);
+        Map<String, List<Proposicao>> proposicoesPorSlug = proposicoesPorSlug(ctx, deputados);
 
         for (DeputadoBruto d : deputados) {
             String slug = d.slug();
@@ -420,6 +617,7 @@ public final class Alece implements Fonte {
             blocosNode.set("despesas", Json.SAIDA.valueToTree(despesasPorSlug.getOrDefault(slug, List.of())));
             blocosNode.set("votos", Json.SAIDA.valueToTree(votacoes.votos().getOrDefault(slug, List.of())));
             blocosNode.set("participacao_votacoes", Json.SAIDA.valueToTree(votacoes.participacao().getOrDefault(slug, List.of())));
+            blocosNode.set("proposicoes", Json.SAIDA.valueToTree(proposicoesPorSlug.getOrDefault(slug, List.of())));
             blocosNode.set("fontes", Json.SAIDA.valueToTree(Registros.fontesDosBlocos(blocosNode)));
             Json.gravar(pastaBlocos.resolve(slug + ".json"), blocosNode);
         }

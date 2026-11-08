@@ -776,6 +776,14 @@ Validação em 2026-11-03 com o User-Agent do projeto.
 - Na validação: 61 votações de 2023 a 2026 e 2.427 votos nos 54 deputados em exercício. 377 linhas de quem não está em exercício ficaram fora.
 - O ETL lê a planilha com `Planilha.java`: só a primeira aba, sem DTD nem entidade externa.
 
+### `alece-proposicoes`: proposições
+
+- URL base: `https://www2.al.ce.gov.br/legislativo/proposicoes/numero.php?nome=31_legislatura&tabela={tabela}&opcao={opcao}&absolutepage={page}`. Validação em 2026-11-08.
+- Tabelas: projetos de lei (`projeto_lei`), projetos de indicação (`projeto_indi`), projetos de decreto legislativo (`projeto_decre`), projetos de lei complementar (`projeto_compl`), propostas de emenda constitucional (`projeto_emen`) e projetos de resolução (`projeto_reso`).
+- Situação: tramitando (`opcao=T`) e deliberado (`opcao=D`).
+- Cada página HTML traz 20 proposições em blocos com número/ano, autoria, data de entrada (`dd.MM.yy`), ementa e endereço da tramitação oficial.
+- Autores são vinculados pela mesma chave de nome das despesas e votações nominais (`chaveDoNome`). Coautorias são separadas por vírgula ou " e ", com atribuição a cada deputado e sinalização de proponente para o primeiro autor. Autor sem perfil em exercício é descartado. Ementas passam pela guarda de privacidade.
+
 ### `ce-transparencia` e `ce-diario-oficial`: Executivo estadual
 
 - Transparência orçamentária: `https://transparencia.ce.gov.br/`

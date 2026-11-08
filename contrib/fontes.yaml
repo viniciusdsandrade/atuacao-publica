@@ -1835,6 +1835,21 @@
   status: validado
   validado_em: 2026-11-07
 
+- id: alece-proposicoes
+  nome: Assembleia Legislativa do Estado do Ceará, proposições
+  orgao: Assembleia Legislativa do Estado do Ceará
+  esfera: estadual
+  ente: CE
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://www2.al.ce.gov.br/legislativo/proposicoes/numero.php
+  formato: HTML
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Proposições legislativas da 31ª legislatura (2023 a 2026), por tipo (PL, PI, PDL, PLC, PEC, PR) e situação (tramitando ou deliberado), em listagens HTML paginadas. O vínculo é pelo nome dos autores, e autor sem perfil em exercício é descartado. Ementas com CPF são higienizadas."
+  status: validado
+  validado_em: 2026-11-08
+
 - id: alesc-deputados
   nome: Assembleia Legislativa do Estado de Santa Catarina, deputados estaduais
   orgao: Assembleia Legislativa do Estado de Santa Catarina

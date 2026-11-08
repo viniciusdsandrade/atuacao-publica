@@ -292,6 +292,49 @@ class AleceTest {
         assertEquals("comissao", resultado.get("missias-dias").get(0).tipo());
     }
 
+    @Test
+    void extraiProposicoesDeFragmentoHtml() {
+        String html = """
+                <table border='0' width='95%'>
+                  <tr><td>
+                    <table border='0' cellspacing='3'>
+                      <tr>
+                        <td width='15%' bgcolor='#EFEFEF'><b>N&ordm; do Proj.:</b></font><br><font face='Verdana' size='1'>1/23 </font></td>
+                        <td width='55%' bgcolor='#EFEFEF'><font face='Verdana' size='1'><b>Autor:</b></font><br><font face='Verdana' size='1'>RENATO ROSENO</font></td>
+                        <td width='16%' bgcolor='#EFEFEF'><font face='Verdana' size='1'><b>Entrada:</b></font><br><font face='Verdana' size='1'>02.02.23</font></td>
+                      </tr>
+                    </table>
+                  </td></tr>
+                  <tr><td>
+                    <table border='0' cellspacing='3'>
+                      <tr>
+                        <td width='100%' bgcolor='#EFEFEF'><b>Ementa:</b></font><br><font face='Verdana' size='1'><a href='https://www2.al.ce.gov.br/legislativo/tramit2023/pl1_23.htm'>ACRESCE DISPOSITIVO &Agrave; LEI DO IPVA.</a></font></td>
+                      </tr>
+                    </table>
+                  </td></tr>
+                </table>
+                """;
+
+        List<Alece.ProposicaoBruta> lista = Alece.extrairProposicoesDoHtml(html);
+        assertEquals(1, lista.size());
+        assertEquals("1/23", lista.getFirst().numeroCompleto());
+        assertEquals("RENATO ROSENO", lista.getFirst().autor());
+        assertEquals("02.02.23", lista.getFirst().dataEntrada());
+        assertEquals("https://www2.al.ce.gov.br/legislativo/tramit2023/pl1_23.htm", lista.getFirst().urlTramitacao());
+        assertEquals("ACRESCE DISPOSITIVO À LEI DO IPVA.", lista.getFirst().ementa());
+    }
+
+    @Test
+    void detectaTotalDePaginasDeProposicoes() {
+        String html = "<b>Página 1 de 124: </b><b>[ </b><b>1</b> <a href='...'>2</a>";
+        assertEquals(124, Alece.totalPaginasDoHtml(html));
+
+        String htmlSemPaginacao = "N&ordm; do Proj.: 1/23";
+        assertEquals(1, Alece.totalPaginasDoHtml(htmlSemPaginacao));
+
+        assertEquals(0, Alece.totalPaginasDoHtml(""));
+    }
+
     private static void gravarMetadado(Path pastaFonte, String relativo, String url) throws IOException {
         Path arquivo = pastaFonte.resolve(relativo);
         Path meta = arquivo.resolveSibling(arquivo.getFileName() + ".meta.json");
