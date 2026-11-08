@@ -23,6 +23,9 @@ ROTAS=(
   "127.0.0.12 ww4.al.rs.gov.br 443 5000"
   "127.0.0.13 www.al.es.gov.br 443"
   "127.0.0.14 www.cl.df.gov.br 443"
+  "127.0.0.15 transparencia.al.rs.gov.br 443"
+  "127.0.0.16 www3.al.es.gov.br 443"
+  "127.0.0.17 ple.cl.df.gov.br 443"
 )
 
 pasta=$(mktemp -d)
@@ -70,7 +73,10 @@ done | sudo tee -a /etc/hosts > /dev/null
 for url in "https://dadosabertos.almg.gov.br/api/v2/legislaturas/pesquisa_deputados?leg=20&formato=json" \
     "https://ww4.al.rs.gov.br:5000/listarDestaqueDeputados" \
     "https://www.al.es.gov.br/Deputado/Lista" \
-    "https://www.cl.df.gov.br/deputados-2023-2026"; do
+    "https://www.cl.df.gov.br/deputados-2023-2026" \
+    "https://transparencia.al.rs.gov.br/" \
+    "https://www3.al.es.gov.br/" \
+    "https://ple.cl.df.gov.br/"; do
   codigo=$(curl -s -o /dev/null --max-time 30 -w '%{http_code}' "$url" || true)
   echo "túnel: ${url%%\?*} respondeu ${codigo:-sem resposta}"
 done

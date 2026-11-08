@@ -77,10 +77,10 @@ ALMG, ALRS, ALES e CLDF recusam conexão do runner nos EUA. O túnel faz essas c
 4. Grave em `~tunel/.ssh/authorized_keys`, com dono `tunel` e modo 600, uma linha só, com o conteúdo de `tunel-ci.pub` no fim:
 
    ```
-   restrict,port-forwarding,permitopen="dadosabertos.almg.gov.br:443",permitopen="ww4.al.rs.gov.br:443",permitopen="ww4.al.rs.gov.br:5000",permitopen="www.al.es.gov.br:443",permitopen="www.cl.df.gov.br:443" ssh-ed25519 AAAA... tunel-ci
+   restrict,port-forwarding,permitopen="dadosabertos.almg.gov.br:443",permitopen="ww4.al.rs.gov.br:443",permitopen="ww4.al.rs.gov.br:5000",permitopen="www.al.es.gov.br:443",permitopen="www.cl.df.gov.br:443",permitopen="transparencia.al.rs.gov.br:443",permitopen="www3.al.es.gov.br:443",permitopen="ple.cl.df.gov.br:443" ssh-ed25519 AAAA... tunel-ci
    ```
 
-   A chave só encaminha para esses cinco destinos e não abre shell.
+   A chave só encaminha para esses oito destinos e não abre shell.
 5. Fixe a chave do servidor: rode `ssh-keyscan -t ed25519 <IP>` e confira a impressão digital (`ssh-keygen -lf`) com a mostrada no console serial da máquina.
 6. Em **Settings > Secrets and variables > Actions > Secrets**, crie:
    - `TUNEL_SSH_DESTINO`: `tunel@<IP>`;

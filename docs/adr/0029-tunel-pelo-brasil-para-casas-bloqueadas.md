@@ -32,8 +32,8 @@ A Vultr em São Paulo também respondeu para ALMG, ALRS e ALES. A CLDF não foi 
 3. O passo `túnel pelo Brasil` do workflow roda `scripts/tunel-brasil.sh` antes das coletas:
    - abre um encaminhamento local por host (`ssh -L`), com um endereço de loopback para cada um, porque todos usam a porta 443;
    - fixa a chave do servidor por `known_hosts`, sem confiar na primeira conexão;
-   - aponta os quatro nomes para o loopback no `/etc/hosts` do runner, só depois de o túnel abrir.
-4. Na máquina, a chave do usuário do túnel só permite encaminhar para esses quatro hosts (`restrict,port-forwarding,permitopen=...`), sem shell.
+   - aponta os nomes para o loopback no `/etc/hosts` do runner, só depois de o túnel abrir (`dadosabertos.almg.gov.br`, `ww4.al.rs.gov.br`, `transparencia.al.rs.gov.br`, `www.al.es.gov.br`, `www3.al.es.gov.br`, `www.cl.df.gov.br` e `ple.cl.df.gov.br`).
+4. Na máquina, a chave do usuário do túnel só permite encaminhar para esses hosts autorizados (`restrict,port-forwarding,permitopen=...`), sem shell.
 5. Segredos do repositório: `TUNEL_SSH_DESTINO`, `TUNEL_SSH_CHAVE` e `TUNEL_SSH_KNOWN_HOSTS`. Sem eles, o passo não faz nada, e as coletas falham como antes.
 6. O ETL não muda. Ele resolve os nomes pelo sistema e conecta como sempre.
 
