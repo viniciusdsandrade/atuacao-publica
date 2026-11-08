@@ -20,7 +20,9 @@ import etl.Contexto;
 import etl.Json;
 import etl.Registros.Despesa;
 import etl.Registros.OrgaoOuFrente;
+import etl.Registros.Participacao;
 import etl.Registros.Prov;
+import etl.Registros.Voto;
 import etl.Texto;
 import tools.jackson.databind.JsonNode;
 
@@ -266,6 +268,90 @@ class AlegoTest {
         assertEquals("deputado_estadual", m1.get("cargo").stringValue());
         assertEquals(20, m1.get("legislatura").asInt());
         assertEquals("Em exercício", m1.get("situacao").stringValue());
+    }
+
+    @Test
+    void formataVotoEChaveDoNome() {
+        assertEquals("Sim", Alego.formatarVoto("SIM"));
+        assertEquals("Não", Alego.formatarVoto("NÃO"));
+        assertEquals("Não", Alego.formatarVoto("NAO"));
+        assertEquals("Abstenção", Alego.formatarVoto("ABSTENÇÃO"));
+        assertEquals("Sem voto registrado", Alego.formatarVoto(""));
+        assertEquals("Sem voto registrado", Alego.formatarVoto(null));
+        assertEquals("Obstrução", Alego.formatarVoto("OBSTRUÇÃO"));
+
+        assertEquals("GEORGE MORAIS", Alego.chaveDoNome("Dr. George Morais"));
+        assertEquals("CRISTIANE", Alego.chaveDoNome("Dra. Cristiane"));
+        assertEquals("EDUARDO PRADO", Alego.chaveDoNome("Delegado Eduardo Prado"));
+        assertEquals("EDUARDO PRADO", Alego.chaveDoNome("Del. Eduardo Prado"));
+        assertEquals("MARCELO FREITAS", Alego.chaveDoNome("Coronel Marcelo Freitas"));
+        assertEquals("MAURO RUBEM", Alego.chaveDoNome("Professor Mauro Rubem"));
+    }
+
+    @Test
+    void extraiVotacoesENormalizaParticipacao(@TempDir Path tempDir) throws Exception {
+        Path raiz = tempDir;
+        Path dados = tempDir.resolve("data");
+        Contexto ctx = new Contexto(raiz, dados, null, null, Instant.parse("2026-11-06T12:00:00Z"), null);
+
+        Path rawAlego = ctx.raw().resolve("alego");
+        Files.createDirectories(rawAlego.resolve("votacoes"));
+
+        String jsonVotacoes = """
+                [
+                  {
+                    "parlamentar": "Dr. George Morais",
+                    "data_sessao": "2024-05-15",
+                    "nome_sessao": "15ª Sessão Ordinária",
+                    "ementa_projeto": "Dispõe sobre diretrizes orçamentárias.",
+                    "pauta_id": 12345,
+                    "tipo_voto": "SIM",
+                    "partido_sigla": "PDT"
+                  },
+                  {
+                    "parlamentar": "George Morais",
+                    "data_sessao": "2024-05-16",
+                    "nome_sessao": "16ª Sessão Ordinária",
+                    "ementa_projeto": "Altera lei de incentivo fiscal.",
+                    "pauta_id": 12346,
+                    "tipo_voto": "NÃO",
+                    "partido_sigla": "PDT"
+                  },
+                  {
+                    "parlamentar": "Desconhecido Sem Perfil",
+                    "data_sessao": "2024-05-16",
+                    "nome_sessao": "16ª Sessão Ordinária",
+                    "ementa_projeto": "Outro projeto.",
+                    "pauta_id": 12346,
+                    "tipo_voto": "SIM",
+                    "partido_sigla": "XYZ"
+                  }
+                ]
+                """;
+        Files.writeString(rawAlego.resolve("votacoes/2024.json"), jsonVotacoes);
+        gravarMetadado(rawAlego, "votacoes/2024.json", Alego.URL_VOTACOES + "?todos=true&ano=2024&tipo=detalhes");
+
+        Alego.DeputadoBruto dep = new Alego.DeputadoBruto("99", "George Morais", "PDT");
+        Alego.Votacoes resultado = Alego.votacoesPorId(ctx, List.of(dep));
+
+        List<Voto> votos = resultado.votos().get("99");
+        assertNotNull(votos);
+        assertEquals(2, votos.size());
+        assertEquals("Sim", votos.get(0).voto());
+        assertEquals("pauta-12345-2024-05-15", votos.get(0).votacaoId());
+        assertEquals("2024-05-15", votos.get(0).data());
+        assertEquals("Não", votos.get(1).voto());
+
+        List<Participacao> participacoes = resultado.participacao().get("99");
+        assertNotNull(participacoes);
+        assertEquals(1, participacoes.size());
+        Participacao p = participacoes.get(0);
+        assertEquals("2024", p.periodo());
+        assertEquals(2, p.votacoesNominais());
+        assertEquals(2, p.votosRegistrados());
+        assertEquals(0, p.semRegistro());
+        assertEquals(1, p.porTipo().get("Sim"));
+        assertEquals(1, p.porTipo().get("Não"));
     }
 
     private static void gravarMetadado(Path dir, String arquivo, String url) throws IOException {

@@ -1970,6 +1970,21 @@
   status: validado
   validado_em: 2026-11-06
 
+- id: alego-votacoes
+  nome: Assembleia Legislativa do Estado de Goiás, votações nominais em plenário
+  orgao: Assembleia Legislativa do Estado de Goiás
+  esfera: estadual
+  ente: GO
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://transparencia.al.go.leg.br/api/transparencia/votacoes.json
+  formato: JSON
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Cobre 2023 a 2026. Detalhe anual de votos nominais por pauta e parlamentar em exercício. Casamento pelo nome do parlamentar normalizado com remoção de patentes e títulos."
+  status: validado
+  validado_em: 2026-11-08
+
 - id: ales-deputados
   nome: Assembleia Legislativa do Estado do Espírito Santo, deputados estaduais
   orgao: Assembleia Legislativa do Estado do Espírito Santo

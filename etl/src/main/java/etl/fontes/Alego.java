@@ -27,8 +27,10 @@ import etl.Registros.Despesa;
 import etl.Registros.LinkOficial;
 import etl.Registros.Mandato;
 import etl.Registros.OrgaoOuFrente;
+import etl.Registros.Participacao;
 import etl.Registros.Pessoa;
 import etl.Registros.Prov;
+import etl.Registros.Voto;
 import etl.Texto;
 import tools.jackson.databind.JsonNode;
 
@@ -47,6 +49,8 @@ public final class Alego implements Fonte {
     public static final String URL_DEPUTADOS = "https://portal.al.go.leg.br/deputados/em-exercicio";
     public static final String FONTE_DESPESAS = "alego-despesas";
     public static final String URL_DESPESAS = "https://transparencia.al.go.leg.br/api/transparencia/verbas_indenizatorias";
+    public static final String FONTE_VOTACOES = "alego-votacoes";
+    public static final String URL_VOTACOES = "https://transparencia.al.go.leg.br/api/transparencia/votacoes.json";
     /** Primeiro ano das despesas: a 20ª legislatura começa em 2023. */
     static final int PRIMEIRO_ANO_DESPESAS = 2023;
     public static final String UF = "GO";
@@ -162,6 +166,12 @@ public final class Alego implements Fonte {
                 }
             }
         }
+
+        // Votações nominais em plenário: JSON anual com tipo=detalhes.
+        for (int ano = PRIMEIRO_ANO_DESPESAS; ano <= ctx.hoje().getYear(); ano++) {
+            coleta.obterOpcional(URL_VOTACOES + "?todos=true&ano=" + ano + "&tipo=detalhes",
+                    arquivoDeVotacoes(ano), "application/json", Politica.porAnoSemanal(ano, ctx.hoje()));
+        }
     }
 
     private static String arquivoDoResumo(int ano, int mes) {
@@ -257,6 +267,128 @@ public final class Alego implements Fonte {
         return porDeputado;
     }
 
+    public static String arquivoDeVotacoes(int ano) {
+        return String.format(Locale.ROOT, "votacoes/%d.json", ano);
+    }
+
+    public record Votacoes(Map<String, List<Voto>> votos, Map<String, List<Participacao>> participacao) {
+    }
+
+    public static Votacoes votacoesPorId(Contexto ctx, List<DeputadoBruto> deputados) {
+        Map<String, String> idPorNome = new HashMap<>();
+        for (DeputadoBruto d : deputados) {
+            idPorNome.put(chaveDoNome(d.nome()), d.id());
+        }
+
+        Map<String, List<Voto>> votos = new HashMap<>();
+        Map<String, Map<Integer, int[]>> contagem = new HashMap<>();
+        Map<String, Map<Integer, Map<String, Integer>>> porTipo = new HashMap<>();
+        Map<Integer, Coleta.Arquivo> arqPorAno = new HashMap<>();
+        int semPerfil = 0;
+
+        for (int ano = PRIMEIRO_ANO_DESPESAS; ano <= ctx.hoje().getYear(); ano++) {
+            Coleta.Arquivo arq = Coleta.metadados(ctx, "alego", arquivoDeVotacoes(ano));
+            if (arq == null || arq.bytes() == 0 || !Files.exists(Coleta.caminho(ctx, arq))) {
+                continue;
+            }
+            arqPorAno.put(ano, arq);
+            try {
+                JsonNode lista = Json.ler(Coleta.caminho(ctx, arq));
+                if (!lista.isArray()) {
+                    continue;
+                }
+                Prov prov = Prov.de(FONTE_VOTACOES, arq.url(), arq);
+                for (JsonNode item : lista) {
+                    String parlamentar = Json.texto(item, "parlamentar");
+                    if (parlamentar == null || parlamentar.isBlank()) {
+                        continue;
+                    }
+                    String id = idPorNome.get(chaveDoNome(parlamentar));
+                    if (id == null) {
+                        semPerfil++;
+                        continue;
+                    }
+                    String dataSessao = Json.texto(item, "data_sessao");
+                    if (dataSessao == null || dataSessao.isBlank()) {
+                        continue;
+                    }
+                    int anoVoto = ano;
+                    try {
+                        anoVoto = LocalDate.parse(dataSessao).getYear();
+                    } catch (Exception ignored) {
+                    }
+                    int pautaId = item.path("pauta_id").asInt();
+                    String idVotacao = "pauta-" + pautaId + "-" + dataSessao;
+                    String ementa = Guarda.semCpf(Json.texto(item, "ementa_projeto"));
+                    String votoBruto = Json.texto(item, "tipo_voto");
+                    String votoTexto = formatarVoto(votoBruto);
+                    String partido = Json.texto(item, "partido_sigla");
+
+                    votos.computeIfAbsent(id, k -> new ArrayList<>()).add(new Voto(
+                            idVotacao, dataSessao, "PLEN", null, ementa, votoTexto,
+                            partido, null, null, null, prov));
+
+                    int[] n = contagem.computeIfAbsent(id, k -> new HashMap<>())
+                            .computeIfAbsent(anoVoto, k -> new int[2]);
+                    n[0]++;
+                    if (!"Sem voto registrado".equals(votoTexto)) {
+                        n[1]++;
+                    }
+                    porTipo.computeIfAbsent(id, k -> new HashMap<>())
+                            .computeIfAbsent(anoVoto, k -> new java.util.TreeMap<>())
+                            .merge(votoTexto, 1, Integer::sum);
+                }
+            } catch (Exception e) {
+                System.err.println("alego: erro ao ler votações de " + ano + ": " + e.getMessage());
+            }
+        }
+
+        Map<String, List<Participacao>> participacao = new HashMap<>();
+        for (var porDeputado : contagem.entrySet()) {
+            String id = porDeputado.getKey();
+            for (var entryAno : new java.util.TreeMap<>(porDeputado.getValue()).entrySet()) {
+                int anoInt = entryAno.getKey();
+                int totalVot = entryAno.getValue()[0];
+                int presencas = entryAno.getValue()[1];
+                int ausencias = totalVot - presencas;
+                Coleta.Arquivo arqAno = arqPorAno.get(anoInt);
+                Prov provAno = arqAno != null
+                        ? Prov.de(FONTE_VOTACOES, arqAno.url(), arqAno)
+                        : new Prov(FONTE_VOTACOES, URL_VOTACOES + "?todos=true&ano=" + anoInt + "&tipo=detalhes", ctx.agora());
+                participacao.computeIfAbsent(id, k -> new ArrayList<>()).add(new Participacao(
+                        String.valueOf(anoInt), totalVot, presencas, ausencias,
+                        porTipo.get(id).get(anoInt), provAno));
+            }
+        }
+
+        int totalVotos = votos.values().stream().mapToInt(List::size).sum();
+        System.out.println("alego: " + totalVotos + " votos nominais em " + votos.size() + " deputados; "
+                + semPerfil + " linhas de quem não tem perfil em exercício");
+        return new Votacoes(votos, participacao);
+    }
+
+    public static String formatarVoto(String voto) {
+        if (voto == null || voto.isBlank()) {
+            return "Sem voto registrado";
+        }
+        String v = voto.trim().toUpperCase(Locale.ROOT);
+        return switch (v) {
+            case "SIM" -> "Sim";
+            case "NÃO", "NAO" -> "Não";
+            case "ABSTENÇÃO", "ABSTENCAO" -> "Abstenção";
+            default -> v.substring(0, 1).toUpperCase(Locale.ROOT) + v.substring(1).toLowerCase(Locale.ROOT);
+        };
+    }
+
+    public static String chaveDoNome(String nome) {
+        if (nome == null) {
+            return "";
+        }
+        String s = nome.toUpperCase(Locale.ROOT).trim();
+        s = s.replaceAll("^(?i)(DR[ªA]?\\.?|DOUTOR[A]?|DEL\\.?|DELEGAD[OA]|CORONEL|MAJOR|PROFESSOR[A]?|PR\\.?)\\s+", "");
+        return Texto.normalizarNome(s);
+    }
+
     @Override
     public void normalize(Contexto ctx) {
         List<DeputadoBruto> deputados = extrairDeputados(ctx);
@@ -277,6 +409,7 @@ public final class Alego implements Fonte {
 
         Map<String, List<OrgaoOuFrente>> comissoesPorDeputado = extrairComissoes(ctx);
         Map<String, List<Despesa>> despesasPorDeputado = despesasPorDeputado(ctx, deputados);
+        Votacoes votacoes = votacoesPorId(ctx, deputados);
 
         List<Pessoa> pessoas = new ArrayList<>();
 
@@ -341,6 +474,8 @@ public final class Alego implements Fonte {
             blocosNode.set("mandatos", Json.SAIDA.valueToTree(mandatos));
             blocosNode.set("orgaos_e_frentes", Json.SAIDA.valueToTree(orgaos));
             blocosNode.set("despesas", Json.SAIDA.valueToTree(despesasPorDeputado.getOrDefault(id, List.of())));
+            blocosNode.set("votos", Json.SAIDA.valueToTree(votacoes.votos().getOrDefault(id, List.of())));
+            blocosNode.set("participacao_votacoes", Json.SAIDA.valueToTree(votacoes.participacao().getOrDefault(id, List.of())));
             blocosNode.set("fontes", Json.SAIDA.valueToTree(Registros.fontesDosBlocos(blocosNode)));
             Json.gravar(pastaBlocos.resolve(id + ".json"), blocosNode);
         }

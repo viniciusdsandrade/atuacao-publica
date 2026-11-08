@@ -858,6 +858,13 @@ Validação em 2026-11-03 com o User-Agent do projeto.
 - O detalhe traz também o e-mail e as redes do gabinete. O projeto não guarda esses campos.
 - Respondeu a provas nos EUA (Azure e AWS) e no Brasil.
 
+### `alego-votacoes`: votações nominais em plenário
+
+- URL base: `https://transparencia.al.go.leg.br/api/transparencia/votacoes.json`. JSON anual com `?todos=true&ano={ano}&tipo=detalhes`.
+- Detalhes nominais por pauta com `parlamentar`, `data_sessao`, `nome_sessao`, `ementa_projeto`, `pauta_id`, `tipo_voto` e `partido_sigla`.
+- Casamento com deputados em exercício pelo nome normalizado (`chaveDoNome`), removendo títulos e patentes (Dr., Dra., Delegado, Coronel, Major, Professor, Pr.).
+- Alimenta os blocos `votos` e `participacao_votacoes` dos parlamentares da 20ª legislatura (2023–2026).
+
 ### `go-transparencia` e `go-diario-oficial`: Executivo estadual
 
 - Transparência orçamentária: `https://www.transparencia.go.gov.br/`
