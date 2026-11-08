@@ -126,6 +126,17 @@ class PublicadorTest {
     }
 
     @Test
+    void proposicaoSemDataVaiParaOAnoDaIdentificacaoEVotoSemDataSegueFora() {
+        JsonNode semData = Json.FONTE.readTree("{\"identificacao\":\"RAP 1/2026\",\"ano\":2026,\"data_apresentacao\":null}");
+        JsonNode comData = Json.FONTE.readTree("{\"identificacao\":\"PL 9/2025\",\"ano\":2025,\"data_apresentacao\":\"2024-12-30\"}");
+        JsonNode votoSemData = Json.FONTE.readTree("{\"votacao_id\":\"x\",\"ano\":2026,\"data\":null}");
+
+        assertEquals(2026, Publicador.ano(semData, "proposicoes"));
+        assertEquals(2024, Publicador.ano(comData, "proposicoes"), "a data prevalece sobre o ano da identificação");
+        assertEquals(null, Publicador.ano(votoSemData, "votos"), "só proposição usa o ano da identificação");
+    }
+
+    @Test
     void escaparCsvTrataAspasEVirgulas() {
         assertEquals("", Publicador.escaparCsv(null));
         assertEquals("normal", Publicador.escaparCsv("normal"));

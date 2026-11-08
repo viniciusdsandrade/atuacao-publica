@@ -530,12 +530,19 @@ public final class Publicador {
         return arquivos;
     }
 
-    private static Integer ano(JsonNode registro, String bloco) {
+    /**
+     * Ano do arquivo de detalhe em que o registro entra. Registro sem ano fica fora dos arquivos e só conta no total.
+     * Proposição sem data na fonte (a lista da ALRS não traz data) usa o ano da identificação, que é o da apresentação.
+     */
+    static Integer ano(JsonNode registro, String bloco) {
         if (registro.hasNonNull("ano") && (bloco.equals("despesas") || bloco.equals("emendas"))) {
             return registro.get("ano").asInt();
         }
         String data = textoOuVazio(registro, CAMPO_DATA.get(bloco));
-        return data.length() >= 4 && data.substring(0, 4).matches("[0-9]{4}") ? Integer.valueOf(data.substring(0, 4)) : null;
+        if (data.length() >= 4 && data.substring(0, 4).matches("[0-9]{4}")) {
+            return Integer.valueOf(data.substring(0, 4));
+        }
+        return bloco.equals("proposicoes") && registro.hasNonNull("ano") ? Integer.valueOf(registro.get("ano").asInt()) : null;
     }
 
     private static ObjectNode entradaDoIndice(ObjectNode doc) {
