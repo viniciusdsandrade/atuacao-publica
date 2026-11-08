@@ -711,6 +711,23 @@ Validação em 2026-11-03 com o User-Agent do projeto.
 - Na validação, 33.204 votos nos 55 deputados: 30.909 Sim e 2.295 Não. Por ano: 4.856 (2022), 7.819 (2023), 7.697 (2024), 8.090 (2025) e 4.742 (2026). 4.556 votos são a segunda votação ou seguinte da mesma proposição no dia.
 - Recusa conexão de fora do Brasil (ADR-0029). Entra pela coleta local cifrada (ADR-0034).
 
+### `alrs-proposicoes`: proposições
+
+- URL base: `https://ww4.al.rs.gov.br/deputados/{id}/proposicoes`, com o id do perfil. Uma página por deputado, com todas as da legislatura. Cerca de 8 s por página. Validação em 2026-11-08.
+- Tabela com proposição (link com tipo, número, ano e um identificador), proponente, situação, tramitação (o órgão onde está) e ementa. Não traz data de apresentação: o ano da identificação, como em "RAP 1/2026", vale como ano. O `publish` agrupa por esse ano quando a data falta.
+- O tipo é a sigla da fonte (PL, REQ, RAP). A situação leva o órgão entre parênteses, quando existe. Entram 2022 em diante.
+- Na validação, 4.507 proposições nos 55 deputados.
+- A página de cada proposição (`/proposicao/{tipo}/{número}/{ano}/{id}`) respondeu 200.
+- Recusa conexão de fora do Brasil (ADR-0029). Entra pela coleta local cifrada (ADR-0034).
+
+### `alrs-gastos`: gastos da cota parlamentar
+
+- URL base: `https://transparencia.al.rs.gov.br/parlamentares/gastos/pesquisa?ano={ano}&mes={mes}&solicitante={id}`, com o id do perfil. Uma página por deputado e mês. Validação em 2026-11-08.
+- A página traz saldo, cota do mês e, em "Despesas do Mês", o total por categoria ("Passagens Aereas", "Telefones", "Indenização por Uso de Veículo Particular em Serviço"). Não há fornecedor nem nota. Cada categoria e mês vira uma linha, sem CNPJ: é um total, não uma nota.
+- Mês anterior ao mandato vem sem o bloco de despesas e não gera linha.
+- Na validação, 27.684 linhas de 2022 a 2026, R$ 35.820.754,75, em 23 categorias. Em 4 dos cerca de 3 mil meses, o total da própria página difere da soma das categorias (de R$ 2,39 a R$ 575,43), e o ETL mantém as categorias como a página as dá.
+- Recusa conexão de fora do Brasil (ADR-0029). Entra pela coleta local cifrada (ADR-0034).
+
 ### `rs-transparencia` e `rs-diario-oficial`: Executivo estadual
 
 - Transparência orçamentária: `https://www.transparencia.rs.gov.br/` e `https://transparencia.al.rs.gov.br/`
@@ -872,6 +889,16 @@ Validação em 2026-11-03 com o User-Agent do projeto.
 - Na validação, 17.273 itens distintos de 2022 a 2026 nos sete tipos. 12.311 são de deputado em exercício, e os 30 têm proposição. Os outros 4.962 são de comissões, do Governador, de ex-deputados e de suplentes.
 - 29 páginas vieram com erro e foram refeitas item a item. 52 itens não abrem nem sozinhos e ficam fora: 26 PL, 11 PR, 8 PDL e 5 PLC de 2023, e um PL e um PR de 2022.
 - A primeira coleta levou 36 minutos. Depois, só o ano corrente atualiza, uma vez por semana.
+- Recusa conexão de fora do Brasil (ADR-0029). Entra pela coleta local cifrada (ADR-0034).
+
+### `ales-cotas`: cotas parlamentares
+
+- URL base: `https://www.al.es.gov.br/Transparencia/Api/CotasParlamentaresNovoTable/{mês inicial}/{mês final}/{ano}/{gabinete}/false`, na página `https://www.al.es.gov.br/Transparencia/CotasParlamentares`. O ETL pede um mês por vez. Validação em 2026-11-08.
+- O gabinete é um id de setor do seletor da página (30 opções "Gab. Dep. ..."), diferente do id do deputado. O fragmento traz o nome civil do deputado, que o ETL compara com o nome civil do perfil: assim o gabinete que muda de ocupante fica certo mês a mês. O perfil traz o nome com entidades HTML, e o ETL as decodifica antes de comparar.
+- Por produto, o fragmento traz quantidade e "Valor Solicitado": é o valor que o gabinete pediu, não necessariamente o pago. Não há fornecedor. Produto de valor zero não vira linha. Em "Devolução de diária", o valor vem na coluna da quantidade.
+- O fragmento também traz telefone e e-mail do deputado, que o ETL não lê.
+- Mês sem registro responde "Nenhuma despesa encontrada". Em 2026-11-08, 70 de 70 meses assim, sorteados desde 2023-02, seguiram vazios na fonte.
+- Na validação, 3.108 linhas de 2022 a 2026 nos 30 deputados, R$ 7.724.090,96: 486 em 2022, 1.004 em 2023, 645 em 2024, 587 em 2025 e 386 em 2026. A soma dos produtos bateu com o total de cada mês.
 - Recusa conexão de fora do Brasil (ADR-0029). Entra pela coleta local cifrada (ADR-0034).
 
 ### `es-transparencia` e `es-dioe`: Executivo estadual

@@ -95,6 +95,12 @@ Não é presença. É a contagem de votos registrados em votações nominais.
 - Reprografia e correspondência vêm só em quantidade, sem valor, e ficam fora.
 - Não há verba de gabinete nem ressarcimento na fonte. O total não é comparável com a cota parlamentar federal.
 
+### Assembleias com total por categoria
+
+- ALRS e ALES não publicam fornecedor nem nota. Cada linha é um total por categoria (ALRS) ou por produto (ALES) em um mês, sem CNPJ. Não é uma nota fiscal, e o total do deputado é a soma dessas linhas.
+- ALES: o valor é o solicitado pelo gabinete.
+- ALEPE: documento com total e sem nota entra como uma linha, na categoria "Sem detalhamento na fonte".
+
 ### Minimização
 
 - CPF de fornecedor pessoa física é descartado. Só CNPJ (14 dígitos) é publicado.

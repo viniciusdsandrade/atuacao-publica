@@ -1730,6 +1730,36 @@
   status: validado
   validado_em: 2026-11-07
 
+- id: alrs-proposicoes
+  nome: Assembleia Legislativa do Estado do Rio Grande do Sul, proposições por deputado
+  orgao: Assembleia Legislativa do Estado do Rio Grande do Sul
+  esfera: estadual
+  ente: RS
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://ww4.al.rs.gov.br/deputados/
+  formato: HTML
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Uma página por deputado, com tipo, número, ano, situação, órgão e ementa. Sem data de apresentação: vale o ano da identificação. Recusa conexão de fora do Brasil."
+  status: validado
+  validado_em: 2026-11-08
+
+- id: alrs-gastos
+  nome: Assembleia Legislativa do Estado do Rio Grande do Sul, gastos da cota parlamentar por mês
+  orgao: Assembleia Legislativa do Estado do Rio Grande do Sul
+  esfera: estadual
+  ente: RS
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://transparencia.al.rs.gov.br/parlamentares/gastos/pesquisa
+  formato: HTML
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Uma página por deputado e mês, com o total por categoria. Sem fornecedor nem nota. Recusa conexão de fora do Brasil."
+  status: validado
+  validado_em: 2026-11-08
+
 - id: alece-deputados
   nome: Assembleia Legislativa do Estado do Ceará, deputados estaduais
   orgao: Assembleia Legislativa do Estado do Ceará
@@ -1984,6 +2014,21 @@
   limitacoes: "Por tipo e ano, em páginas de 20. Autor só por nome. Cada item traz a tramitação inteira, de 5 a 20 KB. Item com campo nulo faz a página inteira responder erro: o ETL refaz item a item, e 52 itens de 2022 e 2023 não abrem. Recusa conexão de fora do Brasil."
   status: validado
   validado_em: 2026-11-07
+
+- id: ales-cotas
+  nome: Assembleia Legislativa do Estado do Espírito Santo, cotas parlamentares por gabinete e mês
+  orgao: Assembleia Legislativa do Estado do Espírito Santo
+  esfera: estadual
+  ente: ES
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://www.al.es.gov.br/Transparencia/CotasParlamentares
+  formato: HTML
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Um fragmento por gabinete e mês, com o valor solicitado por produto. Sem fornecedor. O id do gabinete difere do id do deputado; o vínculo é pelo nome civil. A página traz telefone e e-mail, que o ETL não lê. Recusa conexão de fora do Brasil."
+  status: validado
+  validado_em: 2026-11-08
 
 - id: alepa-deputados
   nome: Assembleia Legislativa do Estado do Pará, deputados estaduais

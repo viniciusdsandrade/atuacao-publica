@@ -61,6 +61,67 @@ class AlrsTest {
     }
 
     @Test
+    void proposicoesDaPaginaDoDeputadoUsamOAnoDaIdentificacaoEIgnoramAntesDe2022() {
+        // Linhas no formato da página do deputado 2144 (a terceira é de 2021 e a quarta repete a primeira).
+        String html = """
+                <table><thead><tr><th>Proposição</th><th>Proponente</th><th>Situação</th><th>Tramitação</th><th>Ementa</th></tr></thead><tbody>
+                <tr><td><a href="/proposicao/RAP/1/2026/c847ad16-0139-11f1-bb5d-da08d5ee8534"> RAP 1 2026 </a></td><td>Deputado(a) Adão Pretto Filho</td>
+                <td>Entrada</td><td>Comis de Agricultura Pecuária e Cooperativismo</td>
+                <td class="proposicao-ementa">Audiência Pública para debater &ldquo;Políticas Públicas&rdquo; da pecuária familiar.</td></tr>
+                <tr><td><a href="/proposicao/REQ/1/2023/fc9b0264-598a-11ee-9cfe-0242c0a8a005"> REQ 1 2023 </a></td><td>Deputado(a) Adão Pretto Filho</td>
+                <td>Entrada</td><td></td><td class="proposicao-ementa">Convite ao SECRETÁRIO DE SEGURANÇA PÚBLICA, nos termos do Art. 258, § 1&deg;.</td></tr>
+                <tr><td><a href="/proposicao/PL/7/2021/aaaaaaaa-0000-0000-0000-000000000000"> PL 7 2021 </a></td><td>Deputado(a) Adão Pretto Filho</td>
+                <td>Arquivado</td><td></td><td class="proposicao-ementa">Proposição de 2021.</td></tr>
+                <tr><td><a href="/proposicao/RAP/1/2026/c847ad16-0139-11f1-bb5d-da08d5ee8534"> RAP 1 2026 </a></td><td>Deputado(a) Adão Pretto Filho</td>
+                <td>Entrada</td><td></td><td class="proposicao-ementa">Repetida.</td></tr>
+                </tbody></table>
+                """;
+        Prov prov = new Prov(Alrs.FONTE_PROPOSICOES, Alrs.urlProposicoes("2144"), Instant.parse("2026-11-08T12:00:00Z"));
+
+        var proposicoes = Alrs.proposicoesDaPagina(html, prov);
+
+        assertEquals(2, proposicoes.size(), "a de 2021 e a repetida ficam fora");
+        var rap = proposicoes.get(0);
+        assertEquals("RAP 1/2026", rap.identificacao());
+        assertEquals("RAP", rap.tipo());
+        assertEquals(2026, rap.ano());
+        assertEquals("Entrada (Comis de Agricultura Pecuária e Cooperativismo)", rap.situacao());
+        assertEquals("Audiência Pública para debater \u201CPolíticas Públicas\u201D da pecuária familiar.", rap.ementa());
+        assertEquals(null, rap.dataApresentacao(), "a página não traz data");
+        assertEquals("https://ww4.al.rs.gov.br/proposicao/RAP/1/2026/c847ad16-0139-11f1-bb5d-da08d5ee8534", rap.urlTexto());
+        assertEquals("Entrada", proposicoes.get(1).situacao());
+        assertTrue(proposicoes.get(1).ementa().endsWith("§ 1\u00B0."));
+    }
+
+    @Test
+    void gastosDoMesSaoOTotalPorCategoriaEMesAnteriorAoMandatoVemSemBloco() {
+        // Trecho no formato da página de março de 2025 do deputado 2144: o texto repete na versão larga e na estreita.
+        String html = """
+                <span class="x">3- Disponibilidade do Mês</span>
+                <section><span class="x">4- Despesas do Mês</span>
+                <span class="responsive-value justify-content-center" data-bs-toggle="modal" data-bs-target="#modalContrato">Impressoras - serviços de impressão local:</span><br>
+                <span class="responsive-value justify-content-center" data-bs-toggle="modal" data-bs-target="#modalContrato"> - R$245,14</span>
+                </span><span class="d-none d-lg-block">- R$ 245,14</span>
+                <span class="responsive-value justify-content-center" data-bs-toggle="modal" data-bs-target="#modalContrato">Indenização por Uso de Veículo Particular em Serviço:</span><br>
+                <span class="responsive-value justify-content-center" data-bs-toggle="modal" data-bs-target="#modalContrato"> - R$14.635,00</span>
+                <span class="responsive-value justify-content-center" data-bs-toggle="modal" data-bs-target="#modalContrato">Total:</span><br>
+                <span class="responsive-value justify-content-center" data-bs-toggle="modal" data-bs-target="#modalContrato"> - R$14.880,14</span>
+                </section><span class="x">5- Outros Créditos</span>
+                <span class="responsive-value justify-content-center">Saldo Atual:</span><br><span class="responsive-value justify-content-center"> R$ 20.614,89</span>
+                """;
+
+        var gastos = Alrs.gastosDoMes(html);
+
+        assertEquals(2, gastos.categorias().size());
+        assertEquals("Impressoras - serviços de impressão local", gastos.categorias().get(0).categoria());
+        assertEquals(new java.math.BigDecimal("245.14"), gastos.categorias().get(0).valor());
+        assertEquals(new java.math.BigDecimal("14635.00"), gastos.categorias().get(1).valor());
+        assertEquals(new java.math.BigDecimal("14880.14"), gastos.totalDeclarado(), "o total declarado não vira categoria");
+        assertEquals(0, Alrs.gastosDoMes("<html><body>Movimentos do Mês 6/2022 1- Saldo Transferido do Mês Anterior</body></html>")
+                .categorias().size(), "mês sem o bloco de despesas");
+    }
+
+    @Test
     void numeroDeProcessoSeiComFormaDeCpfSaiDaMateria() {
         // Matéria encurtada, com o número SEI do PL 33/2017 no formato em que a página publica.
         String html = "<tr data-item='&#x7B;&quot;dataVotacao&quot;&#x3A;&quot;10&#x5C;&#x2F;05&#x5C;&#x2F;2022&#x20;00&#x3A;00&quot;,"

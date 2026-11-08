@@ -27,6 +27,59 @@ import tools.jackson.databind.JsonNode;
 class AlesTest {
 
     @Test
+    void nomeCivilDoPerfilComEntidadeHtmlCasaComODaCota() {
+        assertEquals(Ales.chaveDoNomeCivil("Alc&#226;ntaro Filho "), Ales.chaveDoNomeCivil("Alcântaro Filho"));
+        assertEquals("ALCANTARO FILHO", Ales.chaveDoNomeCivil("Alc&#226;ntaro Filho"));
+    }
+
+    @Test
+    void gabinetesSaemDoSeletorDeSetorSemAOpcaoSelecione() {
+        String html = """
+                <select id="cboDeputado"><option value="305">Adilson Espindula</option></select>
+                <select class="form-control" id="cboSetor" name="cboSetor">
+                <option selected="selected" value="0">Selecione</option>
+                <option value="319">Gab. Dep. Adilson Espindula</option>
+                <option value="346">Gab. Dep. Alc&#226;ntaro Filho</option>
+                </select>
+                """;
+
+        var gabinetes = Ales.gabinetesDaPagina(html);
+
+        assertEquals(2, gabinetes.size());
+        assertEquals("319", gabinetes.get(0).id());
+        assertEquals("Gab. Dep. Alcântaro Filho", gabinetes.get(1).nome());
+        assertEquals("https://www.al.es.gov.br/Transparencia/Api/CotasParlamentaresNovoTable/6/6/2024/319/false",
+                Ales.urlDaCota("319", 2024, 6));
+    }
+
+    @Test
+    void cotaDoMesTrazOsProdutosComValorENaoLeContato() {
+        // Fragmento no formato da página de junho de 2024 do gabinete 319, com três produtos e a devolução de diária.
+        String html = """
+                <style>.x { color: red; }</style>
+                <div class="deputado"><div><label class="fonte-titulo-pesquisa">Nome Civil: </label><span> Adilson Espindula</span></div>
+                <div><label class="fonte-titulo-pesquisa">Telefone: </label><span> (27) 3382-0000 </span><label> E-mail: </label><span> gabinete@example.org</span></div></div>
+                <table><tr><td>Produto:</td><td>C&#243;pias reprogr&#225;ficas</td></tr><tr><td>Quantidade:</td><td> 0 </td></tr><tr><td>Valor Solicitado:</td><td> R$ 0,00 </td></tr>
+                <tr><td>Produto:</td><td>Peri&#243;dicos</td></tr><tr><td>Quantidade:</td><td> 1 </td></tr><tr><td>Valor Solicitado:</td><td> R$ 89,90 </td></tr>
+                <tr><td>Produto:</td><td>Telefone</td></tr><tr><td>Quantidade:</td><td> 2 </td></tr><tr><td>Valor Solicitado:</td><td> R$ 636,00 </td></tr>
+                <tr><td>Produto:</td><td>Devolu&#231;&#227;o de di&#225;ria</td></tr><tr><td>Quantidade:</td><td> R$ 12,50 </td></tr><tr><td>Valor Solicitado:</td><td> - </td></tr>
+                <tr><td>Total:</td><td> R$ 738,40 </td></tr></table>
+                <table><tr><th>Produto</th><th>Quantidade</th><th>Valor Solicitado</th></tr><tr><td>Telefone</td><td>2</td><td>R$ 636,00</td></tr></table>
+                """;
+
+        var cota = Ales.cotaDoMes(html);
+
+        assertEquals("Adilson Espindula", cota.nomeCivil());
+        assertEquals(3, cota.produtos().size(), "o produto de valor zero fica fora");
+        assertEquals("Periódicos", cota.produtos().get(0).produto());
+        assertEquals(new java.math.BigDecimal("636.00"), cota.produtos().get(1).valor());
+        assertEquals("Devolução de diária", cota.produtos().get(2).produto());
+        assertEquals(new java.math.BigDecimal("12.50"), cota.produtos().get(2).valor(), "o valor está na coluna da quantidade");
+        assertEquals(new java.math.BigDecimal("738.40"), cota.totalDeclarado());
+        assertEquals(0, Ales.cotaDoMes("<div>Nenhuma despesa encontrada para os par&#226;metros de busca informados!</div>").produtos().size());
+    }
+
+    @Test
     void proposicaoFicaComODeputadoAutorPeloNomeSemAcento() {
         // Dado sintético no formato da API NoPaper, sem a tramitação.
         JsonNode pagina = Json.FONTE.readTree("""

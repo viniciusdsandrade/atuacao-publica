@@ -1,5 +1,6 @@
 package etl.fontes;
 
+import java.math.BigDecimal;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.text.Normalizer;
@@ -25,6 +26,7 @@ import etl.Fonte;
 import etl.Guarda;
 import etl.Json;
 import etl.Registros;
+import etl.Registros.Despesa;
 import etl.Registros.LinkOficial;
 import etl.Registros.Mandato;
 import etl.Registros.OrgaoOuFrente;
@@ -44,6 +46,17 @@ public final class Ales implements Fonte {
     public static final String FONTE_DETALHES = "ales-deputados-detalhes";
     public static final String FONTE_PORTAL = "ales-portal";
     public static final String FONTE_PROPOSICOES = "ales-proposicoes";
+    public static final String FONTE_COTAS = "ales-cotas";
+
+    public static final String URL_COTAS = "https://www.al.es.gov.br/Transparencia/CotasParlamentares";
+    static final String URL_TABELA_DE_COTAS = "https://www.al.es.gov.br/Transparencia/Api/CotasParlamentaresNovoTable/";
+    static final int PRIMEIRO_ANO_COTAS = 2022;
+    private static final String SEM_DESPESA = "Nenhuma despesa encontrada";
+    private static final Pattern OPCAO_DE_GABINETE = Pattern.compile("<option[^>]*value=\"([0-9]+)\"[^>]*>([^<]*)");
+    private static final Pattern PRODUTO_DA_COTA = Pattern.compile(
+            "Produto:\\s*(.+?)\\s+Quantidade:\\s*(.+?)\\s+Valor Solicitado:\\s*(.+?)(?=\\s+Produto:|\\s+Total:|$)");
+    private static final Pattern TOTAL_DA_COTA = Pattern.compile("Total:\\s*R\\$\\s*([0-9.]+,[0-9]{2})");
+    private static final Pattern NOME_CIVIL_DA_COTA = Pattern.compile("Nome Civil:\\s*</label>\\s*<span>\\s*([^<]+?)\\s*</span>");
 
     public static final String API_PROPOSICOES = "https://www3.al.es.gov.br/api/publico/proposicao/";
     static final int PRIMEIRO_ANO_PROPOSICOES = 2022;
@@ -167,6 +180,200 @@ public final class Ales implements Fonte {
                 });
             }
         }
+
+        // Cotas parlamentares: uma página por gabinete e mês, com os gabinetes do seletor da página de cotas.
+        Coleta.Arquivo paginaDeCotas = coleta.obterOpcional(URL_COTAS, "cotas/pagina.html", "text/html", Politica.SEMANAL);
+        if (paginaDeCotas != null && Files.exists(Coleta.caminho(ctx, paginaDeCotas))) {
+            List<String> ids = new ArrayList<>();
+            gabinetesDaPagina(Texto.lerArquivo(Coleta.caminho(ctx, paginaDeCotas))).forEach(g -> ids.add(g.id()));
+            for (String falha : Camara.paraCadaDeputado(ids, gabinete -> coletarCotas(ctx, coleta, gabinete))) {
+                coleta.falhaParcial("cotas", falha);
+            }
+        }
+    }
+
+    /** Gabinete da lista de cotas: o id do setor não é o id do deputado. */
+    record Gabinete(String id, String nome) {
+    }
+
+    /** Gabinetes do seletor "cboSetor" da página de cotas, sem a opção "Selecione". */
+    static List<Gabinete> gabinetesDaPagina(String html) {
+        int inicio = html.indexOf("id=\"cboSetor\"");
+        int fim = inicio < 0 ? -1 : html.indexOf("</select>", inicio);
+        if (inicio < 0 || fim < 0) {
+            return List.of();
+        }
+        List<Gabinete> gabinetes = new ArrayList<>();
+        Matcher m = OPCAO_DE_GABINETE.matcher(html.substring(inicio, fim));
+        while (m.find()) {
+            String nome = Texto.semEntidades(m.group(2));
+            if (!m.group(1).equals("0") && nome != null) {
+                gabinetes.add(new Gabinete(m.group(1), nome));
+            }
+        }
+        return gabinetes;
+    }
+
+    static String urlDaCota(String gabinete, int ano, int mes) {
+        return URL_TABELA_DE_COTAS + mes + "/" + mes + "/" + ano + "/" + gabinete + "/false";
+    }
+
+    private static String arquivoDaCota(String gabinete, int ano, int mes) {
+        return String.format(Locale.ROOT, "cotas/%s-%d-%02d.html", gabinete, ano, mes);
+    }
+
+    private static boolean semDespesa(Contexto ctx, Coleta.Arquivo arq) {
+        try {
+            return arq != null && Files.exists(Coleta.caminho(ctx, arq)) && Texto.lerArquivo(Coleta.caminho(ctx, arq)).contains(SEM_DESPESA);
+        } catch (java.io.IOException e) {
+            return false;
+        }
+    }
+
+    /**
+     * Cota de um gabinete num mês: uma página por gabinete e mês. A página responde "Nenhuma despesa encontrada" para o
+     * mês sem registro, e esse texto também pode vir por engano, por isso o ETL confirma antes de aceitar.
+     */
+    private static void coletarCotas(Contexto ctx, Coleta coleta, String gabinete) throws Exception {
+        for (int ano = PRIMEIRO_ANO_COTAS; ano <= ctx.hoje().getYear(); ano++) {
+            Politica politica = Politica.porAnoSemanal(ano, ctx.hoje());
+            int ultimoMes = ano == ctx.hoje().getYear() ? ctx.hoje().getMonthValue() : 12;
+            for (int mes = 1; mes <= ultimoMes; mes++) {
+                String url = urlDaCota(gabinete, ano, mes);
+                String caminho = arquivoDaCota(gabinete, ano, mes);
+                Coleta.Arquivo primeira = coleta.obterOpcional(url, caminho, "text/html", politica);
+                Confirmacao.confirmandoVazio(nova -> coleta.obterOpcional(url, caminho, "text/html", nova), politica,
+                        arq -> semDespesa(ctx, arq), primeira, Confirmacao.TENTATIVAS, Confirmacao.PAUSA);
+            }
+        }
+    }
+
+    /** Produto da cota e o valor que o gabinete solicitou no mês. */
+    record ProdutoDaCota(String produto, BigDecimal valor) {
+    }
+
+    /** Cota do mês: o nome civil do deputado do gabinete, os produtos com valor e o total que a página declara. */
+    record CotaDoMes(String nomeCivil, List<ProdutoDaCota> produtos, BigDecimal totalDeclarado) {
+    }
+
+    /**
+     * Produtos da cota de um mês, com valor diferente de zero. A página lista todos os produtos, também os de valor
+     * zero. "Devolução de diária" traz o valor na coluna da quantidade e "-" na do valor: vale o campo com "R$".
+     * O valor é o solicitado pelo gabinete. Telefone e e-mail do deputado, que a página traz, não são lidos.
+     */
+    static CotaDoMes cotaDoMes(String html) {
+        String semEstilo = html.replaceAll("(?s)<(style|script)[^>]*>.*?</\\1>", "");
+        Matcher civil = NOME_CIVIL_DA_COTA.matcher(semEstilo);
+        String nomeCivil = civil.find() ? Texto.semEntidades(civil.group(1)) : null;
+        String texto = Texto.semEntidades(semEstilo.replaceAll("(?s)<[^>]+>", " "));
+        if (texto == null || texto.contains(SEM_DESPESA)) {
+            return new CotaDoMes(nomeCivil, List.of(), null);
+        }
+        List<ProdutoDaCota> produtos = new ArrayList<>();
+        Matcher m = PRODUTO_DA_COTA.matcher(texto);
+        while (m.find()) {
+            String campo = m.group(3).contains("R$") ? m.group(3) : m.group(2).contains("R$") ? m.group(2) : null;
+            BigDecimal valor = campo == null ? null : Texto.valor(campo.replace("R$", "").strip());
+            if (valor != null && valor.signum() != 0) {
+                produtos.add(new ProdutoDaCota(m.group(1).strip(), valor));
+            }
+        }
+        Matcher total = TOTAL_DA_COTA.matcher(texto);
+        return new CotaDoMes(nomeCivil, produtos, total.find() ? Texto.valor(total.group(1)) : null);
+    }
+
+    /** Chave do nome civil: o perfil o traz com entidades HTML ("Alc&#226;ntaro") e a cota já decodificado. */
+    static String chaveDoNomeCivil(String nome) {
+        String decodificado = nome == null ? null : Texto.semEntidades(nome);
+        return decodificado == null ? null : Texto.normalizarNome(decodificado);
+    }
+
+    /** Nome civil de cada deputado, sem acento e em maiúsculas, pelo perfil em cache; repetido entre dois deputados fica fora. */
+    private Map<String, String> idPorNomeCivil(Contexto ctx, List<DeputadoBruto> deputados) {
+        Map<String, List<String>> ids = new HashMap<>();
+        for (DeputadoBruto d : deputados) {
+            Coleta.Arquivo perfil = Coleta.metadados(ctx, nome(), "perfis/" + d.id() + ".html");
+            if (perfil == null || !Files.exists(Coleta.caminho(ctx, perfil))) {
+                continue;
+            }
+            try {
+                Matcher civil = NOME_CIVIL_PATTERN.matcher(Texto.lerArquivo(Coleta.caminho(ctx, perfil)));
+                if (civil.find()) {
+                    String chave = chaveDoNomeCivil(civil.group(1));
+                    if (chave != null) {
+                        ids.computeIfAbsent(chave, k -> new ArrayList<>()).add(d.id());
+                    }
+                }
+            } catch (java.io.IOException e) {
+                System.err.println("ales: aviso ao ler perfil " + d.id() + ": " + e.getMessage());
+            }
+        }
+        Map<String, String> unicos = new HashMap<>();
+        ids.forEach((nome, lista) -> {
+            if (lista.size() == 1) {
+                unicos.put(nome, lista.getFirst());
+            }
+        });
+        return unicos;
+    }
+
+    /**
+     * Cotas de cada deputado, pelas páginas em cache. O gabinete liga ao deputado pelo nome civil que a própria página
+     * traz, igual ao do perfil, e não pelo nome do gabinete. Um gabinete que muda de ocupante fica certo mês a mês.
+     */
+    private Map<String, List<Despesa>> cotasPorDeputado(Contexto ctx, List<DeputadoBruto> deputados) {
+        Map<String, List<Despesa>> porDeputado = new HashMap<>();
+        Coleta.Arquivo pagina = Coleta.metadados(ctx, nome(), "cotas/pagina.html");
+        if (pagina == null || !Files.exists(Coleta.caminho(ctx, pagina))) {
+            return porDeputado;
+        }
+        List<Gabinete> gabinetes;
+        try {
+            gabinetes = gabinetesDaPagina(Texto.lerArquivo(Coleta.caminho(ctx, pagina)));
+        } catch (java.io.IOException e) {
+            return porDeputado;
+        }
+        Map<String, String> idPorNomeCivil = idPorNomeCivil(ctx, deputados);
+        int lancamentos = 0;
+        int semDeputado = 0;
+        int totaisDiferentes = 0;
+        for (Gabinete g : gabinetes) {
+            for (int ano = PRIMEIRO_ANO_COTAS; ano <= ctx.hoje().getYear(); ano++) {
+                for (int mes = 1; mes <= 12; mes++) {
+                    Coleta.Arquivo arq = Coleta.metadados(ctx, nome(), arquivoDaCota(g.id(), ano, mes));
+                    if (arq == null || arq.bytes() == 0 || !Files.exists(Coleta.caminho(ctx, arq))) {
+                        continue;
+                    }
+                    try {
+                        CotaDoMes cota = cotaDoMes(Texto.lerArquivo(Coleta.caminho(ctx, arq)));
+                        if (cota.nomeCivil() == null || cota.produtos().isEmpty()) {
+                            continue;
+                        }
+                        String deputado = idPorNomeCivil.get(Texto.normalizarNome(cota.nomeCivil()));
+                        if (deputado == null) {
+                            semDeputado++;
+                            continue;
+                        }
+                        BigDecimal soma = BigDecimal.ZERO;
+                        for (ProdutoDaCota produto : cota.produtos()) {
+                            soma = soma.add(produto.valor());
+                            porDeputado.computeIfAbsent(deputado, k -> new ArrayList<>()).add(new Despesa(null, ano, mes,
+                                    produto.produto(), null, null, produto.valor(), null, null, Prov.de(FONTE_COTAS, arq.url(), arq)));
+                            lancamentos++;
+                        }
+                        if (cota.totalDeclarado() != null && soma.compareTo(cota.totalDeclarado()) != 0) {
+                            totaisDiferentes++;
+                        }
+                    } catch (java.io.IOException e) {
+                        System.err.println("ales: erro ao ler cota " + g.id() + " " + ano + "-" + mes + ": " + e.getMessage());
+                    }
+                }
+            }
+        }
+        System.out.println("ales: " + lancamentos + " lançamentos de cota por produto e mês em " + porDeputado.size() + " deputados; "
+                + semDeputado + " meses de gabinete sem deputado com esse nome civil; " + totaisDiferentes
+                + " meses com total diferente da soma dos produtos");
+        return porDeputado;
     }
 
     /** Resposta da API em cache, com o arquivo que dá a proveniência. */
@@ -348,6 +555,7 @@ public final class Ales implements Fonte {
             idPorChaveDeAutoria.put(chaveDeAutoria(formatarNome(d.nome())), d.id());
         }
         Map<String, List<Proposicao>> proposicoesPorDeputado = proposicoesPorId(ctx, idPorChaveDeAutoria);
+        Map<String, List<Despesa>> cotasPorDeputado = cotasPorDeputado(ctx, deputados);
 
         List<Pessoa> pessoas = new ArrayList<>();
 
@@ -407,7 +615,7 @@ public final class Ales implements Fonte {
             var blocosNode = Json.SAIDA.createObjectNode();
             blocosNode.set("mandatos", Json.SAIDA.valueToTree(mandatos));
             blocosNode.set("orgaos_e_frentes", Json.SAIDA.valueToTree(orgaos));
-            blocosNode.set("despesas", Json.SAIDA.createArrayNode());
+            blocosNode.set("despesas", Json.SAIDA.valueToTree(cotasPorDeputado.getOrDefault(id, List.of())));
             blocosNode.set("proposicoes", Json.SAIDA.valueToTree(proposicoesPorDeputado.getOrDefault(id, List.of())));
             blocosNode.set("fontes", Json.SAIDA.valueToTree(Registros.fontesDosBlocos(blocosNode)));
             Json.gravar(pastaBlocos.resolve(id + ".json"), blocosNode);
