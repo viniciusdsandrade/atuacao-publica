@@ -1,10 +1,14 @@
 package etl.fontes;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
+import java.nio.charset.MalformedInputException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
@@ -19,6 +23,7 @@ import etl.Contexto;
 import etl.Json;
 import etl.Registros.Despesa;
 import etl.Registros.OrgaoOuFrente;
+import etl.Registros.Proposicao;
 import etl.Registros.Prov;
 import tools.jackson.databind.JsonNode;
 
@@ -333,6 +338,82 @@ class AleceTest {
         assertEquals(1, Alece.totalPaginasDoHtml(htmlSemPaginacao));
 
         assertEquals(0, Alece.totalPaginasDoHtml(""));
+    }
+
+    @Test
+    void lePaginaDeProposicaoComByteWindows1252NoMeioDeUtf8(@TempDir Path tempDir) throws Exception {
+        Path dados = tempDir.resolve("data");
+        Contexto ctx = new Contexto(tempDir, dados, null, null, Instant.parse("2026-11-08T12:00:00Z"), null);
+        Path rawAlece = ctx.raw().resolve("alece");
+        Files.createDirectories(rawAlece.resolve("proposicoes"));
+
+        String modelo = """
+                \uFEFF<b>Página 1 de 29: </b><b>[ </b><b>1</b>
+                <table border='0' width='95%'>
+                  <tr><td>
+                    <table border='0' cellspacing='3'>
+                      <tr>
+                        <td width='15%' bgcolor='#EFEFEF'><b>N&ordm; do Proj.:</b></font><br><font face='Verdana' size='1'>1/23 </font></td>
+                        <td width='55%' bgcolor='#EFEFEF'><font face='Verdana' size='1'><b>Autor:</b></font><br><font face='Verdana' size='1'>RENATO ROSENO</font></td>
+                        <td width='16%' bgcolor='#EFEFEF'><font face='Verdana' size='1'><b>Entrada:</b></font><br><font face='Verdana' size='1'>02.02.23</font></td>
+                      </tr>
+                    </table>
+                  </td></tr>
+                  <tr><td>
+                    <table border='0' cellspacing='3'>
+                      <tr>
+                        <td width='100%' bgcolor='#EFEFEF'><b>Ementa:</b></font><br><font face='Verdana' size='1'><a href='https://www2.al.ce.gov.br/legislativo/tramit2023/pl1_23.htm'>CIPDOWN EN_DASH 06&ordf; REUNIAO</a></font></td>
+                      </tr>
+                    </table>
+                  </td></tr>
+                </table>
+                """;
+        byte[] utf8 = modelo.getBytes(StandardCharsets.UTF_8);
+        byte[] marcador = "EN_DASH".getBytes(StandardCharsets.UTF_8);
+        int pos = indexOf(utf8, marcador);
+        assertTrue(pos >= 0);
+        byte[] html = new byte[utf8.length - marcador.length + 1];
+        System.arraycopy(utf8, 0, html, 0, pos);
+        html[pos] = (byte) 0x96;
+        System.arraycopy(utf8, pos + marcador.length, html, pos + 1, utf8.length - pos - marcador.length);
+
+        Path arquivo = rawAlece.resolve("proposicoes/projeto_lei-T-1.html");
+        Files.write(arquivo, html);
+        gravarMetadado(rawAlece, "proposicoes/projeto_lei-T-1.html",
+                "https://www2.al.ce.gov.br/legislativo/proposicoes1/index.php?tabela=projeto_lei&opcao=T&absolutepage=1");
+
+        assertThrows(MalformedInputException.class, () -> Files.readString(arquivo));
+
+        String lida = Alece.lerPagina(arquivo);
+        assertTrue(lida.contains("Página 1 de 29"));
+        assertFalse(lida.contains("PÃ¡gina"));
+
+        Coleta.Arquivo meta = Coleta.metadados(ctx, "alece", "proposicoes/projeto_lei-T-1.html");
+        assertEquals(29, Alece.totalPaginasDeProposicoes(ctx, meta));
+
+        Alece.DeputadoBruto deputado = new Alece.DeputadoBruto("renato-roseno", "RENATO ROSENO", "PSOL", null);
+        Map<String, List<Proposicao>> porSlug = Alece.proposicoesPorSlug(ctx, List.of(deputado));
+        List<Proposicao> props = porSlug.get("renato-roseno");
+        assertNotNull(props);
+        assertEquals(1, props.size());
+        assertEquals("RENATO ROSENO", deputado.nome());
+        assertTrue(props.getFirst().ementa().contains("CIPDOWN"));
+        assertTrue(props.getFirst().ementa().contains("06ª REUNIAO")
+                || props.getFirst().ementa().contains("06&ordf; REUNIAO")
+                || props.getFirst().ementa().contains("REUNIAO"));
+    }
+
+    private static int indexOf(byte[] haystack, byte[] needle) {
+        outer:
+        for (int i = 0; i <= haystack.length - needle.length; i++) {
+            for (int j = 0; j < needle.length; j++) {
+                if (haystack[i + j] != needle[j]) {
+                    continue outer;
+                }
+            }
+            return i;
+        }
+        return -1;
     }
 
     private static void gravarMetadado(Path pastaFonte, String relativo, String url) throws IOException {

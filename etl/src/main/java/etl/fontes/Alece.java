@@ -1,6 +1,8 @@
 package etl.fontes;
 
+import java.io.IOException;
 import java.math.BigDecimal;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDate;
@@ -14,6 +16,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.zip.GZIPInputStream;
 
 import etl.Coleta;
 import etl.Coleta.Politica;
@@ -429,12 +432,28 @@ public final class Alece implements Fonte {
         return String.format(Locale.ROOT, "proposicoes/%s-%s-%d.html", tabela, opcao, pagina);
     }
 
+    /**
+     * Lê a listagem HTML em UTF-8. A fonte mistura um byte Windows-1252 (traço 0x96)
+     * no meio da página; a substituição preserva "Página" e a paginação.
+     */
+    public static String lerPagina(Path arquivo) throws IOException {
+        byte[] bytes;
+        if (arquivo.getFileName().toString().endsWith(".gz")) {
+            try (GZIPInputStream in = new GZIPInputStream(Files.newInputStream(arquivo), 1 << 16)) {
+                bytes = in.readAllBytes();
+            }
+        } else {
+            bytes = Files.readAllBytes(arquivo);
+        }
+        return new String(bytes, StandardCharsets.UTF_8);
+    }
+
     public static int totalPaginasDeProposicoes(Contexto ctx, Coleta.Arquivo arq) {
         if (arq == null || arq.bytes() == 0 || !Files.exists(Coleta.caminho(ctx, arq))) {
             return 0;
         }
         try {
-            String html = Texto.lerArquivo(Coleta.caminho(ctx, arq));
+            String html = lerPagina(Coleta.caminho(ctx, arq));
             return totalPaginasDoHtml(html);
         } catch (Exception e) {
             return 1;
@@ -499,7 +518,7 @@ public final class Alece implements Fonte {
                         continue;
                     }
                     try {
-                        String html = Texto.lerArquivo(Coleta.caminho(ctx, arq));
+                        String html = lerPagina(Coleta.caminho(ctx, arq));
                         Prov prov = Prov.de(FONTE_PROPOSICOES, arq.url(), arq);
                         for (ProposicaoBruta pb : extrairProposicoesDoHtml(html)) {
                             Integer numero = null;
