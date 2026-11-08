@@ -16,7 +16,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Queue;
 import java.util.Set;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -64,6 +66,12 @@ public final class Alepe implements Fonte {
     /** Consultas para aceitar uma lista vazia da verba: a primeira e duas confirmações. */
     static final int TENTATIVAS_DA_LISTA_VAZIA = 3;
     private static final Duration PAUSA_ENTRE_CONFIRMACOES = Duration.ofSeconds(3);
+    /** Depois da coleta, o que seguiu vazio é consultado de novo após esta pausa: alguns documentos seguiram vazios por segundos. */
+    private static final Duration PAUSA_DA_VARREDURA_FINAL = Duration.ofSeconds(45);
+
+    /** Consulta da verba que seguiu vazia depois das confirmações. */
+    record Pendente(String url, String caminho, Politica politica) {
+    }
 
     public static final String API_PROPOSICOES = "https://dadosabertos.alepe.pe.gov.br/api/v1/proposicoes/";
     /** Página da proposição no sistema oficial, que carrega o item pela API com o mesmo docid e tipoprop. */
@@ -192,17 +200,43 @@ public final class Alepe implements Fonte {
             coleta.obterOpcional(API_VERBAS + "verbaindenizatoria-rubricas.php?ano=" + ano, arquivoDasRubricas(ano),
                     "application/json", Politica.porAnoSemanal(ano, ctx.hoje()));
         }
-        List<String> falhas = Camara.paraCadaDeputado(ids, id -> coletarVerbasDoDeputado(ctx, coleta, id));
+        Queue<Pendente> pendentes = new ConcurrentLinkedQueue<>();
+        List<String> falhas = Camara.paraCadaDeputado(ids, id -> coletarVerbasDoDeputado(ctx, coleta, id, pendentes));
         for (String falha : falhas) {
             coleta.falhaParcial("despesas", falha);
         }
+        varrerPendentes(ctx, coleta, pendentes);
     }
 
-    private static void coletarVerbasDoDeputado(Contexto ctx, Coleta coleta, String id) throws Exception {
+    /** Uma última rodada, depois de uma pausa maior, sobre o que seguiu vazio. O resto fica como veio da fonte. */
+    private static void varrerPendentes(Contexto ctx, Coleta coleta, Queue<Pendente> pendentes) throws Exception {
+        if (pendentes.isEmpty()) {
+            return;
+        }
+        int total = pendentes.size();
+        Thread.sleep(PAUSA_DA_VARREDURA_FINAL);
+        int seguemVazios = 0;
+        for (Pendente p : pendentes) {
+            Coleta.Arquivo atual = confirmandoVazio(nova -> coleta.obterOpcional(p.url(), p.caminho(), "application/json", nova),
+                    p.politica(), arq -> vazia(ctx, arq), coleta.obterOpcional(p.url(), p.caminho(), "application/json", p.politica()),
+                    TENTATIVAS_DA_LISTA_VAZIA, PAUSA_ENTRE_CONFIRMACOES);
+            if (vazia(ctx, atual)) {
+                seguemVazios++;
+            }
+        }
+        System.out.println("alepe: " + total + " consultas da verba seguiram vazias depois das confirmações; "
+                + seguemVazios + " seguem vazias depois da varredura final");
+    }
+
+    private static boolean vazia(Contexto ctx, Coleta.Arquivo arq) {
+        return arq != null && Files.exists(Coleta.caminho(ctx, arq)) && Json.ler(Coleta.caminho(ctx, arq)).isEmpty();
+    }
+
+    private static void coletarVerbasDoDeputado(Contexto ctx, Coleta coleta, String id, Queue<Pendente> pendentes) throws Exception {
         for (int ano = PRIMEIRO_ANO_DESPESAS; ano <= ctx.hoje().getYear(); ano++) {
             Politica politica = Politica.porAnoSemanal(ano, ctx.hoje());
             Coleta.Arquivo meses = obterConfirmandoVazio(ctx, coleta, API_VERBAS + "verbaindenizatoria-dep-meses.php?dep=" + id
-                    + "&ano=" + ano, arquivoDosMeses(id, ano), politica, true);
+                    + "&ano=" + ano, arquivoDosMeses(id, ano), politica, true, pendentes);
             if (meses == null || !Files.exists(Coleta.caminho(ctx, meses))) {
                 continue;
             }
@@ -213,7 +247,7 @@ public final class Alepe implements Fonte {
                 }
                 // Mês que a lista de meses traz tem documento: lista vazia aqui também é resposta de servidor sobrecarregado.
                 Coleta.Arquivo documentos = obterConfirmandoVazio(ctx, coleta, API_VERBAS + "verbaindenizatoria.php?dep=" + id
-                        + "&ano=" + ano + "&mes=" + mes, arquivoDosDocumentos(id, ano, mes), politica, true);
+                        + "&ano=" + ano + "&mes=" + mes, arquivoDosDocumentos(id, ano, mes), politica, true, pendentes);
                 if (documentos == null || !Files.exists(Coleta.caminho(ctx, documentos))) {
                     continue;
                 }
@@ -222,7 +256,7 @@ public final class Alepe implements Fonte {
                     if (docid != null) {
                         BigDecimal total = Texto.valor(Json.texto(documento, "total"));
                         obterConfirmandoVazio(ctx, coleta, API_VERBAS + "verbaindenizatorianotas.php?docid=" + docid,
-                                arquivoDasNotas(docid), politica, total != null && total.signum() > 0);
+                                arquivoDasNotas(docid), politica, total != null && total.signum() > 0, pendentes);
                     }
                 }
             }
@@ -234,14 +268,17 @@ public final class Alepe implements Fonte {
      * para a lista vazia já guardada em coletas anteriores: ela é refeita antes de ser aceita.
      */
     private static Coleta.Arquivo obterConfirmandoVazio(Contexto ctx, Coleta coleta, String url, String caminho, Politica politica,
-                                                        boolean confirmar) throws Exception {
+                                                        boolean confirmar, Queue<Pendente> pendentes) throws Exception {
         Coleta.Arquivo primeira = coleta.obterOpcional(url, caminho, "application/json", politica);
         if (!confirmar) {
             return primeira;
         }
-        return confirmandoVazio(nova -> coleta.obterOpcional(url, caminho, "application/json", nova), politica,
-                arq -> arq != null && Files.exists(Coleta.caminho(ctx, arq)) && Json.ler(Coleta.caminho(ctx, arq)).isEmpty(),
-                primeira, TENTATIVAS_DA_LISTA_VAZIA, PAUSA_ENTRE_CONFIRMACOES);
+        Coleta.Arquivo confirmada = confirmandoVazio(nova -> coleta.obterOpcional(url, caminho, "application/json", nova), politica,
+                arq -> vazia(ctx, arq), primeira, TENTATIVAS_DA_LISTA_VAZIA, PAUSA_ENTRE_CONFIRMACOES);
+        if (vazia(ctx, confirmada)) {
+            pendentes.add(new Pendente(url, caminho, politica));
+        }
+        return confirmada;
     }
 
     /** Uma consulta ao servidor com a política dada. */

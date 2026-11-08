@@ -2101,7 +2101,7 @@
   formato: JSON
   autenticacao: nenhuma
   licenca: null
-  limitacoes: "Por deputado, ano e mês: pedido, complementos e notas com empresa, CNPJ e valor. O id do deputado no portal difere do id do perfil; o vínculo é pelo nome. Sem número de nota fiscal. Recusa conexão de fora do Brasil."
+  limitacoes: "Por deputado, ano e mês: pedido, complementos e notas com empresa, CNPJ e valor. O id do deputado no portal difere do id do perfil; o vínculo é pelo nome. Sem número de nota fiscal. Responde lista vazia, sem erro, em parte das consultas: o ETL espaça as consultas em 0,9 s e confirma toda lista vazia. Recusa conexão de fora do Brasil."
   status: validado
   validado_em: 2026-11-07
 
