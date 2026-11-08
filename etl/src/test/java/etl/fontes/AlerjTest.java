@@ -219,6 +219,36 @@ class AlerjTest {
         assertEquals("2027-01-31", b505.get("mandatos").get(0).get("fim").stringValue());
     }
 
+    @Test
+    void parlamentaresDoDocigpIncluiFallbackEFormatoData(@TempDir Path tempDir) throws Exception {
+        Contexto ctx = new Contexto(tempDir, tempDir.resolve("data"), null, null, Instant.parse("2026-11-07T00:00:00Z"), null);
+        Path rawAlerj = ctx.raw().resolve("alerj");
+        Files.createDirectories(rawAlerj.resolve("docigp"));
+
+        // Formato real do DOCIGP: array sob "data"
+        String jsonDocigp = """
+                {
+                  "current_page": 1,
+                  "last_page": 1,
+                  "data": [
+                    {"id": 95, "remote_id": 505, "name": "Alan Lopes"},
+                    {"id": 131, "remote_id": null, "name": "Rafael Picciani"}
+                  ]
+                }
+                """;
+        Files.writeString(rawAlerj.resolve("docigp/parlamentares-1.json"), jsonDocigp);
+        gravarMetadado(rawAlerj, "docigp/parlamentares-1.json", Alerj.API_DOCIGP + "/congressmen?page=1");
+
+        Map<String, String> mapa = Alerj.parlamentaresDoDocigp(ctx, 1);
+
+        // Mapeado do JSON pelo remote_id
+        assertEquals("95", mapa.get("505"));
+        // Mapeados pelo fallback (remote_id nulo no DOCIGP)
+        assertEquals("131", mapa.get("344")); // Rafael Picciani
+        assertEquals("135", mapa.get("514")); // Lilian Behring
+        assertEquals("136", mapa.get("515")); // Sarah Poncio
+    }
+
     private static void gravarMetadado(Path pastaFonte, String relativo, String url) throws IOException {
         Path arquivo = pastaFonte.resolve(relativo);
         Path meta = arquivo.resolveSibling(arquivo.getFileName() + ".meta.json");

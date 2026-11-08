@@ -51,6 +51,18 @@ public final class Alerj implements Fonte {
     /** Legislatura de 2023 a 2027 no DOCIGP. */
     static final int LEGISLATURA_DOCIGP = 2;
 
+    /**
+     * Mapeamento de deputados em exercício cujo remote_id está nulo na base do DOCIGP:
+     * - Rafael Picciani: id ALERJ 344 -> id DOCIGP 131
+     * - Lilian Behring: id ALERJ 514 -> id DOCIGP 135
+     * - Sarah Poncio: id ALERJ 515 -> id DOCIGP 136
+     */
+    public static final Map<String, String> DOCIGP_FALLBACK_IDS = Map.of(
+            "344", "131",
+            "514", "135",
+            "515", "136"
+    );
+
     /** Centro de custo do DOCIGP. Código em algarismo romano é despesa; código numérico é movimento da conta. */
     public record CentroDeCusto(String codigo, String nome) {
         boolean despesa() {
@@ -148,18 +160,33 @@ public final class Alerj implements Fonte {
         if (arquivo == null || arquivo.bytes() == 0 || !Files.exists(Coleta.caminho(ctx, arquivo))) {
             return 1;
         }
-        return Math.max(1, Json.ler(Coleta.caminho(ctx, arquivo)).path("links").path("pagination").path("last_page").asInt(1));
+        JsonNode root = Json.ler(Coleta.caminho(ctx, arquivo));
+        int lp = root.path("last_page").asInt(0);
+        if (lp == 0) {
+            lp = root.path("links").path("pagination").path("last_page").asInt(1);
+        }
+        return Math.max(1, lp);
+    }
+
+    public static JsonNode linhasDocigp(JsonNode root) {
+        if (root == null) {
+            return Json.SAIDA.createArrayNode();
+        }
+        if (root.has("data") && root.get("data").isArray()) {
+            return root.get("data");
+        }
+        return root.path("rows");
     }
 
     /** remote_id (id do perfil na ALERJ) para o id do parlamentar no DOCIGP. */
-    private static Map<String, String> parlamentaresDoDocigp(Contexto ctx, int paginas) {
-        Map<String, String> mapa = new HashMap<>();
+    public static Map<String, String> parlamentaresDoDocigp(Contexto ctx, int paginas) {
+        Map<String, String> mapa = new HashMap<>(DOCIGP_FALLBACK_IDS);
         for (int p = 1; p <= paginas; p++) {
             Coleta.Arquivo arq = Coleta.metadados(ctx, "alerj", "docigp/parlamentares-" + p + ".json");
             if (arq == null || arq.bytes() == 0 || !Files.exists(Coleta.caminho(ctx, arq))) {
                 continue;
             }
-            for (JsonNode parlamentar : Json.ler(Coleta.caminho(ctx, arq)).path("rows")) {
+            for (JsonNode parlamentar : linhasDocigp(Json.ler(Coleta.caminho(ctx, arq)))) {
                 String alerj = Json.texto(parlamentar, "remote_id");
                 String docigp = Json.texto(parlamentar, "id");
                 if (alerj != null && docigp != null) {
@@ -177,7 +204,7 @@ public final class Alerj implements Fonte {
         if (arq == null || arq.bytes() == 0 || !Files.exists(Coleta.caminho(ctx, arq))) {
             return centros;
         }
-        for (JsonNode centro : Json.ler(Coleta.caminho(ctx, arq)).path("rows")) {
+        for (JsonNode centro : linhasDocigp(Json.ler(Coleta.caminho(ctx, arq)))) {
             String id = Json.texto(centro, "id");
             if (id != null) {
                 centros.put(id, new CentroDeCusto(Json.texto(centro, "code"), Json.texto(centro, "name")));
@@ -241,7 +268,7 @@ public final class Alerj implements Fonte {
                     break;
                 }
                 Prov prov = Prov.de(FONTE_DESPESAS, arq.url(), arq);
-                for (JsonNode orcamento : Json.ler(Coleta.caminho(ctx, arq)).path("rows")) {
+                for (JsonNode orcamento : linhasDocigp(Json.ler(Coleta.caminho(ctx, arq)))) {
                     String id = Json.texto(orcamento, "id");
                     if (id != null && !porOrcamento.containsKey(id)) {
                         porOrcamento.put(id, despesasDoOrcamento(orcamento, centros, prov));
