@@ -97,7 +97,7 @@ Estado real de cada fase. Atualizado ao fechar cada fase.
 
 ## Casas estaduais e municipais no site
 
-Estado da publicação de 2026-11-07, às 23:21 UTC, com 2.116 perfis. "Perfis" conta os perfis com o identificador da casa, inclusive os fundidos com outra casa.
+Estado da publicação de 2026-11-08, às 03:09 UTC, com 2.116 perfis. "Perfis" conta os perfis com o identificador da casa, inclusive os fundidos com outra casa.
 
 | Casa | Coleta no CI | Perfis | Vínculo com o TSE | Blocos além de mandato e candidaturas |
 |---|---|---|---|---|
@@ -112,12 +112,12 @@ Estado da publicação de 2026-11-07, às 23:21 UTC, com 2.116 perfis. "Perfis" 
 | ALEGO (GO) | ok | 43 | 43 | comissões e frentes e despesas (51.156 lançamentos) |
 | ALES (ES) | ok, pela coleta local cifrada | 30 | 29 | comissões e proposições (12.311 autorias em 30 deputados) |
 | ALEPA (PA) | ok | 41 | 40 | comissões |
-| ALEPE (PE) | ok, pela coleta local cifrada | 49 | 49 | comissões e proposições (26.911 autorias em 49 deputados) |
+| ALEPE (PE) | ok, pela coleta local cifrada | 49 | 49 | comissões, proposições (26.911 autorias em 49 deputados) e despesas (10.450 lançamentos em 44 deputados, R$ 104,79 milhões) |
 | CLDF (DF) | ok, pela coleta local cifrada | 24 | 24 | comissões e proposições (26.067 autorias em 24 deputados) |
 | CMSP (capital) | ok | 55 | 51 | comissões e proposições (6.547) |
 | Câmara do piloto (SAPL) | ok | 50 | 50 | votos, presença, falas, matérias, despesas e comissões |
 
-Conferido nos 841 perfis das 14 casas da tabela, inclusive os fundidos com outra casa: os 4.609 blocos com registro citam fonte e data. Os 9 registros da ALEPE (e-mail na ementa) e os 23 da CLDF (número de telefone na ementa) que a guarda do `publish` removeu não entram nas contagens. A participação em votações da ALESP saía sem fonte até 2026-11-07 (ver "Limitações conhecidas"). Os oito governadores eleitos em 2022 que concorreram a outro cargo saíram de em exercício (ADR-0033), e restam 19 governadores em exercício.
+Conferido nos 841 perfis das 14 casas da tabela, inclusive os fundidos com outra casa: os 4.653 blocos com registro citam fonte e data. Os 9 registros da ALEPE (e-mail na ementa) e os 23 da CLDF (número de telefone na ementa) que a guarda do `publish` removeu não entram nas contagens. A participação em votações da ALESP saía sem fonte até 2026-11-07 (ver "Limitações conhecidas"). Os oito governadores eleitos em 2022 que concorreram a outro cargo saíram de em exercício (ADR-0033), e restam 19 governadores em exercício.
 
 ## Cobertura 2022 a 2026 (ADR-0009)
 
