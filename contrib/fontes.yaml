@@ -2090,6 +2090,21 @@
   status: validado
   validado_em: 2026-11-07
 
+- id: alepe-despesas
+  nome: Assembleia Legislativa do Estado de Pernambuco, verba indenizatória dos deputados
+  orgao: Assembleia Legislativa do Estado de Pernambuco
+  esfera: estadual
+  ente: PE
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://www.alepe.pe.gov.br/servicos/transparencia/adm/
+  formato: JSON
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Por deputado, ano e mês: pedido, complementos e notas com empresa, CNPJ e valor. O id do deputado no portal difere do id do perfil; o vínculo é pelo nome. Sem número de nota fiscal. Recusa conexão de fora do Brasil."
+  status: validado
+  validado_em: 2026-11-07
+
 - id: cldf-deputados
   nome: Câmara Legislativa do Distrito Federal, deputados distritais
   orgao: Câmara Legislativa do Distrito Federal

@@ -4,8 +4,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
+import java.math.BigDecimal;
 import java.nio.file.Path;
 import java.time.LocalDate;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -29,6 +31,7 @@ import etl.Fonte;
 import etl.Guarda;
 import etl.Json;
 import etl.Registros;
+import etl.Registros.Despesa;
 import etl.Registros.LinkOficial;
 import etl.Registros.Mandato;
 import etl.Registros.OrgaoOuFrente;
@@ -36,6 +39,7 @@ import etl.Registros.Pessoa;
 import etl.Registros.Proposicao;
 import etl.Registros.Prov;
 import etl.Texto;
+import tools.jackson.databind.JsonNode;
 
 /**
  * Assembleia Legislativa do Estado de Pernambuco (ALEPE, ADR-0025).
@@ -48,6 +52,12 @@ public final class Alepe implements Fonte {
     public static final String FONTE_DETALHES = "alepe-deputados-detalhes";
     public static final String FONTE_PORTAL = "alepe-portal";
     public static final String FONTE_PROPOSICOES = "alepe-proposicoes";
+    public static final String FONTE_DESPESAS = "alepe-despesas";
+
+    static final String API_VERBAS = "https://www.alepe.pe.gov.br/servicos/transparencia/adm/";
+    static final String URL_DEPUTADOS_DA_VERBA = "https://www.alepe.pe.gov.br/servicos/transparencia/dep/deputados.php?leg=-16";
+    /** A verba indenizatória atual, com rubricas por ano, começa em maio de 2022. */
+    static final int PRIMEIRO_ANO_DESPESAS = 2022;
 
     public static final String API_PROPOSICOES = "https://dadosabertos.alepe.pe.gov.br/api/v1/proposicoes/";
     /** Página da proposição no sistema oficial, que carrega o item pela API com o mesmo docid e tipoprop. */
@@ -150,10 +160,78 @@ public final class Alepe implements Fonte {
                         "application/xml", Politica.porAnoSemanal(ano, ctx.hoje()));
             }
         }
+
+        coletarVerbas(ctx, coleta, deputados);
     }
 
     private static String caminhoDaLista(ListaDeProposicoes lista, int ano) {
         return "proposicoes/" + lista.lista() + "-" + ano + ".xml";
+    }
+
+    /**
+     * Verba indenizatória: o portal de transparência usa um id próprio de deputado. A lista do portal liga o id ao nome;
+     * por mês, cada deputado tem o pedido (e complementos), e cada documento traz as notas com empresa, CNPJ e valor.
+     */
+    private void coletarVerbas(Contexto ctx, Coleta coleta, List<DeputadoBruto> deputados) throws Exception {
+        Coleta.Arquivo lista = coleta.obterOpcional(URL_DEPUTADOS_DA_VERBA, "despesas/deputados.json", "application/json",
+                Politica.SEMANAL);
+        if (lista == null || !Files.exists(Coleta.caminho(ctx, lista))) {
+            return;
+        }
+        List<String> ids = new ArrayList<>(idsDoPortalPorSlug(Json.ler(Coleta.caminho(ctx, lista)), slugPorChave(deputados)).values());
+        for (int ano = PRIMEIRO_ANO_DESPESAS; ano <= ctx.hoje().getYear(); ano++) {
+            coleta.obterOpcional(API_VERBAS + "verbaindenizatoria-rubricas.php?ano=" + ano, arquivoDasRubricas(ano),
+                    "application/json", Politica.porAnoSemanal(ano, ctx.hoje()));
+        }
+        List<String> falhas = Camara.paraCadaDeputado(ids, id -> coletarVerbasDoDeputado(ctx, coleta, id));
+        for (String falha : falhas) {
+            coleta.falhaParcial("despesas", falha);
+        }
+    }
+
+    private static void coletarVerbasDoDeputado(Contexto ctx, Coleta coleta, String id) throws Exception {
+        for (int ano = PRIMEIRO_ANO_DESPESAS; ano <= ctx.hoje().getYear(); ano++) {
+            Politica politica = Politica.porAnoSemanal(ano, ctx.hoje());
+            Coleta.Arquivo meses = coleta.obterOpcional(API_VERBAS + "verbaindenizatoria-dep-meses.php?dep=" + id + "&ano=" + ano,
+                    arquivoDosMeses(id, ano), "application/json", politica);
+            if (meses == null || !Files.exists(Coleta.caminho(ctx, meses))) {
+                continue;
+            }
+            for (JsonNode m : Json.ler(Coleta.caminho(ctx, meses))) {
+                int mes = m.path("mes").asInt(0);
+                if (mes < 1 || mes > 12) {
+                    continue;
+                }
+                Coleta.Arquivo documentos = coleta.obterOpcional(API_VERBAS + "verbaindenizatoria.php?dep=" + id + "&ano=" + ano
+                        + "&mes=" + mes, arquivoDosDocumentos(id, ano, mes), "application/json", politica);
+                if (documentos == null || !Files.exists(Coleta.caminho(ctx, documentos))) {
+                    continue;
+                }
+                for (JsonNode documento : Json.ler(Coleta.caminho(ctx, documentos))) {
+                    String docid = Json.texto(documento, "docid");
+                    if (docid != null) {
+                        coleta.obterOpcional(API_VERBAS + "verbaindenizatorianotas.php?docid=" + docid, arquivoDasNotas(docid),
+                                "application/json", politica);
+                    }
+                }
+            }
+        }
+    }
+
+    private static String arquivoDasRubricas(int ano) {
+        return "despesas/rubricas-" + ano + ".json";
+    }
+
+    private static String arquivoDosMeses(String id, int ano) {
+        return "despesas/" + id + "/meses-" + ano + ".json";
+    }
+
+    private static String arquivoDosDocumentos(String id, int ano, int mes) {
+        return String.format(Locale.ROOT, "despesas/%s/%d-%02d.json", id, ano, mes);
+    }
+
+    private static String arquivoDasNotas(String docid) {
+        return "despesas/notas/" + docid + ".json";
     }
 
     @Override
@@ -176,6 +254,7 @@ public final class Alepe implements Fonte {
 
         Map<String, List<OrgaoOuFrente>> comissoesPorDeputado = extrairTodasComissoes(ctx);
         Map<String, List<Proposicao>> proposicoesPorDeputado = proposicoesPorSlug(ctx, deputados);
+        Map<String, List<Despesa>> despesasPorDeputado = despesasPorSlug(ctx, deputados);
 
         List<Pessoa> pessoas = new ArrayList<>();
 
@@ -248,7 +327,7 @@ public final class Alepe implements Fonte {
             var blocosNode = Json.SAIDA.createObjectNode();
             blocosNode.set("mandatos", Json.SAIDA.valueToTree(mandatos));
             blocosNode.set("orgaos_e_frentes", Json.SAIDA.valueToTree(orgaos));
-            blocosNode.set("despesas", Json.SAIDA.createArrayNode());
+            blocosNode.set("despesas", Json.SAIDA.valueToTree(despesasPorDeputado.getOrDefault(slug, List.of())));
             blocosNode.set("proposicoes", Json.SAIDA.valueToTree(proposicoesPorDeputado.getOrDefault(slug, List.of())));
             blocosNode.set("fontes", Json.SAIDA.valueToTree(Registros.fontesDosBlocos(blocosNode)));
             if (biografia != null) {
@@ -446,6 +525,157 @@ public final class Alepe implements Fonte {
     /** Chave de vínculo da autoria: nome sem acento e sem pontuação, em maiúsculas. Serve ao autor e ao perfil. */
     static String chaveDeAutoria(String nome) {
         return Texto.normalizarNome(nome.replaceAll("[^\\p{L}\\s]", " "));
+    }
+
+    /** Chave de autoria do perfil → slug. */
+    private static Map<String, String> slugPorChave(List<DeputadoBruto> deputados) {
+        Map<String, String> slugPorChave = new HashMap<>();
+        for (DeputadoBruto d : deputados) {
+            slugPorChave.put(chaveDeAutoria(formatarNome(d.nome())), d.slug());
+        }
+        return slugPorChave;
+    }
+
+    /**
+     * Slug do perfil → id do deputado no portal de transparência, pelo nome sem acento e pontuação. Nome repetido na
+     * lista do portal (homônimo de outra legislatura) fica fora: sem certeza de quem é, não se atribui despesa.
+     */
+    static Map<String, String> idsDoPortalPorSlug(JsonNode lista, Map<String, String> slugPorChave) {
+        Map<String, List<String>> idsPorChave = new HashMap<>();
+        for (JsonNode d : lista) {
+            String id = Json.texto(d, "id");
+            String nome = Json.texto(d, "nome");
+            if (id != null && nome != null) {
+                idsPorChave.computeIfAbsent(chaveDeAutoria(nome), k -> new ArrayList<>()).add(id);
+            }
+        }
+        Map<String, String> idPorSlug = new HashMap<>();
+        for (var perfil : slugPorChave.entrySet()) {
+            List<String> ids = idsPorChave.getOrDefault(perfil.getKey(), List.of());
+            if (ids.size() == 1) {
+                idPorSlug.put(perfil.getValue(), ids.getFirst());
+            }
+        }
+        return idPorSlug;
+    }
+
+    /** Rubrica do ano → nome da categoria, pelo número da rubrica. */
+    static Map<Integer, String> rubricasDoAno(JsonNode rubricas) {
+        Map<Integer, String> nomes = new HashMap<>();
+        for (JsonNode r : rubricas) {
+            Integer numero = Json.inteiro(r, "numero_categoria");
+            String nome = Json.texto(r, "nome_categoria");
+            if (numero != null && nome != null) {
+                nomes.put(numero, nome);
+            }
+        }
+        return nomes;
+    }
+
+    /** Categoria do documento que a fonte publica com total e sem nenhuma nota. */
+    static final String SEM_DETALHAMENTO = "Sem detalhamento na fonte";
+
+    /**
+     * Notas de um documento da verba (o pedido do mês ou um complemento). O ano e o mês são os da verba; a data é a da
+     * nota. CNPJ de 14 dígitos fica; CPF de prestador pessoa física sai, do campo e do nome da empresa. Documento com
+     * total e sem nota vira uma linha só, com o total, para o valor do deputado não ficar abaixo do que a fonte declara.
+     */
+    static List<Despesa> despesasDoDocumento(JsonNode documento, JsonNode notas, Map<Integer, String> rubricas, int ano, int mes,
+                                            Prov provDasNotas, Prov provDoDocumento) {
+        String numero = Json.texto(documento, "numero");
+        String rotulo = "P".equals(Json.texto(documento, "tipo")) ? "Pedido " : "Complemento ";
+        List<Despesa> despesas = new ArrayList<>();
+        for (JsonNode nota : notas) {
+            BigDecimal valor = Texto.valor(Json.texto(nota, "valor"));
+            if (valor == null) {
+                continue;
+            }
+            Integer rubrica = Json.inteiro(nota, "rubrica");
+            String categoria = rubrica == null ? null : rubricas.get(rubrica);
+            String documentoCnpj = Json.texto(nota, "cnpj");
+            String digitos = documentoCnpj == null ? "" : documentoCnpj.replaceAll("\\D", "");
+            String empresa = Json.texto(nota, "empresa");
+            despesas.add(new Despesa(dia(Json.texto(nota, "data")), ano, mes,
+                    categoria != null ? categoria : rubrica == null ? "Sem rubrica" : "Rubrica " + rubrica,
+                    empresa == null ? null : Guarda.semCpf(empresa.replaceAll("\\s+", " ")),
+                    digitos.length() == 14 ? digitos : null, valor, numero == null ? null : rotulo + numero, null, provDasNotas));
+        }
+        BigDecimal total = Texto.valor(Json.texto(documento, "total"));
+        if (despesas.isEmpty() && total != null && total.signum() > 0) {
+            despesas.add(new Despesa(null, ano, mes, SEM_DETALHAMENTO, null, null, total,
+                    numero == null ? null : rotulo + numero, null, provDoDocumento));
+        }
+        return despesas;
+    }
+
+    private static LocalDate dia(String dataBr) {
+        String iso = Texto.dataBr(dataBr);
+        try {
+            return iso == null ? null : LocalDate.parse(iso);
+        } catch (DateTimeParseException e) {
+            return null;
+        }
+    }
+
+    /** Despesas de cada deputado em exercício, pelos arquivos em cache. */
+    private static Map<String, List<Despesa>> despesasPorSlug(Contexto ctx, List<DeputadoBruto> deputados) {
+        Map<String, List<Despesa>> porSlug = new HashMap<>();
+        Coleta.Arquivo lista = Coleta.metadados(ctx, "alepe", "despesas/deputados.json");
+        if (lista == null || lista.bytes() == 0 || !Files.exists(Coleta.caminho(ctx, lista))) {
+            return porSlug;
+        }
+        Map<String, String> idPorSlug = idsDoPortalPorSlug(Json.ler(Coleta.caminho(ctx, lista)), slugPorChave(deputados));
+        int lancamentos = 0;
+        int totaisDiferentes = 0;
+        int semNotas = 0;
+        for (int ano = PRIMEIRO_ANO_DESPESAS; ano <= ctx.hoje().getYear(); ano++) {
+            Map<Integer, String> rubricas = Map.of();
+            Coleta.Arquivo arqRubricas = Coleta.metadados(ctx, "alepe", arquivoDasRubricas(ano));
+            if (arqRubricas != null && arqRubricas.bytes() > 0 && Files.exists(Coleta.caminho(ctx, arqRubricas))) {
+                rubricas = rubricasDoAno(Json.ler(Coleta.caminho(ctx, arqRubricas)));
+            }
+            for (var perfil : idPorSlug.entrySet()) {
+                String id = perfil.getValue();
+                Coleta.Arquivo meses = Coleta.metadados(ctx, "alepe", arquivoDosMeses(id, ano));
+                if (meses == null || meses.bytes() == 0 || !Files.exists(Coleta.caminho(ctx, meses))) {
+                    continue;
+                }
+                for (JsonNode m : Json.ler(Coleta.caminho(ctx, meses))) {
+                    int mes = m.path("mes").asInt(0);
+                    Coleta.Arquivo documentos = Coleta.metadados(ctx, "alepe", arquivoDosDocumentos(id, ano, mes));
+                    if (documentos == null || documentos.bytes() == 0 || !Files.exists(Coleta.caminho(ctx, documentos))) {
+                        continue;
+                    }
+                    for (JsonNode documento : Json.ler(Coleta.caminho(ctx, documentos))) {
+                        String docid = Json.texto(documento, "docid");
+                        Coleta.Arquivo notas = docid == null ? null : Coleta.metadados(ctx, "alepe", arquivoDasNotas(docid));
+                        if (notas == null || notas.bytes() == 0 || !Files.exists(Coleta.caminho(ctx, notas))) {
+                            continue;
+                        }
+                        List<Despesa> doDocumento = despesasDoDocumento(documento, Json.ler(Coleta.caminho(ctx, notas)), rubricas,
+                                ano, mes, Prov.de(FONTE_DESPESAS, notas.url(), notas),
+                                Prov.de(FONTE_DESPESAS, documentos.url(), documentos));
+                        BigDecimal soma = BigDecimal.ZERO;
+                        for (Despesa d : doDocumento) {
+                            soma = soma.add(d.valor());
+                        }
+                        BigDecimal total = Texto.valor(Json.texto(documento, "total"));
+                        if (total != null && soma.compareTo(total) != 0) {
+                            totaisDiferentes++;
+                        }
+                        if (doDocumento.size() == 1 && SEM_DETALHAMENTO.equals(doDocumento.getFirst().categoria())) {
+                            semNotas++;
+                        }
+                        porSlug.computeIfAbsent(perfil.getKey(), k -> new ArrayList<>()).addAll(doDocumento);
+                        lancamentos += doDocumento.size();
+                    }
+                }
+            }
+        }
+        System.out.println("alepe: " + lancamentos + " lançamentos de verba indenizatória em " + porSlug.size() + " de "
+                + idPorSlug.size() + " deputados com id no portal; " + semNotas + " documentos sem nota entram como linha única, e "
+                + totaisDiferentes + " têm total diferente da soma das notas");
+        return porSlug;
     }
 
     /** Proposições de cada deputado em exercício, pelas listas anuais em cache. */

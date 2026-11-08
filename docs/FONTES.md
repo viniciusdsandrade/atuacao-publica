@@ -939,6 +939,22 @@ Validação em 2026-11-03 com o User-Agent do projeto.
 - O arquivo de indicações passa de 100 mil caracteres de entidades, o limite do leitor XML do JDK desde a versão 24. O leitor recusa DTD, e o ETL sobe esse limite só para essas listas.
 - Recusa conexão de fora do Brasil (ADR-0029). Entra pela coleta local cifrada (ADR-0034).
 
+### `alepe-despesas`: verba indenizatória
+
+- URL base: `https://www.alepe.pe.gov.br/servicos/transparencia/adm/`. Os endereços saíram do código do Portal da Transparência (`transparencia.alepe.pe.gov.br`), uma aplicação de página única. Validação em 2026-11-07.
+- `../dep/deputados.php?leg=-16` lista 163 deputados de várias legislaturas, com `id` do portal e `nome`. O `id` não é o do perfil. A lista traz e-mail, que o ETL não lê.
+- `verbaindenizatoria-rubricas.php?ano={ano}`: a legenda das rubricas do ano. A rubrica de cada nota é o `numero_categoria`. O portal usa a posição na lista, que dá o mesmo resultado.
+- `verbaindenizatoria-dep-meses.php?dep={id}&ano={ano}`: os meses com documento.
+- `verbaindenizatoria.php?dep={id}&ano={ano}&mes={mes}`: os documentos do mês. `tipo` P é o pedido; outro valor é complemento. Traz `docid`, `numero` e `total` (com vírgula decimal). O campo `mes` vem com acento quebrado, e o ETL usa o mês da consulta.
+- `verbaindenizatorianotas.php?docid={docid}`: as notas do documento, com `rubrica`, `sequencial`, `data` (dd/mm/aaaa), `cnpj`, `empresa` e `valor`. Não traz número de nota fiscal: o campo de documento da despesa leva "Pedido {número}" ou "Complemento {número}".
+- No Abimael Santos, de 2023 a 2026, a soma das notas bateu com o total de cada um dos 51 documentos, e todos os CNPJs tinham 14 dígitos. A verba atual, com rubricas por ano, começa em maio de 2022.
+- O vínculo com o perfil é pelo nome, sem acento e sem pontuação. Nome repetido na lista do portal fica fora. "João Paulo do PT" (nome do perfil) não casa com "João Paulo" (PT, id 4496), que não tem verba de 2022 a 2026 e pode ser um homônimo antigo. "Cayo Albino" e "Junior Matuto" não estão na lista. Os três ficam sem despesa.
+- Na validação, 2.186 documentos de 46 deputados, de 2022 a 2026, com R$ 63.617.616,07 no total. 44 deputados têm verba. Delegada Gleide Ângelo e Izaías Régis têm id no portal e nenhum documento no período.
+- 32 documentos (16 pedidos e 16 complementos, R$ 1.079.962,47 no total) saem na fonte com total e sem nenhuma nota. Cada um vira uma linha só, com a categoria "Sem detalhamento na fonte" e a fonte no próprio documento. Sem isso, o total do deputado ficaria abaixo do que a fonte declara. Com as linhas, o total publicado é igual à soma dos totais dos documentos.
+- 6.581 lançamentos: 1.067 em 2022 (a partir de maio), 2.207 em 2023, 2.302 em 2024, 862 em 2025 e 143 em 2026. A fonte lista menos meses com documento em 2025 (338 meses de deputado) e em 2026 (92) do que em 2023 (478) e em 2024 (498). Não se sabe se é uso menor da verba ou publicação atrasada.
+- 111 notas ficam sem CNPJ: o campo vem vazio ou com CPF, e o ETL descarta o CPF. A fonte grafa o mesmo fornecedor com caixa diferente ("DAVIDSON MENDONÇA FIGUEIROA", "Davidson Mendonça Figueiroa"), e o ETL mantém o texto.
+- Recusa conexão de fora do Brasil (ADR-0029). Entra pela coleta local cifrada (ADR-0034).
+
 ### `pe-transparencia` e `pe-diario-oficial`: Executivo estadual
 
 - Transparência orçamentária: `https://web.transparencia.pe.gov.br/`

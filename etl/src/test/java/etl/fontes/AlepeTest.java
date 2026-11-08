@@ -65,6 +65,79 @@ class AlepeTest {
     }
 
     @Test
+    void despesasDoDocumentoUsamARubricaDoAnoECortamCpf() {
+        // Dado sintético no formato do portal: o pedido de março de 2024, com quatro notas.
+        JsonNode documento = Json.FONTE.readTree("{\"docid\":\"5734\",\"numero\":\"193\",\"tipo\":\"P\",\"ano\":2024,\"total\":\"49830,98\"}");
+        JsonNode notas = Json.FONTE.readTree("""
+                [{"rubrica":4,"sequencial":1,"data":"28/03/2024","cnpj":"43683859000155","empresa":"amss consultoria em serviços e informações ltda","valor":"25844"},
+                 {"rubrica":5,"sequencial":1,"data":"28/03/2024","cnpj":"34763489000175","empresa":"2A comunicação","valor":"9900"},
+                 {"rubrica":5,"sequencial":2,"data":"28/03/2024","cnpj":"08079830000140","empresa":"NEWCOM","valor":"13914"},
+                 {"rubrica":9,"sequencial":1,"data":"31/03/2024","cnpj":"12345678901","empresa":"Maria  Prestadora 123.456.789-01","valor":"172,98"}]
+                """);
+        JsonNode legenda = Json.FONTE.readTree("""
+                [{"id":98,"nome_categoria":"CONSULTORIAS E TRABALHOS TÉCNICOS","numero_categoria":4,"numero_romano":"IV"},
+                 {"id":99,"nome_categoria":"DIVULGAÇÃO DA ATIVIDADE PARLAMENTAR","numero_categoria":5,"numero_romano":"V"}]
+                """);
+        Prov prov = new Prov(Alepe.FONTE_DESPESAS, Alepe.API_VERBAS + "verbaindenizatorianotas.php?docid=5734", Instant.parse("2026-11-07T12:00:00Z"));
+
+        Prov provDoDocumento = new Prov(Alepe.FONTE_DESPESAS, Alepe.API_VERBAS + "verbaindenizatoria.php?dep=4508&ano=2024&mes=3",
+                Instant.parse("2026-11-07T12:00:00Z"));
+
+        var despesas = Alepe.despesasDoDocumento(documento, notas, Alepe.rubricasDoAno(legenda), 2024, 3, prov, provDoDocumento);
+
+        assertEquals(4, despesas.size());
+        assertEquals("CONSULTORIAS E TRABALHOS TÉCNICOS", despesas.get(0).categoria());
+        assertEquals("43683859000155", despesas.get(0).fornecedorCnpj());
+        assertEquals(java.time.LocalDate.of(2024, 3, 28), despesas.get(0).data());
+        assertEquals(2024, despesas.get(0).ano());
+        assertEquals(3, despesas.get(0).mes());
+        assertEquals("Pedido 193", despesas.get(0).documentoNumero());
+        assertEquals("Rubrica 9", despesas.get(3).categoria(), "rubrica fora da legenda do ano");
+        assertEquals(null, despesas.get(3).fornecedorCnpj(), "CPF no campo do CNPJ sai");
+        assertEquals("Maria Prestadora", despesas.get(3).fornecedorNome(), "CPF no nome da empresa sai");
+        assertEquals(new java.math.BigDecimal("49830.98"),
+                despesas.stream().map(d -> d.valor()).reduce(java.math.BigDecimal.ZERO, java.math.BigDecimal::add),
+                "a soma das notas é o total do documento");
+    }
+
+    @Test
+    void documentoComTotalESemNotaViraLinhaUnica() {
+        JsonNode complemento = Json.FONTE.readTree("{\"docid\":\"7001\",\"numero\":\"12\",\"tipo\":\"C\",\"total\":\"4209,67\"}");
+        Prov provNotas = new Prov(Alepe.FONTE_DESPESAS, Alepe.API_VERBAS + "verbaindenizatorianotas.php?docid=7001", Instant.EPOCH);
+        Prov provDocumento = new Prov(Alepe.FONTE_DESPESAS, Alepe.API_VERBAS + "verbaindenizatoria.php?dep=4508&ano=2024&mes=5", Instant.EPOCH);
+
+        var despesas = Alepe.despesasDoDocumento(complemento, Json.FONTE.readTree("[]"), Map.of(), 2024, 5, provNotas, provDocumento);
+
+        assertEquals(1, despesas.size());
+        assertEquals(Alepe.SEM_DETALHAMENTO, despesas.getFirst().categoria());
+        assertEquals(new java.math.BigDecimal("4209.67"), despesas.getFirst().valor());
+        assertEquals("Complemento 12", despesas.getFirst().documentoNumero());
+        assertEquals(null, despesas.getFirst().fornecedorNome());
+        assertEquals(provDocumento, despesas.getFirst().prov(), "a fonte é o documento, que traz o total");
+        assertEquals(0, Alepe.despesasDoDocumento(Json.FONTE.readTree("{\"docid\":\"7002\",\"numero\":\"13\",\"tipo\":\"P\",\"total\":\"0\"}"),
+                Json.FONTE.readTree("[]"), Map.of(), 2024, 5, provNotas, provDocumento).size(), "total zero não gera linha");
+    }
+
+    @Test
+    void idDoPortalSoVaiParaNomeSemHomonimo() {
+        JsonNode lista = Json.FONTE.readTree("""
+                [{"id":"4508","nome":"Abimael Santos","partido":"PL","email":"x@example.org"},
+                 {"id":"4496","nome":"João Paulo","partido":"PT"},
+                 {"id":"9001","nome":"Zé Homônimo","partido":"PP"},
+                 {"id":"9002","nome":"Ze Homonimo","partido":"PSD"}]
+                """);
+        Map<String, String> slugPorChave = Map.of(
+                Alepe.chaveDeAutoria("Abimael Santos"), "abimael-santos",
+                Alepe.chaveDeAutoria("João Paulo do PT"), "joao-paulo-do-pt",
+                Alepe.chaveDeAutoria("Zé Homônimo"), "ze-homonimo");
+
+        Map<String, String> ids = Alepe.idsDoPortalPorSlug(lista, slugPorChave);
+
+        assertEquals(Map.of("abimael-santos", "4508"), ids,
+                "sem nome igual não há id, e nome repetido na lista do portal fica fora");
+    }
+
+    @Test
     void projetoUsaOTipoDaFonte() throws XMLStreamException {
         String xml = """
                 <?xml version='1.0' encoding='utf-8'?>
