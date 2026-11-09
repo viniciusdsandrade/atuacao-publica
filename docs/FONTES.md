@@ -671,7 +671,8 @@ Validação em 2026-11-03 com o User-Agent do projeto.
 - A despesa vem com valor negativo e entra positiva. A categoria é o nome do centro de custo, sem o código.
 - O fornecedor traz CNPJ ou CPF e endereço. Só o CNPJ entra; o endereço não é guardado.
 - Um mês novo desloca todas as páginas. Quando a primeira página de um deputado é renovada, as outras são renovadas na mesma execução.
-- Na validação: 30.330 lançamentos de 2023 a 2026 em 67 dos 70 deputados em exercício, 95% com CNPJ. Os ids 344, 514 e 515 não constam do DOCIGP.
+- Três deputados em exercício têm `remote_id` nulo no DOCIGP (ids ALERJ 344, 514 e 515). O adaptador liga esses ids aos ids DOCIGP 131, 135 e 136.
+- No site em 2026-11-09, 31.062 lançamentos de 2023 a 2026 em 70 deputados em exercício.
 - A conexão oscila. Na validação, 12 tentativas esgotaram o tempo e foram repetidas. Entre provas do Globalping, a Azure (eastus), a AWS em São Paulo e uma rede residencial receberam resposta; a AWS nos EUA e o Google Cloud e a Oracle em São Paulo não.
 
 ### `rj-transparencia` e `rj-diario-oficial`: Executivo estadual
@@ -783,6 +784,8 @@ Validação em 2026-11-03 com o User-Agent do projeto.
 - Situação: tramitando (`opcao=T`) e deliberado (`opcao=D`).
 - Cada página HTML traz 20 proposições em blocos com número/ano, autoria, data de entrada (`dd.MM.yy`), ementa e endereço da tramitação oficial.
 - Autores são vinculados pela mesma chave de nome das despesas e votações nominais (`chaveDoNome`). Coautorias são separadas por vírgula ou " e ", com atribuição a cada deputado e sinalização de proponente para o primeiro autor. Autor sem perfil em exercício é descartado. Ementas passam pela guarda de privacidade.
+- A listagem é UTF-8 com BOM e, em algumas páginas, um byte Windows-1252 (0x96) no meio do texto. O ETL lê com substituição, para não perder a paginação nem a página.
+- No site em 2026-11-09, 5.573 proposições em 53 deputados da 31ª legislatura.
 
 ### `ce-transparencia` e `ce-diario-oficial`: Executivo estadual
 
@@ -827,6 +830,7 @@ Validação em 2026-11-03 com o User-Agent do projeto.
 - Mapeamento de apelidos e patentes institucionais de iniciativa (`SLUG_PARA_INICIATIVA`) para garantir 100% de cobertura dos deputados em exercício.
 - Paginador interrompe a coleta de páginas anteriores assim que a última data da listagem for anterior ao início da legislatura (01/02/2023), economizando requisições.
 - Extração de tipo, número, ano, identificação oficial, data de apresentação, ementa, situação e autores com detecção de proponente principal.
+- No site em 2026-11-09, 2.103 proposições da 20ª legislatura em 40 deputados.
 
 ### `sc-transparencia` e `sc-diario-oficial`: Executivo estadual
 
@@ -872,6 +876,7 @@ Validação em 2026-11-03 com o User-Agent do projeto.
 - Detalhes nominais por pauta com `parlamentar`, `data_sessao`, `nome_sessao`, `ementa_projeto`, `pauta_id`, `tipo_voto` e `partido_sigla`.
 - Casamento com deputados em exercício pelo nome normalizado (`chaveDoNome`), removendo títulos e patentes (Dr., Dra., Delegado, Coronel, Major, Professor, Pr.).
 - Alimenta os blocos `votos` e `participacao_votacoes` dos parlamentares da 20ª legislatura (2023–2026).
+- Na publicação de 2026-11-09 o runner esgotou o tempo de conexão nos quatro JSON anuais, e o bloco de votos não entrou no site.
 
 ### `go-transparencia` e `go-diario-oficial`: Executivo estadual
 

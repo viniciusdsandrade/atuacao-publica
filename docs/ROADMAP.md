@@ -82,7 +82,8 @@ Estado real de cada fase. Atualizado ao fechar cada fase.
 - ALESC: as despesas dos gabinetes (`alesc-despesas`) cobrem 2023 a 2026 e entram só para os 40 deputados em exercício. Em 2026-11-06, 4.355 de 54.524 linhas não correspondiam a nenhum deles e foram descartadas; a contagem aparece na saída do `normalize`. A fonte não traz CNPJ nem número de documento, e o favorecido vem vazio em cerca de 21% das linhas.
 - ALESC: o favorecido MEI vem como nome e CPF. A sequência de 11 dígitos é removida na normalização (`Guarda.semCpf`), como na Câmara, no Senado, na ALESP e na ALMG.
 - ALEP: a consulta das verbas de ressarcimento por deputado (`api/ressarcimento`) exige reCAPTCHA v3, conforme o script da própria página (2026-11-06). O ETL não contorna CAPTCHA, então essas despesas não são coletadas (`alep-ressarcimento`, bloqueado).
-- ALERJ: as despesas vêm da API do DOCIGP desde 2026-11-07 (`alerj-docigp`). Três deputados em exercício tinham `remote_id` nulo no DOCIGP e ficavam de fora. Em 2026-11-08 o adaptador passou a ligá-los por um mapa fixo desses ids e a ler o envelope `data` ou `rows`, cobrindo os 70 deputados em exercício. A conexão oscila: a Azure (eastus) recebeu resposta, e a AWS nos EUA e o Google Cloud e a Oracle em São Paulo não. Se o runner falhar, a fonte fica parcial.
+- ALERJ: as despesas vêm da API do DOCIGP desde 2026-11-07 (`alerj-docigp`). Três deputados em exercício têm `remote_id` nulo (ids 344, 514 e 515) e entram pelo mapa fixo 344→131, 514→135 e 515→136, com o envelope `data` ou `rows`. No site em 2026-11-09, às 00:32 UTC, 31.062 lançamentos em 70 deputados. A conexão oscila: nesta execução 4 perfis ficaram sem atualização, com cópia anterior. A Azure (eastus) recebeu resposta, e a AWS nos EUA e o Google Cloud e a Oracle em São Paulo não.
+- ALEGO: as votações nominais (`alego-votacoes`) estão no adaptador. Na publicação de 2026-11-09 o runner esgotou o tempo de conexão nos quatro JSON anuais de `transparencia.al.go.leg.br`, e o bloco de votos não entrou no site.
 - CMSP (capital): só vereadores em exercício entram. Os 9 suplentes sem exercício e quem deixou a vereança na legislatura ficam fora. O serviço não tem voto nominal por vereador, e os perfis ficam sem votações e sem foto. As proposições cobrem, desde 2022, só o que está em tramitação, virou lei ou foi vetado: o serviço não informa o autor do projeto encerrado sem virar lei, nem separa autor de coautor.
 - CMSP: 4 dos 55 vereadores ficaram sem vínculo com o TSE porque o nome parlamentar difere do nome de urna (por exemplo, uma palavra só). O vínculo ignora só a pontuação ("Jr.", "Dra."), porque casar por palavras soltas ligaria homônimos parciais e atribuiria candidaturas e bens a outra pessoa.
 - CMSP: a fonte deixa cargo antigo da Mesa sem data de fim quando há sucessor. Em cargo exclusivo (Mesa, presidência e vice-presidência de comissão), vale o de início mais recente entre os vereadores em exercício.
@@ -98,7 +99,7 @@ Estado real de cada fase. Atualizado ao fechar cada fase.
 
 ## Casas estaduais e municipais no site
 
-Estado da publicação de 2026-11-08, às 03:09 UTC, com 2.116 perfis. "Perfis" conta os perfis com o identificador da casa, inclusive os fundidos com outra casa.
+Estado da publicação de 2026-11-09, às 00:32 UTC, com 2.116 perfis. "Perfis" conta os perfis com o identificador da casa, inclusive os fundidos com outra casa.
 
 | Casa | Coleta no CI | Perfis | Vínculo com o TSE | Blocos além de mandato e candidaturas |
 |---|---|---|---|---|
@@ -106,11 +107,11 @@ Estado da publicação de 2026-11-08, às 03:09 UTC, com 2.116 perfis. "Perfis" 
 | ALMG (MG) | ok, pela coleta local cifrada | 110 | 109 | comissões, despesas (118.453 lançamentos em 107 deputados) e proposições (58.861 autorias em 108 deputados) |
 | ALEP (PR) | parcial: 4 sessões passaram a responder 404, com cópia anterior | 54 | 51 | comissões, proposições (24.343) e votações nominais (197.815 votos em 51 deputados) |
 | ALBA (BA) | ok | 63 | 63 | comissões |
-| ALERJ (RJ) | parcial: o DOCIGP oscila, com cópia anterior | 70 | 70 | despesas (30.330 lançamentos em 67 deputados) |
+| ALERJ (RJ) | parcial: o DOCIGP oscila; 4 perfis sem atualização nesta execução, com cópia anterior | 70 | 70 | despesas (31.062 lançamentos em 70 deputados) |
 | ALRS (RS) | ok, pela coleta local cifrada | 55 | 54 | comissões e votos em plenário (33.204 votos em 55 deputados, sem bloco de participação) |
-| ALECE (CE) | ok | 54 | 51 | comissões, despesas (15.494 lançamentos) e votações nominais (2.439 votos) |
-| ALESC (SC) | ok | 40 | 40 | despesas e comissões |
-| ALEGO (GO) | ok | 43 | 43 | comissões e frentes e despesas (51.156 lançamentos) |
+| ALECE (CE) | ok | 54 | 51 | comissões, despesas (15.444 lançamentos), votações nominais (2.427 votos) e proposições (5.573 em 53 deputados) |
+| ALESC (SC) | ok | 40 | 40 | despesas, comissões e proposições (2.103 da 20ª legislatura em 40 deputados) |
+| ALEGO (GO) | parcial: a API de votações esgotou o tempo nesta execução | 43 | 43 | comissões e frentes e despesas (51.156 lançamentos) |
 | ALES (ES) | ok, pela coleta local cifrada | 30 | 29 | comissões e proposições (12.311 autorias em 30 deputados) |
 | ALEPA (PA) | ok | 41 | 40 | comissões |
 | ALEPE (PE) | ok, pela coleta local cifrada | 49 | 49 | comissões, proposições (26.911 autorias em 49 deputados) e despesas (10.450 lançamentos em 44 deputados, R$ 104,79 milhões) |
@@ -397,10 +398,10 @@ Limitações:
     - Cotas parlamentares da ALES: implementadas em 2026-11-08 (`ales-cotas`), pela API do portal de transparência (`CotasParlamentaresNovoTable`), por gabinete e mês. Os valores vêm agregados por produto e mês, sem identificação de fornecedor nem documento. O vínculo com o perfil é feito pelo nome do titular do gabinete. Entra pela coleta local cifrada (ADR-0034). No site e no ensaio local, 3.108 cotas por produto e mês de 2022 a 2026 nos 30 deputados, totalizando R$ 7.724.090,96, sem divergências de soma.
     - Proposições da ALRS: implementadas em 2026-11-08 (`alrs-proposicoes`), pela página de proposições por deputado no portal da Assembleia (`/deputados/{id}/proposicoes`). Entra pela coleta local cifrada. No site e no ensaio local, 4.507 proposições de 2022 a 2026 nos 55 deputados (todos com ao menos uma proposição).
     - Despesas da ALRS: implementadas em 2026-11-08 (`alrs-gastos`), pelo portal da transparência por deputado, ano e mês (`/parlamentares/gastos/pesquisa`). A fonte traz o total mensal por categoria (23 categorias), sem fornecedor nem documento. Entra pela coleta local cifrada. No site e no ensaio local, 27.684 lançamentos mensais por categoria de 2022 a 2026 nos 55 deputados, somando R$ 35.820.754,75 (4 meses com divergência de centavos entre o total e as parcelas na própria fonte).
-    - Proposições da ALECE: implementadas em 2026-11-08 (`alece-proposicoes`), pelas listagens HTML paginadas da 31ª legislatura (2023–2026), cobrindo PL, PI, PDL, PLC, PEC e PR. O autor vem pelo nome. Sequência de 11 dígitos na ementa (CPF) é removida.
-    - Votações nominais da ALEGO: implementadas em 2026-11-08 (`alego-votacoes`), pelo JSON anual de detalhes (`/api/transparencia/votacoes.json?todos=true&ano={ano}&tipo=detalhes`). O parlamentar vem pelo nome, sem título e sem patente. Entram os blocos `votos` e `participacao_votacoes`.
-    - Proposições da ALESC: implementadas em 2026-11-08 (`alesc-proposicoes`), pelo e-Legis paginado por iniciativa (`/proposicoes/processo-legislativo?iniciativa={slug}`), da 20ª legislatura a partir de 2023-02-01. Autoria e proponente vêm da listagem. O que é anterior fica fora.
-    - Despesas da ALERJ: em 2026-11-08, o adaptador passou a cobrir os 70 deputados em exercício quando o `remote_id` do DOCIGP é nulo, com mapa fixo desses ids e leitura do envelope `data` ou `rows`.
+    - Proposições da ALECE: implementadas em 2026-11-08 (`alece-proposicoes`), pelas listagens HTML paginadas da 31ª legislatura (2023–2026), cobrindo PL, PI, PDL, PLC, PEC e PR. O autor vem pelo nome. Sequência de 11 dígitos na ementa (CPF) é removida. A listagem é UTF-8 com BOM e, em algumas páginas, um byte Windows-1252 (0x96) no meio do texto; o ETL lê com substituição. No site em 2026-11-09, 5.573 proposições em 53 deputados.
+    - Votações nominais da ALEGO: implementadas em 2026-11-08 (`alego-votacoes`), pelo JSON anual de detalhes (`/api/transparencia/votacoes.json?todos=true&ano={ano}&tipo=detalhes`). O parlamentar vem pelo nome, sem título e sem patente. Entram os blocos `votos` e `participacao_votacoes`. Na publicação de 2026-11-09 o runner esgotou o tempo de conexão nos quatro JSON anuais, e o bloco não entrou no site.
+    - Proposições da ALESC: implementadas em 2026-11-08 (`alesc-proposicoes`), pelo e-Legis paginado por iniciativa (`/proposicoes/processo-legislativo?iniciativa={slug}`), da 20ª legislatura a partir de 2023-02-01. Autoria e proponente vêm da listagem. O que é anterior fica fora. No site em 2026-11-09, 2.103 proposições em 40 deputados.
+    - Despesas da ALERJ: em 2026-11-08, o adaptador passou a cobrir os 70 deputados em exercício quando o `remote_id` do DOCIGP é nulo, com mapa fixo 344→131, 514→135 e 515→136 e leitura do envelope `data` ou `rows`. No site em 2026-11-09, 31.062 lançamentos em 70 deputados.
     - Túnel pelo Brasil (ADR-0029): `scripts/tunel-brasil.sh` e o checklist de manutenção passaram a encaminhar também `transparencia.al.rs.gov.br:443`, `www3.al.es.gov.br:443` e `ple.cl.df.gov.br:443`.
 
     | Casa | Despesas | Proposições com autor | Votações nominais |
