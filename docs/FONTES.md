@@ -868,7 +868,7 @@ Validação em 2026-11-03 com o User-Agent do projeto.
 - O projeto usa o valor indenizado, que é o que a Casa pagou. Ano e mês são os da verba; a data é a do documento.
 - `/periodos` lista os meses publicados: de 2014 a 2026, com 2026 até setembro na validação.
 - O detalhe traz também o e-mail e as redes do gabinete. O projeto não guarda esses campos.
-- Respondeu a provas nos EUA (Azure e AWS) e no Brasil.
+- Respondeu a provas nos EUA (Azure e AWS) e no Brasil em 2026-11-06. Em 2026-11-09 o mesmo host deixou de completar a conexão TCP na porta 443; as 51.156 despesas no site vêm da cópia em cache.
 
 ### `alego-votacoes`: votações nominais em plenário
 
@@ -876,7 +876,8 @@ Validação em 2026-11-03 com o User-Agent do projeto.
 - Detalhes nominais por pauta com `parlamentar`, `data_sessao`, `nome_sessao`, `ementa_projeto`, `pauta_id`, `tipo_voto` e `partido_sigla`.
 - Casamento com deputados em exercício pelo nome normalizado (`chaveDoNome`), removendo títulos e patentes (Dr., Dra., Delegado, Coronel, Major, Professor, Pr.).
 - Alimenta os blocos `votos` e `participacao_votacoes` dos parlamentares da 20ª legislatura (2023–2026).
-- Na publicação de 2026-11-09 o runner esgotou o tempo de conexão nos quatro JSON anuais, e o bloco de votos não entrou no site.
+- Em 2026-11-09 o DNS de `transparencia.al.go.leg.br` resolvia e a conexão TCP na porta 443 expirava sem completar, a partir do runner do GitHub Actions e de sondas no Brasil e no exterior (`HttpConnectTimeoutException`, tempo de conexão 0). Aumentar o timeout de conexão não obtém o JSON enquanto o SYN for descartado.
+- O `normalize` do `dados` nessa data imprimiu `alego: 0 votos nominais em 0 deputados`. No site em 2026-11-09, às 00:32 UTC, os perfis da ALEGO ficam sem bloco de votos. Esse zero é ausência de arquivo coletado, não um total conferido na fonte.
 
 ### `go-transparencia` e `go-diario-oficial`: Executivo estadual
 
