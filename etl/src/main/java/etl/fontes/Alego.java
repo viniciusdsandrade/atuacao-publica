@@ -129,6 +129,14 @@ public final class Alego implements Fonte {
         coleta.obter(URL_DEPUTADOS, "deputados.html", "text/html", Politica.SEMANAL);
 
         List<DeputadoBruto> deputados = extrairDeputados(ctx);
+
+        // Quatro JSON anuais, antes das dezenas de páginas do portal e da verba. No CI o orçamento
+        // de 15 min esgota nas biografias e nas despesas, e as votações ficavam só no cache vazio.
+        for (int ano = PRIMEIRO_ANO_DESPESAS; ano <= ctx.hoje().getYear(); ano++) {
+            coleta.obterOpcional(URL_VOTACOES + "?todos=true&ano=" + ano + "&tipo=detalhes",
+                    arquivoDeVotacoes(ano), "application/json", Politica.porAnoSemanal(ano, ctx.hoje()));
+        }
+
         for (DeputadoBruto d : deputados) {
             String urlPerfil = SITE + "/deputados/perfil/" + d.id();
             coleta.obterOuVazio(urlPerfil, "perfis/" + d.id() + ".html", "text/html", Politica.SEMANAL);
@@ -165,12 +173,6 @@ public final class Alego implements Fonte {
                     coleta.falhaParcial("despesas", falha);
                 }
             }
-        }
-
-        // Votações nominais em plenário: JSON anual com tipo=detalhes.
-        for (int ano = PRIMEIRO_ANO_DESPESAS; ano <= ctx.hoje().getYear(); ano++) {
-            coleta.obterOpcional(URL_VOTACOES + "?todos=true&ano=" + ano + "&tipo=detalhes",
-                    arquivoDeVotacoes(ano), "application/json", Politica.porAnoSemanal(ano, ctx.hoje()));
         }
     }
 
