@@ -877,7 +877,7 @@ Validação em 2026-11-03 com o User-Agent do projeto.
 - Casamento com deputados em exercício pelo nome normalizado (`chaveDoNome`), removendo títulos e patentes (Dr., Dra., Delegado, Coronel, Major, Professor, Pr.).
 - Alimenta os blocos `votos` e `participacao_votacoes` dos parlamentares da 20ª legislatura (2023–2026).
 - Em 2026-11-09 o DNS de `transparencia.al.go.leg.br` resolvia e a conexão TCP na porta 443 expirava sem completar, a partir do runner do GitHub Actions e de sondas no Brasil e no exterior (`HttpConnectTimeoutException`, tempo de conexão 0). Aumentar o timeout de conexão não obtém o JSON enquanto o SYN for descartado.
-- O `normalize` do `dados` nessa data imprimiu `alego: 0 votos nominais em 0 deputados`. No site em 2026-11-09, às 00:32 UTC, os perfis da ALEGO ficam sem bloco de votos. Esse zero é ausência de arquivo coletado, não um total conferido na fonte.
+- Os JSON anuais de votações ficaram inalcançáveis. No site em 2026-11-09, às 00:32 UTC, os perfis da ALEGO ficam sem bloco de votos. Não há total conferido na fonte.
 
 ### `go-transparencia` e `go-diario-oficial`: Executivo estadual
 
