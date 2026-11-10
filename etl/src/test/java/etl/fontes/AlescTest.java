@@ -102,6 +102,31 @@ class AlescTest {
     }
 
     @Test
+    void presencaDaSessaoDaASituacaoDeCadaDeputado() {
+        // Trecho no formato da página de presença do e-Legis, com nomes de exemplo.
+        String html = """
+                <table class="table table-hover">
+                        <tr>
+                    <td>Deputada Exemplo</td>
+                    <td>Presente</td>
+                </tr>
+                        <tr>
+                    <td>Deputado Teste </td>
+                    <td>Aus&ecirc;ncia justificada</td>
+                </tr>
+                </table>
+                """;
+
+        var linhas = Alesc.linhasDePresenca(html);
+
+        assertEquals(2, linhas.size());
+        assertEquals("Deputado Teste", linhas.get(1)[0]);
+        assertEquals("registrada", Alesc.PRESENCAS.get(etl.Texto.normalizarNome(linhas.get(0)[1])));
+        assertEquals("ausencia_justificada", Alesc.PRESENCAS.get(etl.Texto.normalizarNome(linhas.get(1)[1])));
+        assertEquals("Sessão Ordinária", Alesc.tipoDaSessao("100ª Sessão Ordinária"));
+    }
+
+    @Test
     void idQueSoDifereNaCaixaNaoCaiNoMesmoArquivo() {
         // Disco que não diferencia maiúsculas guardaria "5bnZ5" e "5bnz5" no mesmo arquivo.
         assertEquals("5bn_z5", Alesc.nomeDeArquivo("5bnZ5"));

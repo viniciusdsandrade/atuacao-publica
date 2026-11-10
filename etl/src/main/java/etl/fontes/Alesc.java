@@ -22,6 +22,8 @@ import etl.Guarda;
 import etl.Json;
 import etl.Registros;
 import etl.Registros.Despesa;
+import etl.Registros.Evento;
+import etl.Registros.FonteUsada;
 import etl.Registros.LinkOficial;
 import etl.Registros.Mandato;
 import etl.Registros.OrgaoOuFrente;
@@ -44,6 +46,7 @@ public final class Alesc implements Fonte {
     public static final String FONTE_DESPESAS = "alesc-despesas";
     public static final String FONTE_PROPOSICOES = "alesc-proposicoes";
     public static final String FONTE_VOTACOES = "alesc-votacoes";
+    public static final String FONTE_PRESENCA = "alesc-presenca";
 
     public static final String SITE = "https://www.alesc.sc.gov.br";
     public static final String URL_DEPUTADOS = "https://www.alesc.sc.gov.br/deputados/";
@@ -67,6 +70,12 @@ public final class Alesc implements Fonte {
             "<span class=\"badge rounded-pill[^\"]*\">(?:<i[^>]*></i>)?\\s*([^<]+?)\\s*</span>");
     private static final Pattern ORDEM_DO_DIA = Pattern.compile(
             "<a href=\"/sessoes-plenarias/([A-Za-z0-9]+)/ordem-do-dia\" class=\"([^\"]*)\"");
+    private static final Pattern PRESENCA_DA_SESSAO = Pattern.compile(
+            "<a href=\"/sessoes-plenarias/[A-Za-z0-9]+/presenca\" class=\"([^\"]*)\"");
+    private static final Pattern LINHA_DE_PRESENCA = Pattern.compile(
+            "<tr>\\s*<td>\\s*([^<]+?)\\s*</td>\\s*<td>\\s*([^<]+?)\\s*</td>\\s*</tr>");
+    /** Situação de presença da fonte e o valor publicado; outra situação fica fora e aparece na saída do normalize. */
+    static final Map<String, String> PRESENCAS = Map.of("PRESENTE", "registrada", "AUSENCIA JUSTIFICADA", "ausencia_justificada");
     private static final String MARCA_DO_ITEM = "<div class=\"border-bottom mb-3\">";
     private static final Pattern PROPOSICAO_DO_ITEM = Pattern.compile("<a href=\"/proposicoes/[A-Za-z0-9]+\">([^<]+)</a>");
     private static final Pattern SELO_DO_ITEM = Pattern.compile("<span class=\"badge text-bg-([a-z-]+)\">([^<]+)</span>");
@@ -253,10 +262,13 @@ public final class Alesc implements Fonte {
         for (VotacaoNominal v : votacoesNominais(Texto.lerArquivo(Coleta.caminho(ctx, ordem)))) {
             coleta.obterOpcional(URL_EXTRATO + v.idExtrato(), arquivoDoExtrato(v.idExtrato()), "text/html", politica, AJAX);
         }
+        if (sessao.comPresenca()) {
+            coleta.obterOpcional(urlDaPresenca(sessao.id()), arquivoDaPresenca(sessao.id()), "text/html", politica);
+        }
     }
 
-    /** Sessão da lista: id, título, data, situação e se a ordem do dia está aberta. */
-    record SessaoListada(String id, String titulo, LocalDate data, String situacao, boolean comOrdemDoDia) {
+    /** Sessão da lista: id, título, data, situação e se a ordem do dia e a presença estão abertas. */
+    record SessaoListada(String id, String titulo, LocalDate data, String situacao, boolean comOrdemDoDia, boolean comPresenca) {
 
         boolean realizada() {
             return comOrdemDoDia && data != null && "Realizada".equalsIgnoreCase(situacao);
@@ -273,6 +285,14 @@ public final class Alesc implements Fonte {
 
     static String urlDaOrdemDoDia(String idSessao) {
         return URL_SESSOES + "/" + idSessao + "/ordem-do-dia";
+    }
+
+    static String urlDaPresenca(String idSessao) {
+        return URL_SESSOES + "/" + idSessao + "/presenca";
+    }
+
+    private static String arquivoDaPresenca(String idSessao) {
+        return "sessoes/presenca/" + nomeDeArquivo(idSessao) + ".html";
     }
 
     private static String arquivoDaLista(int pagina) {
@@ -326,9 +346,11 @@ public final class Alesc implements Fonte {
             Matcher titulo = TITULO_DA_SESSAO.matcher(cartao);
             Matcher data = DATA_DA_SESSAO.matcher(cartao);
             Matcher situacao = SITUACAO_DA_SESSAO.matcher(cartao);
+            Matcher presenca = PRESENCA_DA_SESSAO.matcher(cartao);
             sessoes.add(new SessaoListada(ordem.group(1), titulo.find() ? Texto.semEntidades(titulo.group(1)) : null,
                     data.find() ? LocalDate.parse(data.group(1), DATA_BR) : null,
-                    situacao.find() ? Texto.semEntidades(situacao.group(1)) : null, !ordem.group(2).contains("disabled")));
+                    situacao.find() ? Texto.semEntidades(situacao.group(1)) : null, !ordem.group(2).contains("disabled"),
+                    presenca.find() && !presenca.group(1).contains("disabled")));
         }
         return sessoes;
     }
@@ -415,6 +437,75 @@ public final class Alesc implements Fonte {
         return votos;
     }
 
+    /** Linhas da página de presença: o nome e a situação de cada deputado, como a fonte dá. */
+    static List<String[]> linhasDePresenca(String html) {
+        List<String[]> linhas = new ArrayList<>();
+        Matcher m = LINHA_DE_PRESENCA.matcher(html);
+        while (m.find()) {
+            linhas.add(new String[] {Texto.semEntidades(m.group(1)), Texto.semEntidades(m.group(2))});
+        }
+        return linhas;
+    }
+
+    /** "100ª Sessão Ordinária" vira "Sessão Ordinária". */
+    static String tipoDaSessao(String titulo) {
+        return titulo == null ? null : titulo.replaceFirst("^[0-9]+[ªº]?\\s*", "").strip();
+    }
+
+    /** Presença em sessão plenária de cada deputado em exercício, ligada pelo nome. Cada sessão vira um evento. */
+    record Presencas(Map<String, List<Evento>> porSlug, java.time.Instant capturadaEm) {
+    }
+
+    static Presencas extrairPresencas(Contexto ctx, Map<String, String> slugPorNomeNorm) {
+        Map<String, List<Evento>> porSlug = new HashMap<>();
+        Map<String, Integer> semPerfil = new java.util.TreeMap<>();
+        Map<String, Integer> outrasSituacoes = new java.util.TreeMap<>();
+        java.time.Instant capturadaEm = null;
+        int sessoes = 0;
+        for (SessaoListada sessao : sessoesEmCache(ctx)) {
+            if (!sessao.realizada() || !sessao.comPresenca()) {
+                continue;
+            }
+            Coleta.Arquivo arq = Coleta.metadados(ctx, "alesc", arquivoDaPresenca(sessao.id()));
+            if (arq == null || arq.bytes() == 0 || !Files.exists(Coleta.caminho(ctx, arq))) {
+                continue;
+            }
+            try {
+                List<String[]> linhas = linhasDePresenca(Texto.lerArquivo(Coleta.caminho(ctx, arq)));
+                if (linhas.isEmpty()) {
+                    continue;
+                }
+                sessoes++;
+                capturadaEm = capturadaEm == null || arq.capturadoEm().isAfter(capturadaEm) ? arq.capturadoEm() : capturadaEm;
+                Prov prov = Prov.de(FONTE_PRESENCA, urlDaPresenca(sessao.id()), arq);
+                for (String[] linha : linhas) {
+                    String presenca = PRESENCAS.get(Texto.normalizarNome(linha[1]));
+                    if (presenca == null) {
+                        outrasSituacoes.merge(linha[1], 1, Integer::sum);
+                        continue;
+                    }
+                    String slug = resolverSlugPorNome(linha[0], slugPorNomeNorm);
+                    if (slug == null) {
+                        semPerfil.merge(linha[0], 1, Integer::sum);
+                        continue;
+                    }
+                    porSlug.computeIfAbsent(slug, k -> new ArrayList<>()).add(new Evento("sessao-" + sessao.id(), sessao.data().toString(),
+                            tipoDaSessao(sessao.titulo()), sessao.titulo(), "Plenário", sessao.situacao(), presenca, prov));
+                }
+            } catch (java.io.IOException e) {
+                System.err.println("alesc: erro ao ler a presença da sessão " + sessao.id() + ": " + e.getMessage());
+            }
+        }
+        for (List<Evento> eventos : porSlug.values()) {
+            eventos.sort(Comparator.comparing(Evento::data).reversed());
+        }
+        int total = porSlug.values().stream().mapToInt(List::size).sum();
+        System.out.println("alesc: presença em " + sessoes + " sessões, " + total + " registros em " + porSlug.size()
+                + " deputados; outras situações: " + outrasSituacoes + "; nomes sem perfil em exercício: " + semPerfil.size()
+                + " " + semPerfil.keySet());
+        return new Presencas(porSlug, capturadaEm);
+    }
+
     /** Votos de cada deputado em exercício, pelas ordens do dia e extratos em cache, ligados pelo nome. */
     static Map<String, List<Voto>> extrairVotos(Contexto ctx, Map<String, String> slugPorNomeNorm) {
         Map<String, List<Voto>> porSlug = new HashMap<>();
@@ -498,6 +589,7 @@ public final class Alesc implements Fonte {
         Map<String, List<Despesa>> despesasPorSlug = extrairDespesas(ctx, slugPorNomeNorm);
         Map<String, List<Proposicao>> proposicoesPorSlug = extrairProposicoes(ctx, deputados);
         Map<String, List<Voto>> votosPorSlug = extrairVotos(ctx, slugPorNomeNorm);
+        Presencas presencas = extrairPresencas(ctx, slugPorNomeNorm);
 
         List<Pessoa> pessoas = new ArrayList<>();
 
@@ -534,7 +626,14 @@ public final class Alesc implements Fonte {
             blocosNode.set("despesas", Json.SAIDA.valueToTree(despesas));
             blocosNode.set("proposicoes", Json.SAIDA.valueToTree(proposicoes));
             blocosNode.set("votos", Json.SAIDA.valueToTree(votosPorSlug.getOrDefault(slug, List.of())));
-            blocosNode.set("fontes", Json.SAIDA.valueToTree(Registros.fontesDosBlocos(blocosNode)));
+            List<Evento> eventos = presencas.porSlug().getOrDefault(slug, List.of());
+            blocosNode.set("eventos", Json.SAIDA.valueToTree(eventos));
+            var fontes = Registros.fontesDosBlocos(blocosNode);
+            if (!eventos.isEmpty()) {
+                // Uma página de presença por sessão: o bloco cita a lista de sessões, com a captura mais recente.
+                fontes.put("eventos", List.of(new FonteUsada(FONTE_PRESENCA, URL_SESSOES, presencas.capturadaEm())));
+            }
+            blocosNode.set("fontes", Json.SAIDA.valueToTree(fontes));
             Json.gravar(pastaBlocos.resolve(slug + ".json"), blocosNode);
         }
 
