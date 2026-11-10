@@ -962,7 +962,7 @@ Validação em 2026-11-03 com o User-Agent do projeto.
 - Não há ementa. O projeto aparece pelo tipo e pelo número.
 - O deputado vem pelo nome, sem id. O vínculo é pelo nome do perfil, sem acento e sem pontuação.
 - Quatro deputados em exercício aparecem com outra grafia, como "CARLOS BORDALO" para o perfil "Deputado Bordalo". A tabela `GRAFIAS_DAS_VOTACOES` liga cada grafia a um perfil. Cada uma foi conferida pelo nome completo, pelo partido e pelo período dos votos.
-- Votos de quem não tem perfil em exercício ficam fora. Na coleta de 2026-11-10, foram 21 nomes: deputados da legislatura anterior, com votos só em 2022, e deputados que deixaram a Casa até 2024.
+- Votos de quem não tem perfil em exercício ficam fora. Na coleta de 2026-11-10, foram 21 nomes: 18 da legislatura anterior, com votos só em 2022, e 3 que deixaram a Casa depois, com o último voto em dezembro de 2024 ou em março de 2026.
 - O partido é o da página de votos, às vezes como federação (`FE PT PV PCdoB`).
 - Lista vazia e detalhe sem seção de voto são confirmados com novas consultas quando baixados.
 - Na coleta de 2026-11-10, 198 votações de 2022-03-22 a 2026-11-03. Em 22 dos 59 meses não houve votação nominal, entre eles janeiro e julho de todos os anos.
