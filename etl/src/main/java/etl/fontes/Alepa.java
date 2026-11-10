@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -25,8 +26,10 @@ import etl.Registros;
 import etl.Registros.LinkOficial;
 import etl.Registros.Mandato;
 import etl.Registros.OrgaoOuFrente;
+import etl.Registros.Participacao;
 import etl.Registros.Pessoa;
 import etl.Registros.Prov;
+import etl.Registros.Voto;
 import etl.Texto;
 
 /**
@@ -39,6 +42,17 @@ public final class Alepa implements Fonte {
     public static final String FONTE_DEPUTADOS = "alepa-deputados";
     public static final String FONTE_DETALHES = "alepa-deputados-detalhes";
     public static final String FONTE_PORTAL = "alepa-portal";
+    public static final String FONTE_VOTACOES = "alepa-votacoes";
+
+    public static final String URL_VOTACOES = "https://www.alepa.pa.gov.br/Legislativo/VotacoesNominais";
+    static final int PRIMEIRO_ANO_VOTACOES = 2022;
+    private static final Pattern ITEM_DA_LISTA = Pattern.compile(
+            "class='pauta-item-title' href='(/Legislativo/DetalhesVotacaoNominal\\?IdProposicao=([0-9]+)&(?:amp;)?IdVotacao=([0-9]+))'");
+    private static final Pattern CAMPO_DO_CABECALHO = Pattern.compile("<strong>([^<:]+):</strong>\\s*([^<]*?)\\s*</td>");
+    private static final Pattern SECAO_DE_VOTO = Pattern.compile("<div class=\"section-title\">([^<]+)</div>");
+    private static final Pattern ITEM_DE_VOTO = Pattern.compile("<div class=\"voto-item\">\\s*([^<]*?)\\s*</div>");
+    /** A seção de quem não votou: entra na participação como votação sem voto registrado. */
+    static final String NAO_VOTOU = "Não votou";
 
     public static final String SITE = "https://www.alepa.pa.gov.br";
     public static final String URL_DEPUTADOS = "https://www.alepa.pa.gov.br/Home/Page/Deputados";
@@ -115,6 +129,247 @@ public final class Alepa implements Fonte {
         }
 
         coleta.obterOuVazio(URL_COMISSOES, "comissoes.html", "text/html", Politica.SEMANAL);
+
+        // Votações nominais: uma lista por mês, sem paginação, e um detalhe por votação. Lista vazia é comum (recesso)
+        // e detalhe sem seção de voto não deveria existir: os dois são confirmados quando baixados. O que veio do cache
+        // já passou pela confirmação na execução que o baixou, e o CI roda todo dia.
+        for (int ano = PRIMEIRO_ANO_VOTACOES; ano <= ctx.hoje().getYear(); ano++) {
+            Politica politica = Politica.porAnoSemanal(ano, ctx.hoje());
+            int ultimoMes = ano == ctx.hoje().getYear() ? ctx.hoje().getMonthValue() : 12;
+            for (int mes = 1; mes <= ultimoMes; mes++) {
+                String url = urlDaLista(ano, mes);
+                String caminho = arquivoDaLista(ano, mes);
+                Coleta.Arquivo lista = Confirmacao.confirmandoVazio(
+                        nova -> coleta.obterOpcional(url, caminho, "text/html", nova), politica,
+                        arq -> baixadoAgora(ctx, arq) && semTexto(ctx, arq, "pauta-item-title' href"),
+                        coleta.obterOpcional(url, caminho, "text/html", politica), Confirmacao.TENTATIVAS, Confirmacao.PAUSA);
+                if (lista == null || !Files.exists(Coleta.caminho(ctx, lista))) {
+                    continue;
+                }
+                for (VotacaoListada v : votacoesDaLista(Texto.lerArquivo(Coleta.caminho(ctx, lista)))) {
+                    String urlDetalhe = SITE + v.caminho();
+                    String arquivo = arquivoDoDetalhe(v.idVotacao());
+                    Confirmacao.confirmandoVazio(nova -> coleta.obterOpcional(urlDetalhe, arquivo, "text/html", nova), politica,
+                            arq -> baixadoAgora(ctx, arq) && semTexto(ctx, arq, "section-title"),
+                            coleta.obterOpcional(urlDetalhe, arquivo, "text/html", politica), Confirmacao.TENTATIVAS, Confirmacao.PAUSA);
+                }
+            }
+        }
+    }
+
+    static String urlDaLista(int ano, int mes) {
+        return URL_VOTACOES + "?ano=" + ano + "&mes=" + mes;
+    }
+
+    private static String arquivoDaLista(int ano, int mes) {
+        return String.format(Locale.ROOT, "votacoes/%d-%02d.html", ano, mes);
+    }
+
+    private static String arquivoDoDetalhe(String idVotacao) {
+        return "votacoes/detalhes/" + idVotacao + ".html";
+    }
+
+    /** Arquivo baixado nesta execução: a coleta grava a hora da execução como hora da captura. */
+    private static boolean baixadoAgora(Contexto ctx, Coleta.Arquivo arq) {
+        return arq != null && ctx.agora().equals(arq.capturadoEm());
+    }
+
+    /** Verdadeiro quando o arquivo existe e não traz o trecho esperado. */
+    private static boolean semTexto(Contexto ctx, Coleta.Arquivo arq, String trecho) {
+        try {
+            return arq != null && Files.exists(Coleta.caminho(ctx, arq)) && !Texto.lerArquivo(Coleta.caminho(ctx, arq)).contains(trecho);
+        } catch (java.io.IOException e) {
+            return false;
+        }
+    }
+
+    /** Votação listada no mês: o caminho do detalhe e os ids da proposição e da votação. */
+    record VotacaoListada(String caminho, String idProposicao, String idVotacao) {
+    }
+
+    /** Votações da lista mensal, na ordem da página, sem repetição. */
+    static List<VotacaoListada> votacoesDaLista(String html) {
+        Map<String, VotacaoListada> porId = new java.util.LinkedHashMap<>();
+        Matcher m = ITEM_DA_LISTA.matcher(html);
+        while (m.find()) {
+            porId.putIfAbsent(m.group(3), new VotacaoListada(m.group(1).replace("&amp;", "&"), m.group(2), m.group(3)));
+        }
+        return new ArrayList<>(porId.values());
+    }
+
+    /** Voto de um parlamentar, como a seção da página o dá, com o partido da lista. */
+    record VotoNaVotacao(String nome, String partido, String voto) {
+    }
+
+    /** Cabeçalho e votos do detalhe de uma votação nominal. */
+    record DetalheDaVotacao(String data, String projeto, String turno, String resultado, List<VotoNaVotacao> votos) {
+    }
+
+    /**
+     * Detalhe de uma votação: o cabeçalho (projeto, data, turno, resultado) e, por seção (SIM, NÃO, ABSTENÇÃO, NÃO
+     * VOTARAM), os pares nome e partido. A seção de quem não votou vira "Não votou".
+     */
+    static DetalheDaVotacao detalheDaVotacao(String html) {
+        Map<String, String> campos = new HashMap<>();
+        Matcher c = CAMPO_DO_CABECALHO.matcher(html);
+        while (c.find()) {
+            String valor = Texto.semEntidades(c.group(2));
+            if (valor != null) {
+                campos.putIfAbsent(Texto.semEntidades(c.group(1)), valor);
+            }
+        }
+        List<VotoNaVotacao> votos = new ArrayList<>();
+        Matcher secoes = SECAO_DE_VOTO.matcher(html);
+        List<int[]> limites = new ArrayList<>();
+        List<String> nomesDasSecoes = new ArrayList<>();
+        while (secoes.find()) {
+            limites.add(new int[] {secoes.end(), 0});
+            nomesDasSecoes.add(Texto.semEntidades(secoes.group(1)));
+        }
+        for (int i = 0; i < limites.size(); i++) {
+            int fim = i + 1 < limites.size() ? html.lastIndexOf("<div class=\"section-title\">", limites.get(i + 1)[0]) : html.length();
+            String voto = rotuloDoVoto(nomesDasSecoes.get(i));
+            Matcher itens = ITEM_DE_VOTO.matcher(html.substring(limites.get(i)[0], fim));
+            List<String> valores = new ArrayList<>();
+            while (itens.find()) {
+                valores.add(Texto.semEntidades(itens.group(1)));
+            }
+            for (int j = 0; j + 1 < valores.size(); j += 2) {
+                if (valores.get(j) != null) {
+                    votos.add(new VotoNaVotacao(valores.get(j), valores.get(j + 1), voto));
+                }
+            }
+        }
+        return new DetalheDaVotacao(Texto.dataBr(campos.get("Data")), campos.get("Projeto"), campos.get("Turno"),
+                campos.get("Resultado"), votos);
+    }
+
+    /** "SIM" vira "Sim"; "NÃO VOTARAM", "Não votou". */
+    static String rotuloDoVoto(String secao) {
+        if (secao == null) {
+            return null;
+        }
+        String texto = secao.strip();
+        if (texto.equalsIgnoreCase("NÃO VOTARAM") || texto.equalsIgnoreCase("NÃO VOTOU")) {
+            return NAO_VOTOU;
+        }
+        String minusculo = texto.toLowerCase(Locale.forLanguageTag("pt-BR"));
+        return minusculo.isEmpty() ? null : Character.toUpperCase(minusculo.charAt(0)) + minusculo.substring(1);
+    }
+
+    /** Chave do nome do parlamentar: sem acento e sem pontuação, em maiúsculas. Serve à página de votos e ao perfil. */
+    static String chaveDoNome(String nome) {
+        return nome == null ? null : Texto.normalizarNome(nome.replaceAll("[^\\p{L}\\s]", " "));
+    }
+
+    /**
+     * Nome da página de votos que difere do nome do perfil. Cada grafia foi conferida pelo nome completo do perfil, pelo
+     * partido e pelo período dos votos, e corresponde a um único deputado da lista da ALEPA.
+     */
+    static final Map<String, String> GRAFIAS_DAS_VOTACOES = Map.of(
+            "AVEILTON SOUZA", "AVEILTON",
+            "CARLOS BORDALO", "DEPUTADO BORDALO",
+            "RONIE SILVA", "RONIE",
+            "TORRINHO TORRES", "TORRINHO");
+
+    /** Chave do nome de quem votou, já com a grafia do perfil quando as duas diferem. */
+    static String chaveDoVotante(String nome) {
+        String chave = chaveDoNome(nome);
+        return chave == null ? null : GRAFIAS_DAS_VOTACOES.getOrDefault(chave, chave);
+    }
+
+    /**
+     * Participação por ano: cada votação em que o deputado aparece, em qualquer seção, conta como votação nominal; a
+     * seção de quem não votou conta como votação sem voto registrado.
+     */
+    static List<Participacao> participacao(List<Voto> votos, Prov prov) {
+        Map<String, int[]> contagem = new TreeMap<>();
+        Map<String, Map<String, Integer>> porTipo = new TreeMap<>();
+        for (Voto v : votos) {
+            String ano = v.data() == null || v.data().length() < 4 ? null : v.data().substring(0, 4);
+            if (ano == null) {
+                continue;
+            }
+            int[] n = contagem.computeIfAbsent(ano, k -> new int[2]);
+            n[0]++;
+            if (!NAO_VOTOU.equals(v.voto())) {
+                n[1]++;
+            }
+            porTipo.computeIfAbsent(ano, k -> new TreeMap<>()).merge(v.voto() == null ? "(vazio na fonte)" : v.voto(), 1, Integer::sum);
+        }
+        List<Participacao> lista = new ArrayList<>();
+        for (var ano : contagem.entrySet()) {
+            lista.add(new Participacao(ano.getKey(), ano.getValue()[0], ano.getValue()[1], ano.getValue()[0] - ano.getValue()[1],
+                    porTipo.get(ano.getKey()), prov));
+        }
+        return lista;
+    }
+
+    /** Votos de cada deputado em exercício, pelas listas e detalhes em cache, ligados pelo nome do perfil. */
+    private Map<String, List<Voto>> votosPorDeputado(Contexto ctx, List<DeputadoBruto> deputados, Map<String, Prov> provDaParticipacao) {
+        Map<String, List<String>> idsPorChave = new HashMap<>();
+        for (DeputadoBruto d : deputados) {
+            idsPorChave.computeIfAbsent(chaveDoNome(formatarNome(d.nome())), k -> new ArrayList<>()).add(d.id());
+        }
+        Map<String, List<Voto>> porDeputado = new HashMap<>();
+        Map<String, Integer> semPerfil = new TreeMap<>();
+        int votacoes = 0;
+        Coleta.Arquivo ultimaLista = null;
+        for (int ano = PRIMEIRO_ANO_VOTACOES; ano <= ctx.hoje().getYear(); ano++) {
+            for (int mes = 1; mes <= 12; mes++) {
+                Coleta.Arquivo lista = Coleta.metadados(ctx, nome(), arquivoDaLista(ano, mes));
+                if (lista == null || lista.bytes() == 0 || !Files.exists(Coleta.caminho(ctx, lista))) {
+                    continue;
+                }
+                ultimaLista = lista;
+                try {
+                    for (VotacaoListada v : votacoesDaLista(Texto.lerArquivo(Coleta.caminho(ctx, lista)))) {
+                        Coleta.Arquivo arq = Coleta.metadados(ctx, nome(), arquivoDoDetalhe(v.idVotacao()));
+                        if (arq == null || arq.bytes() == 0 || !Files.exists(Coleta.caminho(ctx, arq))) {
+                            continue;
+                        }
+                        DetalheDaVotacao detalhe = detalheDaVotacao(Texto.lerArquivo(Coleta.caminho(ctx, arq)));
+                        if (detalhe.data() == null || detalhe.votos().isEmpty()) {
+                            continue;
+                        }
+                        votacoes++;
+                        Prov prov = Prov.de(FONTE_VOTACOES, arq.url(), arq);
+                        String descricao = detalhe.turno() == null ? detalhe.resultado()
+                                : detalhe.resultado() == null ? detalhe.turno() : detalhe.turno() + " (" + detalhe.resultado() + ")";
+                        Set<String> jaContados = new HashSet<>();
+                        for (VotoNaVotacao voto : detalhe.votos()) {
+                            List<String> ids = idsPorChave.get(chaveDoVotante(voto.nome()));
+                            if (ids == null || ids.size() != 1) {
+                                semPerfil.merge(voto.nome(), 1, Integer::sum);
+                                continue;
+                            }
+                            if (!jaContados.add(ids.getFirst())) {
+                                continue;
+                            }
+                            porDeputado.computeIfAbsent(ids.getFirst(), k -> new ArrayList<>()).add(new Voto(v.idVotacao(),
+                                    detalhe.data(), "PLEN", detalhe.projeto(), descricao, voto.voto(), voto.partido(), null, null, null, prov));
+                        }
+                    }
+                } catch (java.io.IOException e) {
+                    System.err.println("alepa: erro ao ler votações de " + ano + "-" + mes + ": " + e.getMessage());
+                }
+            }
+        }
+        if (ultimaLista != null) {
+            provDaParticipacao.put("prov", Prov.de(FONTE_VOTACOES, URL_VOTACOES, ultimaLista));
+        }
+        int total = porDeputado.values().stream().mapToInt(List::size).sum();
+        // Deputado em exercício sem nenhum voto costuma ser grafia nova na página de votos, a incluir na tabela acima.
+        List<String> semVoto = new ArrayList<>();
+        for (DeputadoBruto d : deputados) {
+            if (votacoes > 0 && !porDeputado.containsKey(d.id())) {
+                semVoto.add(formatarNome(d.nome()));
+            }
+        }
+        System.out.println("alepa: " + votacoes + " votações nominais, " + total + " votos em " + porDeputado.size()
+                + " deputados; em exercício sem voto: " + semVoto.size() + " " + semVoto
+                + "; nomes sem perfil em exercício: " + semPerfil.size() + " " + semPerfil.keySet());
+        return porDeputado;
     }
 
     @Override
@@ -138,6 +393,8 @@ public final class Alepa implements Fonte {
         Map<String, List<OrgaoOuFrente>> comissoesPorDeputado = extrairTodasComissoes(ctx);
 
         List<Pessoa> pessoas = new ArrayList<>();
+        Map<String, Prov> provDaParticipacao = new HashMap<>();
+        Map<String, List<Voto>> votosPorDeputado = votosPorDeputado(ctx, deputados, provDaParticipacao);
         DateTimeFormatter fmtNasc = DateTimeFormatter.ofPattern("dd.MM.yyyy");
 
         for (DeputadoBruto d : deputados) {
@@ -215,6 +472,10 @@ public final class Alepa implements Fonte {
             blocosNode.set("mandatos", Json.SAIDA.valueToTree(mandatos));
             blocosNode.set("orgaos_e_frentes", Json.SAIDA.valueToTree(orgaos));
             blocosNode.set("despesas", Json.SAIDA.createArrayNode());
+            List<Voto> votos = votosPorDeputado.getOrDefault(id, List.of());
+            blocosNode.set("votos", Json.SAIDA.valueToTree(votos));
+            blocosNode.set("participacao_votacoes", Json.SAIDA.valueToTree(
+                    votos.isEmpty() ? List.of() : participacao(votos, provDaParticipacao.get("prov"))));
             blocosNode.set("fontes", Json.SAIDA.valueToTree(Registros.fontesDosBlocos(blocosNode)));
             Json.gravar(pastaBlocos.resolve(id + ".json"), blocosNode);
         }

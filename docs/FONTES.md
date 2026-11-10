@@ -953,6 +953,21 @@ Validação em 2026-11-03 com o User-Agent do projeto.
 - Comissões permanentes e representações populando `orgaos_e_frentes` com vínculos determinísticos pelos identificadores oficiais dos parlamentares (Presidente, Vice-Presidente, Titular e Suplente).
 - Dados de gabinete, telefones e e-mails institucionais descartados na ingestão por regra estrita de privacidade.
 
+### `alepa-votacoes`: votações nominais em plenário
+
+- URL base: `https://www.alepa.pa.gov.br/Legislativo/VotacoesNominais`. HTML por GET, sem autenticação. Validação em 2026-11-09.
+- Lista do mês: `?ano={ano}&mes={mes}`, sem paginação. Cada item leva ao detalhe `/Legislativo/DetalhesVotacaoNominal?IdProposicao={id}&IdVotacao={id}`.
+- Detalhe: cabeçalho com sessão, projeto, data, autor, turno e resultado. Depois vêm as seções SIM, NÃO, ABSTENÇÃO e NÃO VOTARAM, com o nome e o partido de cada deputado.
+- Cada detalhe lista os 41 deputados em exercício na data. Quem não votou fica na seção NÃO VOTARAM.
+- Não há ementa. O projeto aparece pelo tipo e pelo número.
+- O deputado vem pelo nome, sem id. O vínculo é pelo nome do perfil, sem acento e sem pontuação.
+- Quatro deputados em exercício aparecem com outra grafia, como "CARLOS BORDALO" para o perfil "Deputado Bordalo". A tabela `GRAFIAS_DAS_VOTACOES` liga cada grafia a um perfil. Cada uma foi conferida pelo nome completo, pelo partido e pelo período dos votos.
+- Votos de quem não tem perfil em exercício ficam fora. Na coleta de 2026-11-10, foram 21 nomes: deputados da legislatura anterior, com votos só em 2022, e deputados que deixaram a Casa até 2024.
+- O partido é o da página de votos, às vezes como federação (`FE PT PV PCdoB`).
+- Lista vazia e detalhe sem seção de voto são confirmados com novas consultas quando baixados.
+- Na coleta de 2026-11-10, 198 votações de 2022-03-22 a 2026-11-03. Em 22 dos 59 meses não houve votação nominal, entre eles janeiro e julho de todos os anos.
+- Mesmo host dos perfis, que o CI coleta desde 2026-11-06.
+
 ### `alepa-portal`: portal institucional e fotos
 
 - URL base: `https://www.alepa.pa.gov.br/`

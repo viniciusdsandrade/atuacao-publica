@@ -229,12 +229,13 @@ jobs:
           ETL_ORCAMENTO_MINUTOS: '15'
         run: java -Xmx2g -jar etl/target/etl.jar fetch ales
       - name: fetch alepa
-        # Assembleia Legislativa do Estado do Pará: 41 deputados, comissões e perfis.
+        # Assembleia Legislativa do Estado do Pará: 41 deputados, comissões, perfis e votações nominais desde 2022.
+        # A primeira carga das votações baixa cerca de 300 páginas lentas; depois, só o ano aberto renova, por semana.
         if: env.FONTE == 'todas' || env.FONTE == 'alepa'
         continue-on-error: true
-        timeout-minutes: 20
+        timeout-minutes: 30
         env:
-          ETL_ORCAMENTO_MINUTOS: '15'
+          ETL_ORCAMENTO_MINUTOS: '22'
         run: java -Xmx2g -jar etl/target/etl.jar fetch alepa
       - name: fetch alepe
         # Assembleia Legislativa do Estado de Pernambuco: 49 deputados, comissões e perfis.

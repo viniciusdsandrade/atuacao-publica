@@ -2120,6 +2120,21 @@
   status: validado
   validado_em: 2026-11-06
 
+- id: alepa-votacoes
+  nome: Assembleia Legislativa do Estado do Pará, votações nominais em plenário
+  orgao: Assembleia Legislativa do Estado do Pará
+  esfera: estadual
+  ente: PA
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://www.alepa.pa.gov.br/Legislativo/VotacoesNominais
+  formato: HTML
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Lista mensal sem paginação e um detalhe por votação, com seções SIM, NÃO, ABSTENÇÃO e NÃO VOTARAM, nome e partido. NÃO VOTARAM não separa ausência de presença sem voto. Sem ementa. O parlamentar vem pelo nome."
+  status: validado
+  validado_em: 2026-11-09
+
 - id: alepe-deputados
   nome: Assembleia Legislativa do Estado de Pernambuco, deputados estaduais
   orgao: Assembleia Legislativa do Estado de Pernambuco
