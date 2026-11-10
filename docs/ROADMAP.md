@@ -99,7 +99,7 @@ Estado real de cada fase. Atualizado ao fechar cada fase.
 
 ## Casas estaduais e municipais no site
 
-Estado da publicação de 2026-11-10, às 01:56 UTC, com 2.116 perfis. "Perfis" conta os perfis com o identificador da casa, inclusive os fundidos com outra casa.
+Estado da publicação de 2026-11-10, às 02:38 UTC, com 2.116 perfis. "Perfis" conta os perfis com o identificador da casa, inclusive os fundidos com outra casa.
 
 | Casa | Coleta no CI | Perfis | Vínculo com o TSE | Blocos além de mandato e candidaturas |
 |---|---|---|---|---|
@@ -110,7 +110,7 @@ Estado da publicação de 2026-11-10, às 01:56 UTC, com 2.116 perfis. "Perfis" 
 | ALERJ (RJ) | ok; o DOCIGP oscila e já deixou perfis sem atualização, com cópia anterior | 70 | 70 | despesas (31.062 lançamentos em 70 deputados) |
 | ALRS (RS) | ok, pela coleta local cifrada | 55 | 54 | comissões, proposições (4.504 em 55 deputados), gastos por categoria e mês (27.684 linhas em 55 deputados, R$ 35,82 milhões, sem fornecedor) e votos em plenário (33.204 votos em 55 deputados, sem bloco de participação) |
 | ALECE (CE) | ok | 54 | 51 | comissões, despesas (15.511 lançamentos), votações nominais (2.439 votos) e proposições (5.588 em 53 deputados) |
-| ALESC (SC) | ok | 40 | 40 | despesas, comissões e proposições (2.103 da 20ª legislatura em 40 deputados) |
+| ALESC (SC) | ok | 40 | 40 | despesas, comissões, proposições (2.103 da 20ª legislatura em 40 deputados) e votações nominais (5.674 votos em 39 deputados, sem bloco de participação) |
 | ALEGO (GO) | parcial: a conexão TCP 443 da API de votações expirou sem completar; despesas da cópia em cache | 43 | 43 | comissões e frentes e despesas (51.156 lançamentos) |
 | ALES (ES) | ok, pela coleta local cifrada | 30 | 29 | comissões, proposições (12.311 autorias em 30 deputados) e cotas por produto e mês (3.108 linhas em 30 deputados, R$ 7,72 milhões em valor solicitado, sem fornecedor) |
 | ALEPA (PA) | ok | 41 | 40 | comissões e votações nominais (7.044 votos em 41 deputados, com participação por ano) |
@@ -119,7 +119,7 @@ Estado da publicação de 2026-11-10, às 01:56 UTC, com 2.116 perfis. "Perfis" 
 | CMSP (capital) | ok | 55 | 51 | comissões e proposições (6.547) |
 | Câmara do piloto (SAPL) | ok | 50 | 50 | votos, presença, falas, matérias, despesas e comissões |
 
-Conferido nos 841 perfis das 14 casas da tabela, inclusive os fundidos com outra casa: os 4.970 blocos com registro citam fonte e data. Da publicação de 2026-11-09 às 07:22 UTC para esta, só a linha da ALEPA mudou. Os 9 registros da ALEPE (e-mail na ementa), os 23 da CLDF e os 3 da ALRS (número de telefone na ementa) que a guarda do `publish` removeu não entram nas contagens. A participação em votações da ALESP saía sem fonte até 2026-11-07 (ver "Limitações conhecidas"). Os oito governadores eleitos em 2022 que concorreram a outro cargo saíram de em exercício (ADR-0033), e restam 19 governadores em exercício.
+Conferido nos 841 perfis das 14 casas da tabela, inclusive os fundidos com outra casa: os 5.009 blocos com registro citam fonte e data. Da publicação de 2026-11-09 às 07:22 UTC para esta, mudaram só as linhas da ALEPA e da ALESC, com as votações nominais. A ALESC também renovou as despesas do ano aberto. Os 9 registros da ALEPE (e-mail na ementa), os 23 da CLDF e os 3 da ALRS (número de telefone na ementa) que a guarda do `publish` removeu não entram nas contagens. A participação em votações da ALESP saía sem fonte até 2026-11-07 (ver "Limitações conhecidas"). Os oito governadores eleitos em 2022 que concorreram a outro cargo saíram de em exercício (ADR-0033), e restam 19 governadores em exercício.
 
 ## Cobertura 2022 a 2026 (ADR-0009)
 
@@ -403,7 +403,7 @@ Limitações:
     - Proposições da ALESC: implementadas em 2026-11-08 (`alesc-proposicoes`), pelo e-Legis paginado por iniciativa (`/proposicoes/processo-legislativo?iniciativa={slug}`), da 20ª legislatura a partir de 2023-02-01. Autoria e proponente vêm da listagem. O que é anterior fica fora. No site em 2026-11-09, 2.103 proposições em 40 deputados.
     - Despesas da ALERJ: em 2026-11-08, o adaptador passou a cobrir os 70 deputados em exercício quando o `remote_id` do DOCIGP é nulo, com mapa fixo 344→131, 514→135 e 515→136 e leitura do envelope `data` ou `rows`. No site em 2026-11-09, 31.062 lançamentos em 70 deputados.
     - Votações nominais da ALEPA: implementadas em 2026-11-10 (`alepa-votacoes`), pela lista mensal (`/Legislativo/VotacoesNominais?ano={ano}&mes={mes}`) e pelo detalhe de cada votação, em HTML por GET. Cada detalhe lista os 41 deputados em exercício na data, e quem não votou fica na seção NÃO VOTARAM. O deputado vem pelo nome; quatro grafias diferentes da do perfil ficam numa tabela fixa. Entram os blocos `votos` e `participacao_votacoes`. A coleta é no CI, sem semente, e o passo ganhou orçamento de 22 minutos para a primeira carga. No ensaio local de 2026-11-10, 7.044 votos de 198 votações, de 2022-03-22 a 2026-11-03, nos 41 deputados. No site desde a publicação de 2026-11-10 às 01:56 UTC, com os mesmos 7.044 votos e participação nos 41 perfis. A primeira carga levou 12 minutos no CI.
-    - Votações nominais da ALESC: implementadas em 2026-11-10 (`alesc-votacoes`), pela lista de sessões plenárias do e-Legis, pela ordem do dia de cada sessão realizada e pelo extrato de cada votação nominal. O extrato só responde com o cabeçalho `X-Requested-With` e lista só quem votou: entra o bloco `votos`, sem participação. A coleta é no CI, sem semente, e o passo ganhou orçamento de 22 minutos para a primeira carga, que levou 15,6 minutos no ensaio local. No ensaio local de 2026-11-10, 5.674 votos de 226 votações, de 2023-03-21 a 2026-06-16, em 39 dos 40 deputados. Ainda não publicado.
+    - Votações nominais da ALESC: implementadas em 2026-11-10 (`alesc-votacoes`), pela lista de sessões plenárias do e-Legis, pela ordem do dia de cada sessão realizada e pelo extrato de cada votação nominal. O extrato só responde com o cabeçalho `X-Requested-With` e lista só quem votou: entra o bloco `votos`, sem participação. A coleta é no CI, sem semente, e o passo ganhou orçamento de 22 minutos para a primeira carga, que levou 15,6 minutos no ensaio local. No ensaio local de 2026-11-10, 5.674 votos de 226 votações, de 2023-03-21 a 2026-06-16, em 39 dos 40 deputados. No site desde a publicação de 2026-11-10 às 02:38 UTC, com os mesmos 5.674 votos em 39 perfis. A primeira carga levou 16 minutos no CI.
     - Túnel pelo Brasil (ADR-0029): `scripts/tunel-brasil.sh` e o checklist de manutenção passaram a encaminhar também `transparencia.al.rs.gov.br:443`, `www3.al.es.gov.br:443` e `ple.cl.df.gov.br:443`.
 
     | Casa | Despesas | Proposições com autor | Votações nominais |
@@ -418,7 +418,7 @@ Limitações:
     | ALEPE | implementado em 2026-11-07, pela coleta local cifrada | implementado em 2026-11-07, pela coleta local cifrada | só resultado agregado |
     | ALES | implementado em 2026-11-08, pela coleta local cifrada | implementado em 2026-11-07, pela coleta local cifrada | boletins em PDF |
     | ALRS | implementado em 2026-11-08, pela coleta local cifrada | implementado em 2026-11-08, pela coleta local cifrada | implementado em 2026-11-07, pela coleta local cifrada |
-    | ALESC | implementado em 2026-11-06 | implementado em 2026-11-08 | implementado em 2026-11-10, pelo extrato de votação do e-Legis; lista só quem votou |
+    | ALESC | implementado em 2026-11-06 | implementado em 2026-11-08 | implementado em 2026-11-10, pelo extrato de votação do e-Legis; lista só quem votou; no site desde 2026-11-10 |
     | ALEPA | painel interno de BI, sem fornecedor | callback de componente, paginação não validada | implementado em 2026-11-10, por HTML por GET: lista mensal (`/Legislativo/VotacoesNominais?ano={ano}&mes={mês}`, sem paginação) e detalhe por votação com as seções SIM, NÃO, ABSTENÇÃO e NÃO VOTARAM, nome e partido; 198 votações de 2022 a 2026, no site desde 2026-11-10 |
 
 ### Redes sociais
