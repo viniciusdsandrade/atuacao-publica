@@ -1625,6 +1625,21 @@
   status: validado
   validado_em: 2026-11-10
 
+- id: alba-presenca
+  nome: Assembleia Legislativa do Estado da Bahia, presença em plenário
+  orgao: Assembleia Legislativa do Estado da Bahia
+  esfera: estadual
+  ente: BA
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://albalegis.nopapercloud.com.br/spl/sessoes.aspx
+  formato: HTML
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Lista de sessões filtrada por ano e pelo documento Presença em Plenário; a primeira página abre por GET e as seguintes só por postback ASP.NET. Uma página de presença por sessão, com o nome e a situação de cada deputado: Presente, Falta ou Falta Justificada. Registros de Licenciado ficam fora por indicarem afastamento do mandato."
+  status: validado
+  validado_em: 2026-11-10
+
 - id: alba-portal
   nome: Assembleia Legislativa do Estado da Bahia, portal institucional e fotos
   orgao: Assembleia Legislativa do Estado da Bahia

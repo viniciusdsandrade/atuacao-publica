@@ -161,6 +161,7 @@ Não é presença. É a contagem de votos registrados em votações nominais.
 - A lista da fonte traz só presentes. O projeto não calcula taxa de presença em evento.
 - **Senado.** Sem fonte equivalente na POC: "sem registro na fonte".
 - **ALESC.** Presença em sessão plenária ordinária, pela página de presença de cada sessão no e-Legis. A fonte lista os deputados da sessão como "Presente" ou "Ausência justificada", e as duas situações entram: `registrada` e `ausencia_justificada`. Na contagem por tipo do perfil, a ausência justificada conta à parte. A sessão extraordinária não tem presença publicada e fica fora. O projeto não calcula taxa de presença.
+- **ALBA.** Presença em sessão plenária, pela página de presença de cada sessão no NoPaper. A fonte lista os deputados da sessão como "Presente", "Falta Justificada" ou "Falta", e as três situações entram: `registrada`, `ausencia_justificada` e `falta`. Na contagem por tipo do perfil, a ausência justificada e a falta contam à parte da presença registrada. A situação "Licenciado" fica fora por indicar afastamento temporário do mandato e não comparecimento à sessão. O projeto não calcula taxa de presença.
 - **Câmara municipal (piloto).** Presença em sessão plenária de `sessao/sessaoplenariapresenca` do SAPL, nas sessões da legislatura vigente já realizadas. Tipo, número e data vêm de `sessao/sessaoplenaria`. A fonte lista só presentes. O projeto não calcula taxa de presença.
 
 ## Órgãos e frentes

@@ -659,7 +659,15 @@ Validação em 2026-11-03 com o User-Agent do projeto.
 ### Votações nominais da ALBA: não encontradas
 
 - Validação em 2026-11-10. As sessões no NoPaper (`/spl/sessoes.aspx`) publicam ata, ordem do dia, notas taquigráficas, áudio, vídeo e a presença em plenário, sem votação nominal com voto individual.
-- A presença em plenário de cada sessão (`/spl/sessao-parlamentares.aspx?id={id}`) lista os deputados como "Presente", "Falta" ou "Falta Justificada". Não é coletada: publicar falta sem justificativa depende de decisão editorial.
+
+### `alba-presenca`: presença em sessões plenárias
+
+- URL base: `https://albalegis.nopapercloud.com.br/spl/sessoes.aspx` (lista) e `https://albalegis.nopapercloud.com.br/spl/sessao-parlamentares.aspx?id={id}` (presença por sessão). HTML, sem autenticação. Validação em 2026-11-10.
+- A lista de sessões é filtrada por ano e pelo documento "Presença em Plenário". A primeira página abre por GET; as seguintes usam postback ASP.NET (`__VIEWSTATE`, `__EVENTVALIDATION` e página atual).
+- Cada página de sessão lista os deputados com a situação: "Presente", "Falta" ou "Falta Justificada". A fonte lista também "Licenciado" (39 registros no total da legislatura), que fica fora por corresponder a afastamento do mandato, e não a presença ou falta em sessão plenária.
+- O deputado vem pelo nome parlamentar com link para a página do perfil no NoPaper.
+- Cada sessão vira um evento no perfil, com a presença: `registrada`, `ausencia_justificada` ou `falta`. O bloco cita a lista de sessões como fonte, e cada registro aponta para a página de presença da sessão.
+- Na coleta de 2026-11-10, 481 sessões de 2023-02-01 a 2026-11-09, com 27.972 registros nos 63 deputados: 21.917 presenças, 259 faltas justificadas e 5.796 faltas. Os registros de 9 nomes sem perfil em exercício (ex-deputados ou suplentes que deixaram a Casa) ficam fora.
 
 ### `ba-transparencia` e `ba-diario-oficial`: Executivo estadual
 
