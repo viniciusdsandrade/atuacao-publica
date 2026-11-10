@@ -248,7 +248,8 @@ public final class Http {
                 .header("User-Agent", userAgent)
                 .header("Accept", accept)
                 .header("Accept-Encoding", "gzip");
-        if (corpoJson != null) {
+        // Corpo sem tipo declarado por quem chama é JSON; o formulário de postback declara o dele.
+        if (corpoJson != null && (cabecalhos == null || !cabecalhos.containsKey("Content-Type"))) {
             builder.header("Content-Type", "application/json");
         }
         if (cabecalhos != null) {

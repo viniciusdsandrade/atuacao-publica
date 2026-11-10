@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.StringJoiner;
 import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentSkipListMap;
@@ -183,6 +184,16 @@ public final class Coleta {
     public Arquivo obterPostOpcional(String url, String corpoJson, String caminho, String accept, Politica politica)
             throws IOException, InterruptedException {
         return obter(url, caminho, accept, politica, true, null, false, Map.of(), corpoJson);
+    }
+
+    /** POST de formulário, como o postback de uma página ASP.NET. Os campos vão na ordem do mapa. */
+    public Arquivo obterFormularioOpcional(String url, Map<String, String> campos, String caminho, String accept, Politica politica)
+            throws IOException, InterruptedException {
+        StringJoiner corpo = new StringJoiner("&");
+        campos.forEach((nome, valor) -> corpo.add(java.net.URLEncoder.encode(nome, java.nio.charset.StandardCharsets.UTF_8) + "="
+                + java.net.URLEncoder.encode(valor == null ? "" : valor, java.nio.charset.StandardCharsets.UTF_8)));
+        return obter(url, caminho, accept, politica, true, null, false, Map.of("Content-Type", "application/x-www-form-urlencoded"),
+                corpo.toString());
     }
 
     private Arquivo obter(String url, String caminho, String accept, Politica politica, boolean opcional, Derivacao derivacao,
