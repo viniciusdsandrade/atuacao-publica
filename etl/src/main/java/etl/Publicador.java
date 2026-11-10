@@ -365,12 +365,18 @@ public final class Publicador {
     }
 
     /**
-     * Tipo na contagem do bloco. No bloco de eventos, a ausência justificada conta à parte do mesmo tipo de evento: a
-     * contagem do tipo continua sendo de presença registrada.
+     * Tipo na contagem do bloco. No bloco de eventos, a ausência justificada e a falta contam à parte do mesmo tipo de
+     * evento: a contagem do tipo continua sendo de presença registrada.
      */
     static String tipoNaContagem(String bloco, JsonNode registro, String tipo) {
-        if (bloco.equals("eventos") && "ausencia_justificada".equals(textoOuVazio(registro, "presenca"))) {
-            return tipo + " · ausência justificada";
+        if (bloco.equals("eventos")) {
+            String presenca = textoOuVazio(registro, "presenca");
+            if (presenca.equals("ausencia_justificada")) {
+                return tipo + " · ausência justificada";
+            }
+            if (presenca.equals("falta")) {
+                return tipo + " · falta";
+            }
         }
         return tipo;
     }

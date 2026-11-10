@@ -97,10 +97,11 @@ export const BLOCOS: Record<string, string> = {
   despesas_executivo: 'Despesas pagas pela administração direta do município no período do mandato',
 };
 
-/** Presença em evento como a fonte registra. Ausência sem justificativa não aparece em nenhuma fonte coletada. */
+/** Presença em evento como a fonte registra. */
 export const PRESENCAS: Record<string, string> = {
   registrada: 'Presente',
   ausencia_justificada: 'Ausência justificada',
+  falta: 'Falta',
 };
 
 /** Notas fixas de método, iguais para todos os perfis do bloco. */
@@ -108,7 +109,7 @@ export const NOTAS: Record<string, string> = {
   participacao_votacoes:
     'Conta votos registrados em votações nominais. Não é presença. A Câmara e o Senado registram ausências de forma diferente.',
   eventos:
-    'Na Câmara dos Deputados e no piloto municipal, a fonte lista só quem esteve presente. Na ALESC, lista também a ausência justificada em cada sessão ordinária. O site não calcula taxa de presença.',
+    'Na Câmara dos Deputados e no piloto municipal, a fonte lista só quem esteve presente. Na ALESC, lista também a ausência justificada em cada sessão ordinária; na ALBA, a falta justificada e a falta sem justificativa em cada sessão plenária. O site não calcula taxa de presença.',
   despesas: 'Valores líquidos informados pela casa legislativa. Compensações negativas entram na soma.',
   atos_normativos: 'A fonte não informa quem assinou cada ato.',
   despesas_executivo:

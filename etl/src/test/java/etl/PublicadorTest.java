@@ -46,6 +46,8 @@ class PublicadorTest {
 
         assertEquals("Sessão Ordinária", Publicador.tipoNaContagem("eventos", presente, "Sessão Ordinária"));
         assertEquals("Sessão Ordinária · ausência justificada", Publicador.tipoNaContagem("eventos", ausente, "Sessão Ordinária"));
+        JsonNode falta = Json.FONTE.readTree("{\"tipo\": \"Sessão Ordinária\", \"presenca\": \"falta\"}");
+        assertEquals("Sessão Ordinária · falta", Publicador.tipoNaContagem("eventos", falta, "Sessão Ordinária"));
         // Fora do bloco de eventos, o tipo não muda.
         assertEquals("Sessão Ordinária", Publicador.tipoNaContagem("discursos", ausente, "Sessão Ordinária"));
     }

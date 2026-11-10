@@ -135,7 +135,7 @@
         "titulo": { "$ref": "comum.schema.json#/$defs/texto_ou_nulo" },
         "orgao": { "$ref": "comum.schema.json#/$defs/texto_ou_nulo" },
         "situacao": { "$ref": "comum.schema.json#/$defs/texto_ou_nulo" },
-        "presenca": { "description": "registrada quando a fonte lista o parlamentar como presente; ausencia_justificada quando a fonte lista a ausência como justificada.", "enum": ["registrada", "ausencia_justificada", null] }
+        "presenca": { "description": "registrada quando a fonte lista o parlamentar como presente; ausencia_justificada quando a fonte lista a ausência como justificada; falta quando a fonte lista a falta sem justificativa.", "enum": ["registrada", "ausencia_justificada", "falta", null] }
       },
       "unevaluatedProperties": false
     },
