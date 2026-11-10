@@ -116,6 +116,23 @@ class ColetaTest {
     }
 
     @Test
+    void paginasDaMesmaListaRenovamNoMesmoDia() throws Exception {
+        // Lista que desloca: com um dia por página, o item que muda de página entre duas renovações some.
+        Contexto ctx = new Contexto(tmp, tmp.resolve("data"), new Http("teste/0", 1), null, Instant.parse("2026-10-01T06:00:00Z"), null);
+        List<String> paginas = List.of("proposicoes/PL-2026-1.json", "proposicoes/PL-2026-2.json", "proposicoes/IND-2026-82.json");
+        for (int dia = 0; dia < 7; dia++) {
+            Instant agora = Instant.parse("2026-10-01T06:00:00Z").plus(Duration.ofDays(dia)).plusSeconds(60);
+            java.util.Set<Boolean> vencidas = new java.util.HashSet<>();
+            for (String pagina : paginas) {
+                vencidas.add(Coleta.vencida(Coleta.pasta(pagina), Instant.parse("2026-10-01T06:00:00Z"), agora));
+            }
+            assertEquals(1, vencidas.size(), "dia " + dia);
+        }
+        assertEquals(Politica.SEMANAL_EM_LISTA, Politica.porAnoSemanalEmLista(2026, LocalDate.of(2026, 11, 10)));
+        assertEquals(Politica.SE_AUSENTE, Politica.porAnoSemanalEmLista(2024, LocalDate.of(2026, 11, 10)));
+    }
+
+    @Test
     void copiaSemanalComMaisDeUmaSemanaVence() {
         Instant agora = Instant.parse("2026-10-30T06:00:00Z");
         assertTrue(Coleta.vencida("deputados/1001.json", agora.minus(Duration.ofDays(8)), agora));

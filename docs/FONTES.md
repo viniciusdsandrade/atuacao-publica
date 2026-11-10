@@ -643,7 +643,7 @@ Validação em 2026-11-03 com o User-Agent do projeto.
 - O fornecedor, o CPF ou CNPJ e a glosa ficam só no detalhe de cada lançamento (`/transparencia/verbas-idenizatorias/{id}/`), uma página por lançamento. O projeto não coleta o detalhe: são cerca de 20 mil páginas. Cada despesa publicada aponta para o seu detalhe.
 - O levantamento de 2026-11-06 registrou uma planilha XLSX anual. Em 2026-11-10 a página não oferecia planilha, e a coleta usa a lista.
 - O vínculo é pelo nome parlamentar do perfil, sem acento e sem pontuação. Os 32 nomes sem perfil em exercício são de deputados da legislatura anterior ou que deixaram a Casa, e as linhas deles ficam fora.
-- A lista desloca a cada lançamento novo: o ano aberto renova inteiro todo dia; os fechados ficam no cache.
+- A lista desloca a cada lançamento novo: o ano aberto renova inteiro uma vez por semana, todas as páginas no mesmo dia; os fechados ficam no cache.
 - Na coleta de 2026-11-10, 17.426 lançamentos de janeiro de 2022 a novembro de 2026 nos 63 deputados, em 14 categorias, somando R$ 130.228.729,08.
 
 ### `alba-proposicoes`: proposições

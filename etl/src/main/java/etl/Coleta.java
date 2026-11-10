@@ -31,7 +31,12 @@ public final class Coleta {
         /** Reusa o arquivo em cache (período fechado). */
         SE_AUSENTE,
         /** Dado que muda pouco: reusa a cópia por até uma semana. Cada arquivo tem seu dia de rodízio, e a carga fica espalhada. */
-        SEMANAL;
+        SEMANAL,
+        /**
+         * Como SEMANAL, mas todas as páginas da mesma pasta renovam no mesmo dia: lista paginada que desloca a cada item
+         * novo. Com um dia por página, o item que muda de página entre duas renovações fica fora até o rodízio seguinte.
+         */
+        SEMANAL_EM_LISTA;
 
         /**
          * Arquivo de um ano: o ano corrente fica aberto. O ano anterior fica aberto até 31 de março,
@@ -45,6 +50,11 @@ public final class Coleta {
         /** Como porAno, mas o ano aberto renova uma vez por semana, em rodízio: listagens grandes que mudam pouco. */
         public static Politica porAnoSemanal(int ano, LocalDate hoje) {
             return porAno(ano, hoje) == SEMPRE ? SEMANAL : SE_AUSENTE;
+        }
+
+        /** Como porAnoSemanal, para as páginas de uma lista que desloca: o ano aberto renova inteiro no mesmo dia. */
+        public static Politica porAnoSemanalEmLista(int ano, LocalDate hoje) {
+            return porAno(ano, hoje) == SEMPRE ? SEMANAL_EM_LISTA : SE_AUSENTE;
         }
     }
 
@@ -129,8 +139,7 @@ public final class Coleta {
         Path destino = ctx.raw().resolve(fonte).resolve(caminho);
         Path meta = lateral(destino);
         Arquivo emCache = emCache(meta);
-        if (emCache != null && url.equals(emCache.url()) && emCache.bytes() == 0 && politica != Politica.SEMPRE
-                && !(politica == Politica.SEMANAL && vencida(caminho, emCache.capturadoEm(), ctx.agora()))) {
+        if (emCache != null && url.equals(emCache.url()) && emCache.bytes() == 0 && valeACopia(politica, caminho, emCache)) {
             doCache.incrementAndGet();
             arquivos.add(emCache);
             return emCache;
@@ -196,8 +205,7 @@ public final class Coleta {
             // Outro recurso no mesmo caminho (a consulta mudou com a cobertura): a cópia anterior não vale nem como reserva.
             emCache = null;
         }
-        if (emCache != null && (politica == Politica.SE_AUSENTE
-                || politica == Politica.SEMANAL && !vencida(caminho, emCache.capturadoEm(), ctx.agora()))) {
+        if (emCache != null && valeACopia(politica, caminho, emCache)) {
             doCache.incrementAndGet();
             arquivos.add(emCache);
             return emCache;
@@ -292,6 +300,22 @@ public final class Coleta {
         return Files.exists(ctx.dados().resolve(arquivo.caminho())) ? arquivo : null;
     }
 
+    /** Cópia em cache que ainda vale pela política. Na lista, o dia de rodízio é o da pasta, e não o de cada página. */
+    private boolean valeACopia(Politica politica, String caminho, Arquivo emCache) {
+        return switch (politica) {
+            case SE_AUSENTE -> true;
+            case SEMANAL -> !vencida(caminho, emCache.capturadoEm(), ctx.agora());
+            case SEMANAL_EM_LISTA -> !vencida(pasta(caminho), emCache.capturadoEm(), ctx.agora());
+            case SEMPRE -> false;
+        };
+    }
+
+    /** Pasta do arquivo no cache da fonte: proposicoes/PL-2026-3.json → proposicoes. */
+    static String pasta(String caminho) {
+        int barra = caminho.lastIndexOf('/');
+        return barra < 0 ? caminho : caminho.substring(0, barra);
+    }
+
     /** Cópia SEMANAL vencida: é o dia de rodízio do arquivo, ou a cópia passou de uma semana porque uma execução falhou. */
     static boolean vencida(String caminho, Instant capturadaEm, Instant agora) {
         LocalDate hoje = LocalDate.ofInstant(agora, ZoneOffset.UTC);
@@ -324,8 +348,7 @@ public final class Coleta {
         if (emCache != null && !origem.equals(emCache.url())) {
             emCache = null;
         }
-        if (emCache != null && (politica == Politica.SE_AUSENTE
-                || politica == Politica.SEMANAL && !vencida(caminho, emCache.capturadoEm(), ctx.agora()))) {
+        if (emCache != null && valeACopia(politica, caminho, emCache)) {
             doCache.incrementAndGet();
             arquivos.add(emCache);
             return emCache;

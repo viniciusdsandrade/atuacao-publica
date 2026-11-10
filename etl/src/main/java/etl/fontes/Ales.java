@@ -169,9 +169,10 @@ public final class Ales implements Fonte {
             coleta.obterOuVazio(urlCom, "comissoes/" + comSlug + ".html", "text/html", Politica.SEMANAL);
         }
 
-        // Proposições: API NoPaper, por tipo e ano.
+        // Proposições: API NoPaper, por tipo e ano. A lista do ano aberto desloca a cada proposição nova, e todas as páginas
+        // dele renovam no mesmo dia.
         for (int ano = PRIMEIRO_ANO_PROPOSICOES; ano <= ctx.hoje().getYear(); ano++) {
-            Politica politica = Politica.porAnoSemanal(ano, ctx.hoje());
+            Politica politica = Politica.porAnoSemanalEmLista(ano, ctx.hoje());
             for (String sigla : SIGLAS_DE_PROPOSICAO) {
                 respostasDoAno(sigla, ano, (url, caminho) -> {
                     Coleta.Arquivo arq = coleta.obterOpcional(url, caminho, "application/json", politica);

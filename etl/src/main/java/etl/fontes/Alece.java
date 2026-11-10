@@ -159,19 +159,20 @@ public final class Alece implements Fonte {
             }
         }
 
-        // Proposições por tabela e opção (tramitando/deliberado): a página 1 traz o total de páginas.
+        // Proposições por tabela e opção (tramitando/deliberado): a página 1 traz o total de páginas. A lista desloca a cada
+        // proposição nova, e todas as páginas renovam no mesmo dia.
         for (String tabela : TABELAS_PROPOSICOES) {
             for (String opcao : OPCOES_PROPOSICOES) {
                 String urlP1 = String.format(Locale.ROOT, "%s?nome=31_legislatura&tabela=%s&opcao=%s&absolutepage=1",
                         URL_PROPOSICOES, tabela, opcao);
                 Coleta.Arquivo arqP1 = coleta.obterOpcional(urlP1, arquivoDeProposicoes(tabela, opcao, 1), "text/html",
-                        Politica.SEMANAL);
+                        Politica.SEMANAL_EM_LISTA);
                 int totalPaginas = arqP1 != null ? totalPaginasDeProposicoes(ctx, arqP1) : 0;
                 for (int p = 2; p <= totalPaginas; p++) {
                     String urlP = String.format(Locale.ROOT, "%s?nome=31_legislatura&tabela=%s&opcao=%s&absolutepage=%d",
                             URL_PROPOSICOES, tabela, opcao, p);
                     coleta.obterOpcional(urlP, arquivoDeProposicoes(tabela, opcao, p), "text/html",
-                            Politica.SEMANAL);
+                            Politica.SEMANAL_EM_LISTA);
                 }
             }
         }

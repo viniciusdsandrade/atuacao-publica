@@ -203,14 +203,15 @@ public final class Alesc implements Fonte {
             coleta.obterOuVazio(URL_DESPESAS + ano, "despesas/" + ano + ".csv", "text/csv", Politica.porAno(ano, ctx.hoje()));
         }
 
-        // Proposições da 20ª legislatura por iniciativa (e-Legis)
+        // Proposições da 20ª legislatura por iniciativa (e-Legis). A lista desloca a cada proposição nova, e todas as páginas
+        // renovam no mesmo dia.
         for (DeputadoBruto d : deputados) {
             String inic = iniciativaParaSlug(d.slug());
             int p = 1;
             while (true) {
                 String url = URL_PROPOSICOES + "?iniciativa=" + inic + "&page=" + p;
                 String nomeArquivo = arquivoDeProposicoes(d.slug(), p);
-                coleta.obterOuVazio(url, nomeArquivo, "text/html", Politica.SEMANAL);
+                coleta.obterOuVazio(url, nomeArquivo, "text/html", Politica.SEMANAL_EM_LISTA);
                 Coleta.Arquivo arq = Coleta.metadados(ctx, nome(), nomeArquivo);
                 if (arq == null || arq.bytes() == 0) {
                     break;

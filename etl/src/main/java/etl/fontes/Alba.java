@@ -140,7 +140,8 @@ public final class Alba implements Fonte {
         }
 
         // Verba indenizatória (portal) e proposições (API do NoPaper), por ano. As duas listas vêm do item mais novo para
-        // o mais antigo, e cada item novo desloca as páginas: o ano aberto renova inteiro todo dia; os fechados, só o que falta.
+        // o mais antigo, e cada item novo desloca as páginas: o ano aberto renova inteiro no mesmo dia, uma vez por semana;
+        // os fechados, só o que falta.
         List<String> tarefas = new ArrayList<>();
         for (int ano = PRIMEIRO_ANO; ano <= ctx.hoje().getYear(); ano++) {
             tarefas.add("verbas-" + ano);
@@ -148,7 +149,7 @@ public final class Alba implements Fonte {
         }
         for (String falha : Camara.paraCadaDeputado(tarefas, tarefa -> {
             int ano = Integer.parseInt(tarefa.substring(tarefa.indexOf('-') + 1));
-            Politica politica = Politica.porAno(ano, ctx.hoje());
+            Politica politica = Politica.porAnoSemanalEmLista(ano, ctx.hoje());
             if (tarefa.startsWith("verbas")) {
                 coletarVerbas(ctx, coleta, ano, politica);
             } else {
