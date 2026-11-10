@@ -111,6 +111,66 @@ class AlbaTest {
     }
 
     @Test
+    void postbackDaListaDeSessoesLevaOFormularioDaPaginaAnterior() {
+        // Trecho no formato da lista de sessões do NoPaper (ASP.NET).
+        String pagina = """
+                <input type="hidden" name="__VIEWSTATE" id="__VIEWSTATE" value="abc&#43;1" />
+                <input type="hidden" name="__EVENTVALIDATION" id="__EVENTVALIDATION" value="xyz" />
+                <input type="hidden" name="ctl00$ContentPlaceHolder1$lvSessoes_TotalPages" id="ContentPlaceHolder1_lvSessoes_TotalPages" value="20" />
+                <input type="hidden" name="ctl00$ContentPlaceHolder1$lvSessoes_CurrentPage" id="ContentPlaceHolder1_lvSessoes_CurrentPage" value="1" />
+                <p><a href='sessao-parlamentares.aspx?id=106539' class='c - bitterswiit'>Presença em Plenário</a></p>
+                <p><a href='sessao-parlamentares.aspx?id=106538' class='c - bitterswiit'>Presença em Plenário</a></p>
+                """;
+
+        var campos = Alba.camposDaProximaPagina(pagina, 2025);
+
+        assertEquals("abc+1", campos.get("__VIEWSTATE"));
+        // Sem a página atual no formulário, o servidor volta sempre para a segunda página.
+        assertEquals("1", campos.get("ctl00$ContentPlaceHolder1$lvSessoes_CurrentPage"));
+        assertEquals("ctl00$ContentPlaceHolder1$lvSessoes_lbNext", campos.get("__EVENTTARGET"));
+        assertEquals("2025-12-31", campos.get("ctl00$ContentPlaceHolder1$txt_data_final"));
+        assertEquals("Presença em Plenário", campos.get("ctl00$ContentPlaceHolder1$ddl_sessao_arquivo_tipo"));
+        assertTrue(Alba.urlDaListaDePresenca(2025).endsWith("?arquivo_tipo=Presen%C3%A7a+em+Plen%C3%A1rio&dt_ini=01-01-2025&dt_fim=31-12-2025"));
+        assertEquals(20, Alba.totalDePaginas(pagina));
+        assertEquals(List.of("106539", "106538"), Alba.presencasDaLista(pagina));
+    }
+
+    @Test
+    void presencaDaSessaoDaTipoDataESituacaoDeCadaDeputado() {
+        // Trecho no formato da presença em plenário do NoPaper, com nomes de exemplo.
+        String html = """
+                <h3 class="panel-title">
+                    <i class="fa fa-list-alt"></i>&nbsp; Lista de Presença da Sessão&nbsp;Ordinária&nbsp;&nbsp;&nbsp;N°50&nbsp;&nbsp;&nbsp;Data: 04/11/2026&nbsp;&nbsp;&nbsp;Horário: 14:30</h3>
+                <table id="tabela" class="table">
+                <tr><td>
+                    <div class="col-xs-4"><a href="parlamentar.aspx?id=1" class="c-bitterswiit">
+                        Deputada Exemplo</a><br /></div>
+                    <div class="col-xs-2"><strong>
+                        Falta
+                    </strong></div>
+                </td></tr>
+                <tr><td>
+                    <div class="col-xs-4"><a href="parlamentar.aspx?id=2" class="c-bitterswiit">
+                        Deputado Teste</a><br /></div>
+                    <div class="col-xs-2"><strong>
+                        Falta Justificada
+                    </strong></div>
+                </td></tr>
+                </table>
+                """;
+
+        var sessao = Alba.presencaDaSessao(html);
+
+        assertEquals("Ordinária", sessao.tipo());
+        assertEquals("50", sessao.numero());
+        assertEquals(java.time.LocalDate.of(2026, 11, 4), sessao.data());
+        assertEquals(2, sessao.linhas().size());
+        assertEquals("Deputada Exemplo", sessao.linhas().get(0)[0]);
+        assertEquals("falta", Alba.PRESENCAS.get(etl.Texto.normalizarNome(sessao.linhas().get(0)[1])));
+        assertEquals("ausencia_justificada", Alba.PRESENCAS.get(etl.Texto.normalizarNome(sessao.linhas().get(1)[1])));
+    }
+
+    @Test
     void formataNomeComPreposicoesEMaiusculas() {
         assertEquals("Adolfo Menezes", Alba.formatarNome("ADOLFO MENEZES"));
         assertEquals("Alex da Piatã", Alba.formatarNome("ALEX DA PIATÃ"));

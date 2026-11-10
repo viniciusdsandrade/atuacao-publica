@@ -27,6 +27,7 @@ import etl.Guarda;
 import etl.Json;
 import etl.Registros;
 import etl.Registros.Despesa;
+import etl.Registros.Evento;
 import etl.Registros.FonteUsada;
 import etl.Registros.LinkOficial;
 import etl.Registros.Mandato;
@@ -49,6 +50,7 @@ public final class Alba implements Fonte {
     public static final String FONTE_PORTAL = "alba-portal";
     public static final String FONTE_DESPESAS = "alba-despesas";
     public static final String FONTE_PROPOSICOES = "alba-proposicoes";
+    public static final String FONTE_PRESENCA = "alba-presenca";
 
     public static final String SITE = "https://www.al.ba.gov.br";
     public static final String UF = "BA";
@@ -63,6 +65,20 @@ public final class Alba implements Fonte {
     private static final Pattern CELULA = Pattern.compile("<td[^>]*>(.*?)</td>", Pattern.DOTALL);
     private static final Pattern DETALHE_DA_VERBA = Pattern.compile("/transparencia/verbas-idenizatorias/([0-9]+)/");
     private static final Pattern COMPETENCIA = Pattern.compile("([0-9]{2})/([0-9]{4})");
+    public static final String URL_SESSOES = "https://albalegis.nopapercloud.com.br/spl/sessoes.aspx";
+    public static final String URL_PRESENCA = "https://albalegis.nopapercloud.com.br/spl/sessao-parlamentares.aspx?id=";
+    private static final String CAMPO = "ctl00$ContentPlaceHolder1$";
+    private static final Pattern CAMPO_OCULTO = Pattern.compile("<input type=\"hidden\" name=\"([^\"]+)\" id=\"[^\"]*\" value=\"([^\"]*)\"");
+    private static final Pattern TOTAL_DE_PAGINAS = Pattern.compile(
+            "name=\"ctl00\\$ContentPlaceHolder1\\$lvSessoes_TotalPages\" id=\"[^\"]*\" value=\"([0-9]+)\"");
+    private static final Pattern LINK_DE_PRESENCA = Pattern.compile("sessao-parlamentares\\.aspx\\?id=([0-9]+)");
+    private static final Pattern CABECALHO_DA_PRESENCA = Pattern.compile(
+            "Lista de Presença da Sessão\\s+(.+?)\\s+N°\\s*([0-9]+)\\s+Data:\\s*([0-9]{2}/[0-9]{2}/[0-9]{4})");
+    private static final Pattern LINHA_DE_PRESENCA = Pattern.compile(
+            "<a href=\"parlamentar\\.aspx\\?id=[0-9]+\"[^>]*>\\s*([^<]+?)\\s*</a>.*?<strong>\\s*([^<]+?)\\s*</strong>", Pattern.DOTALL);
+    /** Situação de presença da fonte e o valor publicado; outra situação fica fora e aparece na saída do normalize. */
+    static final Map<String, String> PRESENCAS = Map.of("PRESENTE", "registrada", "FALTA JUSTIFICADA", "ausencia_justificada",
+            "FALTA", "falta");
 
     public static final LocalDate INICIO_LEG_20 = LocalDate.of(2023, 2, 1);
     public static final LocalDate FIM_LEG_20 = LocalDate.of(2027, 1, 31);
@@ -147,11 +163,17 @@ public final class Alba implements Fonte {
             tarefas.add("verbas-" + ano);
             tarefas.add("proposicoes-" + ano);
         }
+        tarefas.add("presenca-" + INICIO_LEG_20.getYear());
         for (String falha : Camara.paraCadaDeputado(tarefas, tarefa -> {
             int ano = Integer.parseInt(tarefa.substring(tarefa.indexOf('-') + 1));
             Politica politica = Politica.porAnoSemanalEmLista(ano, ctx.hoje());
             if (tarefa.startsWith("verbas")) {
                 coletarVerbas(ctx, coleta, ano, politica);
+            } else if (tarefa.startsWith("presenca")) {
+                // A lista de sessões é uma cadeia de postbacks: os anos vão em sequência, na mesma tarefa.
+                for (int a = INICIO_LEG_20.getYear(); a <= ctx.hoje().getYear(); a++) {
+                    coletarPresencas(ctx, coleta, a, Politica.porAnoSemanalEmLista(a, ctx.hoje()));
+                }
             } else {
                 respostasDoAno(ano, (url, caminho) -> {
                     Coleta.Arquivo arq = coleta.obterOpcional(url, caminho, "application/json", politica);
@@ -173,6 +195,180 @@ public final class Alba implements Fonte {
         for (int pagina = 2; pagina <= paginas; pagina++) {
             coleta.obterOpcional(urlDasVerbas(ano, pagina), arquivoDasVerbas(ano, pagina), "text/html", politica);
         }
+    }
+
+    /**
+     * Presença em plenário no NoPaper. A lista de sessões do ano, filtrada pelo documento "Presença em Plenário", abre por
+     * GET; as páginas seguintes só saem por postback ASP.NET, com o formulário da página anterior. Cada link leva à presença
+     * da sessão.
+     */
+    private static void coletarPresencas(Contexto ctx, Coleta coleta, int ano, Politica politica) throws Exception {
+        String url = urlDaListaDePresenca(ano);
+        String anterior = null;
+        Set<String> ids = new java.util.LinkedHashSet<>();
+        int paginas = 1;
+        for (int pagina = 1; pagina <= paginas; pagina++) {
+            Coleta.Arquivo arq = pagina == 1
+                    ? coleta.obterOpcional(url, arquivoDaListaDePresenca(ano, pagina), "text/html", politica)
+                    : coleta.obterFormularioOpcional(url, camposDaProximaPagina(anterior, ano), arquivoDaListaDePresenca(ano, pagina),
+                            "text/html", politica);
+            if (arq == null || !Files.exists(Coleta.caminho(ctx, arq))) {
+                break;
+            }
+            anterior = Texto.lerArquivo(Coleta.caminho(ctx, arq));
+            if (pagina == 1) {
+                paginas = totalDePaginas(anterior);
+            }
+            ids.addAll(presencasDaLista(anterior));
+        }
+        Politica daSessao = Politica.porAnoSemanal(ano, ctx.hoje());
+        for (String id : ids) {
+            coleta.obterOpcional(URL_PRESENCA + id, arquivoDaPresenca(id), "text/html", daSessao);
+        }
+    }
+
+    /** Lista de sessões do ano com presença em plenário, filtrada pela própria URL. */
+    static String urlDaListaDePresenca(int ano) {
+        return URL_SESSOES + "?arquivo_tipo=" + java.net.URLEncoder.encode("Presença em Plenário", java.nio.charset.StandardCharsets.UTF_8)
+                + "&dt_ini=01-01-" + ano + "&dt_fim=31-12-" + ano;
+    }
+
+    /**
+     * Campos do postback de próxima página: todos os ocultos da página anterior, inclusive a página atual, que o servidor
+     * lê do formulário, e o filtro do ano, que sem os campos volta a ser a lista inteira.
+     */
+    static Map<String, String> camposDaProximaPagina(String anterior, int ano) {
+        Map<String, String> campos = new LinkedHashMap<>();
+        Matcher m = CAMPO_OCULTO.matcher(anterior);
+        while (m.find()) {
+            campos.put(m.group(1), Texto.semEntidades(m.group(2)));
+        }
+        campos.put("__EVENTTARGET", CAMPO + "lvSessoes_lbNext");
+        campos.put("__EVENTARGUMENT", "");
+        campos.put(CAMPO + "ddl_tipo_sessao", "");
+        campos.put(CAMPO + "ddl_sessao_arquivo_tipo", "Presença em Plenário");
+        campos.put(CAMPO + "txt_data_inicio", ano + "-01-01");
+        campos.put(CAMPO + "txt_data_final", ano + "-12-31");
+        return campos;
+    }
+
+    static int totalDePaginas(String html) {
+        Matcher m = TOTAL_DE_PAGINAS.matcher(html);
+        return m.find() ? Math.max(1, Integer.parseInt(m.group(1))) : 1;
+    }
+
+    /** Ids das presenças em plenário de uma página da lista de sessões. */
+    static List<String> presencasDaLista(String html) {
+        Set<String> ids = new java.util.LinkedHashSet<>();
+        Matcher m = LINK_DE_PRESENCA.matcher(html);
+        while (m.find()) {
+            ids.add(m.group(1));
+        }
+        return new ArrayList<>(ids);
+    }
+
+    private static String arquivoDaListaDePresenca(int ano, int pagina) {
+        return "presenca/lista-" + ano + "-" + pagina + ".html";
+    }
+
+    private static String arquivoDaPresenca(String id) {
+        return "presenca/sessoes/" + id + ".html";
+    }
+
+    /** Presença de uma sessão: o tipo, o número, a data e, por deputado, o nome e a situação, como a fonte dá. */
+    record PresencaDaSessao(String tipo, String numero, LocalDate data, List<String[]> linhas) {
+    }
+
+    static PresencaDaSessao presencaDaSessao(String html) {
+        String texto = Texto.semEntidades(html).replace('\u00a0', ' ');
+        Matcher cabecalho = CABECALHO_DA_PRESENCA.matcher(texto.replaceAll("<[^>]+>", " ").replaceAll("\\s+", " "));
+        if (!cabecalho.find()) {
+            return null;
+        }
+        List<String[]> linhas = new ArrayList<>();
+        for (String celula : texto.split("<td>")) {
+            Matcher linha = LINHA_DE_PRESENCA.matcher(celula);
+            if (linha.find()) {
+                linhas.add(new String[] {linha.group(1).replaceAll("\\s+", " "), linha.group(2).replaceAll("\\s+", " ")});
+            }
+        }
+        return new PresencaDaSessao(cabecalho.group(1).strip(), cabecalho.group(2),
+                LocalDate.parse(cabecalho.group(3), java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy")), linhas);
+    }
+
+    /** Presença em plenário de cada deputado em exercício, ligada pelo nome parlamentar. Cada sessão vira um evento. */
+    record Presencas(Map<String, List<Evento>> porId, java.time.Instant capturadaEm) {
+    }
+
+    static Presencas presencasPorDeputado(Contexto ctx, Map<String, String> idPorNomeParlamentar) {
+        Map<String, List<Evento>> porId = new HashMap<>();
+        Map<String, Integer> semPerfil = new java.util.TreeMap<>();
+        Map<String, Integer> outrasSituacoes = new java.util.TreeMap<>();
+        java.time.Instant capturadaEm = null;
+        int sessoes = 0;
+        Set<String> ids = new java.util.LinkedHashSet<>();
+        for (int ano = INICIO_LEG_20.getYear(); ano <= ctx.hoje().getYear(); ano++) {
+            int paginas = 1;
+            for (int pagina = 1; pagina <= paginas; pagina++) {
+                Coleta.Arquivo arq = Coleta.metadados(ctx, "alba", arquivoDaListaDePresenca(ano, pagina));
+                if (arq == null || arq.bytes() == 0 || !Files.exists(Coleta.caminho(ctx, arq))) {
+                    break;
+                }
+                try {
+                    String html = Texto.lerArquivo(Coleta.caminho(ctx, arq));
+                    if (pagina == 1) {
+                        paginas = totalDePaginas(html);
+                    }
+                    ids.addAll(presencasDaLista(html));
+                } catch (java.io.IOException e) {
+                    System.err.println("alba: erro ao ler a lista de sessões " + ano + "-" + pagina + ": " + e.getMessage());
+                }
+            }
+        }
+        for (String id : ids) {
+            Coleta.Arquivo arq = Coleta.metadados(ctx, "alba", arquivoDaPresenca(id));
+            if (arq == null || arq.bytes() == 0 || !Files.exists(Coleta.caminho(ctx, arq))) {
+                continue;
+            }
+            try {
+                PresencaDaSessao sessao = presencaDaSessao(Texto.lerArquivo(Coleta.caminho(ctx, arq)));
+                // Sessão de antes da 20ª legislatura (janeiro de 2023) fica fora: os perfis são da legislatura atual.
+                if (sessao == null || sessao.linhas().isEmpty() || sessao.data().isBefore(INICIO_LEG_20)) {
+                    continue;
+                }
+                sessoes++;
+                capturadaEm = capturadaEm == null || arq.capturadoEm().isAfter(capturadaEm) ? arq.capturadoEm() : capturadaEm;
+                Prov prov = Prov.de(FONTE_PRESENCA, URL_PRESENCA + id, arq);
+                String tipo = "Sessão " + sessao.tipo();
+                Set<String> jaContados = new HashSet<>();
+                for (String[] linha : sessao.linhas()) {
+                    String presenca = PRESENCAS.get(Texto.normalizarNome(linha[1]));
+                    if (presenca == null) {
+                        outrasSituacoes.merge(linha[1], 1, Integer::sum);
+                        continue;
+                    }
+                    String deputado = idPorNomeParlamentar.get(chaveDoNome(linha[0]));
+                    if (deputado == null) {
+                        semPerfil.merge(linha[0], 1, Integer::sum);
+                        continue;
+                    }
+                    if (jaContados.add(deputado)) {
+                        porId.computeIfAbsent(deputado, k -> new ArrayList<>()).add(new Evento("sessao-" + id, sessao.data().toString(),
+                                tipo, tipo + " nº " + sessao.numero(), "Plenário", null, presenca, prov));
+                    }
+                }
+            } catch (java.io.IOException e) {
+                System.err.println("alba: erro ao ler a presença da sessão " + id + ": " + e.getMessage());
+            }
+        }
+        for (List<Evento> eventos : porId.values()) {
+            eventos.sort(Comparator.comparing(Evento::data).reversed());
+        }
+        int total = porId.values().stream().mapToInt(List::size).sum();
+        System.out.println("alba: presença em " + sessoes + " sessões, " + total + " registros em " + porId.size()
+                + " deputados; outras situações: " + outrasSituacoes + "; nomes sem perfil em exercício: " + semPerfil.size()
+                + " " + semPerfil.keySet());
+        return new Presencas(porId, capturadaEm);
     }
 
     static String urlDasVerbas(int ano, int pagina) {
@@ -470,6 +666,7 @@ public final class Alba implements Fonte {
         }
         Map<String, List<Despesa>> despesasPorDeputado = despesasPorDeputado(ctx, idPorNomeParlamentar);
         Map<String, List<Proposicao>> proposicoesPorDeputado = proposicoesPorDeputado(ctx, idPorNomeCivil);
+        Presencas presencas = presencasPorDeputado(ctx, idPorNomeParlamentar);
 
         List<Pessoa> pessoas = new ArrayList<>();
         Map<String, Acumulado> acumulados = new LinkedHashMap<>();
@@ -542,6 +739,12 @@ public final class Alba implements Fonte {
             blocosNode.set("orgaos_e_frentes", Json.SAIDA.valueToTree(ac.orgaos));
             blocosNode.set("despesas", Json.SAIDA.valueToTree(despesasPorDeputado.getOrDefault(id, List.of())));
             blocosNode.set("proposicoes", Json.SAIDA.valueToTree(proposicoesPorDeputado.getOrDefault(id, List.of())));
+            List<Evento> eventos = presencas.porId().getOrDefault(id, List.of());
+            blocosNode.set("eventos", Json.SAIDA.valueToTree(eventos));
+            if (!eventos.isEmpty()) {
+                // Uma página de presença por sessão: o bloco cita a lista de sessões, com a captura mais recente.
+                ac.fontes.put("eventos", List.of(new FonteUsada(FONTE_PRESENCA, URL_SESSOES, presencas.capturadaEm())));
+            }
             // Despesas e proposições citam as fontes da proveniência dos próprios registros.
             var derivadas = Registros.fontesDosBlocos(blocosNode);
             for (String bloco : List.of("despesas", "proposicoes")) {
