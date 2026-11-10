@@ -71,6 +71,7 @@ Não é presença. É a contagem de votos registrados em votações nominais.
 - As casas registram ausência de forma diferente. Os números das casas não são comparáveis entre si.
 - No piloto municipal, a orientação de partido e de governo fica `null`: a fonte não publica orientação.
 - Na ALRS, a fonte lista só o voto dado (Sim ou Não), por deputado e ano. Sem ausência registrada, o perfil tem os votos e não tem bloco de participação.
+- Na ALESC, o extrato de cada votação nominal lista só quem votou, com nome e voto, sem partido. Sem ausência registrada, o perfil tem os votos e não tem bloco de participação. A votação simbólica da ordem do dia não tem voto individual e fica fora.
 - Na ALES, as votações nominais saem só em boletim PDF. O ETL não lê PDF.
 - Na ALEPA, a seção NÃO VOTARAM não separa ausência de presença sem voto. A página de votos não traz ementa nem orientação de bancada.
 
