@@ -1595,6 +1595,36 @@
   status: validado
   validado_em: 2026-11-04
 
+- id: alba-despesas
+  nome: Assembleia Legislativa do Estado da Bahia, verba indenizatória dos deputados
+  orgao: Assembleia Legislativa do Estado da Bahia
+  esfera: estadual
+  ente: BA
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://www.al.ba.gov.br/transparencia/verbas-idenizatorias
+  formato: HTML
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Lista por ano de competência, 20 lançamentos por página, com processo, nota, competência, deputado pelo nome parlamentar, categoria e valor. Fornecedor e CNPJ só no detalhe de cada lançamento, que não é coletado."
+  status: validado
+  validado_em: 2026-11-10
+
+- id: alba-proposicoes
+  nome: Assembleia Legislativa do Estado da Bahia, proposições pela API pública do NoPaper
+  orgao: Assembleia Legislativa do Estado da Bahia
+  esfera: estadual
+  ente: BA
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://albalegis.nopapercloud.com.br/api/publico/proposicao/
+  formato: JSON
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Páginas de 20 por ano; página com item nulo responde erro e é refeita item a item. Autor e coautores pelo nome civil, sem id do perfil."
+  status: validado
+  validado_em: 2026-11-10
+
 - id: alba-portal
   nome: Assembleia Legislativa do Estado da Bahia, portal institucional e fotos
   orgao: Assembleia Legislativa do Estado da Bahia
@@ -1924,6 +1954,21 @@
   limitacoes: "Proposições da 20ª legislatura (2023 a 2026) extraídas do portal e-Legis paginado por iniciativa. Apenas proposições com data igual ou superior ao início da 20ª legislatura (01/02/2023)."
   status: validado
   validado_em: 2026-11-08
+
+- id: alesc-presenca
+  nome: Assembleia Legislativa do Estado de Santa Catarina, presença em sessões plenárias
+  orgao: Assembleia Legislativa do Estado de Santa Catarina
+  esfera: estadual
+  ente: SC
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://portalelegis.alesc.sc.gov.br/sessoes-plenarias
+  formato: HTML
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Uma página de presença por sessão ordinária, com o nome e a situação de cada deputado (Presente ou Ausência justificada). Sessões extraordinárias não têm presença publicada."
+  status: validado
+  validado_em: 2026-11-10
 
 - id: alesc-votacoes
   nome: Assembleia Legislativa do Estado de Santa Catarina, votações nominais em plenário

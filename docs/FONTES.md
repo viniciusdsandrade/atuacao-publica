@@ -635,6 +635,31 @@ Validação em 2026-11-03 com o User-Agent do projeto.
 - URL base: `https://www.al.ba.gov.br/comissoes/composicao`
 - Composição detalhada por comissão (`/comissoes/composicao/{id}`), identificando Presidente, Vice-Presidente, Membros Titulares e Membros Suplentes.
 
+### `alba-despesas`: verba indenizatória
+
+- URL base: `https://www.al.ba.gov.br/transparencia/verbas-idenizatorias?ano={ano}&categoria=&page={p}&size=20`. HTML por GET, sem autenticação. Validação em 2026-11-10. A grafia "idenizatorias" é a do endereço do site.
+- Lista por ano de competência, do lançamento mais novo para o mais antigo, com 20 por página: o site ignora tamanho maior. De 2022 a 2026, de 161 a 219 páginas por ano.
+- Cada linha traz o número do processo, o número da nota, a competência (mês e ano), o deputado pelo nome parlamentar, a categoria e o valor.
+- O fornecedor, o CPF ou CNPJ e a glosa ficam só no detalhe de cada lançamento (`/transparencia/verbas-idenizatorias/{id}/`), uma página por lançamento. O projeto não coleta o detalhe: são cerca de 20 mil páginas. Cada despesa publicada aponta para o seu detalhe.
+- O levantamento de 2026-11-06 registrou uma planilha XLSX anual. Em 2026-11-10 a página não oferecia planilha, e a coleta usa a lista.
+- O vínculo é pelo nome parlamentar do perfil, sem acento e sem pontuação. Os 32 nomes sem perfil em exercício são de deputados da legislatura anterior ou que deixaram a Casa, e as linhas deles ficam fora.
+- A lista desloca a cada lançamento novo: o ano aberto renova inteiro todo dia; os fechados ficam no cache.
+- Na coleta de 2026-11-10, 17.426 lançamentos de janeiro de 2022 a novembro de 2026 nos 63 deputados, em 14 categorias, somando R$ 130.228.729,08.
+
+### `alba-proposicoes`: proposições
+
+- URL base: `https://albalegis.nopapercloud.com.br/api/publico/proposicao/?pag={n}&qtd=20&ano={ano}`. API pública do NoPaper, em JSON, sem autenticação. Validação em 2026-11-10.
+- Mesma API da ALES, com o mesmo defeito: página com item de campo nulo responde `{"erro": true}` inteira, e quantidade acima de 20 também. A página com erro é refeita item a item, e só o item com defeito fica fora.
+- O autor e os coautores vêm pelo nome civil (`AutorRequerenteDados.nomeRazao`), ligado ao nome civil do perfil. O gabinete (`setor`) não serve de vínculo: há item de outra pessoa no gabinete de um deputado. A fonte pode marcar o cadastro do autor com "(INATIVO)" no fim do nome; a marca sai antes do vínculo.
+- Autoria de órgão (Poder Executivo, tribunais) não tem perfil e fica fora.
+- Cada consulta leva cerca de 2 s. A primeira carga, de 2022 a 2026, tem cerca de 700 consultas.
+- Na coleta de 2026-11-10, 9.750 autorias de 2022-01-03 a 2026-11-10 nos 63 deputados. Os tipos mais comuns são moção, indicação, projeto de lei e requerimento.
+
+### Votações nominais da ALBA: não encontradas
+
+- Validação em 2026-11-10. As sessões no NoPaper (`/spl/sessoes.aspx`) publicam ata, ordem do dia, notas taquigráficas, áudio, vídeo e a presença em plenário, sem votação nominal com voto individual.
+- A presença em plenário de cada sessão (`/spl/sessao-parlamentares.aspx?id={id}`) lista os deputados como "Presente", "Falta" ou "Falta Justificada". Não é coletada: publicar falta sem justificativa depende de decisão editorial.
+
 ### `ba-transparencia` e `ba-diario-oficial`: Executivo estadual
 
 - Transparência orçamentária: `https://www.transparencia.ba.gov.br/`
@@ -846,6 +871,15 @@ Validação em 2026-11-03 com o User-Agent do projeto.
 - O id do e-Legis diferencia maiúsculas. No nome do arquivo em cache, cada maiúscula vira `_` e a minúscula, para o cache funcionar em disco que não diferencia maiúsculas.
 - Na coleta de 2026-11-10, 226 votações nominais em 111 sessões, de 2023-03-21 a 2026-06-16, com 5.674 votos em 39 dos 40 deputados. Das 44 sessões realizadas de julho a novembro de 2026, nenhuma teve votação nominal.
 - Carolline Sardá não aparece em nenhum extrato e fica sem votos. Os votos de 18 nomes sem perfil em exercício, de suplentes e de deputados que deixaram a Casa, ficam fora.
+
+### `alesc-presenca`: presença em sessões plenárias
+
+- URL base: `https://portalelegis.alesc.sc.gov.br/sessoes-plenarias/{id}/presenca`. HTML por GET, sem autenticação. Validação em 2026-11-10.
+- A sessão vem da mesma lista de `alesc-votacoes`. Só a sessão ordinária tem a aba de presença aberta; na extraordinária, a aba vem desativada.
+- Cada página lista os deputados da sessão com a situação: "Presente" ou "Ausência justificada". Não há outra situação nas 459 sessões coletadas.
+- O deputado vem pelo nome, com o mesmo mapa de nomes das despesas e das votações.
+- Cada sessão vira um evento no perfil, com a presença: `registrada` ou `ausencia_justificada`. O bloco cita a lista de sessões como fonte, e cada registro aponta para a página de presença da sessão.
+- Na coleta de 2026-11-10, 459 sessões ordinárias de 2023-02-02 a 2026-11-05, com 16.707 registros nos 40 deputados: 12.307 presenças e 4.400 ausências justificadas. Os registros de 21 nomes sem perfil em exercício, de suplentes e de deputados que deixaram a Casa, ficam fora.
 
 ### `sc-transparencia` e `sc-diario-oficial`: Executivo estadual
 

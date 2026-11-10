@@ -118,6 +118,7 @@ Não é presença. É a contagem de votos registrados em votações nominais.
 - ALRS e ALES não publicam fornecedor nem nota. Cada linha é um total por categoria (ALRS) ou por produto (ALES) em um mês, sem CNPJ. Não é uma nota fiscal, e o total do deputado é a soma dessas linhas.
 - ALES: o valor é o solicitado pelo gabinete.
 - ALEPE: documento com total e sem nota entra como uma linha, na categoria "Sem detalhamento na fonte".
+- ALBA: a lista da verba indenizatória traz o lançamento com número da nota, categoria e valor, sem fornecedor. O fornecedor fica no detalhe do lançamento, que o projeto não coleta; a despesa publicada aponta para esse detalhe. A competência dá o ano e o mês, e a data fica vazia.
 - CLDF: os arquivos de verbas indenizatórias do CKAN não entram. Os formatos de data misturam dia e mês, número serial de planilha e texto; em 2026, 112 datas têm dia e mês indistinguíveis. O projeto não adivinha a data.
 
 ### Minimização
@@ -132,6 +133,7 @@ Não é presença. É a contagem de votos registrados em votações nominais.
 - **Senado.** `/processo?codigoParlamentarAutor={codigo}`, filtrado por apresentação a partir do início da cobertura (2022-01-01). A listagem não traz temas: o campo fica `null`.
 - **ALECE.** Listagens HTML paginadas da 31ª legislatura (2023–2026). Tipos: projeto de lei (PL), indicação (PI), decreto legislativo (PDL), lei complementar (PLC), emenda constitucional (PEC) e resolução (PR). O autor vem pelo nome. Sequência de 11 dígitos na ementa (CPF) é removida.
 - **ALESC.** Portal e-Legis paginado por iniciativa parlamentar. Cobre a 20ª legislatura, a partir de 2023-02-01. O que é anterior fica fora. Autoria e proponente vêm da listagem; o slug da iniciativa no portal pode ser o apelido ou o título parlamentar.
+- **ALBA.** API pública do NoPaper, por ano, de 2022 em diante. Entram todos os tipos com autor ou coautor deputado em exercício. O autor vem pelo nome civil, ligado ao nome civil do perfil, sem a marca "(INATIVO)" que a fonte põe no fim do nome. O primeiro autor é o proponente. Sequência de 11 dígitos na ementa (CPF) é removida.
 - **Câmara municipal (piloto).** `materia/materialegislativa?autores={autor}&ano={ano}` do SAPL, por ano da legislatura vigente. O `autor` vem de `base/autor` pelo `object_id` do parlamentar. Entram todos os tipos de matéria, inclusive indicações e requerimentos. Situação: `resultado` da fonte, ou "Em tramitação" e "Tramitação encerrada" pelo campo `em_tramitacao`. Temas ficam vazios: a fonte não classifica.
 
 ## Emendas parlamentares (ADR-0030)
@@ -157,6 +159,7 @@ Não é presença. É a contagem de votos registrados em votações nominais.
 - **Câmara.** Eventos com presença registrada em `eventosPresencaDeputados`, com tipo, situação e descrição de `eventos` e órgão de `eventosOrgaos`.
 - A lista da fonte traz só presentes. O projeto não calcula taxa de presença em evento.
 - **Senado.** Sem fonte equivalente na POC: "sem registro na fonte".
+- **ALESC.** Presença em sessão plenária ordinária, pela página de presença de cada sessão no e-Legis. A fonte lista os deputados da sessão como "Presente" ou "Ausência justificada", e as duas situações entram: `registrada` e `ausencia_justificada`. Na contagem por tipo do perfil, a ausência justificada conta à parte. A sessão extraordinária não tem presença publicada e fica fora. O projeto não calcula taxa de presença.
 - **Câmara municipal (piloto).** Presença em sessão plenária de `sessao/sessaoplenariapresenca` do SAPL, nas sessões da legislatura vigente já realizadas. Tipo, número e data vêm de `sessao/sessaoplenaria`. A fonte lista só presentes. O projeto não calcula taxa de presença.
 
 ## Órgãos e frentes
