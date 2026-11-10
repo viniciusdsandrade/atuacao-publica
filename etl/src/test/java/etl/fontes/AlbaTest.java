@@ -11,6 +11,7 @@ import java.time.Instant;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -24,6 +25,90 @@ import etl.Registros.OrgaoOuFrente;
 import etl.Registros.Prov;
 
 class AlbaTest {
+
+    @Test
+    void listaDaVerbaDaLancamentoComCompetenciaNotaEDetalhe() {
+        // Trecho no formato da lista de verbas indenizatórias de 2025, com nome de exemplo.
+        String html = """
+                <table class="tabela-cab table table-bordered divider table-striped"><thead><tr><th>N° PROCESSO</th></tr></thead><tbody>
+                <tr class="table-itens cinza">
+                 <div>
+                <td width="150" style="text-align: center;">220255</td>
+                <td style="text-align: center;">3172</td>
+                <td style="text-align: center;">11/2025</td>
+                <td width="150">Deputada Exemplo</td>
+                <td>Loca&ccedil;&atilde;o de ve&iacute;culo terrestre</td>
+                <td width="150">R$ 4.500,00</td>
+                <td width="150"><a href="/transparencia/verbas-idenizatorias/98460/"><button class="btn">DETALHES</button></a></td>
+                </tr>
+                </tbody></table>
+                <a href="?ano=2025&amp;categoria=&amp;page=2&amp;size=20">2</a><a href="?ano=2025&amp;categoria=&amp;page=219&amp;size=20">219</a>
+                """;
+
+        var lancamentos = Alba.lancamentosDaPagina(html);
+
+        assertEquals(1, lancamentos.size());
+        var l = lancamentos.getFirst();
+        assertEquals("98460", l.id());
+        assertEquals("3172", l.nota());
+        assertEquals(11, l.mes());
+        assertEquals(2025, l.ano());
+        assertEquals("Locação de veículo terrestre", l.categoria());
+        assertEquals(new java.math.BigDecimal("4500.00"), l.valor());
+        assertEquals(Alba.chaveDoNome("Deputada Exemplo"), Alba.chaveDoNome(l.deputado()));
+        assertEquals(219, Alba.paginasDasVerbas(html));
+    }
+
+    @Test
+    void proposicaoLigaPeloNomeCivilEDeixaForaAutoriaDeOrgao() {
+        // Itens no formato da API do NoPaper, com nomes de exemplo.
+        JsonNode resposta = Json.FONTE.readTree("""
+                {"total": 3, "Data": [
+                 {"id": 1, "ano": "2025", "sigla": "PL", "tipo": "PROJETO DE LEI", "numero": "26140", "data": "29/12/2025 09:50:12",
+                  "assunto": "Dispõe sobre   recarga de veículos.", "situacao": "TRAMITANDO",
+                  "AutorRequerenteDados": {"nomeRazao": "MARIA EXEMPLO DE SOUZA", "setor": "GAB DEP MARIA EXEMPLO"}, "CoAutores": null},
+                 {"id": 2, "ano": "2025", "sigla": "MSG", "tipo": "MENSAGEM", "numero": "10", "data": "28/12/2025 10:00:00",
+                  "AutorRequerenteDados": {"nomeRazao": "PODER EXECUTIVO", "setor": null}, "CoAutores": null},
+                 {"id": 3, "ano": "2025", "sigla": "IND", "tipo": "INDICAÇÃO", "numero": "5", "data": "27/12/2025 10:00:00",
+                  "AutorRequerenteDados": {"nomeRazao": "JOSE TESTE", "setor": "GAB DEP ZE TESTE"}, "CoAutores": null}]}
+                """);
+        Prov prov = new Prov(Alba.FONTE_PROPOSICOES, Alba.urlDaPagina(2025, 1, 20), Instant.parse("2026-11-10T12:00:00Z"));
+        Map<String, Integer> semPerfil = new HashMap<>();
+
+        var porId = Alba.proposicoesDaPagina(resposta, Map.of(Alba.chaveDoNome("Maria Exemplo de Souza"), "100"), prov, semPerfil);
+
+        assertEquals(Set.of("100"), porId.keySet());
+        var p = porId.get("100").getFirst();
+        assertEquals("PL 26140/2025", p.identificacao());
+        assertEquals("Dispõe sobre recarga de veículos.", p.ementa());
+        assertEquals("2025-12-29", p.dataApresentacao());
+        assertTrue(p.proponente());
+        // Gabinete de deputado sem perfil aparece na saída do normalize; órgão, não.
+        assertEquals(Map.of("GAB DEP ZE TESTE", 1), semPerfil);
+        // A fonte marca o cadastro inativo no fim do nome; a pessoa é a mesma.
+        assertEquals("MARIA EXEMPLO DE SOUZA", Alba.semSituacao("MARIA EXEMPLO DE SOUZA (INATIVO)"));
+    }
+
+    @Test
+    void paginaComItemNuloERefeitaItemAItem() throws Exception {
+        // A API responde {"erro": true} para a página inteira quando um item tem campo nulo.
+        Map<String, String> respostas = new HashMap<>();
+        respostas.put(Alba.urlDaPagina(2025, 1, 20), "{\"total\": 23, \"Data\": [" + "{\"id\": 1},".repeat(19) + "{\"id\": 20}]}");
+        respostas.put(Alba.urlDaPagina(2025, 2, 20), "{\"erro\": true}");
+        respostas.put(Alba.urlDaPagina(2025, 21, 1), "{\"total\": 23, \"Data\": [{\"id\": 21}]}");
+        respostas.put(Alba.urlDaPagina(2025, 22, 1), "{\"erro\": true}");
+        respostas.put(Alba.urlDaPagina(2025, 23, 1), "{\"total\": 23, \"Data\": [{\"id\": 23}]}");
+        List<String> consultadas = new java.util.ArrayList<>();
+
+        var validas = Alba.respostasDoAno(2025, (url, caminho) -> {
+            consultadas.add(url);
+            String corpo = respostas.get(url);
+            return corpo == null ? null : new Alba.Resposta(Json.FONTE.readTree(corpo), null);
+        });
+
+        assertEquals(3, validas.size());
+        assertEquals(5, consultadas.size());
+    }
 
     @Test
     void formataNomeComPreposicoesEMaiusculas() {

@@ -173,12 +173,14 @@ jobs:
           ETL_ORCAMENTO_MINUTOS: '15'
         run: java -Xmx2g -jar etl/target/etl.jar fetch alep
       - name: fetch alba
-        # Assembleia Legislativa do Estado da Bahia: deputados, comissões e perfis biográficos.
+        # Assembleia Legislativa do Estado da Bahia: deputados, comissões, perfis biográficos, verba indenizatória e
+        # proposições. A primeira carga baixa cerca de mil páginas da verba e setecentas da API do NoPaper, a 2 s cada;
+        # depois, só o ano aberto renova.
         if: env.FONTE == 'todas' || env.FONTE == 'alba'
         continue-on-error: true
-        timeout-minutes: 20
+        timeout-minutes: 40
         env:
-          ETL_ORCAMENTO_MINUTOS: '15'
+          ETL_ORCAMENTO_MINUTOS: '30'
         run: java -Xmx2g -jar etl/target/etl.jar fetch alba
       - name: fetch alerj
         # Assembleia Legislativa do Estado do Rio de Janeiro: deputados e perfis biográficos.
