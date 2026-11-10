@@ -31,6 +31,84 @@ import tools.jackson.databind.JsonNode;
 class AlescTest {
 
     @Test
+    void listaDeSessoesTrazSoAsRealizadasComOrdemDoDia() {
+        // Trecho no formato da lista do e-Legis em 2026-11-10: a sessão futura vem em "Horário regimental".
+        String html = """
+                <div class="card card-alesc mb-4"><div class="card-body">
+                <h4 class="mb-1">
+                    101ª Sessão Ordinária                </h4>
+                <span class="text-nowrap"><i class="far fa-clock"></i> 10/11/2026 · 14:00 </span>
+                <span class="badge rounded-pill bg-light text-secondary-emphasis"><i class="fas fa-circle fa-2xs text-warning"></i> Horário regimental</span>
+                <a href="/sessoes-plenarias/5qB4N/ordem-do-dia" class="btn btn-sm btn-outline-default text-nowrap"><i class="fas fa-calendar-days"></i> Ordem do Dia</a>
+                </div></div>
+                <div class="card card-alesc mb-4"><div class="card-body">
+                <h4 class="mb-1">
+                    100ª Sessão Ordinária                </h4>
+                <span class="text-nowrap"><i class="far fa-clock"></i> 27/10/2026 · 14:00 </span>
+                <span class="badge rounded-pill bg-light text-secondary-emphasis"><i class="fas fa-circle fa-2xs text-success"></i> Realizada</span>
+                <a href="/sessoes-plenarias/5bnZ5/ordem-do-dia" class="btn btn-sm btn-outline-default text-nowrap"><i class="fas fa-calendar-days"></i> Ordem do Dia</a>
+                </div></div>
+                <ul class="pagination"><li><a href="/sessoes-plenarias?page=2">2</a></li><li><a href="/sessoes-plenarias?page=64">64</a></li></ul>
+                """;
+
+        var sessoes = Alesc.sessoesDaPagina(html);
+
+        assertEquals(2, sessoes.size());
+        assertEquals("100ª Sessão Ordinária", sessoes.get(1).titulo());
+        assertEquals(java.time.LocalDate.of(2026, 10, 27), sessoes.get(1).data());
+        assertTrue(sessoes.get(1).realizada());
+        assertEquals("Horário regimental", sessoes.get(0).situacao());
+        assertTrue(!sessoes.get(0).realizada());
+        assertEquals(64, Alesc.paginasDaLista(html));
+    }
+
+    @Test
+    void ordemDoDiaDaSoAsVotacoesNominaisComOVotoDeQuemVotou() {
+        // Trechos no formato da ordem do dia e do extrato do e-Legis, com nomes de exemplo.
+        String ordem = """
+                <tr><th>Início</th>
+                <td>27/10/2026 às 14:00</td></tr>
+                <div class="border-bottom mb-3"><h5 class="text-success m-0 me-1"><a href="/proposicoes/5aAJj">PCL/0269/2026</a></h5>
+                <span class="badge text-bg-success">Aprovado</span>                <span class="badge text-bg-light">Votação simbólica</span>
+                <p class="fst-italic text-secondary mb-1">Altera o quadro de pessoal.</p></div>
+                <div class="border-bottom mb-3"><h5 class="text-success m-0 me-1"><a href="/proposicoes/K9JW0">PLC/0007/2026</a></h5>
+                <span class="badge text-bg-success">Aprovado</span>                <span class="badge text-bg-light">Votação nominal</span>
+                <p class="fst-italic text-secondary mb-1">Altera a Resolu&ccedil;&atilde;o n&ordm; 001, de 2006.</p>
+                <a hx-get="/extrato-votacao/5qgL2" hx-trigger="click" class="btn btn-outline-default btn-sm btn-extrato-votacao">Extrato de votação</a></div>
+                """;
+        String extrato = """
+                <h4 class="row text-center">PLC/0007/2026</h4>
+                <div class="d-flex justify-content-between align-items-center w-100">
+                    <div>Deputada Exemplo</div>
+                    <div><span class="badge text-bg-success fw-normal">Sim</span></div>
+                </div>
+                <div class="d-flex justify-content-between align-items-center w-100">
+                    <div>Deputado Teste</div>
+                    <div><span class="badge text-bg-danger fw-normal">N&atilde;o</span></div>
+                </div>
+                """;
+
+        var votacoes = Alesc.votacoesNominais(ordem);
+        var votos = Alesc.votosDoExtrato(extrato);
+
+        assertEquals(java.time.LocalDate.of(2026, 10, 27), Alesc.dataDaOrdemDoDia(ordem));
+        assertEquals(1, votacoes.size());
+        assertEquals("5qgL2", votacoes.getFirst().idExtrato());
+        assertEquals("PLC 7/2026", votacoes.getFirst().proposicao());
+        assertEquals("Aprovado", votacoes.getFirst().resultado());
+        assertEquals("Altera a Resolução nº 001, de 2006.", votacoes.getFirst().ementa());
+        assertEquals(List.of(new Alesc.VotoNoExtrato("Deputada Exemplo", "Sim"), new Alesc.VotoNoExtrato("Deputado Teste", "Não")), votos);
+        assertEquals("PL 143/2026", Alesc.identificacao("PL./0143/2026"));
+    }
+
+    @Test
+    void idQueSoDifereNaCaixaNaoCaiNoMesmoArquivo() {
+        // Disco que não diferencia maiúsculas guardaria "5bnZ5" e "5bnz5" no mesmo arquivo.
+        assertEquals("5bn_z5", Alesc.nomeDeArquivo("5bnZ5"));
+        assertTrue(!Alesc.nomeDeArquivo("5bnZ5").equalsIgnoreCase(Alesc.nomeDeArquivo("5bnz5")));
+    }
+
+    @Test
     void formataNomeComPreposicoesEMaiusculas() {
         assertEquals("Alex Brasil", Alesc.formatarNome("ALEX BRASIL"));
         assertEquals("Altair Silva", Alesc.formatarNome("ALTAIR SILVA"));

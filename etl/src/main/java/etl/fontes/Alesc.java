@@ -28,6 +28,7 @@ import etl.Registros.OrgaoOuFrente;
 import etl.Registros.Pessoa;
 import etl.Registros.Proposicao;
 import etl.Registros.Prov;
+import etl.Registros.Voto;
 import etl.Texto;
 
 /**
@@ -42,6 +43,7 @@ public final class Alesc implements Fonte {
     public static final String FONTE_PORTAL = "alesc-portal";
     public static final String FONTE_DESPESAS = "alesc-despesas";
     public static final String FONTE_PROPOSICOES = "alesc-proposicoes";
+    public static final String FONTE_VOTACOES = "alesc-votacoes";
 
     public static final String SITE = "https://www.alesc.sc.gov.br";
     public static final String URL_DEPUTADOS = "https://www.alesc.sc.gov.br/deputados/";
@@ -49,7 +51,30 @@ public final class Alesc implements Fonte {
     public static final String URL_DESPESAS = "https://transparencia.alesc.sc.gov.br/gabinetes-parlamentares/csv/";
     public static final String URL_ELEGIS = "https://portalelegis.alesc.sc.gov.br";
     public static final String URL_PROPOSICOES = "https://portalelegis.alesc.sc.gov.br/proposicoes/processo-legislativo";
+    public static final String URL_SESSOES = "https://portalelegis.alesc.sc.gov.br/sessoes-plenarias";
+    public static final String URL_EXTRATO = "https://portalelegis.alesc.sc.gov.br/extrato-votacao/";
     public static final String UF = "SC";
+
+    /** Primeiras páginas da lista de sessões: a lista vem da sessão mais nova e desloca a cada sessão, e essas renovam todo dia. */
+    static final int PAGINAS_RECENTES = 3;
+    /** Cabeçalho que a própria página do e-Legis manda ao abrir o extrato e o modal de comissão. Sem ele, o extrato responde 405. */
+    private static final Map<String, String> AJAX = Map.of("X-Requested-With", "XMLHttpRequest");
+    private static final Pattern PAGINA_DA_LISTA = Pattern.compile("href=\"/sessoes-plenarias\\?page=([0-9]+)\"");
+    private static final String MARCA_DA_SESSAO = "<div class=\"card card-alesc mb-4\">";
+    private static final Pattern TITULO_DA_SESSAO = Pattern.compile("<h4 class=\"mb-1\">\\s*([^<]+?)\\s*</h4>");
+    private static final Pattern DATA_DA_SESSAO = Pattern.compile("([0-9]{2}/[0-9]{2}/[0-9]{4}) ·");
+    private static final Pattern SITUACAO_DA_SESSAO = Pattern.compile(
+            "<span class=\"badge rounded-pill[^\"]*\">(?:<i[^>]*></i>)?\\s*([^<]+?)\\s*</span>");
+    private static final Pattern ORDEM_DO_DIA = Pattern.compile(
+            "<a href=\"/sessoes-plenarias/([A-Za-z0-9]+)/ordem-do-dia\" class=\"([^\"]*)\"");
+    private static final String MARCA_DO_ITEM = "<div class=\"border-bottom mb-3\">";
+    private static final Pattern PROPOSICAO_DO_ITEM = Pattern.compile("<a href=\"/proposicoes/[A-Za-z0-9]+\">([^<]+)</a>");
+    private static final Pattern SELO_DO_ITEM = Pattern.compile("<span class=\"badge text-bg-([a-z-]+)\">([^<]+)</span>");
+    private static final Pattern EMENTA_DO_ITEM = Pattern.compile("<p class=\"fst-italic text-secondary mb-1\">(.*?)</p>", Pattern.DOTALL);
+    private static final Pattern EXTRATO_DO_ITEM = Pattern.compile("hx-get=\"/extrato-votacao/([A-Za-z0-9]+)\"");
+    private static final Pattern INICIO_DA_SESSAO = Pattern.compile("<th>Início</th>\\s*<td>([0-9]{2}/[0-9]{2}/[0-9]{4})");
+    private static final Pattern VOTO_DO_EXTRATO = Pattern.compile(
+            "<div>\\s*([^<]+?)\\s*</div>\\s*<div><span class=\"badge[^\"]*\">\\s*([^<]+?)\\s*</span></div>");
 
     public static final LocalDate INICIO_LEG_20 = LocalDate.of(2023, 2, 1);
     public static final LocalDate FIM_LEG_20 = LocalDate.of(2027, 1, 31);
@@ -162,8 +187,7 @@ public final class Alesc implements Fonte {
         List<ComissaoMeta> comissoes = extrairMetadadosComissoes(ctx);
         for (ComissaoMeta com : comissoes) {
             String urlModal = URL_COMISSOES + "/" + com.id();
-            coleta.obterOuVazio(urlModal, "comissoes/" + com.id() + ".html", "text/html", Politica.SEMANAL,
-                    Map.of("X-Requested-With", "XMLHttpRequest"));
+            coleta.obterOuVazio(urlModal, "comissoes/" + com.id() + ".html", "text/html", Politica.SEMANAL, AJAX);
         }
 
         for (int ano = 2023; ano <= 2026; ano++) {
@@ -189,6 +213,260 @@ public final class Alesc implements Fonte {
                 p++;
             }
         }
+
+        coletarVotacoes(ctx, coleta);
+    }
+
+    /**
+     * Votações nominais da 20ª legislatura no e-Legis: a lista de sessões plenárias, a ordem do dia de cada sessão realizada
+     * e o extrato de cada votação nominal. Fora as primeiras páginas da lista, que deslocam a cada sessão nova, cada página
+     * só é baixada quando falta: a sessão fica pelo id, que não muda de uma página para outra.
+     */
+    private void coletarVotacoes(Contexto ctx, Coleta coleta) throws Exception {
+        Coleta.Arquivo primeira = coleta.obterOpcional(URL_SESSOES, arquivoDaLista(1), "text/html", Politica.SEMPRE);
+        if (primeira == null || !Files.exists(Coleta.caminho(ctx, primeira))) {
+            return;
+        }
+        int paginas = paginasDaLista(Texto.lerArquivo(Coleta.caminho(ctx, primeira)));
+        for (int p = 2; p <= paginas; p++) {
+            coleta.obterOpcional(URL_SESSOES + "?page=" + p, arquivoDaLista(p), "text/html",
+                    p <= PAGINAS_RECENTES ? Politica.SEMPRE : Politica.SE_AUSENTE);
+        }
+        Map<String, SessaoListada> realizadas = new java.util.LinkedHashMap<>();
+        for (SessaoListada s : sessoesEmCache(ctx)) {
+            if (s.realizada()) {
+                realizadas.put(s.id(), s);
+            }
+        }
+        // Em paralelo, com o limite de conexões e o intervalo por host do cliente HTTP.
+        for (String falha : Camara.paraCadaDeputado(new ArrayList<>(realizadas.keySet()), id -> coletarSessao(ctx, coleta, realizadas.get(id)))) {
+            System.err.println("alesc: falha na sessão " + falha);
+        }
+    }
+
+    private static void coletarSessao(Contexto ctx, Coleta coleta, SessaoListada sessao) throws Exception {
+        Politica politica = Politica.porAnoSemanal(sessao.data().getYear(), ctx.hoje());
+        Coleta.Arquivo ordem = coleta.obterOpcional(urlDaOrdemDoDia(sessao.id()), arquivoDaOrdemDoDia(sessao.id()), "text/html", politica);
+        if (ordem == null || !Files.exists(Coleta.caminho(ctx, ordem))) {
+            return;
+        }
+        for (VotacaoNominal v : votacoesNominais(Texto.lerArquivo(Coleta.caminho(ctx, ordem)))) {
+            coleta.obterOpcional(URL_EXTRATO + v.idExtrato(), arquivoDoExtrato(v.idExtrato()), "text/html", politica, AJAX);
+        }
+    }
+
+    /** Sessão da lista: id, título, data, situação e se a ordem do dia está aberta. */
+    record SessaoListada(String id, String titulo, LocalDate data, String situacao, boolean comOrdemDoDia) {
+
+        boolean realizada() {
+            return comOrdemDoDia && data != null && "Realizada".equalsIgnoreCase(situacao);
+        }
+    }
+
+    /** Votação nominal de um item da ordem do dia: o extrato, a proposição, o resultado e a ementa. */
+    record VotacaoNominal(String idExtrato, String proposicao, String resultado, String ementa) {
+    }
+
+    /** Voto de um deputado no extrato, como a página o dá. */
+    record VotoNoExtrato(String nome, String voto) {
+    }
+
+    static String urlDaOrdemDoDia(String idSessao) {
+        return URL_SESSOES + "/" + idSessao + "/ordem-do-dia";
+    }
+
+    private static String arquivoDaLista(int pagina) {
+        return "sessoes/pagina-" + pagina + ".html";
+    }
+
+    private static String arquivoDaOrdemDoDia(String idSessao) {
+        return "sessoes/ordem-do-dia/" + nomeDeArquivo(idSessao) + ".html";
+    }
+
+    private static String arquivoDoExtrato(String idExtrato) {
+        return "sessoes/extratos/" + nomeDeArquivo(idExtrato) + ".html";
+    }
+
+    /**
+     * Id do e-Legis como nome de arquivo. O id diferencia maiúsculas ("5bnZ5"), e o disco do mantenedor pode não
+     * diferenciar: cada maiúscula vira "_" e a minúscula, para dois ids nunca caírem no mesmo arquivo.
+     */
+    static String nomeDeArquivo(String id) {
+        StringBuilder nome = new StringBuilder();
+        for (char c : id.toCharArray()) {
+            if (Character.isUpperCase(c)) {
+                nome.append('_').append(Character.toLowerCase(c));
+            } else {
+                nome.append(c);
+            }
+        }
+        return nome.toString();
+    }
+
+    /** Número de páginas da lista de sessões, pelo maior número de página dos links. */
+    static int paginasDaLista(String html) {
+        int maior = 1;
+        Matcher m = PAGINA_DA_LISTA.matcher(html);
+        while (m.find()) {
+            maior = Math.max(maior, Integer.parseInt(m.group(1)));
+        }
+        return maior;
+    }
+
+    /** Sessões de uma página da lista, na ordem da página. */
+    static List<SessaoListada> sessoesDaPagina(String html) {
+        List<SessaoListada> sessoes = new ArrayList<>();
+        String[] cartoes = html.split(Pattern.quote(MARCA_DA_SESSAO));
+        for (int i = 1; i < cartoes.length; i++) {
+            String cartao = cartoes[i];
+            Matcher ordem = ORDEM_DO_DIA.matcher(cartao);
+            if (!ordem.find()) {
+                continue;
+            }
+            Matcher titulo = TITULO_DA_SESSAO.matcher(cartao);
+            Matcher data = DATA_DA_SESSAO.matcher(cartao);
+            Matcher situacao = SITUACAO_DA_SESSAO.matcher(cartao);
+            sessoes.add(new SessaoListada(ordem.group(1), titulo.find() ? Texto.semEntidades(titulo.group(1)) : null,
+                    data.find() ? LocalDate.parse(data.group(1), DATA_BR) : null,
+                    situacao.find() ? Texto.semEntidades(situacao.group(1)) : null, !ordem.group(2).contains("disabled")));
+        }
+        return sessoes;
+    }
+
+    /**
+     * Sessões de todas as páginas em cache, sem repetição. O total de páginas vem da primeira, e página que falhou não
+     * interrompe a leitura das seguintes. A página mais nova vale quando a sessão aparece em duas.
+     */
+    static List<SessaoListada> sessoesEmCache(Contexto ctx) {
+        Map<String, SessaoListada> porId = new java.util.LinkedHashMap<>();
+        int paginas = 1;
+        for (int p = 1; p <= paginas; p++) {
+            Coleta.Arquivo arq = Coleta.metadados(ctx, "alesc", arquivoDaLista(p));
+            if (arq == null || arq.bytes() == 0 || !Files.exists(Coleta.caminho(ctx, arq))) {
+                continue;
+            }
+            try {
+                String html = Texto.lerArquivo(Coleta.caminho(ctx, arq));
+                if (p == 1) {
+                    paginas = paginasDaLista(html);
+                }
+                for (SessaoListada s : sessoesDaPagina(html)) {
+                    porId.putIfAbsent(s.id(), s);
+                }
+            } catch (java.io.IOException e) {
+                System.err.println("alesc: erro ao ler a página " + p + " das sessões: " + e.getMessage());
+            }
+        }
+        return new ArrayList<>(porId.values());
+    }
+
+    /** Data de início da sessão, no cartão da ordem do dia. */
+    static LocalDate dataDaOrdemDoDia(String html) {
+        Matcher m = INICIO_DA_SESSAO.matcher(html);
+        return m.find() ? LocalDate.parse(m.group(1), DATA_BR) : null;
+    }
+
+    /** Itens da ordem do dia votados por votação nominal, com o extrato. Votação simbólica não tem voto individual. */
+    static List<VotacaoNominal> votacoesNominais(String html) {
+        List<VotacaoNominal> votacoes = new ArrayList<>();
+        Set<String> vistos = new HashSet<>();
+        String[] itens = html.split(Pattern.quote(MARCA_DO_ITEM));
+        for (int i = 1; i < itens.length; i++) {
+            String item = itens[i];
+            Matcher extrato = EXTRATO_DO_ITEM.matcher(item);
+            if (!extrato.find() || !vistos.add(extrato.group(1))) {
+                continue;
+            }
+            String resultado = null;
+            boolean nominal = false;
+            Matcher selo = SELO_DO_ITEM.matcher(item);
+            while (selo.find()) {
+                String texto = Texto.semEntidades(selo.group(2)).strip();
+                if (selo.group(1).equals("light")) {
+                    nominal |= texto.equalsIgnoreCase("Votação nominal");
+                } else if (resultado == null) {
+                    resultado = texto;
+                }
+            }
+            if (!nominal) {
+                continue;
+            }
+            Matcher proposicao = PROPOSICAO_DO_ITEM.matcher(item);
+            Matcher ementa = EMENTA_DO_ITEM.matcher(item);
+            votacoes.add(new VotacaoNominal(extrato.group(1), proposicao.find() ? identificacao(Texto.semEntidades(proposicao.group(1))) : null,
+                    resultado, ementa.find() ? Guarda.semCpf(Texto.semEntidades(ementa.group(1).strip())) : null));
+        }
+        return votacoes;
+    }
+
+    /** "PLC/0007/2026" vira "PLC 7/2026"; o que não segue o padrão fica como veio. */
+    static String identificacao(String texto) {
+        Matcher m = IDENTIFICACAO_PATTERN.matcher(texto.strip());
+        return m.matches() ? m.group(1).toUpperCase(Locale.ROOT) + " " + Integer.parseInt(m.group(2)) + "/" + m.group(3) : texto.strip();
+    }
+
+    /** Votos do extrato de uma votação: o nome e o voto de quem votou. */
+    static List<VotoNoExtrato> votosDoExtrato(String html) {
+        List<VotoNoExtrato> votos = new ArrayList<>();
+        Matcher m = VOTO_DO_EXTRATO.matcher(html);
+        while (m.find()) {
+            votos.add(new VotoNoExtrato(Texto.semEntidades(m.group(1)), Texto.semEntidades(m.group(2))));
+        }
+        return votos;
+    }
+
+    /** Votos de cada deputado em exercício, pelas ordens do dia e extratos em cache, ligados pelo nome. */
+    static Map<String, List<Voto>> extrairVotos(Contexto ctx, Map<String, String> slugPorNomeNorm) {
+        Map<String, List<Voto>> porSlug = new HashMap<>();
+        Map<String, Integer> semPerfil = new java.util.TreeMap<>();
+        int votacoes = 0;
+        for (SessaoListada sessao : sessoesEmCache(ctx)) {
+            if (!sessao.realizada()) {
+                continue;
+            }
+            Coleta.Arquivo ordem = Coleta.metadados(ctx, "alesc", arquivoDaOrdemDoDia(sessao.id()));
+            if (ordem == null || ordem.bytes() == 0 || !Files.exists(Coleta.caminho(ctx, ordem))) {
+                continue;
+            }
+            try {
+                String htmlOrdem = Texto.lerArquivo(Coleta.caminho(ctx, ordem));
+                LocalDate data = java.util.Objects.requireNonNullElse(dataDaOrdemDoDia(htmlOrdem), sessao.data());
+                if (data.isBefore(INICIO_LEG_20)) {
+                    continue;
+                }
+                for (VotacaoNominal v : votacoesNominais(htmlOrdem)) {
+                    Coleta.Arquivo extrato = Coleta.metadados(ctx, "alesc", arquivoDoExtrato(v.idExtrato()));
+                    if (extrato == null || extrato.bytes() == 0 || !Files.exists(Coleta.caminho(ctx, extrato))) {
+                        continue;
+                    }
+                    List<VotoNoExtrato> votos = votosDoExtrato(Texto.lerArquivo(Coleta.caminho(ctx, extrato)));
+                    if (votos.isEmpty()) {
+                        continue;
+                    }
+                    votacoes++;
+                    // O extrato só abre pelo botão da ordem do dia: o registro aponta para a página que o leitor consegue abrir.
+                    Prov prov = Prov.de(FONTE_VOTACOES, urlDaOrdemDoDia(sessao.id()), extrato);
+                    Set<String> jaContados = new HashSet<>();
+                    for (VotoNoExtrato voto : votos) {
+                        String slug = resolverSlugPorNome(voto.nome(), slugPorNomeNorm);
+                        if (slug == null) {
+                            semPerfil.merge(voto.nome(), 1, Integer::sum);
+                            continue;
+                        }
+                        if (jaContados.add(slug)) {
+                            porSlug.computeIfAbsent(slug, k -> new ArrayList<>()).add(new Voto(v.idExtrato(), data.toString(), "PLEN",
+                                    v.proposicao(), v.ementa(), voto.voto(), null, null, null, null, prov));
+                        }
+                    }
+                }
+            } catch (java.io.IOException e) {
+                System.err.println("alesc: erro ao ler a ordem do dia da sessão " + sessao.id() + ": " + e.getMessage());
+            }
+        }
+        int total = porSlug.values().stream().mapToInt(List::size).sum();
+        System.out.println("alesc: " + votacoes + " votações nominais, " + total + " votos em " + porSlug.size()
+                + " deputados; nomes sem perfil em exercício: " + semPerfil.size() + " " + semPerfil.keySet());
+        return porSlug;
     }
 
     @Override
@@ -219,6 +497,7 @@ public final class Alesc implements Fonte {
         Map<String, List<OrgaoOuFrente>> comissoesPorSlug = extrairComissoes(ctx, slugPorNomeNorm);
         Map<String, List<Despesa>> despesasPorSlug = extrairDespesas(ctx, slugPorNomeNorm);
         Map<String, List<Proposicao>> proposicoesPorSlug = extrairProposicoes(ctx, deputados);
+        Map<String, List<Voto>> votosPorSlug = extrairVotos(ctx, slugPorNomeNorm);
 
         List<Pessoa> pessoas = new ArrayList<>();
 
@@ -254,6 +533,7 @@ public final class Alesc implements Fonte {
             blocosNode.set("orgaos_e_frentes", Json.SAIDA.valueToTree(orgaos));
             blocosNode.set("despesas", Json.SAIDA.valueToTree(despesas));
             blocosNode.set("proposicoes", Json.SAIDA.valueToTree(proposicoes));
+            blocosNode.set("votos", Json.SAIDA.valueToTree(votosPorSlug.getOrDefault(slug, List.of())));
             blocosNode.set("fontes", Json.SAIDA.valueToTree(Registros.fontesDosBlocos(blocosNode)));
             Json.gravar(pastaBlocos.resolve(slug + ".json"), blocosNode);
         }

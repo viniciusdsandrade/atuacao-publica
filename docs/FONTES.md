@@ -832,6 +832,21 @@ Validação em 2026-11-03 com o User-Agent do projeto.
 - Extração de tipo, número, ano, identificação oficial, data de apresentação, ementa, situação e autores com detecção de proponente principal.
 - No site em 2026-11-09, 2.103 proposições da 20ª legislatura em 40 deputados.
 
+### `alesc-votacoes`: votações nominais em plenário
+
+- URL base: `https://portalelegis.alesc.sc.gov.br/sessoes-plenarias?page={p}`. HTML por GET, sem autenticação. Validação em 2026-11-10.
+- A lista traz as sessões plenárias da 20ª legislatura, da mais nova para a mais antiga, 10 por página, com título, data e situação. Em 2026-11-10, 64 páginas, de 2023-02-02 a 2026-11-10.
+- Ordem do dia da sessão: `/sessoes-plenarias/{id}/ordem-do-dia`. Cada item traz a proposição, o resultado, o tipo de votação (simbólica ou nominal) e a ementa.
+- Extrato da votação nominal: `/extrato-votacao/{id}`, aberto pelo botão "Extrato de votação" da ordem do dia. Só responde com o cabeçalho `X-Requested-With: XMLHttpRequest`, que a própria página manda. Sem ele, a resposta é 405.
+- O extrato traz o nome e o voto de quem votou. Não lista ausentes nem partido.
+- O registro aponta para a ordem do dia da sessão, que o leitor consegue abrir.
+- O deputado vem pelo nome, com o mesmo mapa de nomes das despesas (`NOMES_ALTERNATIVOS`).
+- Votação simbólica não tem voto individual e fica fora.
+- A lista desloca a cada sessão nova. As 3 primeiras páginas renovam todo dia, e as outras só são baixadas quando faltam. A sessão fica pelo id, que não muda.
+- O id do e-Legis diferencia maiúsculas. No nome do arquivo em cache, cada maiúscula vira `_` e a minúscula, para o cache funcionar em disco que não diferencia maiúsculas.
+- Na coleta de 2026-11-10, 226 votações nominais em 111 sessões, de 2023-03-21 a 2026-06-16, com 5.674 votos em 39 dos 40 deputados. Das 44 sessões realizadas de julho a novembro de 2026, nenhuma teve votação nominal.
+- Carolline Sardá não aparece em nenhum extrato e fica sem votos. Os votos de 18 nomes sem perfil em exercício, de suplentes e de deputados que deixaram a Casa, ficam fora.
+
 ### `sc-transparencia` e `sc-diario-oficial`: Executivo estadual
 
 - Transparência orçamentária: `https://www.transparencia.sc.gov.br/`

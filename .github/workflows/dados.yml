@@ -205,12 +205,14 @@ jobs:
           ETL_ORCAMENTO_MINUTOS: '15'
         run: java -Xmx2g -jar etl/target/etl.jar fetch alece
       - name: fetch alesc
-        # Assembleia Legislativa do Estado de Santa Catarina: deputados em exercício, comissões e perfis.
+        # Assembleia Legislativa do Estado de Santa Catarina: deputados em exercício, comissões, perfis, despesas,
+        # proposições e votações nominais. A primeira carga das votações baixa cerca de 900 páginas do e-Legis, a cerca de
+        # uma por segundo; depois, só as primeiras páginas da lista renovam todo dia, e o ano aberto, por semana.
         if: env.FONTE == 'todas' || env.FONTE == 'alesc'
         continue-on-error: true
-        timeout-minutes: 20
+        timeout-minutes: 30
         env:
-          ETL_ORCAMENTO_MINUTOS: '15'
+          ETL_ORCAMENTO_MINUTOS: '22'
         run: java -Xmx2g -jar etl/target/etl.jar fetch alesc
       - name: fetch alego
         # Assembleia Legislativa do Estado de Goiás: deputados em exercício, comissões, frentes e perfis.

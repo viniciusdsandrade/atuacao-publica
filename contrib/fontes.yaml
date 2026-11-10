@@ -1925,6 +1925,21 @@
   status: validado
   validado_em: 2026-11-08
 
+- id: alesc-votacoes
+  nome: Assembleia Legislativa do Estado de Santa Catarina, votações nominais em plenário
+  orgao: Assembleia Legislativa do Estado de Santa Catarina
+  esfera: estadual
+  ente: SC
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://portalelegis.alesc.sc.gov.br/sessoes-plenarias
+  formato: HTML
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Lista de sessões plenárias, ordem do dia por sessão e extrato por votação nominal. O extrato só responde com o cabeçalho X-Requested-With e lista só quem votou, com nome e voto, sem partido. O parlamentar vem pelo nome."
+  status: validado
+  validado_em: 2026-11-10
+
 - id: alego-deputados
   nome: Assembleia Legislativa do Estado de Goiás, deputados estaduais
   orgao: Assembleia Legislativa do Estado de Goiás
