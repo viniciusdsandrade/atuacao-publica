@@ -34,7 +34,7 @@ Estado real de cada fase. Atualizado ao fechar cada fase.
 - `/deputados/{id}/despesas` da Câmara responde vazio. O ETL usa o arquivo anual de cotas.
 - `/deputados/{id}/frentes` respondeu 504 seguidamente em 2026-10-30. O ETL manteve a cópia da coleta anterior e marcou a fonte como parcial (ADR-0005).
 - A API da Câmara responde 504 e recusa conexões em escala a partir do runner do GitHub Actions (execuções de 2026-11-01 e 2026-11-02), e também respondeu 504 em 2026-10-30 de outra rede. Com o cache preenchido, os blocos usam a cópia anterior e ficam marcados como desatualizados. Desde 2026-11-02 a coleta tem orçamento de tempo, discursos são complementares e a falha em poucos deputados deixa a fonte parcial, não em falha. A execução diária roda às 06:17 UTC. Em 2026-11-10 o orçamento de 75 minutos se esgotou, mas as requisições que já esperavam vaga no cliente HTTP seguiram tentando contra os 504, e o passo foi encerrado no limite de 90 minutos. A Câmara saiu parcial, com a cópia anterior de 93 arquivos de discursos. Corrigido: o cliente HTTP também respeita o prazo da coleta.
-- Proposições da ALES no ano aberto: em 2026-11-10, o cache tinha todas as páginas de 2026, mas menos itens únicos que o total da API (1.549 de 1.626 indicações, 540 de 550 projetos de lei). As páginas do ano aberto renovam em rodízio semanal, uma por dia, e a lista desloca a cada proposição nova: item que muda de página entre duas renovações fica de fora até o rodízio seguinte. No site, 2.195 autorias de 2026, contra 2.241 na publicação anterior. Corrigido no mesmo dia: as páginas de uma lista que desloca (proposições da ALES, da ALECE e da ALESC, verba e proposições da ALBA) renovam todas no mesmo dia da semana (`SEMANAL_EM_LISTA`). No ensaio local, os 2.374 itens de 2026 da API da ALES voltaram a bater com o total declarado.
+- Proposições da ALES no ano aberto: em 2026-11-10, o cache tinha todas as páginas de 2026, mas menos itens únicos que o total da API (1.549 de 1.626 indicações, 540 de 550 projetos de lei). As páginas do ano aberto renovam em rodízio semanal, uma por dia, e a lista desloca a cada proposição nova: item que muda de página entre duas renovações fica de fora até o rodízio seguinte. No site, 2.195 autorias de 2026, contra 2.241 na publicação anterior. Corrigido no mesmo dia: as páginas de uma lista que desloca (proposições da ALES, da ALECE e da ALESC, verba e proposições da ALBA) renovam todas no mesmo dia da semana (`SEMANAL_EM_LISTA`). No ensaio local, os 2.374 itens de 2026 da API da ALES voltaram a bater com o total declarado. No site desde a publicação de 2026-11-10 às 19:48 UTC: 2.298 autorias de 2026 e 12.331 no total. O deploy do Pages expirou quatro vezes antes de passar, sem incidente no status do GitHub.
 - DivulgaCandContas bloqueia o User-Agent do projeto. O ETL usa os arquivos do TSE.
 - A agenda presidencial existe só em HTML, uma página por dia. Desde 2026-11-02 é coletada pela página do dia (ADR-0011); 2022 vem do Internet Archive, e dias sem captura ficam sem registro.
 - O e-Agendas não traz a Presidência da República.
@@ -100,7 +100,7 @@ Estado real de cada fase. Atualizado ao fechar cada fase.
 
 ## Casas estaduais e municipais no site
 
-Estado da publicação de 2026-11-10, às 18:17 UTC, com 2.116 perfis. "Perfis" conta os perfis com o identificador da casa, inclusive os fundidos com outra casa.
+Estado da publicação de 2026-11-10, às 19:48 UTC, com 2.116 perfis. "Perfis" conta os perfis com o identificador da casa, inclusive os fundidos com outra casa.
 
 | Casa | Coleta no CI | Perfis | Vínculo com o TSE | Blocos além de mandato e candidaturas |
 |---|---|---|---|---|
@@ -113,7 +113,7 @@ Estado da publicação de 2026-11-10, às 18:17 UTC, com 2.116 perfis. "Perfis" 
 | ALECE (CE) | ok | 54 | 51 | comissões, despesas (15.511 lançamentos), votações nominais (2.439 votos) e proposições (5.553 em 53 deputados) |
 | ALESC (SC) | ok | 40 | 40 | despesas, comissões, proposições (2.103 da 20ª legislatura em 40 deputados) votações nominais (5.674 votos em 39 deputados, sem bloco de participação) e presença em sessão plenária (16.707 registros em 40 deputados, 4.400 deles de ausência justificada) |
 | ALEGO (GO) | parcial: a conexão TCP 443 da API de votações expirou sem completar; despesas da cópia em cache | 43 | 43 | comissões e frentes e despesas (51.156 lançamentos) |
-| ALES (ES) | ok, pela coleta local cifrada | 30 | 29 | comissões, proposições (12.228 autorias em 30 deputados; em 2026 faltam itens, ver "Limitações conhecidas") e cotas por produto e mês (3.108 linhas em 30 deputados, R$ 7,72 milhões em valor solicitado, sem fornecedor) |
+| ALES (ES) | ok, pela coleta local cifrada | 30 | 29 | comissões, proposições (12.331 autorias em 30 deputados) e cotas por produto e mês (3.108 linhas em 30 deputados, R$ 7,72 milhões em valor solicitado, sem fornecedor) |
 | ALEPA (PA) | ok | 41 | 40 | comissões e votações nominais (7.044 votos em 41 deputados, com participação por ano) |
 | ALEPE (PE) | ok, pela coleta local cifrada | 49 | 49 | comissões, proposições (26.911 autorias em 49 deputados) e despesas (10.464 lançamentos em 44 deputados, R$ 104,85 milhões) |
 | CLDF (DF) | ok, pela coleta local cifrada | 24 | 24 | comissões e proposições (26.067 autorias em 24 deputados) |
