@@ -402,6 +402,7 @@ Limitações:
     - Votações nominais da ALEGO: implementadas em 2026-11-08 (`alego-votacoes`), pelo JSON anual de detalhes (`/api/transparencia/votacoes.json?todos=true&ano={ano}&tipo=detalhes`). O parlamentar vem pelo nome, sem título e sem patente. Entram os blocos `votos` e `participacao_votacoes`. Em 2026-11-09 o DNS resolvia e a conexão TCP na porta 443 expirava sem completar. Os JSON anuais ficaram inalcançáveis, e o bloco de votos não entrou no site.
     - Proposições da ALESC: implementadas em 2026-11-08 (`alesc-proposicoes`), pelo e-Legis paginado por iniciativa (`/proposicoes/processo-legislativo?iniciativa={slug}`), da 20ª legislatura a partir de 2023-02-01. Autoria e proponente vêm da listagem. O que é anterior fica fora. No site em 2026-11-09, 2.103 proposições em 40 deputados.
     - Despesas da ALERJ: em 2026-11-08, o adaptador passou a cobrir os 70 deputados em exercício quando o `remote_id` do DOCIGP é nulo, com mapa fixo 344→131, 514→135 e 515→136 e leitura do envelope `data` ou `rows`. No site em 2026-11-09, 31.062 lançamentos em 70 deputados.
+    - Votações nominais da ALEPA: implementadas em 2026-11-10 (`alepa-votacoes`), pela lista mensal (`/Legislativo/VotacoesNominais?ano={ano}&mes={mes}`) e pelo detalhe de cada votação, em HTML por GET. Cada detalhe lista os 41 deputados em exercício na data, e quem não votou fica na seção NÃO VOTARAM. O deputado vem pelo nome; quatro grafias diferentes da do perfil ficam numa tabela fixa. Entram os blocos `votos` e `participacao_votacoes`. A coleta é no CI, sem semente, e o passo ganhou orçamento de 22 minutos para a primeira carga. No ensaio local de 2026-11-10, 7.044 votos de 198 votações, de 2022-03-22 a 2026-11-03, nos 41 deputados. Ainda não publicado.
     - Túnel pelo Brasil (ADR-0029): `scripts/tunel-brasil.sh` e o checklist de manutenção passaram a encaminhar também `transparencia.al.rs.gov.br:443`, `www3.al.es.gov.br:443` e `ple.cl.df.gov.br:443`.
 
     | Casa | Despesas | Proposições com autor | Votações nominais |
@@ -417,7 +418,7 @@ Limitações:
     | ALES | implementado em 2026-11-08, pela coleta local cifrada | implementado em 2026-11-07, pela coleta local cifrada | boletins em PDF |
     | ALRS | implementado em 2026-11-08, pela coleta local cifrada | implementado em 2026-11-08, pela coleta local cifrada | implementado em 2026-11-07, pela coleta local cifrada |
     | ALESC | implementado em 2026-11-06 | implementado em 2026-11-08 | não validado |
-    | ALEPA | painel interno de BI, sem fornecedor | callback de componente, paginação não validada | HTML por GET, conferido em 2026-11-09: lista mensal (`/Legislativo/VotacoesNominais?ano={ano}&mes={mês}`, sem paginação) e detalhe por votação com as seções SIM, NÃO, ABSTENÇÃO e NÃO VOTARAM, nome e partido; 196 votações de 2022 a 2026; não implementado |
+    | ALEPA | painel interno de BI, sem fornecedor | callback de componente, paginação não validada | implementado em 2026-11-10, por HTML por GET: lista mensal (`/Legislativo/VotacoesNominais?ano={ano}&mes={mês}`, sem paginação) e detalhe por votação com as seções SIM, NÃO, ABSTENÇÃO e NÃO VOTARAM, nome e partido; 198 votações de 2022 a 2026 no ensaio local |
 
 ### Redes sociais
 

@@ -56,6 +56,15 @@ Não é presença. É a contagem de votos registrados em votações nominais.
 2. Vínculo: nome do parlamentar na pauta, sem acento, sem pontuação, sem título e sem patente.
 3. Entram os blocos `votos` e `participacao_votacoes`.
 
+### ALEPA
+
+1. Universo: votações da lista mensal de votações nominais, desde 2022, com o detalhe de cada uma. Cada detalhe lista os deputados em exercício na data, inclusive quem não votou.
+2. Vínculo: nome do deputado na página de votos, sem acento e sem pontuação, igual ao nome do perfil. Grafia diferente da do perfil fica numa tabela fixa, conferida deputado a deputado.
+3. `votacoes_nominais`: votações em que o deputado aparece, em qualquer seção, por ano.
+4. `votos_registrados`: votos `Sim`, `Não` ou `Abstenção`.
+5. `sem_registro`: a seção "NÃO VOTARAM", que entra como `Não votou`.
+6. `por_tipo`: contagem de cada seção.
+
 ### Limites
 
 - Votação simbólica não tem voto individual e fica fora.
@@ -63,7 +72,7 @@ Não é presença. É a contagem de votos registrados em votações nominais.
 - No piloto municipal, a orientação de partido e de governo fica `null`: a fonte não publica orientação.
 - Na ALRS, a fonte lista só o voto dado (Sim ou Não), por deputado e ano. Sem ausência registrada, o perfil tem os votos e não tem bloco de participação.
 - Na ALES, as votações nominais saem só em boletim PDF. O ETL não lê PDF.
-- Na ALEPA, as votações saem só por callback DevExpress, sem HTML estático nem endpoint aberto.
+- Na ALEPA, a seção NÃO VOTARAM não separa ausência de presença sem voto. A página de votos não traz ementa nem orientação de bancada.
 
 ## Orientação de voto
 
