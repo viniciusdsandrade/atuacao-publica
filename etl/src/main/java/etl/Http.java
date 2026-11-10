@@ -59,6 +59,30 @@ public final class Http {
         intervaloPorHost.put(host, intervalo);
     }
     private final Map<String, LongAdder> tentativasFalhas = new ConcurrentHashMap<>();
+    /** Fim do orçamento da coleta em curso, em System.nanoTime(). Nulo: sem limite. */
+    private volatile Long prazo;
+
+    /**
+     * A coleta em curso marca o fim do orçamento. Depois dele, nenhuma tentativa nova sai, nem a de quem já esperava vaga
+     * ou nova tentativa: com a fonte respondendo 504, essas filas passavam o limite do passo no CI.
+     */
+    public void definirPrazo(Long prazoNanos) {
+        this.prazo = prazoNanos;
+    }
+
+    /** Orçamento de tempo da coleta esgotado antes de a requisição sair. */
+    public static final class PrazoEsgotado extends IOException {
+        public PrazoEsgotado(String mensagem) {
+            super(mensagem);
+        }
+    }
+
+    private void conferirPrazo(HttpRequest requisicao) throws PrazoEsgotado {
+        Long fim = prazo;
+        if (fim != null && System.nanoTime() - fim >= 0) {
+            throw new PrazoEsgotado("orçamento de tempo esgotado antes de " + requisicao.uri());
+        }
+    }
 
     /** O recurso não existe na fonte (404, ou 403 do Portal da Transparência para arquivo ainda não publicado). */
     public static final class NaoEncontrado extends IOException {
@@ -242,12 +266,14 @@ public final class Http {
         String retryAfter = null;
         for (int tentativa = 0; tentativa < TENTATIVAS; tentativa++) {
             if (tentativa > 0) {
+                conferirPrazo(requisicao);
                 // A espera fica fora da vaga: uma URL instável não trava as outras requisições.
                 Thread.sleep(espera(tentativa, retryAfter));
             }
             esperarVez(requisicao.uri().getHost());
             vagas.acquire();
             try {
+                conferirPrazo(requisicao);
                 HttpResponse<T> resposta = cliente.send(requisicao, leitor);
                 int status = resposta.statusCode();
                 // 405 intermitente do Portal da Transparência para o mesmo GET que responde 200 em seguida: vale nova tentativa.
@@ -259,6 +285,8 @@ public final class Http {
                     continue;
                 }
                 return resposta;
+            } catch (PrazoEsgotado e) {
+                throw e;
             } catch (IOException e) {
                 ultimaFalha = e;
                 retryAfter = null;

@@ -79,6 +79,10 @@ public final class Coleta {
         this.ctx = ctx;
         this.fonte = fonte;
         this.orcamento = orcamento;
+        // O orçamento vale também para a requisição que já passou por obter e espera vaga ou nova tentativa no cliente.
+        if (ctx.http() != null) {
+            ctx.http().definirPrazo(orcamento == null ? null : inicio + orcamento.toNanos());
+        }
     }
 
     /** ETL_ORCAMENTO_MINUTOS: abaixo do limite de tempo do passo no CI, para o cursor e o cache serem gravados. */

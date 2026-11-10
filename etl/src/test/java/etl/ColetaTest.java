@@ -36,6 +36,18 @@ class ColetaTest {
     }
 
     @Test
+    void requisicaoQueJaEsperavaNoClienteNaoSaiDepoisDoOrcamento() {
+        Http http = new Http("teste/0", 1);
+        Contexto ctx = new Contexto(tmp, tmp.resolve("data"), http, null, Instant.now(), null);
+        new Coleta(ctx, "teste", Duration.ZERO);
+        // Requisição que passou por obter antes do fim do orçamento e esperava vaga: desiste sem ir à rede.
+        IOException erro = assertThrows(IOException.class,
+                () -> http.baixar("https://exemplo.invalid/a", tmp.resolve("a.json"), "application/json"));
+        assertTrue(erro instanceof Http.PrazoEsgotado);
+        assertEquals("nenhuma", http.tentativasFalhas());
+    }
+
+    @Test
     void copiaDeOutraUrlNoMesmoCaminhoNaoValeComoCache() throws Exception {
         Contexto ctx = new Contexto(tmp, tmp.resolve("data"), new Http("teste/0", 1), null, Instant.now(), null);
         Path arquivo = ctx.raw().resolve("teste").resolve("grupo").resolve("a.json");
