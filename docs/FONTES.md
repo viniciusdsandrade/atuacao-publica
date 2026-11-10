@@ -653,6 +653,7 @@ Validação em 2026-11-03 com o User-Agent do projeto.
 - O autor e os coautores vêm pelo nome civil (`AutorRequerenteDados.nomeRazao`), ligado ao nome civil do perfil. O gabinete (`setor`) não serve de vínculo: há item de outra pessoa no gabinete de um deputado. A fonte pode marcar o cadastro do autor com "(INATIVO)" no fim do nome; a marca sai antes do vínculo.
 - Autoria de órgão (Poder Executivo, tribunais) não tem perfil e fica fora.
 - Cada consulta leva cerca de 2 s. A primeira carga, de 2022 a 2026, tem cerca de 700 consultas.
+- Em 2026-11-10, a API respondeu HTTP 403 ao runner do GitHub Actions e 200 à rede do mantenedor. A ALBA entra pela coleta local cifrada (ADR-0034).
 - Na coleta de 2026-11-10, 9.750 autorias de 2022-01-03 a 2026-11-10 nos 63 deputados. Os tipos mais comuns são moção, indicação, projeto de lei e requerimento.
 
 ### Votações nominais da ALBA: não encontradas

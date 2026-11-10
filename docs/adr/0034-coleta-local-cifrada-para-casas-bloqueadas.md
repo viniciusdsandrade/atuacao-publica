@@ -33,6 +33,12 @@ O cache bruto dessas casas tem CPF de fornecedor (verbas da ALMG) e telefone e e
 - A cifra é simétrica e sem assinatura: a integridade do asset depende de só quem escreve no repositório poder trocá-lo.
 - Antes de qualquer mudança de chave, um envio em andamento pode deixar uma execução sem semente. O passo do CI não falha: só não restaura.
 
+## Atualização em 2026-11-10: ALBA
+
+- Nas execuções do `dados` de 2026-11-10, a API pública do NoPaper da ALBA (`albalegis.nopapercloud.com.br`), que dá as proposições, respondeu HTTP 403 ao runner do GitHub Actions. Da rede do mantenedor, respondeu 200.
+- No mesmo dia, a lista da verba indenizatória no portal da ALBA respondeu a cerca de uma página a cada 9 segundos no CI, e o orçamento de 30 minutos não bastou para renovar o ano aberto.
+- A ALBA entrou na semente: o script de envio coleta as seis casas, o de restauração aceita o cache e o cursor da ALBA, e o passo da ALBA no CI só roda sem semente.
+
 ## Alternativas consideradas
 
 - Release sem cifra: descartada. O repositório é público, e o cache tem CPF e contatos de gabinete.

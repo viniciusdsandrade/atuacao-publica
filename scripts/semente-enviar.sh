@@ -6,7 +6,7 @@
 # SEMENTE_CHAVE do repositório: não é impressa nem gravada em disco. O asset público fica ilegível sem ela.
 set -euo pipefail
 
-FONTES=(almg alrs ales alepe cldf)
+FONTES=(almg alrs ales alepe cldf alba)
 RELEASE=semente-coleta-local
 ASSET=semente-coleta-local.tar.gz.enc
 

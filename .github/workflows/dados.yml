@@ -55,9 +55,10 @@ jobs:
             data/publicado/index.json
           key: dados-${{ github.run_id }}-${{ github.run_attempt }}
           restore-keys: dados-
-      - name: semente da coleta local para ALMG, ALRS, ALES, ALEPE e CLDF
-        # Essas casas recusam conexão de fora do Brasil. O mantenedor coleta na rede dele e envia o cache cifrado
-        # (ADR-0034). Sem o segredo, o passo não faz nada. As casas restauradas pulam a coleta abaixo.
+      - name: semente da coleta local para ALMG, ALRS, ALES, ALEPE, CLDF e ALBA
+        # Essas casas recusam conexão de fora do Brasil; na ALBA, a API de proposições responde 403 ao runner.
+        # O mantenedor coleta na rede dele e envia o cache cifrado (ADR-0034). Sem o segredo, o passo não faz nada.
+        # As casas restauradas pulam a coleta abaixo.
         continue-on-error: true
         timeout-minutes: 5
         env:
@@ -175,8 +176,8 @@ jobs:
       - name: fetch alba
         # Assembleia Legislativa do Estado da Bahia: deputados, comissões, perfis biográficos, verba indenizatória e
         # proposições. A primeira carga baixa cerca de mil páginas da verba e setecentas da API do NoPaper, a 2 s cada;
-        # depois, só o ano aberto renova.
-        if: env.FONTE == 'todas' || env.FONTE == 'alba'
+        # depois, só o ano aberto renova. Com a semente (ADR-0034), o passo não roda.
+        if: (env.FONTE == 'todas' || env.FONTE == 'alba') && !contains(env.SEMENTE, ' alba ')
         continue-on-error: true
         timeout-minutes: 40
         env:

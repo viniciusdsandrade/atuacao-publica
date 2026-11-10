@@ -53,11 +53,11 @@ O pipeline de dados não roda e não publica nada até o mantenedor ativar:
 
 ## Atualizar a semente da coleta local (ADR-0034)
 
-ALMG, ALRS, ALES, ALEPE e CLDF recusam conexão de fora do Brasil. Enquanto o túnel não estiver ativo, os dados delas vêm da sua rede.
+ALMG, ALRS, ALES, ALEPE e CLDF recusam conexão de fora do Brasil, e a API de proposições da ALBA responde 403 ao runner do GitHub. Enquanto o túnel não estiver ativo, os dados dessas seis casas vêm da sua rede.
 
 1. Na raiz do repositório, compile o ETL: `cd etl && ./mvnw -q package -DskipTests && cd ..`.
-2. Com o `gh` autenticado, rode `scripts/semente-enviar.sh`. Ele coleta as cinco casas, cifra o cache com uma chave nova e envia o pacote à release `semente-coleta-local`, trocando o segredo `SEMENTE_CHAVE`.
-3. A execução seguinte do `dados` restaura a semente e publica as cinco casas. O relatório mostra a data da coleta local.
+2. Com o `gh` autenticado, rode `scripts/semente-enviar.sh`. Ele coleta as seis casas, cifra o cache com uma chave nova e envia o pacote à release `semente-coleta-local`, trocando o segredo `SEMENTE_CHAVE`.
+3. A execução seguinte do `dados` restaura a semente e publica as seis casas. O relatório mostra a data da coleta local.
 4. Repita quando o alerta de fonte sem coleta válida abrir issue para uma delas, ou quando quiser dados mais novos.
 5. Com o túnel ativo, apague a release (`gh release delete semente-coleta-local --cleanup-tag`) e o segredo.
 
