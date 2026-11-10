@@ -8,6 +8,7 @@ import {
   inteiro,
   moeda,
   nomeDoEnte,
+  PRESENCAS,
   rotuloCargo,
   rotuloLocal,
   rotuloTipoOrgao,
@@ -136,6 +137,10 @@ export class Tabela {
     return Object.entries(valor as Record<string, number>)
       .map(([tipo, n]) => `${tipo}: ${n}`)
       .join('; ');
+  }
+
+  protected presenca(valor: unknown): string {
+    return typeof valor === 'string' && valor in PRESENCAS ? PRESENCAS[valor] : SEM_REGISTRO;
   }
 
   protected lista(valor: unknown): string {

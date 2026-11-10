@@ -113,9 +113,9 @@
       </table>
     }
     @case ('eventos') {
-      <table role="table" data-cols="5">
-        <caption [class.sr-only]="!legenda()">{{ legenda() || 'Eventos com presença registrada' }}</caption>
-        <thead role="rowgroup"><tr role="row"><th scope="col" role="columnheader">Data</th><th scope="col" role="columnheader">Tipo</th><th scope="col" role="columnheader">Órgão</th><th scope="col" role="columnheader">Descrição oficial</th><th scope="col" role="columnheader">Fonte</th></tr></thead>
+      <table role="table" data-cols="6">
+        <caption [class.sr-only]="!legenda()">{{ legenda() || 'Eventos e presença' }}</caption>
+        <thead role="rowgroup"><tr role="row"><th scope="col" role="columnheader">Data</th><th scope="col" role="columnheader">Tipo</th><th scope="col" role="columnheader">Órgão</th><th scope="col" role="columnheader">Descrição oficial</th><th scope="col" role="columnheader">Presença</th><th scope="col" role="columnheader">Fonte</th></tr></thead>
         <tbody role="rowgroup">
           @for (r of visiveis(); track $index) {
             <tr role="row">
@@ -123,6 +123,7 @@
               <td role="cell" data-label="Tipo"><span class="v">{{ texto(r['tipo']) }}</span></td>
               <td role="cell" data-label="Órgão"><span class="v">{{ texto(r['orgao']) }}</span></td>
               <td class="longo" role="cell" data-label="Descrição oficial"><span class="v">{{ texto(r['titulo']) }}</span></td>
+              <td role="cell" data-label="Presença"><span class="v">{{ presenca(r['presenca']) }}</span></td>
               <td role="cell" data-label="Fonte"><span class="v"><a [href]="r.url_origem" rel="noopener noreferrer" target="_blank">ver na fonte<span class="sr-only">: evento de {{ data(r['data']) }}</span></a></span></td>
             </tr>
           }

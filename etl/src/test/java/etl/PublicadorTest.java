@@ -40,6 +40,17 @@ class PublicadorTest {
     }
 
     @Test
+    void ausenciaJustificadaContaAParteDoTipoDeEvento() {
+        JsonNode presente = Json.FONTE.readTree("{\"tipo\": \"Sessão Ordinária\", \"presenca\": \"registrada\"}");
+        JsonNode ausente = Json.FONTE.readTree("{\"tipo\": \"Sessão Ordinária\", \"presenca\": \"ausencia_justificada\"}");
+
+        assertEquals("Sessão Ordinária", Publicador.tipoNaContagem("eventos", presente, "Sessão Ordinária"));
+        assertEquals("Sessão Ordinária · ausência justificada", Publicador.tipoNaContagem("eventos", ausente, "Sessão Ordinária"));
+        // Fora do bloco de eventos, o tipo não muda.
+        assertEquals("Sessão Ordinária", Publicador.tipoNaContagem("discursos", ausente, "Sessão Ordinária"));
+    }
+
+    @Test
     void todoCargoDoSchemaTemBlocos() {
         // Cargo fora da tabela de blocos sai publicado sem bloco nenhum, nem mandato.
         Path comum = Contexto.acharRaiz(Path.of("").toAbsolutePath()).resolve("schemas/comum.schema.json");

@@ -87,7 +87,7 @@ export const BLOCOS: Record<string, string> = {
   proposicoes: 'Proposições de autoria',
   emendas: 'Emendas individuais ao Orçamento da União',
   discursos: 'Discursos',
-  eventos: 'Eventos com presença registrada',
+  eventos: 'Eventos e presença',
   orgaos_e_frentes: 'Órgãos, comissões e frentes',
   candidaturas: 'Candidaturas',
   financiamento_campanha: 'Financiamento de campanha',
@@ -97,11 +97,18 @@ export const BLOCOS: Record<string, string> = {
   despesas_executivo: 'Despesas pagas pela administração direta do município no período do mandato',
 };
 
+/** Presença em evento como a fonte registra. Ausência sem justificativa não aparece em nenhuma fonte coletada. */
+export const PRESENCAS: Record<string, string> = {
+  registrada: 'Presente',
+  ausencia_justificada: 'Ausência justificada',
+};
+
 /** Notas fixas de método, iguais para todos os perfis do bloco. */
 export const NOTAS: Record<string, string> = {
   participacao_votacoes:
     'Conta votos registrados em votações nominais. Não é presença. A Câmara e o Senado registram ausências de forma diferente.',
-  eventos: 'A fonte lista só quem esteve presente. O site não calcula taxa de presença.',
+  eventos:
+    'Na Câmara dos Deputados e no piloto municipal, a fonte lista só quem esteve presente. Na ALESC, lista também a ausência justificada em cada sessão ordinária. O site não calcula taxa de presença.',
   despesas: 'Valores líquidos informados pela casa legislativa. Compensações negativas entram na soma.',
   atos_normativos: 'A fonte não informa quem assinou cada ato.',
   despesas_executivo:

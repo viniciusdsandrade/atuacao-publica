@@ -354,7 +354,7 @@ public final class Publicador {
         if (!campoTipo.isEmpty()) {
             Map<String, Integer> porTipo = new TreeMap<>();
             for (JsonNode r : registros) {
-                porTipo.merge(textoOuPadrao(r, campoTipo, "(vazio na fonte)"), 1, Integer::sum);
+                porTipo.merge(tipoNaContagem(bloco, r, textoOuPadrao(r, campoTipo, "(vazio na fonte)")), 1, Integer::sum);
             }
             ObjectNode tipos = no.putObject("por_tipo");
             porTipo.forEach(tipos::put);
@@ -362,6 +362,17 @@ public final class Publicador {
         no.set("arquivos", detalhes(perfil, bloco, ordenados, pasta));
         ArrayNode recentes = no.putArray("recentes");
         ordenados.stream().limit(RECENTES).forEach(recentes::add);
+    }
+
+    /**
+     * Tipo na contagem do bloco. No bloco de eventos, a ausência justificada conta à parte do mesmo tipo de evento: a
+     * contagem do tipo continua sendo de presença registrada.
+     */
+    static String tipoNaContagem(String bloco, JsonNode registro, String tipo) {
+        if (bloco.equals("eventos") && "ausencia_justificada".equals(textoOuVazio(registro, "presenca"))) {
+            return tipo + " · ausência justificada";
+        }
+        return tipo;
     }
 
     private void despesas(Perfil perfil, List<JsonNode> registros, ObjectNode no, Path pasta) {
