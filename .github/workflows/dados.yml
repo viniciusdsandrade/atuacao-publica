@@ -11,7 +11,7 @@ on:
       fonte:
         description: Fonte a coletar. As demais seguem do cache de dados brutos.
         type: choice
-        options: [todas, camara, senado, tse, executivo, sapl, tcesp, cgu, agenda, contrib, alesp, executivosp, almg, alep, alba, alerj, alrs, alece, alesc, alego, ales, alepa, alepe, cldf, almt, alems, alpb, aleam, aleal, alero, alepi, alrn, aleto, alese, alema, aleac, cmsp]
+        options: [todas, camara, senado, tse, executivo, sapl, tcesp, cgu, agenda, contrib, alesp, executivosp, almg, alep, alba, alerj, alrs, alece, alesc, alego, ales, alepa, alepe, cldf, almt, alems, alpb, aleam, aleal, alero, alepi, alrn, aleto, alese, alema, aleac, alerr, cmsp]
         default: todas
 
 permissions:
@@ -354,6 +354,14 @@ jobs:
         env:
           ETL_ORCAMENTO_MINUTOS: '15'
         run: java -Xmx2g -jar etl/target/etl.jar fetch aleac
+      - name: fetch alerr
+        # Assembleia Legislativa do Estado de Roraima: 24 deputados estaduais, perfis e Mesa Diretora.
+        if: env.FONTE == 'todas' || env.FONTE == 'alerr'
+        continue-on-error: true
+        timeout-minutes: 20
+        env:
+          ETL_ORCAMENTO_MINUTOS: '15'
+        run: java -Xmx2g -jar etl/target/etl.jar fetch alerr
       - name: fetch cmsp
         # Câmara Municipal de São Paulo (segundo município piloto): vereadores em exercício, gabinetes e comissões.
         if: env.FONTE == 'todas' || env.FONTE == 'cmsp'

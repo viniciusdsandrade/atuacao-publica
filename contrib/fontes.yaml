@@ -3282,6 +3282,96 @@
   status: validado
   validado_em: 2026-11-11
 
+- id: alerr-deputados
+  nome: Assembleia Legislativa do Estado de Roraima, mandatos e deputados da legislatura
+  orgao: Assembleia Legislativa do Estado de Roraima
+  esfera: estadual
+  ente: RR
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://sapl.al.rr.leg.br/api/parlamentares/mandato/
+  formato: JSON
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Mandatos da 9ª Legislatura (2023–2026) via API REST do SAPL 3."
+  status: validado
+  validado_em: 2026-11-11
+
+- id: alerr-parlamentares
+  nome: Assembleia Legislativa do Estado de Roraima, cadastro e biografias de parlamentares
+  orgao: Assembleia Legislativa do Estado de Roraima
+  esfera: estadual
+  ente: RR
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://sapl.al.rr.leg.br/api/parlamentares/parlamentar/
+  formato: JSON
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Cadastro individual de parlamentares no SAPL com biografia, fotografia e dados civis."
+  status: validado
+  validado_em: 2026-11-11
+
+- id: alerr-mesa-diretora
+  nome: Assembleia Legislativa do Estado de Roraima, Mesa Diretora
+  orgao: Assembleia Legislativa do Estado de Roraima
+  esfera: estadual
+  ente: RR
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://sapl.al.rr.leg.br/api/parlamentares/composicaomesa/
+  formato: JSON
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Composição oficial da Mesa Diretora da 9ª Legislatura por sessão legislativa."
+  status: validado
+  validado_em: 2026-11-11
+
+- id: alerr-filiacao
+  nome: Assembleia Legislativa do Estado de Roraima, filiações partidárias
+  orgao: Assembleia Legislativa do Estado de Roraima
+  esfera: estadual
+  ente: RR
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://sapl.al.rr.leg.br/api/parlamentares/filiacao/
+  formato: JSON
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Histórico de filiação partidária dos parlamentares no SAPL."
+  status: validado
+  validado_em: 2026-11-11
+
+- id: alerr-proposicoes
+  nome: Assembleia Legislativa do Estado de Roraima, matérias e proposições legislativas
+  orgao: Assembleia Legislativa do Estado de Roraima
+  esfera: estadual
+  ente: RR
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://sapl.al.rr.leg.br/api/materia/materialegislativa/
+  formato: JSON
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Proposições legislativas com autores mapeados por legislatura e ano."
+  status: validado
+  validado_em: 2026-11-11
+
+- id: alerr-portal
+  nome: Assembleia Legislativa do Estado de Roraima, portal institucional e imagens
+  orgao: Assembleia Legislativa do Estado de Roraima
+  esfera: estadual
+  ente: RR
+  categoria: primeira_parte
+  nivel_confianca: T0
+  url_base: https://sapl.al.rr.leg.br/media/sapl/public/parlamentar/
+  formato: binario (imagem JPEG/PNG)
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Fotografias oficiais dos parlamentares hospedadas no SAPL da ALERR."
+  status: validado
+  validado_em: 2026-11-11
+
 - id: cmsp-splegisws
   nome: Câmara Municipal de São Paulo, serviço SPLegisWS (vereadores, gabinetes, comissões e proposições)
   orgao: Câmara Municipal de São Paulo

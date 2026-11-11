@@ -80,7 +80,7 @@ public final class Publicador {
     static final List<String> VALORES_DE_EMENDA = List.of("valor_empenhado", "valor_liquidado", "valor_pago", "restos_inscritos",
             "restos_cancelados", "restos_pagos");
     static final int RECENTES = 20;
-    static final List<String> FONTES_CLI = List.of("camara", "senado", "tse", "executivo", "sapl", "tcesp", "cgu", "agenda", "contrib", "alesp", "executivosp", "almg", "alep", "alba", "alerj", "alrs", "alece", "alesc", "alego", "ales", "alepa", "alepe", "cldf", "almt", "alems", "alpb", "aleam", "aleal", "alero", "alepi", "alrn", "aleto", "alese", "alema", "aleac", "cmsp");
+    static final List<String> FONTES_CLI = List.of("camara", "senado", "tse", "executivo", "sapl", "tcesp", "cgu", "agenda", "contrib", "alesp", "executivosp", "almg", "alep", "alba", "alerj", "alrs", "alece", "alesc", "alego", "ales", "alepa", "alepe", "cldf", "almt", "alems", "alpb", "aleam", "aleal", "alero", "alepi", "alrn", "aleto", "alese", "alema", "aleac", "alerr", "cmsp");
 
     /** Perfil em construção, antes da validação. */
     static final class Perfil {
@@ -683,6 +683,9 @@ public final class Publicador {
             }
             if (externos.hasNonNull("aleac")) {
                 porChave.put("aleac:" + externos.get("aleac").stringValue(), id);
+            }
+            if (externos.hasNonNull("alerr")) {
+                porChave.put("alerr:" + externos.get("alerr").stringValue(), id);
             }
             if (externos.hasNonNull("cmsp")) {
                 porChave.put("cmsp:" + externos.get("cmsp").stringValue(), id);

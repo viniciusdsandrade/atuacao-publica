@@ -1564,6 +1564,45 @@ Validação em 2026-11-03 com o User-Agent do projeto.
 - Mandato do Governador Gladson Cameli (2023–2026) e candidaturas integrados via TSE.
 
 
+## Fontes de Roraima (ALERR & Governo do Estado)
+
+### `alerr-deputados`: mandatos e deputados estaduais da legislatura
+
+- URL base: `https://sapl.al.rr.leg.br/api/parlamentares/mandato/?legislatura=9`
+- Relação oficial dos 24 deputados estaduais titulares da 9ª Legislatura (2023–2026), via API REST JSON do SAPL 3.
+
+### `alerr-parlamentares`: cadastro individual e biografias
+
+- URL base: `https://sapl.al.rr.leg.br/api/parlamentares/parlamentar/{id}/`
+- Cadastro individual no SAPL com nome civil, mandatos, fotografia oficial e biografia parlamentar sanitizada com `Guarda.semCpf`.
+
+### `alerr-mesa-diretora`: composição da Mesa Diretora
+
+- URL base: `https://sapl.al.rr.leg.br/api/parlamentares/composicaomesa/`
+- Composição oficial da Mesa Diretora da 9ª Legislatura (Presidente, Vice-Presidentes e Secretários por sessão legislativa).
+
+### `alerr-filiacao`: filiação partidária oficial
+
+- URL base: `https://sapl.al.rr.leg.br/api/parlamentares/filiacao/?parlamentar={id}`
+- Histórico partidário oficial no SAPL.
+
+### `alerr-proposicoes`: matérias legislativas
+
+- URL base: `https://sapl.al.rr.leg.br/api/materia/materialegislativa/`
+- Proposições legislativas com autores mapeados por legislatura e ano via `SaplMateria`.
+
+### `alerr-portal`: fotografias oficiais
+
+- URL base: `https://sapl.al.rr.leg.br/media/sapl/public/parlamentar/`
+- Imagens oficiais dos parlamentares hospedadas no SAPL da ALERR.
+
+### `rr-transparencia` e `rr-diario-oficial`: Executivo estadual
+
+- Transparência orçamentária: `https://transparencia.rr.gov.br/`
+- Diário Oficial: `https://www.imprensaoficial.rr.gov.br/`
+- Mandato do Governador Antonio Denarium (2023–2026) e candidaturas integrados via TSE.
+
+
 ## Segundo município piloto: São Paulo (CMSP & Prefeitura)
 
 Capital do estado, código IBGE `3550308` e unidade eleitoral `71072` no TSE (ADR-0027).
