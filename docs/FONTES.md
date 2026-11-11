@@ -1428,6 +1428,45 @@ Validação em 2026-11-03 com o User-Agent do projeto.
 - Mandato da Governadora Fátima Bezerra (2019–2022 e 2023–2026) e candidaturas integrados via TSE.
 
 
+## Fontes do Tocantins (ALETO & Governo do Estado)
+
+### `aleto-deputados`: mandatos e deputados estaduais da legislatura
+
+- URL base: `https://sapl.al.to.leg.br/api/parlamentares/mandato/?legislatura=11&page_size=100`
+- Relação oficial dos mandatos da 10ª Legislatura (2023–2027), identificando 27 mandatos (titulares e suplentes), tipo de causa de fim de mandato, votos e parlamentar associado.
+
+### `aleto-parlamentares`: cadastro individual e biografias
+
+- URL base: `https://sapl.al.to.leg.br/api/parlamentares/parlamentar/{id}/`
+- Cadastro detalhado do parlamentar com nome completo civil, nome parlamentar, fotografia oficial, forma de tratamento e biografia oficial sanitizada com `Guarda.semCpf`.
+
+### `aleto-mesa-diretora`: composição da Mesa Diretora
+
+- URL base: `https://sapl.al.to.leg.br/api/parlamentares/composicaomesa/?sessao_legislativa={id}`
+- Composição da Mesa Diretora nas sessões legislativas da 10ª Legislatura (Presidente, Vice-Presidentes e Secretários).
+
+### `aleto-filiacao`: filiação partidária
+
+- URL base: `https://sapl.al.to.leg.br/api/parlamentares/filiacao/?parlamentar={id}`
+- Histórico partidário e sigla oficial vigente do parlamentar na legislatura.
+
+### `aleto-proposicoes`: matérias legislativas via SAPL
+
+- URL base: `https://sapl.al.to.leg.br/api/materia/materialegislativa/?ano={ano}`
+- Matérias legislativas e proposições estaduais com autorias mapeadas aos deputados estaduais.
+
+### `aleto-portal`: fotografias oficiais
+
+- URL base: `https://sapl.al.to.leg.br/media/sapl/public/parlamentar/`
+- Repositório de imagens oficiais dos parlamentares hospedadas no SAPL da ALETO.
+
+### `to-transparencia` e `to-diario-oficial`: Executivo estadual
+
+- Transparência orçamentária: `https://transparencia.to.gov.br/`
+- Diário Oficial: `https://diariooficial.to.gov.br/`
+- Mandato do Governador Wanderlei Barbosa (2023–2026) e candidaturas integrados via TSE.
+
+
 ## Segundo município piloto: São Paulo (CMSP & Prefeitura)
 
 Capital do estado, código IBGE `3550308` e unidade eleitoral `71072` no TSE (ADR-0027).

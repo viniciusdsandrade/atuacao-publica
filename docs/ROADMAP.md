@@ -125,6 +125,7 @@ Estado da publicação de 2026-11-10, às 23:06 UTC, com 2.116 perfis. "Perfis" 
 | ALERO (RO) | ok | 24 | 24 | Mesa Diretora e proposições legislativas via SAPL |
 | ALEPI (PI) | ok | 30 | 30 | Mesa Diretora e proposições legislativas via SAPL |
 | ALRN (RN) | ok | 24 | 24 | Mesa Diretora e deputados em exercício |
+| ALETO (TO) | ok | 24 | 24 | Mesa Diretora e proposições legislativas via SAPL |
 | CMSP (capital) | ok | 55 | 51 | comissões e proposições (6.547) |
 | Câmara do piloto (SAPL) | ok | 50 | 50 | votos, presença, falas, matérias, despesas e comissões |
 
@@ -424,6 +425,7 @@ Limitações:
     - ALERO (Rondônia): décimo nono ente federativo integrado em 2026-11-11 (ADR-0042), ampliando a cobertura da Região Norte para 3 estados (PA, AM e RO) e totalizando 19 unidades federativas no projeto (mais de 70% do país coberto). Coleta aberta diretamente no CI do GitHub Actions sem bloqueio geográfico via API REST nativa do SAPL (`https://sapl.al.ro.leg.br/api/`: `alero-deputados`, `alero-parlamentares`, `alero-mesa-diretora`, `alero-filiacao` e `alero-portal`). 24 deputados estaduais em exercício na 11ª Legislatura (2023–2027), com perfis biográficos, fotografias oficiais, mandatos, filiações partidárias e composição da Mesa Diretora nas sessões legislativas da legislatura. Cruzamento determinístico de 24/24 deputados com candidaturas do TSE via nomes civis e de urna.
     - ALEPI (Piauí): vigésimo ente federativo integrado em 2026-11-11 (ADR-0043), alcançando 6 de 9 estados na Região Nordeste (66,7% de cobertura regional: BA, PE, CE, PB, AL e PI) e totalizando o marco de 20 unidades federativas no projeto (quase 75% do território nacional coberto). Coleta aberta diretamente no CI do GitHub Actions sem bloqueio geográfico via API REST nativa do SAPL (`https://sapl.al.pi.leg.br/api/`: `alepi-deputados`, `alepi-parlamentares`, `alepi-mesa-diretora`, `alepi-filiacao` e `alepi-portal`). 30 deputados estaduais em exercício na 20ª Legislatura (2023–2027), com perfis biográficos, fotografias oficiais, mandatos, filiações partidárias e composição da Mesa Diretora nas sessões legislativas da legislatura. Cruzamento determinístico de 30/30 deputados com candidaturas do TSE via nomes civis e de urna.
     - ALRN (Rio Grande do Norte): vigésimo primeiro ente federativo integrado em 2026-11-11 (ADR-0044), alcançando 7 de 9 estados na Região Nordeste (77,8% de cobertura regional: BA, PE, CE, PB, AL, PI e RN) e totalizando 21 unidades federativas no projeto (mais de 77% do território nacional coberto). Coleta aberta diretamente no CI do GitHub Actions sem bloqueio geográfico via portal oficial da ALRN (`https://www.al.rn.leg.br/`: `alrn-deputados`, `alrn-parlamentares`, `alrn-mesa-diretora` e `alrn-portal`). 24 deputados estaduais em exercício na 63ª Legislatura (2023–2027), com perfis biográficos, fotografias oficiais, mandatos, filiações partidárias e composição da Mesa Diretora da legislatura. Cruzamento determinístico de 24/24 deputados com candidaturas do TSE via nomes civis e de urna.
+    - ALETO (Tocantins): vigésimo segundo ente federativo integrado em 2026-11-11 (ADR-0046), ampliando a cobertura da Região Norte para 4 estados (PA, AM, RO e TO) e alcançando o total de 22 unidades federativas no projeto (mais de 81% do território nacional coberto). Coleta aberta diretamente no CI do GitHub Actions sem bloqueio geográfico via API REST nativa do SAPL 3.1 (`https://sapl.al.to.leg.br/api/`: `aleto-deputados`, `aleto-parlamentares`, `aleto-mesa-diretora`, `aleto-filiacao`, `aleto-proposicoes` e `aleto-portal`). 24 deputados estaduais titulares da 10ª Legislatura (2023–2027), com perfis biográficos, fotografias oficiais, mandatos, filiações partidárias, proposições legislativas e composição da Mesa Diretora nas sessões legislativas da legislatura. Cruzamento determinístico de 24/24 deputados com candidaturas do TSE via nomes civis e de urna.
     - Túnel pelo Brasil (ADR-0029): `scripts/tunel-brasil.sh` e o checklist de manutenção passaram a encaminhar também `transparencia.al.rs.gov.br:443`, `www3.al.es.gov.br:443`, `ple.cl.df.gov.br:443`, `sapl.al.ac.leg.br:443` e `sapl.al.rr.leg.br:443`.
 
     | Casa | Despesas | Proposições com autor | Votações nominais |
@@ -442,12 +444,13 @@ Limitações:
     | ALEPA | painel interno de BI, sem fornecedor | callback de componente, paginação não validada | implementado em 2026-11-10, por HTML por GET: lista mensal (`/Legislativo/VotacoesNominais?ano={ano}&mes={mês}`, sem paginação) e detalhe por votação com as seções SIM, NÃO, ABSTENÇÃO e NÃO VOTARAM, nome e partido; 198 votações de 2022 a 2026, no site desde 2026-11-10 |
     | ALMT | não implementado | não implementado | não implementado (Mesa Diretora integrada em orgaos_e_frentes) |
     | ALEMS | não implementado | não implementado | não implementado (Mesa Diretora integrada em orgaos_e_frentes) |
-    | ALPB | não implementado | não implementado | não implementado (Mesa Diretora integrada em orgaos_e_frentes) |
-    | ALEAM | não implementado | não implementado | não implementado (Mesa Diretora integrada em orgaos_e_frentes) |
-    | ALEAL | não implementado | não implementado | não implementado (Mesa Diretora integrada em orgaos_e_frentes) |
-    | ALERO | não implementado | não implementado | não implementado (Mesa Diretora integrada em orgaos_e_frentes) |
-    | ALEPI | não implementado | não implementado | não implementado (Mesa Diretora integrada em orgaos_e_frentes) |
-    | ALRN | não implementado | não implementado | não implementado (Mesa Diretora integrada em orgaos_e_frentes) |
+    | ALPB | não implementado | implementado via SAPL (ADR-0045) | não encontrado (Mesa Diretora integrada em orgaos_e_frentes) |
+    | ALEAM | não implementado | implementado via SAPL (ADR-0045) | não encontrado (Mesa Diretora integrada em orgaos_e_frentes) |
+    | ALEAL | não implementado | implementado via SAPL (ADR-0045) | não encontrado (Mesa Diretora integrada em orgaos_e_frentes) |
+    | ALERO | não implementado | implementado via SAPL (ADR-0045) | não encontrado (Mesa Diretora integrada em orgaos_e_frentes) |
+    | ALEPI | não implementado | implementado via SAPL (ADR-0045) | não encontrado (Mesa Diretora integrada em orgaos_e_frentes) |
+    | ALRN | não implementado | não implementado | não encontrado (Mesa Diretora integrada em orgaos_e_frentes) |
+    | ALETO | não implementado | implementado via SAPL (ADR-0046) | não encontrado (Mesa Diretora integrada em orgaos_e_frentes) |
 
 ### Redes sociais
 

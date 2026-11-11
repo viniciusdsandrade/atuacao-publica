@@ -2982,6 +2982,96 @@
   status: validado
   validado_em: 2026-11-11
 
+- id: aleto-deputados
+  nome: Assembleia Legislativa do Estado do Tocantins, mandatos e deputados estaduais
+  orgao: Assembleia Legislativa do Estado do Tocantins
+  esfera: estadual
+  ente: TO
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://sapl.al.to.leg.br/api/parlamentares/mandato/
+  formato: JSON (REST)
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Mandatos da 10ª Legislatura (2023–2027) via API REST do SAPL."
+  status: validado
+  validado_em: 2026-11-11
+
+- id: aleto-parlamentares
+  nome: Assembleia Legislativa do Estado do Tocantins, perfis parlamentares e biografias
+  orgao: Assembleia Legislativa do Estado do Tocantins
+  esfera: estadual
+  ente: TO
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://sapl.al.to.leg.br/api/parlamentares/parlamentar/
+  formato: JSON (REST)
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Cadastro individual com nome parlamentar, nome civil completo, fotografia e biografia oficial."
+  status: validado
+  validado_em: 2026-11-11
+
+- id: aleto-mesa-diretora
+  nome: Assembleia Legislativa do Estado do Tocantins, Mesa Diretora e sessões legislativas
+  orgao: Assembleia Legislativa do Estado do Tocantins
+  esfera: estadual
+  ente: TO
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://sapl.al.to.leg.br/api/parlamentares/composicaomesa/
+  formato: JSON (REST)
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Composição da Mesa Diretora por sessão legislativa da 10ª Legislatura."
+  status: validado
+  validado_em: 2026-11-11
+
+- id: aleto-filiacao
+  nome: Assembleia Legislativa do Estado do Tocantins, filiação partidária
+  orgao: Assembleia Legislativa do Estado do Tocantins
+  esfera: estadual
+  ente: TO
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://sapl.al.to.leg.br/api/parlamentares/filiacao/
+  formato: JSON (REST)
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Histórico partidário e filiação vigente dos parlamentares."
+  status: validado
+  validado_em: 2026-11-11
+
+- id: aleto-proposicoes
+  nome: Assembleia Legislativa do Estado do Tocantins, matérias legislativas via SAPL
+  orgao: Assembleia Legislativa do Estado do Tocantins
+  esfera: estadual
+  ente: TO
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://sapl.al.to.leg.br/api/materia/materialegislativa/
+  formato: JSON (REST)
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Proposições e matérias legislativas apresentadas pelos deputados estaduais na legislatura."
+  status: validado
+  validado_em: 2026-11-11
+
+- id: aleto-portal
+  nome: Assembleia Legislativa do Estado do Tocantins, portal institucional e imagens
+  orgao: Assembleia Legislativa do Estado do Tocantins
+  esfera: estadual
+  ente: TO
+  categoria: primeira_parte
+  nivel_confianca: T0
+  url_base: https://sapl.al.to.leg.br/media/sapl/public/parlamentar/
+  formato: binario (imagem JPEG/PNG)
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Fotografias oficiais dos deputados estaduais hospedadas no SAPL."
+  status: validado
+  validado_em: 2026-11-11
+
 - id: cmsp-splegisws
   nome: Câmara Municipal de São Paulo, serviço SPLegisWS (vereadores, gabinetes, comissões e proposições)
   orgao: Câmara Municipal de São Paulo

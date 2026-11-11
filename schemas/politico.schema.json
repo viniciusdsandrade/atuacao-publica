@@ -70,6 +70,7 @@
         "alero": { "type": "string", "pattern": "^[0-9]+$" },
         "alepi": { "type": "string", "pattern": "^[0-9]+$" },
         "alrn": { "type": "string", "pattern": "^[0-9]+$" },
+        "aleto": { "type": "string", "pattern": "^[0-9]+$" },
         "cmsp": { "type": "string", "pattern": "^[0-9]+$" },
         "sapl": { "type": "string", "pattern": "^[0-9]+$" },
         "tse": {
