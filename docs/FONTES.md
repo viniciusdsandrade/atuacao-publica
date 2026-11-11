@@ -1496,6 +1496,35 @@ Validação em 2026-11-03 com o User-Agent do projeto.
 - Mandato do Governador Fábio Mitidieri (2023–2026) e candidaturas integrados via TSE.
 
 
+## Fontes do Maranhão (ALEMA & Governo do Estado)
+
+### `alema-deputados`: mandatos e deputados estaduais da legislatura
+
+- URL base: `https://www.al.ma.leg.br/sitealema/deputados/`
+- Relação oficial dos 42 deputados estaduais em exercício na 20ª Legislatura (2023–2027), identificando parlamentares em exercício, partidos e vínculos institucionais.
+
+### `alema-parlamentares`: fichas individuais e biografias
+
+- URL base: `https://www.al.ma.leg.br/sitealema/deputados/detalhes/{slug}`
+- Ficha institucional individual com foto oficial, partido, profissão e biografia parlamentar sanitizada com `Guarda.semCpf`.
+
+### `alema-mesa-diretora`: composição da Mesa Diretora
+
+- URL base: `https://www.al.ma.leg.br/sitealema/mesa-diretora/`
+- Composição oficial da Mesa Diretora da 20ª Legislatura (biênio 2025–2027: Presidente Iracema Vale, Vice-Presidentes e Secretários).
+
+### `alema-portal`: fotografias oficiais
+
+- URL base: `https://www.al.ma.leg.br/`
+- Fotografias oficiais de perfil dos deputados estaduais hospedadas no portal da ALEMA.
+
+### `ma-transparencia` e `ma-diario-oficial`: Executivo estadual
+
+- Transparência orçamentária: `https://transparencia.ma.gov.br/`
+- Diário Oficial: `https://diariooficial.ma.gov.br/`
+- Mandato do Governador Carlos Brandão (2023–2026) e candidaturas integrados via TSE.
+
+
 ## Segundo município piloto: São Paulo (CMSP & Prefeitura)
 
 Capital do estado, código IBGE `3550308` e unidade eleitoral `71072` no TSE (ADR-0027).

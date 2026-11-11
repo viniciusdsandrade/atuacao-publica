@@ -3132,6 +3132,66 @@
   status: validado
   validado_em: 2026-11-11
 
+- id: alema-deputados
+  nome: Assembleia Legislativa do Estado do Maranhão, deputados estaduais e mandatos
+  orgao: Assembleia Legislativa do Estado do Maranhão
+  esfera: estadual
+  ente: MA
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://www.al.ma.leg.br/sitealema/deputados/
+  formato: HTML
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Relação oficial de deputados estaduais da 20ª Legislatura (2023–2027)."
+  status: validado
+  validado_em: 2026-11-11
+
+- id: alema-parlamentares
+  nome: Assembleia Legislativa do Estado do Maranhão, fichas parlamentares e biografias
+  orgao: Assembleia Legislativa do Estado do Maranhão
+  esfera: estadual
+  ente: MA
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://www.al.ma.leg.br/sitealema/deputados/detalhes/
+  formato: HTML
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Fichas individuais de parlamentares com biografia, partido e profissão."
+  status: validado
+  validado_em: 2026-11-11
+
+- id: alema-mesa-diretora
+  nome: Assembleia Legislativa do Estado do Maranhão, Mesa Diretora
+  orgao: Assembleia Legislativa do Estado do Maranhão
+  esfera: estadual
+  ente: MA
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://www.al.ma.leg.br/sitealema/mesa-diretora/
+  formato: HTML
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Composição oficial da Mesa Diretora da 20ª Legislatura (biênio 2025–2027)."
+  status: validado
+  validado_em: 2026-11-11
+
+- id: alema-portal
+  nome: Assembleia Legislativa do Estado do Maranhão, portal institucional e imagens
+  orgao: Assembleia Legislativa do Estado do Maranhão
+  esfera: estadual
+  ente: MA
+  categoria: primeira_parte
+  nivel_confianca: T0
+  url_base: https://www.al.ma.leg.br/
+  formato: binario (imagem JPEG/PNG)
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Fotografias oficiais dos parlamentares hospedadas no portal da ALEMA."
+  status: validado
+  validado_em: 2026-11-11
+
 - id: cmsp-splegisws
   nome: Câmara Municipal de São Paulo, serviço SPLegisWS (vereadores, gabinetes, comissões e proposições)
   orgao: Câmara Municipal de São Paulo
