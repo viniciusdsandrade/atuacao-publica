@@ -188,6 +188,39 @@ class AleamTest {
         Files.writeString(rawAleam.resolve("composicao_mesa.json"), compJson);
         gravarMetadado(rawAleam, "composicao_mesa.json", Aleam.API + "/parlamentares/composicaomesa/");
 
+        // 7. tipos-materia.json e materias/5-2023-p1.json
+        Files.createDirectories(rawAleam.resolve("materias"));
+        String tiposJson = """
+                {
+                    "results": [
+                        { "id": 1, "sigla": "PL", "descricao": "Projeto de Lei" }
+                    ]
+                }
+                """;
+        Files.writeString(rawAleam.resolve("tipos-materia.json"), tiposJson);
+        gravarMetadado(rawAleam, "tipos-materia.json", Aleam.API + "/materia/tipomaterialegislativa/");
+
+        String materiasJson = """
+                {
+                    "results": [
+                        {
+                            "id": 8801,
+                            "tipo": 1,
+                            "numero": 77,
+                            "ano": 2023,
+                            "ementa": "Institui o polo regional de bioeconomia no Amazonas.",
+                            "resultado": "Aprovado",
+                            "em_tramitacao": false,
+                            "data_apresentacao": "2023-05-18",
+                            "texto_original": "https://sapl.al.am.leg.br/media/texto.pdf",
+                            "__str__": "Projeto de Lei nº 77 de 2023"
+                        }
+                    ]
+                }
+                """;
+        Files.writeString(rawAleam.resolve("materias/5-2023-p1.json"), materiasJson);
+        gravarMetadado(rawAleam, "materias/5-2023-p1.json", Aleam.API + "/materia/materialegislativa/?autores=5&ano=2023&page_size=100&page=1");
+
         new Aleam().normalize(ctx);
 
         Path arqPessoas = ctx.normalizado().resolve("aleam/pessoas.json");
@@ -226,6 +259,15 @@ class AleamTest {
         assertEquals("Mesa Diretora", orgaos.get(0).get("nome").stringValue());
         assertEquals("1º Secretário", orgaos.get(0).get("papel").stringValue());
         assertEquals("2023-02-01", orgaos.get(0).get("inicio").stringValue());
+
+        // Proposições
+        assertEquals(1, bloco.get("proposicoes").size());
+        JsonNode prop = bloco.get("proposicoes").get(0);
+        assertEquals("8801", prop.get("id_fonte").stringValue());
+        assertEquals("PL", prop.get("tipo").stringValue());
+        assertEquals(77, prop.get("numero").asInt());
+        assertEquals("Aprovado", prop.get("situacao").stringValue());
+        assertEquals("aleam-proposicoes", prop.get("fonte_id").stringValue());
     }
 
     private static void gravarMetadado(Path dir, String arquivo, String url) throws IOException {

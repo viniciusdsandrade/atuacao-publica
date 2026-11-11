@@ -196,6 +196,39 @@ class AlepiTest {
         Files.writeString(rawAlepi.resolve("composicao_mesa.json"), compJson);
         gravarMetadado(rawAlepi, "composicao_mesa.json", Alepi.API + "/parlamentares/composicaomesa/");
 
+        // 7. tipos-materia.json e materias/278-2023-p1.json
+        Files.createDirectories(rawAlepi.resolve("materias"));
+        String tiposJson = """
+                {
+                    "results": [
+                        { "id": 1, "sigla": "PL", "descricao": "Projeto de Lei" }
+                    ]
+                }
+                """;
+        Files.writeString(rawAlepi.resolve("tipos-materia.json"), tiposJson);
+        gravarMetadado(rawAlepi, "tipos-materia.json", Alepi.API + "/materia/tipomaterialegislativa/");
+
+        String materiasJson = """
+                {
+                    "results": [
+                        {
+                            "id": 6401,
+                            "tipo": 1,
+                            "numero": 52,
+                            "ano": 2023,
+                            "ementa": "Institui o programa estadual de incentivo à energia solar no Piauí.",
+                            "resultado": "Aprovado",
+                            "em_tramitacao": false,
+                            "data_apresentacao": "2023-09-05",
+                            "texto_original": "https://sapl.al.pi.leg.br/media/texto.pdf",
+                            "__str__": "Projeto de Lei nº 52 de 2023"
+                        }
+                    ]
+                }
+                """;
+        Files.writeString(rawAlepi.resolve("materias/278-2023-p1.json"), materiasJson);
+        gravarMetadado(rawAlepi, "materias/278-2023-p1.json", Alepi.API + "/materia/materialegislativa/?autores=278&ano=2023&page_size=100&page=1");
+
         // Executa normalização
         Alepi alepi = new Alepi();
         alepi.normalize(ctx);
@@ -237,6 +270,15 @@ class AlepiTest {
         assertEquals("Mesa Diretora", orgaos.get(0).get("nome").stringValue());
         assertEquals("Presidente", orgaos.get(0).get("papel").stringValue());
         assertEquals("2025-02-01", orgaos.get(0).get("inicio").stringValue());
+
+        // Proposições
+        assertEquals(1, bloco.get("proposicoes").size());
+        JsonNode prop = bloco.get("proposicoes").get(0);
+        assertEquals("6401", prop.get("id_fonte").stringValue());
+        assertEquals("PL", prop.get("tipo").stringValue());
+        assertEquals(52, prop.get("numero").asInt());
+        assertEquals("Aprovado", prop.get("situacao").stringValue());
+        assertEquals("alepi-proposicoes", prop.get("fonte_id").stringValue());
     }
 
     private static void gravarMetadado(Path dir, String arquivo, String url) throws IOException {

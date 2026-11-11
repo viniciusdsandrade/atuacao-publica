@@ -117,6 +117,14 @@ Estado da publicação de 2026-11-10, às 23:06 UTC, com 2.116 perfis. "Perfis" 
 | ALEPA (PA) | ok | 41 | 40 | comissões e votações nominais (7.044 votos em 41 deputados, com participação por ano) |
 | ALEPE (PE) | ok, pela coleta local cifrada | 49 | 49 | comissões, proposições (26.911 autorias em 49 deputados) e despesas (10.464 lançamentos em 44 deputados, R$ 104,85 milhões) |
 | CLDF (DF) | ok, pela coleta local cifrada | 24 | 24 | comissões e proposições (26.067 autorias em 24 deputados) |
+| ALMT (MT) | ok | 24 | 24 | Mesa Diretora e deputados em exercício |
+| ALEMS (MS) | ok | 24 | 24 | Mesa Diretora e deputados em exercício |
+| ALPB (PB) | ok | 36 | 36 | Mesa Diretora e proposições legislativas via SAPL |
+| ALEAM (AM) | ok | 24 | 24 | Mesa Diretora e proposições legislativas via SAPL |
+| ALEAL (AL) | ok | 27 | 27 | Mesa Diretora e proposições legislativas via SAPL |
+| ALERO (RO) | ok | 24 | 24 | Mesa Diretora e proposições legislativas via SAPL |
+| ALEPI (PI) | ok | 30 | 30 | Mesa Diretora e proposições legislativas via SAPL |
+| ALRN (RN) | ok | 24 | 24 | Mesa Diretora e deputados em exercício |
 | CMSP (capital) | ok | 55 | 51 | comissões e proposições (6.547) |
 | Câmara do piloto (SAPL) | ok | 50 | 50 | votos, presença, falas, matérias, despesas e comissões |
 

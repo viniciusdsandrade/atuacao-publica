@@ -196,6 +196,39 @@ class AlealTest {
         Files.writeString(rawAleal.resolve("composicao_mesa.json"), compJson);
         gravarMetadado(rawAleal, "composicao_mesa.json", Aleal.API + "/parlamentares/composicaomesa/");
 
+        // 7. tipos-materia.json e materias/16-2023-p1.json
+        Files.createDirectories(rawAleal.resolve("materias"));
+        String tiposJson = """
+                {
+                    "results": [
+                        { "id": 1, "sigla": "PL", "descricao": "Projeto de Lei" }
+                    ]
+                }
+                """;
+        Files.writeString(rawAleal.resolve("tipos-materia.json"), tiposJson);
+        gravarMetadado(rawAleal, "tipos-materia.json", Aleal.API + "/materia/tipomaterialegislativa/");
+
+        String materiasJson = """
+                {
+                    "results": [
+                        {
+                            "id": 7101,
+                            "tipo": 1,
+                            "numero": 33,
+                            "ano": 2023,
+                            "ementa": "Dispõe sobre o fomento ao turismo em Alagoas.",
+                            "resultado": "Aprovado",
+                            "em_tramitacao": false,
+                            "data_apresentacao": "2023-06-21",
+                            "texto_original": "https://sapl.al.al.leg.br/media/texto.pdf",
+                            "__str__": "Projeto de Lei nº 33 de 2023"
+                        }
+                    ]
+                }
+                """;
+        Files.writeString(rawAleal.resolve("materias/16-2023-p1.json"), materiasJson);
+        gravarMetadado(rawAleal, "materias/16-2023-p1.json", Aleal.API + "/materia/materialegislativa/?autores=16&ano=2023&page_size=100&page=1");
+
         new Aleal().normalize(ctx);
 
         Path arqPessoas = ctx.normalizado().resolve("aleal/pessoas.json");
@@ -234,6 +267,15 @@ class AlealTest {
         assertEquals("Mesa Diretora", orgaos.get(0).get("nome").stringValue());
         assertEquals("Presidente", orgaos.get(0).get("papel").stringValue());
         assertEquals("2023-02-01", orgaos.get(0).get("inicio").stringValue());
+
+        // Proposições
+        assertEquals(1, bloco.get("proposicoes").size());
+        JsonNode prop = bloco.get("proposicoes").get(0);
+        assertEquals("7101", prop.get("id_fonte").stringValue());
+        assertEquals("PL", prop.get("tipo").stringValue());
+        assertEquals(33, prop.get("numero").asInt());
+        assertEquals("Aprovado", prop.get("situacao").stringValue());
+        assertEquals("aleal-proposicoes", prop.get("fonte_id").stringValue());
     }
 
     private static void gravarMetadado(Path dir, String arquivo, String url) throws IOException {

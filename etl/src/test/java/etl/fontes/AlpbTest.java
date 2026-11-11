@@ -185,6 +185,39 @@ class AlpbTest {
         Files.writeString(rawAlpb.resolve("composicao_mesa.json"), compJson);
         gravarMetadado(rawAlpb, "composicao_mesa.json", Alpb.API + "/parlamentares/composicaomesa/");
 
+        // 7. tipos-materia.json e materias/89-2023-p1.json
+        Files.createDirectories(rawAlpb.resolve("materias"));
+        String tiposJson = """
+                {
+                    "results": [
+                        { "id": 1, "sigla": "PL", "descricao": "Projeto de Lei" }
+                    ]
+                }
+                """;
+        Files.writeString(rawAlpb.resolve("tipos-materia.json"), tiposJson);
+        gravarMetadado(rawAlpb, "tipos-materia.json", Alpb.API + "/materia/tipomaterialegislativa/");
+
+        String materiasJson = """
+                {
+                    "results": [
+                        {
+                            "id": 5001,
+                            "tipo": 1,
+                            "numero": 10,
+                            "ano": 2023,
+                            "ementa": "Institui diretrizes para a infraestrutura estadual.",
+                            "resultado": "Aprovado",
+                            "em_tramitacao": false,
+                            "data_apresentacao": "2023-04-10",
+                            "texto_original": "https://sapl3.al.pb.leg.br/media/texto.pdf",
+                            "__str__": "Projeto de Lei nº 10 de 2023"
+                        }
+                    ]
+                }
+                """;
+        Files.writeString(rawAlpb.resolve("materias/89-2023-p1.json"), materiasJson);
+        gravarMetadado(rawAlpb, "materias/89-2023-p1.json", Alpb.API + "/materia/materialegislativa/?autores=89&ano=2023&page_size=100&page=1");
+
         Alpb alpb = new Alpb();
         alpb.normalize(ctx);
 
@@ -213,6 +246,15 @@ class AlpbTest {
         assertFalse(bloco.get("biografia").stringValue().contains("123.456.789-00")); // CPF descartado por Guarda.semCpf
         assertEquals(1, bloco.get("orgaos_e_frentes").size());
         assertEquals("Presidente", bloco.get("orgaos_e_frentes").get(0).get("papel").stringValue());
+
+        // Proposições
+        assertEquals(1, bloco.get("proposicoes").size());
+        JsonNode prop = bloco.get("proposicoes").get(0);
+        assertEquals("5001", prop.get("id_fonte").stringValue());
+        assertEquals("PL", prop.get("tipo").stringValue());
+        assertEquals(10, prop.get("numero").asInt());
+        assertEquals("Aprovado", prop.get("situacao").stringValue());
+        assertEquals("alpb-proposicoes", prop.get("fonte_id").stringValue());
     }
 
     private static void gravarMetadado(Path dir, String arquivo, String url) throws IOException {

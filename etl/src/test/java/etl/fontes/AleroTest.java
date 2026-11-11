@@ -196,6 +196,39 @@ class AleroTest {
         Files.writeString(rawAlero.resolve("composicao_mesa.json"), compJson);
         gravarMetadado(rawAlero, "composicao_mesa.json", Alero.API + "/parlamentares/composicaomesa/");
 
+        // 7. tipos-materia.json e materias/256-2023-p1.json
+        Files.createDirectories(rawAlero.resolve("materias"));
+        String tiposJson = """
+                {
+                    "results": [
+                        { "id": 1, "sigla": "PL", "descricao": "Projeto de Lei" }
+                    ]
+                }
+                """;
+        Files.writeString(rawAlero.resolve("tipos-materia.json"), tiposJson);
+        gravarMetadado(rawAlero, "tipos-materia.json", Alero.API + "/materia/tipomaterialegislativa/");
+
+        String materiasJson = """
+                {
+                    "results": [
+                        {
+                            "id": 9201,
+                            "tipo": 1,
+                            "numero": 88,
+                            "ano": 2023,
+                            "ementa": "Dispõe sobre incentivos ao desenvolvimento agropecuário em Rondônia.",
+                            "resultado": "Aprovado",
+                            "em_tramitacao": false,
+                            "data_apresentacao": "2023-07-14",
+                            "texto_original": "https://sapl.al.ro.leg.br/media/texto.pdf",
+                            "__str__": "Projeto de Lei nº 88 de 2023"
+                        }
+                    ]
+                }
+                """;
+        Files.writeString(rawAlero.resolve("materias/256-2023-p1.json"), materiasJson);
+        gravarMetadado(rawAlero, "materias/256-2023-p1.json", Alero.API + "/materia/materialegislativa/?autores=256&ano=2023&page_size=100&page=1");
+
         // Executa normalização
         Alero alero = new Alero();
         alero.normalize(ctx);
@@ -237,6 +270,15 @@ class AleroTest {
         assertEquals("Mesa Diretora", orgaos.get(0).get("nome").stringValue());
         assertEquals("Presidente", orgaos.get(0).get("papel").stringValue());
         assertEquals("2025-02-01", orgaos.get(0).get("inicio").stringValue());
+
+        // Proposições
+        assertEquals(1, bloco.get("proposicoes").size());
+        JsonNode prop = bloco.get("proposicoes").get(0);
+        assertEquals("9201", prop.get("id_fonte").stringValue());
+        assertEquals("PL", prop.get("tipo").stringValue());
+        assertEquals(88, prop.get("numero").asInt());
+        assertEquals("Aprovado", prop.get("situacao").stringValue());
+        assertEquals("alero-proposicoes", prop.get("fonte_id").stringValue());
     }
 
     private static void gravarMetadado(Path dir, String arquivo, String url) throws IOException {

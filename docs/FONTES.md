@@ -1221,6 +1221,12 @@ Validação em 2026-11-03 com o User-Agent do projeto.
 - URL base: `https://sapl3.al.pb.leg.br/api/parlamentares/filiacao/`
 - Filiações partidárias e determinação da legenda vigente do parlamentar.
 
+### `alpb-proposicoes`: matérias legislativas dos deputados estaduais
+
+- URL base: `https://sapl3.al.pb.leg.br/api/materia/materialegislativa/`
+- Catálogo de matérias e proposições legislativas (projetos de lei, requerimentos, indicações) apresentadas pelos deputados estaduais na 20ª Legislatura.
+- Metadados incluem tipo, número, ano, ementa, situação de tramitação, data de apresentação e link oficial do inteiro teor.
+
 ### `alpb-portal`: fotografias oficiais
 
 - URL base: `https://sapl3.al.pb.leg.br/media/sapl/public/parlamentar/`
@@ -1254,6 +1260,12 @@ Validação em 2026-11-03 com o User-Agent do projeto.
 
 - URL base: `https://sapl.al.am.leg.br/api/parlamentares/filiacao/`
 - Filiações partidárias e determinação da legenda vigente do parlamentar.
+
+### `aleam-proposicoes`: matérias legislativas dos deputados estaduais
+
+- URL base: `https://sapl.al.am.leg.br/api/materia/materialegislativa/`
+- Catálogo de matérias e proposições legislativas apresentadas pelos deputados estaduais na 20ª Legislatura.
+- Metadados incluem tipo, número, ano, ementa, situação de tramitação, data de apresentação e link oficial do inteiro teor.
 
 ### `aleam-portal`: fotografias oficiais
 
@@ -1289,6 +1301,12 @@ Validação em 2026-11-03 com o User-Agent do projeto.
 - URL base: `https://sapl.al.al.leg.br/api/parlamentares/filiacao/`
 - Filiações partidárias e determinação da legenda vigente do parlamentar.
 
+### `aleal-proposicoes`: matérias legislativas dos deputados estaduais
+
+- URL base: `https://sapl.al.al.leg.br/api/materia/materialegislativa/`
+- Catálogo de matérias e proposições legislativas apresentadas pelos deputados estaduais na 20ª Legislatura.
+- Metadados incluem tipo, número, ano, ementa, situação de tramitação, data de apresentação e link oficial do inteiro teor.
+
 ### `aleal-portal`: fotografias oficiais
 
 - URL base: `https://sapl.al.al.leg.br/media/sapl/public/parlamentar/`
@@ -1323,6 +1341,12 @@ Validação em 2026-11-03 com o User-Agent do projeto.
 - URL base: `https://sapl.al.ro.leg.br/api/parlamentares/filiacao/`
 - Filiações partidárias e determinação da legenda vigente do parlamentar.
 
+### `alero-proposicoes`: matérias legislativas dos deputados estaduais
+
+- URL base: `https://sapl.al.ro.leg.br/api/materia/materialegislativa/`
+- Catálogo de matérias e proposições legislativas apresentadas pelos deputados estaduais na 11ª Legislatura.
+- Metadados incluem tipo, número, ano, ementa, situação de tramitação, data de apresentação e link oficial do inteiro teor.
+
 ### `alero-portal`: fotografias oficiais
 
 - URL base: `https://sapl.al.ro.leg.br/media/sapl/public/parlamentar/`
@@ -1356,6 +1380,12 @@ Validação em 2026-11-03 com o User-Agent do projeto.
 
 - URL base: `https://sapl.al.pi.leg.br/api/parlamentares/filiacao/`
 - Filiações partidárias e determinação da legenda vigente do parlamentar.
+
+### `alepi-proposicoes`: matérias legislativas dos deputados estaduais
+
+- URL base: `https://sapl.al.pi.leg.br/api/materia/materialegislativa/`
+- Catálogo de matérias e proposições legislativas apresentadas pelos deputados estaduais na 20ª Legislatura.
+- Metadados incluem tipo, número, ano, ementa, situação de tramitação, data de apresentação e link oficial do inteiro teor.
 
 ### `alepi-portal`: fotografias oficiais
 

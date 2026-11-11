@@ -2532,6 +2532,21 @@
   status: validado
   validado_em: 2026-11-11
 
+- id: alpb-proposicoes
+  nome: Assembleia Legislativa do Estado da Paraíba, matérias legislativas via SAPL
+  orgao: Assembleia Legislativa do Estado da Paraíba
+  esfera: estadual
+  ente: PB
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://sapl3.al.pb.leg.br/api/materia/materialegislativa/
+  formato: JSON
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Proposições e matérias legislativas apresentadas pelos deputados estaduais na legislatura."
+  status: validado
+  validado_em: 2026-11-11
+
 - id: alpb-portal
   nome: Assembleia Legislativa do Estado da Paraíba, portal institucional e imagens
   orgao: Assembleia Legislativa do Estado da Paraíba
@@ -2604,6 +2619,21 @@
   autenticacao: nenhuma
   licenca: null
   limitacoes: "Histórico partidário e filiação vigente dos parlamentares."
+  status: validado
+  validado_em: 2026-11-11
+
+- id: aleam-proposicoes
+  nome: Assembleia Legislativa do Estado do Amazonas, matérias legislativas via SAPL
+  orgao: Assembleia Legislativa do Estado do Amazonas
+  esfera: estadual
+  ente: AM
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://sapl.al.am.leg.br/api/materia/materialegislativa/
+  formato: JSON
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Proposições e matérias legislativas apresentadas pelos deputados estaduais na legislatura."
   status: validado
   validado_em: 2026-11-11
 
@@ -2682,6 +2712,21 @@
   status: validado
   validado_em: 2026-11-11
 
+- id: aleal-proposicoes
+  nome: Assembleia Legislativa do Estado de Alagoas, matérias legislativas via SAPL
+  orgao: Assembleia Legislativa do Estado de Alagoas
+  esfera: estadual
+  ente: AL
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://sapl.al.al.leg.br/api/materia/materialegislativa/
+  formato: JSON
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Proposições e matérias legislativas apresentadas pelos deputados estaduais na legislatura."
+  status: validado
+  validado_em: 2026-11-11
+
 - id: aleal-portal
   nome: Assembleia Legislativa do Estado de Alagoas, portal institucional e imagens
   orgao: Assembleia Legislativa do Estado de Alagoas
@@ -2757,6 +2802,21 @@
   status: validado
   validado_em: 2026-11-11
 
+- id: alero-proposicoes
+  nome: Assembleia Legislativa do Estado de Rondônia, matérias legislativas via SAPL
+  orgao: Assembleia Legislativa do Estado de Rondônia
+  esfera: estadual
+  ente: RO
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://sapl.al.ro.leg.br/api/materia/materialegislativa/
+  formato: JSON (API REST do SAPL)
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Proposições e matérias legislativas apresentadas pelos deputados estaduais na legislatura."
+  status: validado
+  validado_em: 2026-11-11
+
 - id: alero-portal
   nome: Assembleia Legislativa do Estado de Rondônia, portal institucional e imagens
   orgao: Assembleia Legislativa do Estado de Rondônia
@@ -2829,6 +2889,21 @@
   autenticacao: nenhuma
   licenca: null
   limitacoes: "Histórico partidário e filiação vigente dos parlamentares."
+  status: validado
+  validado_em: 2026-11-11
+
+- id: alepi-proposicoes
+  nome: Assembleia Legislativa do Estado do Piauí, matérias legislativas via SAPL
+  orgao: Assembleia Legislativa do Estado do Piauí
+  esfera: estadual
+  ente: PI
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://sapl.al.pi.leg.br/api/materia/materialegislativa/
+  formato: JSON (API REST do SAPL)
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Proposições e matérias legislativas apresentadas pelos deputados estaduais na legislatura."
   status: validado
   validado_em: 2026-11-11
 

@@ -43,6 +43,7 @@ public final class Alpb implements Fonte {
     public static final String FONTE_PARLAMENTARES = "alpb-parlamentares";
     public static final String FONTE_MESA_DIRETORA = "alpb-mesa-diretora";
     public static final String FONTE_FILIACAO = "alpb-filiacao";
+    public static final String FONTE_PROPOSICOES = "alpb-proposicoes";
     public static final String FONTE_PORTAL = "alpb-portal";
 
     public static final String API = "https://sapl3.al.pb.leg.br/api";
@@ -89,13 +90,18 @@ public final class Alpb implements Fonte {
             }
         }
 
-        // 2. Detalhes de cada parlamentar e filiações
+        // 2. Detalhes de cada parlamentar, filiações, autorias e proposições legislativas
+        SaplMateria.fetchTipos(coleta, API);
+        List<Integer> anos = SaplMateria.anosLegislatura(INICIO_LEG_20, FIM_LEG_20, ctx.hoje());
+
         for (int pid : parlamentarIds) {
             String urlParl = API + "/parlamentares/parlamentar/" + pid + "/?format=json";
             coleta.obterOuVazio(urlParl, "parlamentares/" + pid + ".json", JSON, Politica.SEMANAL);
 
             String urlFil = API + "/parlamentares/filiacao/?parlamentar=" + pid + "&format=json";
             coleta.obterOuVazio(urlFil, "filiacoes/" + pid + ".json", JSON, Politica.SEMANAL);
+
+            SaplMateria.fetchAutorEMaterias(ctx, coleta, API, pid, anos);
         }
 
         // 3. Mesas Diretoras e Composição
@@ -121,10 +127,12 @@ public final class Alpb implements Fonte {
             throw new RuntimeException("alpb: erro ao criar pasta de blocos", e);
         }
 
-        // Carrega mapas de mesas e cargos
+        // Carrega mapas de mesas, cargos e tipos de matéria
         Map<Integer, MesaInfo> mesasPorId = carregarMesas(ctx);
         Map<Integer, String> cargosMesaPorId = carregarCargosMesa(ctx);
         Map<Integer, List<OrgaoOuFrente>> orgaosPorParlamentar = carregarMesaDiretora(ctx, mesasPorId, cargosMesaPorId);
+        Map<String, String[]> tiposMateria = SaplMateria.carregarTipos(ctx, nome());
+        List<Integer> anosLeg = SaplMateria.anosLegislatura(INICIO_LEG_20, FIM_LEG_20, ctx.hoje());
 
         JsonNode mandatosRoot = Json.ler(Coleta.caminho(ctx, arqMandatos));
         List<MandatoInfo> mandatos = parseMandatos(mandatosRoot);
@@ -210,11 +218,14 @@ public final class Alpb implements Fonte {
 
             List<OrgaoOuFrente> orgaos = orgaosPorParlamentar.getOrDefault(pid, List.of());
 
+            List<Registros.Proposicao> proposicoes = SaplMateria.normalizarProposicoes(
+                    ctx, nome(), FONTE_PROPOSICOES, SITE, pid, anosLeg, tiposMateria, null);
+
             var blocosNode = Json.SAIDA.createObjectNode();
             blocosNode.set("mandatos", Json.SAIDA.valueToTree(mandatosFormatados));
             blocosNode.set("orgaos_e_frentes", Json.SAIDA.valueToTree(orgaos));
             blocosNode.set("despesas", Json.SAIDA.createArrayNode());
-            blocosNode.set("proposicoes", Json.SAIDA.createArrayNode());
+            blocosNode.set("proposicoes", Json.SAIDA.valueToTree(proposicoes));
             blocosNode.set("fontes", Json.SAIDA.valueToTree(Registros.fontesDosBlocos(blocosNode)));
             if (biografia != null) {
                 blocosNode.put("biografia", biografia);
