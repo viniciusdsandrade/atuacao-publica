@@ -1603,6 +1603,35 @@ Validação em 2026-11-03 com o User-Agent do projeto.
 - Mandato do Governador Antonio Denarium (2023–2026) e candidaturas integrados via TSE.
 
 
+## Fontes do Amapá (ALAP & Governo do Estado)
+
+### `alap-deputados`: mandatos e deputados estaduais da legislatura
+
+- URL base: `https://www.al.ap.leg.br/pagina.php?pg=exibir_legislatura`
+- Relação oficial dos 24 deputados estaduais da 9ª Legislatura (2023–2027), identificando parlamentares em exercício, partidos, profissões e vínculos institucionais.
+
+### `alap-parlamentares`: cadastro individual e biografias
+
+- URL base: `https://www.al.ap.leg.br/pagina.php?pg=exibir_parlamentar&iddeputado={id}`
+- Ficha institucional individual com foto oficial, partido, profissão e biografia parlamentar sanitizada com `Guarda.semCpf`.
+
+### `alap-mesa-diretora`: composição da Mesa Diretora
+
+- URL base: `https://www.al.ap.leg.br/pagina.php?pg=exibir_mesadiretora`
+- Composição oficial da Mesa Diretora da 9ª Legislatura (Presidente Alliny Serrão, Vice-Presidentes e Secretários).
+
+### `alap-portal`: fotografias oficiais
+
+- URL base: `https://www.al.ap.leg.br/fotodeputado/`
+- Fotografias oficiais de perfil dos deputados estaduais hospedadas no portal da ALAP.
+
+### `ap-transparencia` e `ap-diario-oficial`: Executivo estadual
+
+- Transparência orçamentária: `https://transparencia.ap.gov.br/`
+- Diário Oficial: `https://diofe.portal.ap.gov.br/`
+- Mandato do Governador Clécio Luís (2023–2026) e candidaturas integrados via TSE.
+
+
 ## Segundo município piloto: São Paulo (CMSP & Prefeitura)
 
 Capital do estado, código IBGE `3550308` e unidade eleitoral `71072` no TSE (ADR-0027).

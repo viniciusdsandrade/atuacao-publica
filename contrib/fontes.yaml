@@ -3372,6 +3372,66 @@
   status: validado
   validado_em: 2026-11-11
 
+- id: alap-deputados
+  nome: Assembleia Legislativa do Estado do Amapá, deputados estaduais e mandatos
+  orgao: Assembleia Legislativa do Estado do Amapá
+  esfera: estadual
+  ente: AP
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://www.al.ap.leg.br/pagina.php?pg=exibir_legislatura
+  formato: HTML
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Relação oficial de deputados estaduais da 9ª Legislatura (2023–2027)."
+  status: validado
+  validado_em: 2026-11-11
+
+- id: alap-parlamentares
+  nome: Assembleia Legislativa do Estado do Amapá, fichas parlamentares individuais
+  orgao: Assembleia Legislativa do Estado do Amapá
+  esfera: estadual
+  ente: AP
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://www.al.ap.leg.br/pagina.php?pg=exibir_parlamentar
+  formato: HTML
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Fichas individuais de parlamentares com biografia, partido e profissão."
+  status: validado
+  validado_em: 2026-11-11
+
+- id: alap-mesa-diretora
+  nome: Assembleia Legislativa do Estado do Amapá, Mesa Diretora
+  orgao: Assembleia Legislativa do Estado do Amapá
+  esfera: estadual
+  ente: AP
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://www.al.ap.leg.br/pagina.php?pg=exibir_mesadiretora
+  formato: HTML
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Composição oficial da Mesa Diretora da 9ª Legislatura."
+  status: validado
+  validado_em: 2026-11-11
+
+- id: alap-portal
+  nome: Assembleia Legislativa do Estado do Amapá, portal institucional e imagens
+  orgao: Assembleia Legislativa do Estado do Amapá
+  esfera: estadual
+  ente: AP
+  categoria: primeira_parte
+  nivel_confianca: T0
+  url_base: https://www.al.ap.leg.br/fotodeputado/
+  formato: binario (imagem JPEG/PNG)
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Fotografias oficiais dos deputados estaduais hospedadas no portal da ALAP."
+  status: validado
+  validado_em: 2026-11-11
+
 - id: cmsp-splegisws
   nome: Câmara Municipal de São Paulo, serviço SPLegisWS (vereadores, gabinetes, comissões e proposições)
   orgao: Câmara Municipal de São Paulo
