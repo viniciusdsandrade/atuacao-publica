@@ -1132,6 +1132,38 @@ Validação em 2026-11-03 com o User-Agent do projeto.
 - Mandato do Governador Ibaneis Rocha integrado ao modelo e ao arquivo histórico via candidaturas do TSE.
 
 
+## Fontes de Mato Grosso (ALMT & Governo do Estado)
+
+### `almt-deputados`: parlamentares estaduais em exercício
+
+- URL base: `https://www.al.mt.gov.br/parlamento/deputados`
+- Relação oficial dos 24 deputados estaduais em exercício na 20ª Legislatura (2023–2027), com id numérico oficial, nome parlamentar, foto oficial e sigla partidária.
+- Identificador canônico no projeto: `almt-{id}` (ex.: `almt-129`, `almt-401`, `almt-56`).
+- Aberto a conexões nacionais e internacionais sem restrição geográfica.
+
+### `almt-deputados-detalhes`: perfil individual, biografia e links oficiais
+
+- URL base: `https://www.al.mt.gov.br/parlamento/deputados/{id}/perfil`
+- Perfil biográfico individual contendo nome civil completo, filiação partidária, votação na eleição de 2022, biografia oficial e canais oficiais de comunicação.
+- Dados de contato pessoal, telefones e e-mails institucionais descartados na normalização por regra estrita de privacidade.
+
+### `almt-mesa-diretora`: composição da Mesa Diretora por sessão legislativa
+
+- URL base: `https://www.al.mt.gov.br/parlamento/legislatura/21/sessao-legislativa`
+- Relação dos cargos da Mesa Diretora (Presidente, Vice-Presidentes e Secretários) nas 4 sessões legislativas da 20ª Legislatura (2023 a 2026), populando `orgaos_e_frentes` com vínculos determinísticos pelos identificadores e nomes dos parlamentares.
+
+### `almt-portal`: fotos oficiais em alta resolução
+
+- URL base: `https://storage.al.mt.gov.br/`
+- Servidor institucional de mídia da Assembleia Legislativa de Mato Grosso com fotografias oficiais dos parlamentares em alta definição.
+
+### `mt-transparencia` e `mt-diario-oficial`: Executivo estadual
+
+- Transparência orçamentária: `https://www.transparencia.mt.gov.br/`
+- Diário Oficial: `https://www.iomat.mt.gov.br/`
+- Mandatos do Governador Mauro Mendes (2019–2022 e 2023–2026) integrados ao modelo e ao arquivo histórico via candidaturas do TSE.
+
+
 ## Segundo município piloto: São Paulo (CMSP & Prefeitura)
 
 Capital do estado, código IBGE `3550308` e unidade eleitoral `71072` no TSE (ADR-0027).

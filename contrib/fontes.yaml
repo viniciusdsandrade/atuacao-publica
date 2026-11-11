@@ -2352,6 +2352,66 @@
 
 
 
+- id: almt-deputados
+  nome: Assembleia Legislativa do Estado de Mato Grosso, deputados estaduais
+  orgao: Assembleia Legislativa do Estado de Mato Grosso
+  esfera: estadual
+  ente: MT
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://www.al.mt.gov.br/parlamento/deputados
+  formato: HTML
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Relação oficial de deputados estaduais em exercício na 20ª legislatura (2023–2027)."
+  status: validado
+  validado_em: 2026-11-11
+
+- id: almt-deputados-detalhes
+  nome: Assembleia Legislativa do Estado de Mato Grosso, perfis parlamentares e biografias
+  orgao: Assembleia Legislativa do Estado de Mato Grosso
+  esfera: estadual
+  ente: MT
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://www.al.mt.gov.br/parlamento/deputados
+  formato: HTML
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Páginas individuais de perfil com nome civil, filiação partidária e biografia."
+  status: validado
+  validado_em: 2026-11-11
+
+- id: almt-mesa-diretora
+  nome: Assembleia Legislativa do Estado de Mato Grosso, composição da Mesa Diretora
+  orgao: Assembleia Legislativa do Estado de Mato Grosso
+  esfera: estadual
+  ente: MT
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://www.al.mt.gov.br/parlamento/legislatura/21/sessao-legislativa
+  formato: HTML
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Composição da Mesa Diretora por sessão legislativa da 20ª Legislatura."
+  status: validado
+  validado_em: 2026-11-11
+
+- id: almt-portal
+  nome: Assembleia Legislativa do Estado de Mato Grosso, portal institucional e imagens oficiais
+  orgao: Assembleia Legislativa do Estado de Mato Grosso
+  esfera: estadual
+  ente: MT
+  categoria: primeira_parte
+  nivel_confianca: T0
+  url_base: https://storage.al.mt.gov.br/
+  formato: binario (imagem JPEG/PNG)
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Fotografias oficiais dos parlamentares hospedadas no storage institucional."
+  status: validado
+  validado_em: 2026-11-11
+
 - id: cmsp-splegisws
   nome: Câmara Municipal de São Paulo, serviço SPLegisWS (vereadores, gabinetes, comissões e proposições)
   orgao: Câmara Municipal de São Paulo

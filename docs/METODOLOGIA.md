@@ -168,6 +168,7 @@ Não é presença. É a contagem de votos registrados em votações nominais.
 
 - **Câmara.** `orgaosDeputados-L{legislatura}` de cada legislatura coberta (cargo, início e fim) e `/deputados/{id}/frentes` filtrado pelas legislaturas cobertas.
 - **Senado.** `/senador/{codigo}/comissoes`, com participação ativa em algum momento desde o início da cobertura (2022-01-01).
+- **ALMT.** Composição da Mesa Diretora por sessão legislativa da 20ª Legislatura (2023 a 2026), com cargos institucionais (Presidente, Vice-Presidentes e Secretários) e vigência anual de cada biênio regimental.
 - **Câmara municipal (piloto).** `comissoes/participacao` do SAPL por vereador, com a comissão e o período vindos de `comissoes/composicao` (coletada por período), `comissoes/comissao` e `comissoes/periodo`. Papel: cargo da fonte (`Presidente`, `Membro`, `Relator`, `Suplente`); membro não titular recebe o sufixo "(suplente)". Entram as participações cujo fim é posterior ao início da cobertura ou está aberto.
 
 ## Candidaturas

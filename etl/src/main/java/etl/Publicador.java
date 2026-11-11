@@ -80,7 +80,7 @@ public final class Publicador {
     static final List<String> VALORES_DE_EMENDA = List.of("valor_empenhado", "valor_liquidado", "valor_pago", "restos_inscritos",
             "restos_cancelados", "restos_pagos");
     static final int RECENTES = 20;
-    static final List<String> FONTES_CLI = List.of("camara", "senado", "tse", "executivo", "sapl", "tcesp", "cgu", "agenda", "contrib", "alesp", "executivosp", "almg", "alep", "alba", "alerj", "alrs", "alece", "alesc", "alego", "ales", "alepa", "alepe", "cldf", "cmsp");
+    static final List<String> FONTES_CLI = List.of("camara", "senado", "tse", "executivo", "sapl", "tcesp", "cgu", "agenda", "contrib", "alesp", "executivosp", "almg", "alep", "alba", "alerj", "alrs", "alece", "alesc", "alego", "ales", "alepa", "alepe", "cldf", "almt", "cmsp");
 
     /** Perfil em construção, antes da validação. */
     static final class Perfil {
@@ -647,6 +647,9 @@ public final class Publicador {
             }
             if (externos.hasNonNull("cldf")) {
                 porChave.put("cldf:" + externos.get("cldf").stringValue(), id);
+            }
+            if (externos.hasNonNull("almt")) {
+                porChave.put("almt:" + externos.get("almt").stringValue(), id);
             }
             if (externos.hasNonNull("cmsp")) {
                 porChave.put("cmsp:" + externos.get("cmsp").stringValue(), id);
