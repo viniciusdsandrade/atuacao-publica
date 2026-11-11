@@ -2772,6 +2772,81 @@
   status: validado
   validado_em: 2026-11-11
 
+- id: alepi-deputados
+  nome: Assembleia Legislativa do Estado do Piauí, mandatos e deputados estaduais
+  orgao: Assembleia Legislativa do Estado do Piauí
+  esfera: estadual
+  ente: PI
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://sapl.al.pi.leg.br/api/parlamentares/mandato/
+  formato: JSON (API REST do SAPL)
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Mandatos da 20ª Legislatura (2023–2027) via API REST do SAPL."
+  status: validado
+  validado_em: 2026-11-11
+
+- id: alepi-parlamentares
+  nome: Assembleia Legislativa do Estado do Piauí, perfis parlamentares e biografias
+  orgao: Assembleia Legislativa do Estado do Piauí
+  esfera: estadual
+  ente: PI
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://sapl.al.pi.leg.br/api/parlamentares/parlamentar/
+  formato: JSON (API REST do SAPL)
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Cadastro individual com nome parlamentar, nome civil completo, fotografia e biografia oficial."
+  status: validado
+  validado_em: 2026-11-11
+
+- id: alepi-mesa-diretora
+  nome: Assembleia Legislativa do Estado do Piauí, Mesa Diretora e sessões legislativas
+  orgao: Assembleia Legislativa do Estado do Piauí
+  esfera: estadual
+  ente: PI
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://sapl.al.pi.leg.br/api/parlamentares/composicaomesa/
+  formato: JSON (API REST do SAPL)
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Composição da Mesa Diretora por sessão legislativa da 20ª Legislatura."
+  status: validado
+  validado_em: 2026-11-11
+
+- id: alepi-filiacao
+  nome: Assembleia Legislativa do Estado do Piauí, filiação partidária
+  orgao: Assembleia Legislativa do Estado do Piauí
+  esfera: estadual
+  ente: PI
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://sapl.al.pi.leg.br/api/parlamentares/filiacao/
+  formato: JSON (API REST do SAPL)
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Histórico partidário e filiação vigente dos parlamentares."
+  status: validado
+  validado_em: 2026-11-11
+
+- id: alepi-portal
+  nome: Assembleia Legislativa do Estado do Piauí, portal institucional e imagens
+  orgao: Assembleia Legislativa do Estado do Piauí
+  esfera: estadual
+  ente: PI
+  categoria: primeira_parte
+  nivel_confianca: T0
+  url_base: https://sapl.al.pi.leg.br/media/sapl/public/parlamentar/
+  formato: binario (imagem JPEG/PNG)
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Fotografias oficiais dos deputados estaduais hospedadas no SAPL."
+  status: validado
+  validado_em: 2026-11-11
+
 - id: cmsp-splegisws
   nome: Câmara Municipal de São Paulo, serviço SPLegisWS (vereadores, gabinetes, comissões e proposições)
   orgao: Câmara Municipal de São Paulo
