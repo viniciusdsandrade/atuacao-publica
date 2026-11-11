@@ -42,6 +42,7 @@ const NOMES: Record<string, string> = {
   alepi: 'Assembleia Legislativa do Estado do Piauí (ALEPI)',
   alrn: 'Assembleia Legislativa do Estado do Rio Grande do Norte (ALRN)',
   aleto: 'Assembleia Legislativa do Estado do Tocantins (ALETO)',
+  alese: 'Assembleia Legislativa do Estado de Sergipe (ALESE)',
   cmsp: 'Câmara Municipal de São Paulo (CMSP)',
 };
 

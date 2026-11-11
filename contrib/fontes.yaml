@@ -3072,6 +3072,66 @@
   status: validado
   validado_em: 2026-11-11
 
+- id: alese-deputados
+  nome: Assembleia Legislativa do Estado de Sergipe, mandatos e deputados estaduais
+  orgao: Assembleia Legislativa do Estado de Sergipe
+  esfera: estadual
+  ente: SE
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://al.se.leg.br/deputados/
+  formato: HTML
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Relação oficial de deputados estaduais da 20ª Legislatura (2023–2027)."
+  status: validado
+  validado_em: 2026-11-11
+
+- id: alese-parlamentares
+  nome: Assembleia Legislativa do Estado de Sergipe, perfis parlamentares e biografias
+  orgao: Assembleia Legislativa do Estado de Sergipe
+  esfera: estadual
+  ente: SE
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://aleselegis.al.se.leg.br/spl/parlamentar.aspx
+  formato: HTML
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Fichas institucionais individuais no sistema legislativo com nome civil e biografia."
+  status: validado
+  validado_em: 2026-11-11
+
+- id: alese-mesa-diretora
+  nome: Assembleia Legislativa do Estado de Sergipe, Mesa Diretora
+  orgao: Assembleia Legislativa do Estado de Sergipe
+  esfera: estadual
+  ente: SE
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://al.se.leg.br/mesa-diretora/
+  formato: HTML
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Composição oficial da Mesa Diretora da 20ª Legislatura."
+  status: validado
+  validado_em: 2026-11-11
+
+- id: alese-portal
+  nome: Assembleia Legislativa do Estado de Sergipe, portal institucional e imagens
+  orgao: Assembleia Legislativa do Estado de Sergipe
+  esfera: estadual
+  ente: SE
+  categoria: primeira_parte
+  nivel_confianca: T0
+  url_base: https://al.se.leg.br/wp-content/uploads/
+  formato: binario (imagem JPEG/PNG)
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Fotografias oficiais dos parlamentares hospedadas no portal da ALESE."
+  status: validado
+  validado_em: 2026-11-11
+
 - id: cmsp-splegisws
   nome: Câmara Municipal de São Paulo, serviço SPLegisWS (vereadores, gabinetes, comissões e proposições)
   orgao: Câmara Municipal de São Paulo

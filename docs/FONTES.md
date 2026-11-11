@@ -1467,6 +1467,35 @@ Validação em 2026-11-03 com o User-Agent do projeto.
 - Mandato do Governador Wanderlei Barbosa (2023–2026) e candidaturas integrados via TSE.
 
 
+## Fontes de Sergipe (ALESE & Governo do Estado)
+
+### `alese-deputados`: mandatos e deputados estaduais da legislatura
+
+- URL base: `https://al.se.leg.br/deputados/`
+- Relação oficial dos 24 deputados estaduais da 20ª Legislatura (2023–2027), identificando parlamentares em exercício, partidos e vínculos institucionais.
+
+### `alese-parlamentares`: cadastro individual e biografias
+
+- URL base: `https://aleselegis.al.se.leg.br/spl/parlamentar.aspx?id={id}`
+- Ficha institucional individual no sistema legislativo com nome civil, mandatos e biografia sanitizada com `Guarda.semCpf`.
+
+### `alese-mesa-diretora`: composição da Mesa Diretora
+
+- URL base: `https://al.se.leg.br/mesa-diretora/`
+- Composição oficial da Mesa Diretora da 20ª Legislatura (Presidente, Vice-Presidente e Secretários).
+
+### `alese-portal`: fotografias oficiais
+
+- URL base: `https://al.se.leg.br/wp-content/uploads/`
+- Repositório de imagens oficiais dos parlamentares hospedadas no portal da ALESE.
+
+### `se-transparencia` e `se-diario-oficial`: Executivo estadual
+
+- Transparência orçamentária: `https://transparencia.se.gov.br/`
+- Diário Oficial: `https://diariooficial.se.gov.br/`
+- Mandato do Governador Fábio Mitidieri (2023–2026) e candidaturas integrados via TSE.
+
+
 ## Segundo município piloto: São Paulo (CMSP & Prefeitura)
 
 Capital do estado, código IBGE `3550308` e unidade eleitoral `71072` no TSE (ADR-0027).
