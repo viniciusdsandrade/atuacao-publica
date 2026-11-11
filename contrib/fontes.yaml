@@ -2847,6 +2847,66 @@
   status: validado
   validado_em: 2026-11-11
 
+- id: alrn-deputados
+  nome: Assembleia Legislativa do Estado do Rio Grande do Norte, mandatos e deputados estaduais
+  orgao: Assembleia Legislativa do Estado do Rio Grande do Norte
+  esfera: estadual
+  ente: RN
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://www.al.rn.leg.br/deputados
+  formato: HTML
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Relação oficial de deputados estaduais da 63ª Legislatura (2023–2027)."
+  status: validado
+  validado_em: 2026-11-11
+
+- id: alrn-parlamentares
+  nome: Assembleia Legislativa do Estado do Rio Grande do Norte, perfis parlamentares e biografias
+  orgao: Assembleia Legislativa do Estado do Rio Grande do Norte
+  esfera: estadual
+  ente: RN
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://www.al.rn.leg.br/deputado/
+  formato: HTML
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Fichas institucionais individuais com biografia e dados biográficos."
+  status: validado
+  validado_em: 2026-11-11
+
+- id: alrn-mesa-diretora
+  nome: Assembleia Legislativa do Estado do Rio Grande do Norte, Mesa Diretora
+  orgao: Assembleia Legislativa do Estado do Rio Grande do Norte
+  esfera: estadual
+  ente: RN
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://www.al.rn.leg.br/deputados/mesadiretora
+  formato: HTML
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Composição oficial da Mesa Diretora da 63ª Legislatura."
+  status: validado
+  validado_em: 2026-11-11
+
+- id: alrn-portal
+  nome: Assembleia Legislativa do Estado do Rio Grande do Norte, portal institucional e imagens
+  orgao: Assembleia Legislativa do Estado do Rio Grande do Norte
+  esfera: estadual
+  ente: RN
+  categoria: primeira_parte
+  nivel_confianca: T0
+  url_base: https://www.al.rn.leg.br/storage/deputados/
+  formato: binario (imagem JPEG/PNG)
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Fotografias oficiais dos parlamentares hospedadas no storage institucional."
+  status: validado
+  validado_em: 2026-11-11
+
 - id: cmsp-splegisws
   nome: Câmara Municipal de São Paulo, serviço SPLegisWS (vereadores, gabinetes, comissões e proposições)
   orgao: Câmara Municipal de São Paulo

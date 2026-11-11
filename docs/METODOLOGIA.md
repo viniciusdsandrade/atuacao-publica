@@ -175,6 +175,7 @@ Não é presença. É a contagem de votos registrados em votações nominais.
 - **ALEAL.** Composição da Mesa Diretora nas sessões legislativas da 20ª Legislatura (2023–2027) via SAPL, com cargos institucionais (Presidente, Vice-Presidentes, Secretários e Suplentes).
 - **ALERO.** Composição da Mesa Diretora nas sessões legislativas da 11ª Legislatura (2023–2027) via SAPL, com cargos institucionais (Presidente, Vice-Presidentes e Secretários).
 - **ALEPI.** Composição da Mesa Diretora nas sessões legislativas da 20ª Legislatura (2023–2027) via SAPL, com cargos institucionais (Presidente, Vice-Presidentes e Secretários).
+- **ALRN.** Composição oficial da Mesa Diretora da 63ª Legislatura (2023–2027) via portal institucional, com cargos institucionais (Presidente, Vice-Presidentes e Secretários).
 - **Câmara municipal (piloto).** `comissoes/participacao` do SAPL por vereador, com a comissão e o período vindos de `comissoes/composicao` (coletada por período), `comissoes/comissao` e `comissoes/periodo`. Papel: cargo da fonte (`Presidente`, `Membro`, `Relator`, `Suplente`); membro não titular recebe o sufixo "(suplente)". Entram as participações cujo fim é posterior ao início da cobertura ou está aberto.
 
 ## Candidaturas

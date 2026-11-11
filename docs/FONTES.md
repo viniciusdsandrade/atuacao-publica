@@ -1369,6 +1369,35 @@ Validação em 2026-11-03 com o User-Agent do projeto.
 - Mandato do Governador Rafael Fonteles (2023–2026) e candidaturas integrados via TSE.
 
 
+## Fontes do Rio Grande do Norte (ALRN & Governo do Estado)
+
+### `alrn-deputados`: mandatos e deputados estaduais da legislatura
+
+- URL base: `https://www.al.rn.leg.br/deputados`
+- Relação oficial dos deputados estaduais da 63ª Legislatura (2023–2027), identificando 24 deputados estaduais, partido e foto institucional.
+
+### `alrn-parlamentares`: perfis parlamentares e biografias
+
+- URL base: `https://www.al.rn.leg.br/deputado/{id}/{slug}`
+- Cadastro individual contendo identificador numérico, nome parlamentar, nome civil completo e biografia oficial.
+
+### `alrn-mesa-diretora`: composição da Mesa Diretora
+
+- URL base: `https://www.al.rn.leg.br/deputados/mesadiretora`
+- Composição oficial da Mesa Diretora da 63ª Legislatura (Presidente, Vice-Presidentes e Secretários).
+
+### `alrn-portal`: fotografias oficiais
+
+- URL base: `https://www.al.rn.leg.br/storage/deputados/`
+- Repositório de imagens oficiais dos parlamentares hospedadas no storage institucional da ALRN.
+
+### `rn-transparencia` e `rn-diario-oficial`: Executivo estadual
+
+- Transparência orçamentária: `https://transparencia.rn.gov.br/`
+- Diário Oficial: `https://www.diariooficial.rn.gov.br/`
+- Mandato da Governadora Fátima Bezerra (2019–2022 e 2023–2026) e candidaturas integrados via TSE.
+
+
 ## Segundo município piloto: São Paulo (CMSP & Prefeitura)
 
 Capital do estado, código IBGE `3550308` e unidade eleitoral `71072` no TSE (ADR-0027).
