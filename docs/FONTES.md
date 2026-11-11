@@ -1196,6 +1196,43 @@ Validação em 2026-11-03 com o User-Agent do projeto.
 - Mandato do Governador Eduardo Riedel (2023–2026) e histórico estadual integrados ao modelo via candidaturas do TSE.
 
 
+## Fontes da Paraíba (ALPB & Governo do Estado)
+
+### `alpb-deputados`: mandatos e deputados estaduais da legislatura
+
+- URL base: `https://sapl3.al.pb.leg.br/api/parlamentares/mandato/?legislatura=20`
+- Relação oficial dos deputados estaduais da 20ª Legislatura (2023–2027) via API REST JSON do SAPL 3, identificando deputados titulares (36 vagas) e suplentes com mandato exercido.
+- Identificador canônico no projeto: `alpb-{id}` (ex.: `alpb-89`, `alpb-157`).
+- Aberto internacionalmente a requisições diretas via HTTPS sem restrição de rede.
+
+### `alpb-parlamentares`: perfis parlamentares e fotografias
+
+- URL base: `https://sapl3.al.pb.leg.br/api/parlamentares/parlamentar/`
+- Cadastro individual contendo nome parlamentar, nome civil completo, biografia oficial e link para a foto institucional.
+- Telefones e e-mails institucionais de gabinete descartados na normalização por regra de privacidade.
+
+### `alpb-mesa-diretora`: composição da Mesa Diretora por sessão legislativa
+
+- URL base: `https://sapl3.al.pb.leg.br/api/parlamentares/composicaomesa/`
+- Composição dos cargos da Mesa Diretora nas sessões legislativas da 20ª Legislatura (Presidente, Vice-Presidentes, Secretários e Corregedores).
+
+### `alpb-filiacao`: histórico partidário e filiação vigente
+
+- URL base: `https://sapl3.al.pb.leg.br/api/parlamentares/filiacao/`
+- Filiações partidárias e determinação da legenda vigente do parlamentar.
+
+### `alpb-portal`: fotografias oficiais
+
+- URL base: `https://sapl3.al.pb.leg.br/media/sapl/public/parlamentar/`
+- Repositório de imagens oficiais dos parlamentares hospedadas no SAPL da Assembleia Legislativa da Paraíba.
+
+### `pb-transparencia` e `pb-diario-oficial`: Executivo estadual
+
+- Transparência orçamentária: `https://transparencia.pb.gov.br/`
+- Diário Oficial: `https://auniao.pb.gov.br/`
+- Mandato do Governador João Azevêdo (2019–2022 e 2023–2026) e candidaturas integrados via TSE.
+
+
 ## Segundo município piloto: São Paulo (CMSP & Prefeitura)
 
 Capital do estado, código IBGE `3550308` e unidade eleitoral `71072` no TSE (ADR-0027).
