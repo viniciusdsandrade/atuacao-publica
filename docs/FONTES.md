@@ -1164,6 +1164,38 @@ Validação em 2026-11-03 com o User-Agent do projeto.
 - Mandatos do Governador Mauro Mendes (2019–2022 e 2023–2026) integrados ao modelo e ao arquivo histórico via candidaturas do TSE.
 
 
+## Fontes de Mato Grosso do Sul (ALEMS & Governo do Estado)
+
+### `alems-deputados`: parlamentares estaduais em exercício
+
+- URL base: `https://al.ms.gov.br/Partidos/Lista`
+- Relação oficial dos 24 deputados estaduais em exercício na 12ª Legislatura (2023–2027) por bancada partidária, com id numérico oficial, nome parlamentar, foto oficial e sigla partidária.
+- Identificador canônico no projeto: `alems-{id}` (ex.: `alems-35`, `alems-6`, `alems-2043`).
+- Aberto a conexões nacionais e internacionais sem restrição geográfica.
+
+### `alems-deputados-detalhes`: perfil individual, biografia e fotos oficiais
+
+- URL base: `https://al.ms.gov.br/Deputados/Visualizar/{id}`
+- Perfil biográfico individual contendo nome parlamentar, filiação partidária, fotografia oficial em alta resolução, biografia oficial e canais oficiais de comunicação.
+- Dados de contato pessoal, telefones e e-mails institucionais descartados na normalização por regra estrita de privacidade.
+
+### `alems-mesa-diretora`: composição da Mesa Diretora e legislatura
+
+- URL base: `https://al.ms.gov.br/Paginas/783/12-legislatura`
+- Relação dos cargos da Mesa Diretora da 12ª Legislatura (Presidente, Vice-Presidentes e Secretários), populando `orgaos_e_frentes` com vínculos determinísticos pelos identificadores e nomes dos parlamentares.
+
+### `alems-portal`: fotos oficiais em alta resolução
+
+- URL base: `https://al.ms.gov.br/upload/Deputy/`
+- Repositório institucional de imagens da Assembleia Legislativa de Mato Grosso do Sul com fotografias oficiais dos parlamentares.
+
+### `ms-transparencia` e `ms-diario-oficial`: Executivo estadual
+
+- Transparência orçamentária: `https://transparencia.ms.gov.br/`
+- Diário Oficial: `https://diariooficial.al.ms.gov.br/`
+- Mandato do Governador Eduardo Riedel (2023–2026) e histórico estadual integrados ao modelo via candidaturas do TSE.
+
+
 ## Segundo município piloto: São Paulo (CMSP & Prefeitura)
 
 Capital do estado, código IBGE `3550308` e unidade eleitoral `71072` no TSE (ADR-0027).

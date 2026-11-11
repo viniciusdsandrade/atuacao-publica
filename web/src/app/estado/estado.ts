@@ -34,6 +34,7 @@ const NOMES: Record<string, string> = {
   alepe: 'Assembleia Legislativa do Estado de Pernambuco (ALEPE)',
   cldf: 'Câmara Legislativa do Distrito Federal (CLDF)',
   almt: 'Assembleia Legislativa do Estado de Mato Grosso (ALMT)',
+  alems: 'Assembleia Legislativa do Estado de Mato Grosso do Sul (ALEMS)',
   cmsp: 'Câmara Municipal de São Paulo (CMSP)',
 };
 

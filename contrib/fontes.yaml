@@ -2412,6 +2412,66 @@
   status: validado
   validado_em: 2026-11-11
 
+- id: alems-deputados
+  nome: Assembleia Legislativa do Estado de Mato Grosso do Sul, deputados estaduais
+  orgao: Assembleia Legislativa do Estado de Mato Grosso do Sul
+  esfera: estadual
+  ente: MS
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://al.ms.gov.br/Partidos/Lista
+  formato: HTML
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Relação de deputados estaduais em exercício na 12ª legislatura (2023–2027) por bancada partidária."
+  status: validado
+  validado_em: 2026-11-11
+
+- id: alems-deputados-detalhes
+  nome: Assembleia Legislativa do Estado de Mato Grosso do Sul, perfis parlamentares e biografias
+  orgao: Assembleia Legislativa do Estado de Mato Grosso do Sul
+  esfera: estadual
+  ente: MS
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://al.ms.gov.br/Deputados/Visualizar
+  formato: HTML
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Páginas individuais de perfil com fotografia, filiação partidária e biografia oficial."
+  status: validado
+  validado_em: 2026-11-11
+
+- id: alems-mesa-diretora
+  nome: Assembleia Legislativa do Estado de Mato Grosso do Sul, Mesa Diretora e legislatura
+  orgao: Assembleia Legislativa do Estado de Mato Grosso do Sul
+  esfera: estadual
+  ente: MS
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://al.ms.gov.br/Paginas/783/12-legislatura
+  formato: HTML
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Composição da Mesa Diretora e relação oficial da 12ª Legislatura."
+  status: validado
+  validado_em: 2026-11-11
+
+- id: alems-portal
+  nome: Assembleia Legislativa do Estado de Mato Grosso do Sul, portal institucional e imagens
+  orgao: Assembleia Legislativa do Estado de Mato Grosso do Sul
+  esfera: estadual
+  ente: MS
+  categoria: primeira_parte
+  nivel_confianca: T0
+  url_base: https://al.ms.gov.br/upload/Deputy/
+  formato: binario (imagem JPEG/PNG)
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Fotografias oficiais dos parlamentares hospedadas no portal."
+  status: validado
+  validado_em: 2026-11-11
+
 - id: cmsp-splegisws
   nome: Câmara Municipal de São Paulo, serviço SPLegisWS (vereadores, gabinetes, comissões e proposições)
   orgao: Câmara Municipal de São Paulo
