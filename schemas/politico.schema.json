@@ -73,6 +73,7 @@
         "aleto": { "type": "string", "pattern": "^[0-9]+$" },
         "alese": { "type": "string", "pattern": "^[0-9]+$" },
         "alema": { "type": "string", "pattern": "^[a-z0-9-]+$" },
+        "aleac": { "type": "string", "pattern": "^[0-9]+$" },
         "cmsp": { "type": "string", "pattern": "^[0-9]+$" },
         "sapl": { "type": "string", "pattern": "^[0-9]+$" },
         "tse": {

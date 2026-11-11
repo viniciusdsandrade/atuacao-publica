@@ -3192,6 +3192,96 @@
   status: validado
   validado_em: 2026-11-11
 
+- id: aleac-deputados
+  nome: Assembleia Legislativa do Estado do Acre, mandatos e deputados da legislatura
+  orgao: Assembleia Legislativa do Estado do Acre
+  esfera: estadual
+  ente: AC
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://sapl.al.ac.leg.br/api/parlamentares/mandato/
+  formato: JSON
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Mandatos da 16ª Legislatura (2023–2027) via API REST do SAPL 3."
+  status: validado
+  validado_em: 2026-11-11
+
+- id: aleac-parlamentares
+  nome: Assembleia Legislativa do Estado do Acre, cadastro e biografias de parlamentares
+  orgao: Assembleia Legislativa do Estado do Acre
+  esfera: estadual
+  ente: AC
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://sapl.al.ac.leg.br/api/parlamentares/parlamentar/
+  formato: JSON
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Cadastro individual de parlamentares no SAPL com biografia, fotografia e dados civis."
+  status: validado
+  validado_em: 2026-11-11
+
+- id: aleac-mesa-diretora
+  nome: Assembleia Legislativa do Estado do Acre, Mesa Diretora
+  orgao: Assembleia Legislativa do Estado do Acre
+  esfera: estadual
+  ente: AC
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://sapl.al.ac.leg.br/api/parlamentares/composicaomesa/
+  formato: JSON
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Composição oficial da Mesa Diretora da 16ª Legislatura por sessão legislativa."
+  status: validado
+  validado_em: 2026-11-11
+
+- id: aleac-filiacao
+  nome: Assembleia Legislativa do Estado do Acre, filiações partidárias
+  orgao: Assembleia Legislativa do Estado do Acre
+  esfera: estadual
+  ente: AC
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://sapl.al.ac.leg.br/api/parlamentares/filiacao/
+  formato: JSON
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Histórico de filiação partidária dos parlamentares no SAPL."
+  status: validado
+  validado_em: 2026-11-11
+
+- id: aleac-proposicoes
+  nome: Assembleia Legislativa do Estado do Acre, matérias e proposições legislativas
+  orgao: Assembleia Legislativa do Estado do Acre
+  esfera: estadual
+  ente: AC
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://sapl.al.ac.leg.br/api/materia/materialegislativa/
+  formato: JSON
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Proposições legislativas com autores mapeados por legislatura e ano."
+  status: validado
+  validado_em: 2026-11-11
+
+- id: aleac-portal
+  nome: Assembleia Legislativa do Estado do Acre, portal institucional e imagens
+  orgao: Assembleia Legislativa do Estado do Acre
+  esfera: estadual
+  ente: AC
+  categoria: primeira_parte
+  nivel_confianca: T0
+  url_base: https://sapl.al.ac.leg.br/media/sapl/public/parlamentar/
+  formato: binario (imagem JPEG/PNG)
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Fotografias oficiais dos parlamentares hospedadas no SAPL da ALEAC."
+  status: validado
+  validado_em: 2026-11-11
+
 - id: cmsp-splegisws
   nome: Câmara Municipal de São Paulo, serviço SPLegisWS (vereadores, gabinetes, comissões e proposições)
   orgao: Câmara Municipal de São Paulo

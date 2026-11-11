@@ -1525,6 +1525,45 @@ Validação em 2026-11-03 com o User-Agent do projeto.
 - Mandato do Governador Carlos Brandão (2023–2026) e candidaturas integrados via TSE.
 
 
+## Fontes do Acre (ALEAC & Governo do Estado)
+
+### `aleac-deputados`: mandatos e deputados estaduais da legislatura
+
+- URL base: `https://sapl.al.ac.leg.br/api/parlamentares/mandato/?legislatura=17`
+- Relação oficial dos 24 deputados estaduais titulares da 16ª Legislatura (2023–2027), via API REST JSON do SAPL 3.
+
+### `aleac-parlamentares`: cadastro individual e biografias
+
+- URL base: `https://sapl.al.ac.leg.br/api/parlamentares/parlamentar/{id}/`
+- Cadastro individual no SAPL com nome civil, mandatos, fotografia oficial e biografia parlamentar sanitizada com `Guarda.semCpf`.
+
+### `aleac-mesa-diretora`: composição da Mesa Diretora
+
+- URL base: `https://sapl.al.ac.leg.br/api/parlamentares/composicaomesa/`
+- Composição oficial da Mesa Diretora da 16ª Legislatura (Presidente, Vice-Presidentes e Secretários por sessão legislativa).
+
+### `aleac-filiacao`: filiação partidária oficial
+
+- URL base: `https://sapl.al.ac.leg.br/api/parlamentares/filiacao/?parlamentar={id}`
+- Histórico partidário oficial no SAPL.
+
+### `aleac-proposicoes`: matérias legislativas
+
+- URL base: `https://sapl.al.ac.leg.br/api/materia/materialegislativa/`
+- Proposições legislativas com autores mapeados por legislatura e ano via `SaplMateria`.
+
+### `aleac-portal`: fotografias oficiais
+
+- URL base: `https://sapl.al.ac.leg.br/media/sapl/public/parlamentar/`
+- Imagens oficiais dos parlamentares hospedadas no SAPL da ALEAC.
+
+### `ac-transparencia` e `ac-diario-oficial`: Executivo estadual
+
+- Transparência orçamentária: `https://transparencia.ac.gov.br/`
+- Diário Oficial: `https://diario.ac.gov.br/`
+- Mandato do Governador Gladson Cameli (2023–2026) e candidaturas integrados via TSE.
+
+
 ## Segundo município piloto: São Paulo (CMSP & Prefeitura)
 
 Capital do estado, código IBGE `3550308` e unidade eleitoral `71072` no TSE (ADR-0027).
