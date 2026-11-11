@@ -51,6 +51,7 @@ final class Vinculo {
         perfis.addAll(legisladores(ctx, "alpb", "alpb", "alpb"));
         perfis.addAll(legisladores(ctx, "aleam", "aleam", "aleam"));
         perfis.addAll(legisladores(ctx, "aleal", "aleal", "aleal"));
+        perfis.addAll(legisladores(ctx, "alero", "alero", "alero"));
         perfis.addAll(legisladores(ctx, "cmsp", "cmsp", "cmsp"));
         perfis.addAll(legisladores(ctx, "sapl", "sapl-" + Sapl.IBGE, "sapl"));
         List<JsonNode> candidaturas = Tse.linhas(ctx);
@@ -360,6 +361,10 @@ final class Vinculo {
         Map<String, JsonNode> candPorAlealNomeUrna = new HashMap<>();
         Map<String, String> cpfPorAlealChave = new HashMap<>();
         Map<String, String> alealNomesCivis = lerNomesCivis(ctx, "aleal");
+        Map<String, JsonNode> candPorAleroNomeCivil = new HashMap<>();
+        Map<String, JsonNode> candPorAleroNomeUrna = new HashMap<>();
+        Map<String, String> cpfPorAleroChave = new HashMap<>();
+        Map<String, String> aleroNomesCivis = lerNomesCivis(ctx, "alero");
         for (JsonNode c : candidaturas) {
             Tse.Chave chave = chaves.get(c.get("sq").stringValue());
             if (chave != null) {
@@ -520,6 +525,14 @@ final class Vinculo {
                     }
                     if (chave.cpf() != null) {
                         cpfPorAlealChave.put(chave.nomeCivil() + "|" + chave.nascimento(), chave.cpf());
+                    }
+                } else if ("DEPUTADO ESTADUAL".equals(chave.cargo()) && "RO".equals(chave.uf())) {
+                    candPorAleroNomeCivil.merge(chave.nomeCivil(), c, Vinculo::maisRecente);
+                    if (c.hasNonNull("nome_urna")) {
+                        candPorAleroNomeUrna.merge(Texto.normalizarNome(c.get("nome_urna").stringValue()), c, Vinculo::maisRecente);
+                    }
+                    if (chave.cpf() != null) {
+                        cpfPorAleroChave.put(chave.nomeCivil() + "|" + chave.nascimento(), chave.cpf());
                     }
                 }
             }
@@ -1456,6 +1469,69 @@ final class Vinculo {
                 if (cand == null && !nomeLimpo.equals(nomeNorm)) {
                     Set<String> palavras = palavras(nomeLimpo);
                     for (var entry : candPorAlealNomeCivil.entrySet()) {
+                        if (palavras(entry.getKey()).containsAll(palavras)) {
+                            cand = entry.getValue();
+                            break;
+                        }
+                    }
+                }
+                if (cand != null) {
+                    candSapl = cand;
+                    chaveSapl = chaves.get(cand.get("sq").stringValue());
+                    if (cpf == null && chaveSapl != null) {
+                        cpf = chaveSapl.cpf();
+                    }
+                }
+            } else if ("alero".equals(p.fonteCli)) {
+                String nomeCivilAlero = aleroNomesCivis.get(p.ids.get("alero"));
+                String nomeNorm = Texto.normalizarNome(p.nome);
+                String nomeLimpo = Texto.normalizarNome(limparTitulo(p.nome));
+                JsonNode cand = null;
+                if (nomeCivilAlero != null) {
+                    cand = candPorAleroNomeCivil.get(Texto.normalizarNome(nomeCivilAlero));
+                }
+                if (cand == null) {
+                    cand = candPorAleroNomeUrna.get(nomeNorm);
+                }
+                if (cand == null) {
+                    cand = candPorAleroNomeCivil.get(nomeNorm);
+                }
+                if (cand == null && !nomeLimpo.equals(nomeNorm)) {
+                    cand = candPorAleroNomeUrna.get(nomeLimpo);
+                    if (cand == null) {
+                        cand = candPorAleroNomeCivil.get(nomeLimpo);
+                    }
+                }
+                if (cand == null) {
+                    Set<String> palavras = palavras(nomeNorm);
+                    for (var entry : candPorAleroNomeUrna.entrySet()) {
+                        if (palavras(entry.getKey()).containsAll(palavras)) {
+                            cand = entry.getValue();
+                            break;
+                        }
+                    }
+                }
+                if (cand == null) {
+                    Set<String> palavras = palavras(nomeNorm);
+                    for (var entry : candPorAleroNomeCivil.entrySet()) {
+                        if (palavras(entry.getKey()).containsAll(palavras)) {
+                            cand = entry.getValue();
+                            break;
+                        }
+                    }
+                }
+                if (cand == null && !nomeLimpo.equals(nomeNorm)) {
+                    Set<String> palavras = palavras(nomeLimpo);
+                    for (var entry : candPorAleroNomeUrna.entrySet()) {
+                        if (palavras(entry.getKey()).containsAll(palavras)) {
+                            cand = entry.getValue();
+                            break;
+                        }
+                    }
+                }
+                if (cand == null && !nomeLimpo.equals(nomeNorm)) {
+                    Set<String> palavras = palavras(nomeLimpo);
+                    for (var entry : candPorAleroNomeCivil.entrySet()) {
                         if (palavras(entry.getKey()).containsAll(palavras)) {
                             cand = entry.getValue();
                             break;

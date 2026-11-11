@@ -2697,6 +2697,81 @@
   status: validado
   validado_em: 2026-11-11
 
+- id: alero-deputados
+  nome: Assembleia Legislativa do Estado de Rondônia, mandatos e deputados estaduais
+  orgao: Assembleia Legislativa do Estado de Rondônia
+  esfera: estadual
+  ente: RO
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://sapl.al.ro.leg.br/api/parlamentares/mandato/
+  formato: JSON (API REST do SAPL)
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Mandatos da 11ª Legislatura (2023–2027) via API REST do SAPL."
+  status: validado
+  validado_em: 2026-11-11
+
+- id: alero-parlamentares
+  nome: Assembleia Legislativa do Estado de Rondônia, perfis parlamentares e biografias
+  orgao: Assembleia Legislativa do Estado de Rondônia
+  esfera: estadual
+  ente: RO
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://sapl.al.ro.leg.br/api/parlamentares/parlamentar/
+  formato: JSON (API REST do SAPL)
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Cadastro individual com nome parlamentar, nome civil completo, fotografia e biografia oficial."
+  status: validado
+  validado_em: 2026-11-11
+
+- id: alero-mesa-diretora
+  nome: Assembleia Legislativa do Estado de Rondônia, Mesa Diretora e sessões legislativas
+  orgao: Assembleia Legislativa do Estado de Rondônia
+  esfera: estadual
+  ente: RO
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://sapl.al.ro.leg.br/api/parlamentares/composicaomesa/
+  formato: JSON (API REST do SAPL)
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Composição da Mesa Diretora por sessão legislativa da 11ª Legislatura."
+  status: validado
+  validado_em: 2026-11-11
+
+- id: alero-filiacao
+  nome: Assembleia Legislativa do Estado de Rondônia, filiação partidária
+  orgao: Assembleia Legislativa do Estado de Rondônia
+  esfera: estadual
+  ente: RO
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://sapl.al.ro.leg.br/api/parlamentares/filiacao/
+  formato: JSON (API REST do SAPL)
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Histórico partidário e filiação vigente dos parlamentares."
+  status: validado
+  validado_em: 2026-11-11
+
+- id: alero-portal
+  nome: Assembleia Legislativa do Estado de Rondônia, portal institucional e imagens
+  orgao: Assembleia Legislativa do Estado de Rondônia
+  esfera: estadual
+  ente: RO
+  categoria: primeira_parte
+  nivel_confianca: T0
+  url_base: https://sapl.al.ro.leg.br/media/sapl/public/parlamentar/
+  formato: binario (imagem JPEG/PNG)
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Fotografias oficiais dos deputados estaduais hospedadas no SAPL."
+  status: validado
+  validado_em: 2026-11-11
+
 - id: cmsp-splegisws
   nome: Câmara Municipal de São Paulo, serviço SPLegisWS (vereadores, gabinetes, comissões e proposições)
   orgao: Câmara Municipal de São Paulo
