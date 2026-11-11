@@ -1267,6 +1267,40 @@ Validação em 2026-11-03 com o User-Agent do projeto.
 - Mandato do Governador Wilson Lima (2019–2022 e 2023–2026) e candidaturas integrados via TSE.
 
 
+## Fontes de Alagoas (ALEAL & Governo do Estado)
+
+### `aleal-deputados`: mandatos e deputados estaduais da legislatura
+
+- URL base: `https://sapl.al.al.leg.br/api/parlamentares/mandato/?legislatura=35`
+- Relação oficial dos deputados estaduais da 20ª Legislatura (2023–2027, identificada como legislatura 35 no sistema) via API REST JSON do SAPL, identificando deputados titulares (27 vagas) e suplentes com mandato exercido.
+
+### `aleal-parlamentares`: perfis parlamentares e biografias
+
+- URL base: `https://sapl.al.al.leg.br/api/parlamentares/parlamentar/`
+- Cadastro individual contendo identificador numérico, nome parlamentar, nome civil completo, biografia oficial e URL da fotografia oficial.
+
+### `aleal-mesa-diretora`: composição da Mesa Diretora
+
+- URL base: `https://sapl.al.al.leg.br/api/parlamentares/composicaomesa/`
+- Cargos da Mesa Diretora nas sessões legislativas da 20ª Legislatura (Presidente, Vice-Presidentes, Secretários e Suplentes).
+
+### `aleal-filiacao`: filiação partidária oficial
+
+- URL base: `https://sapl.al.al.leg.br/api/parlamentares/filiacao/`
+- Filiações partidárias e determinação da legenda vigente do parlamentar.
+
+### `aleal-portal`: fotografias oficiais
+
+- URL base: `https://sapl.al.al.leg.br/media/sapl/public/parlamentar/`
+- Repositório de imagens oficiais dos parlamentares hospedadas no SAPL da Assembleia Legislativa de Alagoas.
+
+### `al-transparencia` e `al-diario-oficial`: Executivo estadual
+
+- Transparência orçamentária: `https://transparencia.al.gov.br/`
+- Diário Oficial: `https://diario.imprensaoficial.al.gov.br/`
+- Mandato do Governador Paulo Dantas (2022 e 2023–2026) e candidaturas integrados via TSE.
+
+
 ## Segundo município piloto: São Paulo (CMSP & Prefeitura)
 
 Capital do estado, código IBGE `3550308` e unidade eleitoral `71072` no TSE (ADR-0027).

@@ -172,6 +172,7 @@ Não é presença. É a contagem de votos registrados em votações nominais.
 - **ALEMS.** Composição da Mesa Diretora da 12ª Legislatura (2023–2027), com cargos institucionais (Presidente, Vice-Presidentes e Secretários) e vigência regimental dos biênios.
 - **ALPB.** Composição da Mesa Diretora nas sessões legislativas da 20ª Legislatura (2023–2027) via SAPL, com cargos institucionais (Presidente, Vice-Presidentes, Secretários e Corregedores).
 - **ALEAM.** Composição da Mesa Diretora nas sessões legislativas da 20ª Legislatura (2023–2027) via SAPL, com cargos institucionais (Presidente, Vice-Presidentes, Secretários, Ouvidor e Corregedor).
+- **ALEAL.** Composição da Mesa Diretora nas sessões legislativas da 20ª Legislatura (2023–2027) via SAPL, com cargos institucionais (Presidente, Vice-Presidentes, Secretários e Suplentes).
 - **Câmara municipal (piloto).** `comissoes/participacao` do SAPL por vereador, com a comissão e o período vindos de `comissoes/composicao` (coletada por período), `comissoes/comissao` e `comissoes/periodo`. Papel: cargo da fonte (`Presidente`, `Membro`, `Relator`, `Suplente`); membro não titular recebe o sufixo "(suplente)". Entram as participações cujo fim é posterior ao início da cobertura ou está aberto.
 
 ## Candidaturas

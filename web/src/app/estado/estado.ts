@@ -37,6 +37,7 @@ const NOMES: Record<string, string> = {
   alems: 'Assembleia Legislativa do Estado de Mato Grosso do Sul (ALEMS)',
   alpb: 'Assembleia Legislativa do Estado da Paraíba (ALPB)',
   aleam: 'Assembleia Legislativa do Estado do Amazonas (ALEAM)',
+  aleal: 'Assembleia Legislativa do Estado de Alagoas (ALEAL)',
   cmsp: 'Câmara Municipal de São Paulo (CMSP)',
 };
 

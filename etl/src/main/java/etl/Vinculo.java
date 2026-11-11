@@ -50,6 +50,7 @@ final class Vinculo {
         perfis.addAll(legisladores(ctx, "alems", "alems", "alems"));
         perfis.addAll(legisladores(ctx, "alpb", "alpb", "alpb"));
         perfis.addAll(legisladores(ctx, "aleam", "aleam", "aleam"));
+        perfis.addAll(legisladores(ctx, "aleal", "aleal", "aleal"));
         perfis.addAll(legisladores(ctx, "cmsp", "cmsp", "cmsp"));
         perfis.addAll(legisladores(ctx, "sapl", "sapl-" + Sapl.IBGE, "sapl"));
         List<JsonNode> candidaturas = Tse.linhas(ctx);
@@ -242,7 +243,7 @@ final class Vinculo {
         return set;
     }
 
-    private static final Pattern TITULO_PATTERN = Pattern.compile("^(?:PADRE|DR\\.|DRA\\.|PROF\\.|PROFESSOR\\.|PROFESSORA\\.|DELEGADO\\.|DELEGADA\\.|CAPITAO\\.|PASTOR\\.|DR|DRA|PROF|PROFESSOR|PROFESSORA)\\s+", Pattern.CASE_INSENSITIVE);
+    private static final Pattern TITULO_PATTERN = Pattern.compile("^(?:DEPUTADO\\.|DEPUTADA\\.|DEPUTADO|DEPUTADA|PADRE|DR\\.|DRA\\.|PROF\\.|PROFESSOR\\.|PROFESSORA\\.|DELEGADO\\.|DELEGADA\\.|CAPITAO\\.|PASTOR\\.|DR|DRA|PROF|PROFESSOR|PROFESSORA)\\s+", Pattern.CASE_INSENSITIVE);
 
     private static String limparTitulo(String nome) {
         if (nome == null || nome.isBlank()) {
@@ -355,6 +356,10 @@ final class Vinculo {
         Map<String, JsonNode> candPorAleamNomeUrna = new HashMap<>();
         Map<String, String> cpfPorAleamChave = new HashMap<>();
         Map<String, String> aleamNomesCivis = lerNomesCivis(ctx, "aleam");
+        Map<String, JsonNode> candPorAlealNomeCivil = new HashMap<>();
+        Map<String, JsonNode> candPorAlealNomeUrna = new HashMap<>();
+        Map<String, String> cpfPorAlealChave = new HashMap<>();
+        Map<String, String> alealNomesCivis = lerNomesCivis(ctx, "aleal");
         for (JsonNode c : candidaturas) {
             Tse.Chave chave = chaves.get(c.get("sq").stringValue());
             if (chave != null) {
@@ -507,6 +512,14 @@ final class Vinculo {
                     }
                     if (chave.cpf() != null) {
                         cpfPorAleamChave.put(chave.nomeCivil() + "|" + chave.nascimento(), chave.cpf());
+                    }
+                } else if ("DEPUTADO ESTADUAL".equals(chave.cargo()) && "AL".equals(chave.uf())) {
+                    candPorAlealNomeCivil.merge(chave.nomeCivil(), c, Vinculo::maisRecente);
+                    if (c.hasNonNull("nome_urna")) {
+                        candPorAlealNomeUrna.merge(Texto.normalizarNome(c.get("nome_urna").stringValue()), c, Vinculo::maisRecente);
+                    }
+                    if (chave.cpf() != null) {
+                        cpfPorAlealChave.put(chave.nomeCivil() + "|" + chave.nascimento(), chave.cpf());
                     }
                 }
             }
@@ -1380,6 +1393,69 @@ final class Vinculo {
                 if (cand == null && !nomeLimpo.equals(nomeNorm)) {
                     Set<String> palavras = palavras(nomeLimpo);
                     for (var entry : candPorAleamNomeCivil.entrySet()) {
+                        if (palavras(entry.getKey()).containsAll(palavras)) {
+                            cand = entry.getValue();
+                            break;
+                        }
+                    }
+                }
+                if (cand != null) {
+                    candSapl = cand;
+                    chaveSapl = chaves.get(cand.get("sq").stringValue());
+                    if (cpf == null && chaveSapl != null) {
+                        cpf = chaveSapl.cpf();
+                    }
+                }
+            } else if ("aleal".equals(p.fonteCli)) {
+                String nomeCivilAleal = alealNomesCivis.get(p.ids.get("aleal"));
+                String nomeNorm = Texto.normalizarNome(p.nome);
+                String nomeLimpo = Texto.normalizarNome(limparTitulo(p.nome));
+                JsonNode cand = null;
+                if (nomeCivilAleal != null) {
+                    cand = candPorAlealNomeCivil.get(Texto.normalizarNome(nomeCivilAleal));
+                }
+                if (cand == null) {
+                    cand = candPorAlealNomeUrna.get(nomeNorm);
+                }
+                if (cand == null) {
+                    cand = candPorAlealNomeCivil.get(nomeNorm);
+                }
+                if (cand == null && !nomeLimpo.equals(nomeNorm)) {
+                    cand = candPorAlealNomeUrna.get(nomeLimpo);
+                    if (cand == null) {
+                        cand = candPorAlealNomeCivil.get(nomeLimpo);
+                    }
+                }
+                if (cand == null) {
+                    Set<String> palavras = palavras(nomeNorm);
+                    for (var entry : candPorAlealNomeUrna.entrySet()) {
+                        if (palavras(entry.getKey()).containsAll(palavras)) {
+                            cand = entry.getValue();
+                            break;
+                        }
+                    }
+                }
+                if (cand == null) {
+                    Set<String> palavras = palavras(nomeNorm);
+                    for (var entry : candPorAlealNomeCivil.entrySet()) {
+                        if (palavras(entry.getKey()).containsAll(palavras)) {
+                            cand = entry.getValue();
+                            break;
+                        }
+                    }
+                }
+                if (cand == null && !nomeLimpo.equals(nomeNorm)) {
+                    Set<String> palavras = palavras(nomeLimpo);
+                    for (var entry : candPorAlealNomeUrna.entrySet()) {
+                        if (palavras(entry.getKey()).containsAll(palavras)) {
+                            cand = entry.getValue();
+                            break;
+                        }
+                    }
+                }
+                if (cand == null && !nomeLimpo.equals(nomeNorm)) {
+                    Set<String> palavras = palavras(nomeLimpo);
+                    for (var entry : candPorAlealNomeCivil.entrySet()) {
                         if (palavras(entry.getKey()).containsAll(palavras)) {
                             cand = entry.getValue();
                             break;

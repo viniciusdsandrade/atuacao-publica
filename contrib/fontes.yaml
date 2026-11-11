@@ -2622,6 +2622,81 @@
   status: validado
   validado_em: 2026-11-11
 
+- id: aleal-deputados
+  nome: Assembleia Legislativa do Estado de Alagoas, mandatos e deputados estaduais
+  orgao: Assembleia Legislativa do Estado de Alagoas
+  esfera: estadual
+  ente: AL
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://sapl.al.al.leg.br/api/parlamentares/mandato/
+  formato: JSON
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Mandatos da 20ª Legislatura (2023–2027) via API REST do SAPL."
+  status: validado
+  validado_em: 2026-11-11
+
+- id: aleal-parlamentares
+  nome: Assembleia Legislativa do Estado de Alagoas, perfis parlamentares e biografias
+  orgao: Assembleia Legislativa do Estado de Alagoas
+  esfera: estadual
+  ente: AL
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://sapl.al.al.leg.br/api/parlamentares/parlamentar/
+  formato: JSON
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Cadastro individual com nome parlamentar, nome civil completo, fotografia e biografia oficial."
+  status: validado
+  validado_em: 2026-11-11
+
+- id: aleal-mesa-diretora
+  nome: Assembleia Legislativa do Estado de Alagoas, Mesa Diretora e sessões legislativas
+  orgao: Assembleia Legislativa do Estado de Alagoas
+  esfera: estadual
+  ente: AL
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://sapl.al.al.leg.br/api/parlamentares/composicaomesa/
+  formato: JSON
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Composição da Mesa Diretora por sessão legislativa da 20ª Legislatura."
+  status: validado
+  validado_em: 2026-11-11
+
+- id: aleal-filiacao
+  nome: Assembleia Legislativa do Estado de Alagoas, filiação partidária
+  orgao: Assembleia Legislativa do Estado de Alagoas
+  esfera: estadual
+  ente: AL
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://sapl.al.al.leg.br/api/parlamentares/filiacao/
+  formato: JSON
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Histórico partidário e filiação vigente dos parlamentares."
+  status: validado
+  validado_em: 2026-11-11
+
+- id: aleal-portal
+  nome: Assembleia Legislativa do Estado de Alagoas, portal institucional e imagens
+  orgao: Assembleia Legislativa do Estado de Alagoas
+  esfera: estadual
+  ente: AL
+  categoria: primeira_parte
+  nivel_confianca: T0
+  url_base: https://sapl.al.al.leg.br/media/sapl/public/parlamentar/
+  formato: binario (imagem JPEG/PNG)
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Fotografias oficiais dos deputados estaduais hospedadas no SAPL."
+  status: validado
+  validado_em: 2026-11-11
+
 - id: cmsp-splegisws
   nome: Câmara Municipal de São Paulo, serviço SPLegisWS (vereadores, gabinetes, comissões e proposições)
   orgao: Câmara Municipal de São Paulo
