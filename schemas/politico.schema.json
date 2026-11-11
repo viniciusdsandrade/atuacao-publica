@@ -65,6 +65,7 @@
         "almt": { "type": "string", "pattern": "^[0-9]+$" },
         "alems": { "type": "string", "pattern": "^[0-9]+$" },
         "alpb": { "type": "string", "pattern": "^[0-9]+$" },
+        "aleam": { "type": "string", "pattern": "^[0-9]+$" },
         "cmsp": { "type": "string", "pattern": "^[0-9]+$" },
         "sapl": { "type": "string", "pattern": "^[0-9]+$" },
         "tse": {

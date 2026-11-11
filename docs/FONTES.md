@@ -1233,6 +1233,40 @@ Validação em 2026-11-03 com o User-Agent do projeto.
 - Mandato do Governador João Azevêdo (2019–2022 e 2023–2026) e candidaturas integrados via TSE.
 
 
+## Fontes do Amazonas (ALEAM & Governo do Estado)
+
+### `aleam-deputados`: mandatos e deputados estaduais da legislatura
+
+- URL base: `https://sapl.al.am.leg.br/api/parlamentares/mandato/?legislatura=20`
+- Relação oficial dos deputados estaduais da 20ª Legislatura (2023–2027) via API REST JSON do SAPL, identificando deputados titulares (24 vagas) e suplentes com mandato exercido.
+
+### `aleam-parlamentares`: perfis parlamentares e biografias
+
+- URL base: `https://sapl.al.am.leg.br/api/parlamentares/parlamentar/`
+- Cadastro individual contendo identificador numérico, nome parlamentar, nome civil completo, biografia oficial e URL da fotografia oficial.
+
+### `aleam-mesa-diretora`: composição da Mesa Diretora
+
+- URL base: `https://sapl.al.am.leg.br/api/parlamentares/composicaomesa/`
+- Cargos da Mesa Diretora nas sessões legislativas da 20ª Legislatura (Presidente, Vice-Presidentes, Secretários, etc.).
+
+### `aleam-filiacao`: filiação partidária oficial
+
+- URL base: `https://sapl.al.am.leg.br/api/parlamentares/filiacao/`
+- Filiações partidárias e determinação da legenda vigente do parlamentar.
+
+### `aleam-portal`: fotografias oficiais
+
+- URL base: `https://sapl.al.am.leg.br/media/sapl/public/parlamentar/`
+- Repositório de imagens oficiais dos parlamentares hospedadas no SAPL da Assembleia Legislativa do Amazonas.
+
+### `am-transparencia` e `am-diario-oficial`: Executivo estadual
+
+- Transparência orçamentária: `https://transparencia.am.gov.br/`
+- Diário Oficial: `https://diario.imprensaoficial.am.gov.br/`
+- Mandato do Governador Wilson Lima (2019–2022 e 2023–2026) e candidaturas integrados via TSE.
+
+
 ## Segundo município piloto: São Paulo (CMSP & Prefeitura)
 
 Capital do estado, código IBGE `3550308` e unidade eleitoral `71072` no TSE (ADR-0027).
