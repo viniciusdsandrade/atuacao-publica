@@ -1620,6 +1620,17 @@ Validação em 2026-11-03 com o User-Agent do projeto.
 - URL base: `https://www.al.ap.leg.br/pagina.php?pg=exibir_mesadiretora`
 - Composição oficial da Mesa Diretora da 9ª Legislatura (Presidente Alliny Serrão, Vice-Presidentes e Secretários).
 
+### `alap-ceap`: verba indenizatória parlamentar (CEAP)
+
+- URL base: `https://www.al.ap.leg.br/transparencia/`. Endpoints PHP do portal: `mes_ceap_json.php`, `gabinete_ceap_json.php`, `pagina.php?pg=ceap&acao=buscar` e `ceap_exibir_detalhado.php`. Validação em 2026-11-12.
+- A CEAP começa em 2023-02. Cada mês lista os gabinetes; cada gabinete lista subelementos; cada subelemento traz os lançamentos com fornecedor, número de documento e valor.
+- O portal responde em ISO-8859-1 e, em parte dos campos, UTF-8 lido como latin-1 ou UTF-8 duplo. O ETL repara token a token e preserva o símbolo nativo `Nº`.
+- O vínculo com o perfil em exercício é pelo nome do gabinete (nome parlamentar ou tokens do nome civil). Gabinetes sem perfil em exercício ficam fora; a lista aparece na saída do `normalize`.
+- CNPJ entra só com 14 dígitos. CPF no nome do fornecedor pessoa física é removido (`Guarda.sanitizar`).
+- A competência dá o ano e o mês. A data fica vazia.
+- Recusa conexão de fora do Brasil (ADR-0029). Entra pela coleta local cifrada (ADR-0034).
+- No ensaio local de 2026-11-12: 1.053 buscas de gabinete/mês e 4.796 detalhamentos, de 2023-02 a 2026-09. 6.013 lançamentos nos 24 deputados em exercício, R$ 39.368.932,56. Por ano: 1.347 (2023), 1.791 (2024), 1.693 (2025) e 1.182 (2026, até setembro). 5.662 com CNPJ e 5.392 com número de documento. Quatro gabinetes sem perfil em exercício ficaram de fora: CARLOS LOBATO - MDB, DELEGADO INÁCIO - PDT, KAKA BARBOSA - PL e PAULO NOGUEIRA - PT. Dois lançamentos de 2025 reproduzem a categoria já corrompida no HTML do portal (`Aparelhos, Equipamentos e Mquinas para uso em Escritrrrio`).
+
 ### `alap-portal`: fotografias oficiais
 
 - URL base: `https://www.al.ap.leg.br/fotodeputado/`

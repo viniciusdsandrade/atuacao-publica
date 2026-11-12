@@ -120,6 +120,7 @@ Não é presença. É a contagem de votos registrados em votações nominais.
 - ALES: o valor é o solicitado pelo gabinete.
 - ALEPE: documento com total e sem nota entra como uma linha, na categoria "Sem detalhamento na fonte".
 - ALBA: a lista da verba indenizatória traz o lançamento com número da nota, categoria e valor, sem fornecedor. O fornecedor fica no detalhe do lançamento, que o projeto não coleta; a despesa publicada aponta para esse detalhe. A competência dá o ano e o mês, e a data fica vazia.
+- ALAP (`alap-ceap`): a CEAP do portal de transparência entra por gabinete, mês e subelemento, com fornecedor, CNPJ quando a fonte traz 14 dígitos, número de documento e valor. A competência dá o ano e o mês; a data fica vazia. Gabinetes sem perfil em exercício ficam fora.
 - CLDF: os arquivos de verbas indenizatórias do CKAN não entram. Os formatos de data misturam dia e mês, número serial de planilha e texto; em 2026, 112 datas têm dia e mês indistinguíveis. O projeto não adivinha a data.
 
 ### Minimização
