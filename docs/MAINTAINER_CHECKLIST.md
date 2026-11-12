@@ -53,17 +53,17 @@ O pipeline de dados não roda e não publica nada até o mantenedor ativar:
 
 ## Atualizar a semente da coleta local (ADR-0034)
 
-ALMG, ALRS, ALES, ALEPE e CLDF recusam conexão de fora do Brasil, e a API de proposições da ALBA responde 403 ao runner do GitHub. Enquanto o túnel não estiver ativo, os dados dessas seis casas vêm da sua rede.
+ALMG, ALRS, ALES, ALEPE, CLDF, ALEMA e ALAP recusam conexão de fora do Brasil; na ALBA e na ALERR, as APIs respondem 403 ao runner do GitHub. Enquanto o túnel não estiver ativo, os dados dessas nove casas vêm da sua rede.
 
 1. Na raiz do repositório, compile o ETL: `cd etl && ./mvnw -q package -DskipTests && cd ..`.
-2. Com o `gh` autenticado, rode `scripts/semente-enviar.sh`. Ele coleta as seis casas, cifra o cache com uma chave nova e envia o pacote à release `semente-coleta-local`, trocando o segredo `SEMENTE_CHAVE`.
-3. A execução seguinte do `dados` restaura a semente e publica as seis casas. O relatório mostra a data da coleta local.
+2. Com o `gh` autenticado, rode `scripts/semente-enviar.sh`. Ele coleta as nove casas, cifra o cache com uma chave nova e envia o pacote à release `semente-coleta-local`, trocando o segredo `SEMENTE_CHAVE`.
+3. A execução seguinte do `dados` restaura a semente e publica as nove casas. O relatório mostra a data da coleta local.
 4. Repita quando o alerta de fonte sem coleta válida abrir issue para uma delas, ou quando quiser dados mais novos.
 5. Com o túnel ativo, apague a release (`gh release delete semente-coleta-local --cleanup-tag`) e o segredo.
 
 ## Ativar o túnel pelo Brasil (ADR-0029)
 
-ALMG, ALRS, ALES e CLDF recusam conexão do runner nos EUA. O túnel faz essas coletas saírem por uma máquina no Brasil.
+ALMG, ALRS, ALES, CLDF, ALEMA, ALEAC, ALERR e ALAP recusam conexão ou respondem 403 ao runner nos EUA. O túnel faz essas coletas saírem por uma máquina no Brasil.
 
 1. Crie uma máquina pequena no Google Cloud, na região `southamerica-east1` (São Paulo), com Debian. Reserve um IP externo fixo: sem ele, o segredo muda quando o IP muda. Na rede padrão, a porta 22 já fica aberta, e o login por senha já vem desligado.
 2. Numa máquina de confiança, gere a chave do túnel: `ssh-keygen -t ed25519 -N "" -C tunel-ci -f tunel-ci`.
@@ -77,10 +77,10 @@ ALMG, ALRS, ALES e CLDF recusam conexão do runner nos EUA. O túnel faz essas c
 4. Grave em `~tunel/.ssh/authorized_keys`, com dono `tunel` e modo 600, uma linha só, com o conteúdo de `tunel-ci.pub` no fim:
 
    ```
-   restrict,port-forwarding,permitopen="dadosabertos.almg.gov.br:443",permitopen="ww4.al.rs.gov.br:443",permitopen="ww4.al.rs.gov.br:5000",permitopen="www.al.es.gov.br:443",permitopen="www.cl.df.gov.br:443",permitopen="transparencia.al.rs.gov.br:443",permitopen="www3.al.es.gov.br:443",permitopen="ple.cl.df.gov.br:443" ssh-ed25519 AAAA... tunel-ci
+   restrict,port-forwarding,permitopen="dadosabertos.almg.gov.br:443",permitopen="ww4.al.rs.gov.br:443",permitopen="ww4.al.rs.gov.br:5000",permitopen="www.al.es.gov.br:443",permitopen="www.cl.df.gov.br:443",permitopen="transparencia.al.rs.gov.br:443",permitopen="www3.al.es.gov.br:443",permitopen="ple.cl.df.gov.br:443",permitopen="sapl.al.ac.leg.br:443",permitopen="sapl.al.rr.leg.br:443",permitopen="www.al.ma.leg.br:443",permitopen="www.al.ap.leg.br:443" ssh-ed25519 AAAA... tunel-ci
    ```
 
-   A chave só encaminha para esses oito destinos e não abre shell.
+   A chave só encaminha para esses doze destinos e não abre shell.
 5. Fixe a chave do servidor: rode `ssh-keyscan -t ed25519 <IP>` e confira a impressão digital (`ssh-keygen -lf`) com a mostrada no console serial da máquina.
 6. Em **Settings > Secrets and variables > Actions > Secrets**, crie:
    - `TUNEL_SSH_DESTINO`: `tunel@<IP>`;

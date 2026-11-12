@@ -55,8 +55,8 @@ jobs:
             data/publicado/index.json
           key: dados-${{ github.run_id }}-${{ github.run_attempt }}
           restore-keys: dados-
-      - name: semente da coleta local para ALMG, ALRS, ALES, ALEPE, CLDF e ALBA
-        # Essas casas recusam conexão de fora do Brasil; na ALBA, a API de proposições responde 403 ao runner.
+      - name: semente da coleta local para ALMG, ALRS, ALES, ALEPE, CLDF, ALBA, ALEMA, ALERR e ALAP
+        # Essas casas recusam conexão ou respondem 403 de fora do Brasil.
         # O mantenedor coleta na rede dele e envia o cache cifrado (ADR-0034). Sem o segredo, o passo não faz nada.
         # As casas restauradas pulam a coleta abaixo.
         continue-on-error: true
@@ -68,9 +68,9 @@ jobs:
       - name: build do ETL
         working-directory: etl
         run: ./mvnw -B -ntp -q package -DskipTests
-      - name: túnel pelo Brasil para ALMG, ALRS, ALES e CLDF
+      - name: túnel pelo Brasil para casas bloqueadas fora do país
         # Esses sites recusam conexão de fora do país (ADR-0029). Sem os segredos, o passo não faz nada.
-        if: env.FONTE == 'todas' || env.FONTE == 'almg' || env.FONTE == 'alrs' || env.FONTE == 'ales' || env.FONTE == 'cldf'
+        if: env.FONTE == 'todas' || env.FONTE == 'almg' || env.FONTE == 'alrs' || env.FONTE == 'ales' || env.FONTE == 'cldf' || env.FONTE == 'alema' || env.FONTE == 'aleac' || env.FONTE == 'alerr' || env.FONTE == 'alap'
         continue-on-error: true
         timeout-minutes: 3
         env:
@@ -340,7 +340,7 @@ jobs:
         run: java -Xmx2g -jar etl/target/etl.jar fetch alese
       - name: fetch alema
         # Assembleia Legislativa do Estado do Maranhão: 42 deputados estaduais, perfis e Mesa Diretora.
-        if: env.FONTE == 'todas' || env.FONTE == 'alema'
+        if: (env.FONTE == 'todas' || env.FONTE == 'alema') && !contains(env.SEMENTE, ' alema ')
         continue-on-error: true
         timeout-minutes: 20
         env:
@@ -356,7 +356,7 @@ jobs:
         run: java -Xmx2g -jar etl/target/etl.jar fetch aleac
       - name: fetch alerr
         # Assembleia Legislativa do Estado de Roraima: 24 deputados estaduais, perfis e Mesa Diretora.
-        if: env.FONTE == 'todas' || env.FONTE == 'alerr'
+        if: (env.FONTE == 'todas' || env.FONTE == 'alerr') && !contains(env.SEMENTE, ' alerr ')
         continue-on-error: true
         timeout-minutes: 20
         env:
@@ -364,7 +364,7 @@ jobs:
         run: java -Xmx2g -jar etl/target/etl.jar fetch alerr
       - name: fetch alap
         # Assembleia Legislativa do Estado do Amapá: 24 deputados estaduais, perfis e Mesa Diretora.
-        if: env.FONTE == 'todas' || env.FONTE == 'alap'
+        if: (env.FONTE == 'todas' || env.FONTE == 'alap') && !contains(env.SEMENTE, ' alap ')
         continue-on-error: true
         timeout-minutes: 20
         env:
@@ -390,6 +390,8 @@ jobs:
         continue-on-error: true
         run: java -Xmx4g -jar etl/target/etl.jar normalize
       - name: publish
+        env:
+          ETL_PERMITIR_REMOCAO: ${{ vars.ETL_PERMITIR_REMOCAO }}
         run: java -Xmx4g -jar etl/target/etl.jar publish
       - name: relatório da execução
         run: |
