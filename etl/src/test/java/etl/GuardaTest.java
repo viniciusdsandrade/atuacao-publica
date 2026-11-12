@@ -50,6 +50,15 @@ class GuardaTest {
     }
 
     @Test
+    void sanitizaCpfTelefoneEEmailDoTextoOficial() {
+        assertEquals("PRESTADOR X", Guarda.sanitizar("PRESTADOR X 999.888.777-66"));
+        assertEquals("EMPRESA EXEMPLO LTDA",
+                Guarda.sanitizar("EMPRESA EXEMPLO LTDA (96) 3222-1000 pessoa.exemplo@exemplo.invalid"));
+        assertEquals("POSTO EXEMPLO LTDA", Guarda.sanitizar("POSTO EXEMPLO LTDA"));
+        assertEquals(null, Guarda.sanitizar("123.456.789-09"));
+    }
+
+    @Test
     void varreArvoreEIgnoraIdentificadoresEUrls() {
         var registro = Json.arvore(Map.of(
                 "id_fonte", "12345678909",

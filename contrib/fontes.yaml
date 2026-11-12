@@ -3417,6 +3417,21 @@
   status: validado
   validado_em: 2026-11-11
 
+- id: alap-ceap
+  nome: Assembleia Legislativa do Estado do Amapá, verba indenizatória parlamentar (CEAP)
+  orgao: Assembleia Legislativa do Estado do Amapá
+  esfera: estadual
+  ente: AP
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://www.al.ap.leg.br/transparencia/
+  formato: HTML e endpoint PHP (ISO-8859-1)
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Despesas da CEAP por gabinete e subelemento desde 2023-02, com fornecedor (CNPJ quando a fonte traz 14 dígitos), nota fiscal e valor. Ensaio local de 2026-11-12: 6.013 lançamentos em 24 deputados em exercício, de 2023-02 a 2026-09. Quatro gabinetes sem perfil em exercício ficam fora."
+  status: validado
+  validado_em: 2026-11-12
+
 - id: alap-portal
   nome: Assembleia Legislativa do Estado do Amapá, portal institucional e imagens
   orgao: Assembleia Legislativa do Estado do Amapá

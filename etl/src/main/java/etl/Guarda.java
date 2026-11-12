@@ -35,6 +35,17 @@ public final class Guarda {
         return Texto.vazioParaNulo(CPF.matcher(texto).replaceAll("").replaceAll("\\s{2,}", " "));
     }
 
+    /** Remove CPF, telefone e e-mail do texto oficial mantendo o restante legível. */
+    public static String sanitizar(String texto) {
+        if (texto == null) {
+            return null;
+        }
+        String limpo = CPF.matcher(texto).replaceAll("");
+        limpo = TELEFONE.matcher(limpo).replaceAll("");
+        limpo = EMAIL.matcher(limpo).replaceAll("");
+        return Texto.vazioParaNulo(limpo.replaceAll("\\s{2,}", " "));
+    }
+
     /** Lista os campos de texto que casam com algum padrão bloqueado. Não devolve o trecho. */
     public static List<String> violacoes(JsonNode no) {
         List<String> achados = new ArrayList<>();
