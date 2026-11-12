@@ -6,11 +6,14 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
+import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
+import java.util.zip.GZIPOutputStream;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -121,8 +124,7 @@ class AlrnTest {
                     </a>
                 </div>
                 """;
-        Files.writeString(rawAlrn.resolve("deputados.html"), htmlDeputados);
-        gravarMetadado(rawAlrn, "deputados.html", Alrn.URL_DEPUTADOS);
+        gravarCompactado(rawAlrn, "deputados.html", Alrn.URL_DEPUTADOS, htmlDeputados);
 
         String htmlMesa = """
                 <div class="row">
@@ -132,8 +134,7 @@ class AlrnTest {
                     </a>
                 </div>
                 """;
-        Files.writeString(rawAlrn.resolve("mesa_diretora.html"), htmlMesa);
-        gravarMetadado(rawAlrn, "mesa_diretora.html", Alrn.URL_MESA);
+        gravarCompactado(rawAlrn, "mesa_diretora.html", Alrn.URL_MESA, htmlMesa);
 
         String htmlDetalhe = """
                 <div class="container">
@@ -144,8 +145,7 @@ class AlrnTest {
                     <div class="outra-coisa"></div>
                 </div>
                 """;
-        Files.writeString(rawAlrn.resolve("deputados/72.html"), htmlDetalhe);
-        gravarMetadado(rawAlrn, "deputados/72.html", Alrn.SITE + "/deputado/72/ezequiel-ferreira");
+        gravarCompactado(rawAlrn, "deputados/72.html", Alrn.SITE + "/deputado/72/ezequiel-ferreira", htmlDetalhe);
 
         // Normalização
         Alrn alrn = new Alrn();
@@ -188,9 +188,13 @@ class AlrnTest {
         assertEquals("Presidente", orgaos.get(0).get("papel").stringValue());
     }
 
-    private static void gravarMetadado(Path dir, String arquivo, String url) throws IOException {
+    private static void gravarCompactado(Path dir, String arquivo, String url, String conteudo) throws IOException {
+        Path gz = dir.resolve(arquivo + ".gz");
+        try (OutputStream out = Files.newOutputStream(gz); GZIPOutputStream gzip = new GZIPOutputStream(out)) {
+            gzip.write(conteudo.getBytes(StandardCharsets.UTF_8));
+        }
         Path meta = dir.resolve(arquivo + ".meta.json");
-        Coleta.Arquivo arq = new Coleta.Arquivo(url, "raw/alrn/" + arquivo, "abc", 100L, Instant.parse("2026-11-11T12:00:00Z"));
+        Coleta.Arquivo arq = new Coleta.Arquivo(url, "raw/alrn/" + arquivo + ".gz", "abc", 100L, Instant.parse("2026-11-11T12:00:00Z"));
         Json.gravar(meta, arq, true);
     }
 }

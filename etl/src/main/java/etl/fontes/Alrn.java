@@ -95,7 +95,7 @@ public final class Alrn implements Fonte {
             return;
         }
 
-        String htmlDeputados = Files.readString(Coleta.caminho(ctx, arqDeputados));
+        String htmlDeputados = Texto.lerArquivo(Coleta.caminho(ctx, arqDeputados));
         List<DeputadoCard> deputados = parseDeputados(htmlDeputados);
 
         for (DeputadoCard d : deputados) {
@@ -123,7 +123,7 @@ public final class Alrn implements Fonte {
 
         String htmlDeputados;
         try {
-            htmlDeputados = Files.readString(Coleta.caminho(ctx, arqDeputados));
+            htmlDeputados = Texto.lerArquivo(Coleta.caminho(ctx, arqDeputados));
         } catch (Exception e) {
             throw new RuntimeException("alrn: erro ao ler deputados.html", e);
         }
@@ -147,7 +147,7 @@ public final class Alrn implements Fonte {
 
             if (arqDetalhe != null && Files.exists(Coleta.caminho(ctx, arqDetalhe))) {
                 try {
-                    String htmlDetalhe = Files.readString(Coleta.caminho(ctx, arqDetalhe));
+                    String htmlDetalhe = Texto.lerArquivo(Coleta.caminho(ctx, arqDetalhe));
                     biografia = extrairBiografia(htmlDetalhe);
                     nomeCivil = extrairNomeCivilDaBio(biografia);
                 } catch (Exception e) {
@@ -205,6 +205,7 @@ public final class Alrn implements Fonte {
             if (!nomesCivisPorId.isEmpty()) {
                 Json.gravar(ctx.normalizado().resolve("alrn/nomes-civis.json"), Json.SAIDA.valueToTree(nomesCivisPorId));
             }
+            System.out.printf("alrn: %d deputados estaduais normalizados%n", pessoas.size());
         } catch (Exception e) {
             throw new RuntimeException("alrn: erro ao gravar pessoas.json", e);
         }
@@ -319,7 +320,7 @@ public final class Alrn implements Fonte {
             return Map.of();
         }
         try {
-            String htmlMesa = Files.readString(Coleta.caminho(ctx, arqMesa));
+            String htmlMesa = Texto.lerArquivo(Coleta.caminho(ctx, arqMesa));
             return parseMesa(htmlMesa);
         } catch (Exception e) {
             System.err.println("alrn: erro ao ler mesa_diretora.html: " + e.getMessage());

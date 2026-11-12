@@ -97,7 +97,7 @@ public final class Alema implements Fonte {
             return;
         }
 
-        String htmlDeputados = Files.readString(Coleta.caminho(ctx, arqDeputados));
+        String htmlDeputados = Texto.lerArquivo(Coleta.caminho(ctx, arqDeputados));
         List<DeputadoCard> deputados = parseDeputados(htmlDeputados);
 
         for (DeputadoCard dep : deputados) {
@@ -125,7 +125,7 @@ public final class Alema implements Fonte {
 
         String htmlDeputados;
         try {
-            htmlDeputados = Files.readString(Coleta.caminho(ctx, arqDeputados));
+            htmlDeputados = Texto.lerArquivo(Coleta.caminho(ctx, arqDeputados));
         } catch (Exception e) {
             throw new RuntimeException("alema: erro ao ler deputados.html", e);
         }
@@ -153,7 +153,7 @@ public final class Alema implements Fonte {
 
             if (arqDetalhe != null && Files.exists(Coleta.caminho(ctx, arqDetalhe))) {
                 try {
-                    String htmlDetalhe = Files.readString(Coleta.caminho(ctx, arqDetalhe));
+                    String htmlDetalhe = Texto.lerArquivo(Coleta.caminho(ctx, arqDetalhe));
                     String bio = parseBiografia(htmlDetalhe);
                     if (bio != null && !bio.isBlank()) {
                         biografia = bio;

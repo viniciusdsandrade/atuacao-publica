@@ -54,7 +54,7 @@ public final class Alap implements Fonte {
     public static final LocalDate FIM_LEG_9 = LocalDate.of(2027, 1, 31);
     public static final int NUMERO_LEGISLATURA = 9;
 
-    private static final String HTML = "text/html; charset=iso-8859-1";
+    private static final String HTML = "text/html";
 
     public record DeputadoCard(String id, String nomeParlamentar, String nomeCompleto, String partido,
                               String fotoUrl, String link, String profissao) {
@@ -92,7 +92,7 @@ public final class Alap implements Fonte {
             return;
         }
 
-        String htmlLeg = Files.readString(Coleta.caminho(ctx, arqLeg));
+        String htmlLeg = Texto.lerArquivo(Coleta.caminho(ctx, arqLeg));
         List<DeputadoCard> deputados = parseDeputados(htmlLeg);
 
         for (DeputadoCard dep : deputados) {
@@ -120,7 +120,7 @@ public final class Alap implements Fonte {
 
         String htmlLeg;
         try {
-            htmlLeg = Files.readString(Coleta.caminho(ctx, arqLeg));
+            htmlLeg = Texto.lerArquivo(Coleta.caminho(ctx, arqLeg));
         } catch (Exception e) {
             throw new RuntimeException("alap: erro ao ler legislatura.html", e);
         }
@@ -133,7 +133,7 @@ public final class Alap implements Fonte {
         Prov provMesa = Prov.de(FONTE_MESA_DIRETORA, URL_MESA_DIRETORA, arqMesa != null ? arqMesa : arqLeg);
         if (arqMesa != null && Files.exists(Coleta.caminho(ctx, arqMesa))) {
             try {
-                String htmlMesa = Files.readString(Coleta.caminho(ctx, arqMesa));
+                String htmlMesa = Texto.lerArquivo(Coleta.caminho(ctx, arqMesa));
                 for (MesaMembro mm : parseMesa(htmlMesa)) {
                     cargoMesaPorId.put(mm.id(), mm.cargo());
                 }

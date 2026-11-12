@@ -6,10 +6,13 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
+import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.List;
+import java.util.zip.GZIPOutputStream;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -89,15 +92,13 @@ class AlapTest {
                     <p class="ls-title-5">Deputada Alliny Serrão </p>
                 </div>
                 """;
-        Files.writeString(rawAlap.resolve("legislatura.html"), htmlLeg);
-        gravarMetadado(rawAlap, "legislatura.html", Alap.URL_LEGISLATURA);
+        gravarCompactado(rawAlap, "legislatura.html", Alap.URL_LEGISLATURA, htmlLeg);
 
         String htmlMesa = """
                 <div class="box-foto-deputados"><a href="pagina.php?pg=exibir_parlamentar&iddeputado=75"><img src="foto.jpg"></a></div>
                 <p class="ls-title-5">Alliny Serrão <br> <strong>Presidente</strong> </p>
                 """;
-        Files.writeString(rawAlap.resolve("mesa_diretora.html"), htmlMesa);
-        gravarMetadado(rawAlap, "mesa_diretora.html", Alap.URL_MESA_DIRETORA);
+        gravarCompactado(rawAlap, "mesa_diretora.html", Alap.URL_MESA_DIRETORA, htmlMesa);
 
         Alap alap = new Alap();
         alap.normalize(ctx);
@@ -138,9 +139,13 @@ class AlapTest {
         assertEquals("Presidente", orgaos.get(0).get("papel").stringValue());
     }
 
-    private static void gravarMetadado(Path dir, String arquivo, String url) throws IOException {
+    private static void gravarCompactado(Path dir, String arquivo, String url, String conteudo) throws IOException {
+        Path gz = dir.resolve(arquivo + ".gz");
+        try (OutputStream out = Files.newOutputStream(gz); GZIPOutputStream gzip = new GZIPOutputStream(out)) {
+            gzip.write(conteudo.getBytes(StandardCharsets.UTF_8));
+        }
         Path meta = dir.resolve(arquivo + ".meta.json");
-        Coleta.Arquivo arq = new Coleta.Arquivo(url, "raw/alap/" + arquivo, "abc", 100L, Instant.parse("2026-11-11T12:00:00Z"));
+        Coleta.Arquivo arq = new Coleta.Arquivo(url, "raw/alap/" + arquivo + ".gz", "abc", 100L, Instant.parse("2026-11-11T12:00:00Z"));
         Json.gravar(meta, arq, true);
     }
 }

@@ -99,7 +99,7 @@ public final class Alese implements Fonte {
             return;
         }
 
-        String htmlDeputados = Files.readString(Coleta.caminho(ctx, arqDeputados));
+        String htmlDeputados = Texto.lerArquivo(Coleta.caminho(ctx, arqDeputados));
         List<DeputadoCard> deputados = parseDeputados(htmlDeputados);
 
         for (DeputadoCard dep : deputados) {
@@ -127,7 +127,7 @@ public final class Alese implements Fonte {
 
         String htmlDeputados;
         try {
-            htmlDeputados = Files.readString(Coleta.caminho(ctx, arqDeputados));
+            htmlDeputados = Texto.lerArquivo(Coleta.caminho(ctx, arqDeputados));
         } catch (Exception e) {
             throw new RuntimeException("alese: erro ao ler deputados.html", e);
         }
@@ -158,7 +158,7 @@ public final class Alese implements Fonte {
 
             if (arqDetalhe != null && Files.exists(Coleta.caminho(ctx, arqDetalhe))) {
                 try {
-                    String htmlDetalhe = Files.readString(Coleta.caminho(ctx, arqDetalhe));
+                    String htmlDetalhe = Texto.lerArquivo(Coleta.caminho(ctx, arqDetalhe));
                     String nc = parseNomeCivil(htmlDetalhe);
                     if (nc != null && !nc.isBlank()) {
                         nomeCivil = nc;
@@ -228,7 +228,7 @@ public final class Alese implements Fonte {
             return List.of();
         }
         try {
-            String htmlMesa = Files.readString(Coleta.caminho(ctx, arqMesa));
+            String htmlMesa = Texto.lerArquivo(Coleta.caminho(ctx, arqMesa));
             return parseMesa(htmlMesa);
         } catch (Exception e) {
             System.err.println("alese: aviso ao carregar mesa: " + e.getMessage());

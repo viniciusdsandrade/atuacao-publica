@@ -6,10 +6,13 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
+import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.List;
+import java.util.zip.GZIPOutputStream;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -149,8 +152,7 @@ class AleseTest {
                     </div>
                 </article>
                 """;
-        Files.writeString(rawAlese.resolve("deputados.html"), htmlDeputados);
-        gravarMetadado(rawAlese, "deputados.html", Alese.URL_DEPUTADOS);
+        gravarCompactado(rawAlese, "deputados.html", Alese.URL_DEPUTADOS, htmlDeputados);
 
         String htmlMesa = """
                 <table class="tb-body">
@@ -160,8 +162,7 @@ class AleseTest {
                     </tr>
                 </table>
                 """;
-        Files.writeString(rawAlese.resolve("mesa_diretora.html"), htmlMesa);
-        gravarMetadado(rawAlese, "mesa_diretora.html", Alese.URL_MESA);
+        gravarCompactado(rawAlese, "mesa_diretora.html", Alese.URL_MESA, htmlMesa);
 
         String htmlDetalhe = """
                 <div class='kt-widget__info'>
@@ -171,8 +172,7 @@ class AleseTest {
                     <p>Natural de Aracaju, engenheiro civil e deputado estadual. CPF 123.456.789-00.</p>
                 </div>
                 """;
-        Files.writeString(rawAlese.resolve("parlamentares/545.html"), htmlDetalhe);
-        gravarMetadado(rawAlese, "parlamentares/545.html", Alese.URL_PARLAMENTAR + "545");
+        gravarCompactado(rawAlese, "parlamentares/545.html", Alese.URL_PARLAMENTAR + "545", htmlDetalhe);
 
         Alese alese = new Alese();
         alese.normalize(ctx);
@@ -214,9 +214,13 @@ class AleseTest {
         assertEquals("Presidente", orgaos.get(0).get("papel").stringValue());
     }
 
-    private static void gravarMetadado(Path dir, String arquivo, String url) throws IOException {
+    private static void gravarCompactado(Path dir, String arquivo, String url, String conteudo) throws IOException {
+        Path gz = dir.resolve(arquivo + ".gz");
+        try (OutputStream out = Files.newOutputStream(gz); GZIPOutputStream gzip = new GZIPOutputStream(out)) {
+            gzip.write(conteudo.getBytes(StandardCharsets.UTF_8));
+        }
         Path meta = dir.resolve(arquivo + ".meta.json");
-        Coleta.Arquivo arq = new Coleta.Arquivo(url, "raw/alese/" + arquivo, "abc", 100L, Instant.parse("2026-11-11T12:00:00Z"));
+        Coleta.Arquivo arq = new Coleta.Arquivo(url, "raw/alese/" + arquivo + ".gz", "abc", 100L, Instant.parse("2026-11-11T12:00:00Z"));
         Json.gravar(meta, arq, true);
     }
 }
