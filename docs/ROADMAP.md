@@ -285,15 +285,15 @@ Limitações:
 
 ## Ponto de partida na página inicial (ADR-0056)
 
-Implementado em 2026-11-13, sem mudar dado nem rota. Não publicado: o ADR está como proposta e aguarda aprovação.
+Concluído e publicado em 2026-11-13, sem mudar dado nem rota.
 Sem busca e sem recorte, a página inicial deixa de listar políticos e mostra portas de entrada.
 
 | Etapa | Entrega | Estado |
 |---|---|---|
-| Ponto de partida | Índice "Pelo estado" (ordem alfabética) e índice "Pelo cargo" (por esfera, ordem institucional), com a contagem de quem está em exercício; "Ver todos", "aguardando posse" e "fora de exercício" logo abaixo; data dos dados e estado das coletas | implementada, não publicada |
-| Lista sob pedido | A lista aparece com busca, recorte ou "Ver todos" (`lista=completa` no endereço); "Limpar tudo" e a remoção do último filtro voltam ao ponto de partida | implementada, não publicada |
-| Histórico | Escolher uma porta de entrada cria entrada no histórico; Voltar retorna ao ponto de partida na mesma rolagem; a tela vai aos filtros e o foco vai à contagem | implementada, não publicada |
-| Cargo depois do estado | Com um estado escolhido, os cargos do recorte viram chips com contagem, no lugar da esfera | implementada, não publicada |
+| Ponto de partida | Índice "Pelo estado" (ordem alfabética) e índice "Pelo cargo" (por esfera, ordem institucional), com a contagem de quem está em exercício; "Ver todos", "aguardando posse" e "fora de exercício" logo abaixo; data dos dados e estado das coletas | concluída |
+| Lista sob pedido | A lista aparece com busca, recorte ou "Ver todos" (`lista=completa` no endereço); "Limpar tudo" e a remoção do último filtro voltam ao ponto de partida | concluída |
+| Histórico | Escolher uma porta de entrada cria entrada no histórico; Voltar retorna ao ponto de partida na mesma rolagem; a tela vai aos filtros e o foco vai à contagem | concluída |
+| Cargo depois do estado | Com um estado escolhido, os cargos do recorte viram chips com contagem, no lugar da esfera | concluída |
 
 Medidas no Chromium. Antes: site publicado, com os dados de 2026-11-13. Depois: build novo, com os dados de 2026-11-11.
 
@@ -310,12 +310,19 @@ Verificação de 2026-11-13, na cópia de trabalho:
 - E2E com axe: 87 testes passaram e 1 foi pulado (o de teclado no celular emulado). Novos: ponto de partida sem cartões; estado abre a lista e Voltar retorna; "Ver todos" e "Limpar tudo"; chips de cargo com estado escolhido. A varredura do axe cobre o ponto de partida, a lista completa e a lista de um estado, nos dois temas.
 - Roteiro local com os dados de 2026-11-11: índice baixado uma vez; cada porta com endereço próprio; Voltar e Avançar; mesmo estado de novo depois de "Limpar tudo"; voltar de um perfil reabre a lista; digitar na busca abre a lista; sem transbordo lateral em 320 px; nenhum erro de console.
 
+Publicação de 2026-11-13:
+
+- CI do commit `c54b10a`: build, testes unitários e E2E com axe passaram (87 testes, 1 pulado).
+- Publicado pelo workflow `dados`, com a fonte `contrib` e as demais do cache.
+- No site publicado, em 390 e 1366 px, no Chromium, no WebKit e no Firefox: ponto de partida com 27 estados e nenhum cartão; índice baixado uma vez; o estado abre a lista com o foco na contagem e os chips de cargo; Voltar retorna ao ponto de partida na mesma rolagem; "Ver todos" abre a lista completa; digitar na busca abre a lista.
+- No site publicado, no Chromium: axe-core (WCAG 2.0, 2.1 e 2.2, A e AA) sem achados em 14 rotas, em 390 e 1366 px, nos dois temas. Nenhuma requisição a terceiros e nenhum erro de console.
+
 Limitações:
 
 - Quem usava a lista completa dá um clique a mais.
 - "Limpar tudo" não cria entrada no histórico: depois dele, o primeiro Voltar pode parecer não fazer nada.
 - No celular, o índice de estados tem 14 linhas em duas colunas.
-- Não validado: teste com pessoas, leitor de tela real, aparelho real, Firefox e WebKit.
+- Não validado: teste com pessoas, leitor de tela real e aparelho real.
 
 ## Fase 2 (depois da POC)
 
