@@ -3506,3 +3506,63 @@
   limitacoes: "Navegação humana, sem API validada. A despesa do Executivo da capital não está no TCE-SP: a API devolve lista vazia."
   status: validado com limitação
   validado_em: 2026-11-06
+
+- id: caraguatatuba-camara-sagl
+  nome: Câmara Municipal de Caraguatatuba, sistema legislativo (SAGL)
+  orgao: Câmara Municipal de Caraguatatuba
+  esfera: municipal
+  ente: "3510500"
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://sistema.camaracaragua.sp.gov.br/
+  formato: HTML
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Sem API: fichas e pesquisa de matérias em HTML. A situação de tramitação não é mantida e não é publicada. Comissões só até 2022. Uma sessão cadastrada, de 2023: sem votação nominal. Sem normas de 2025 e 2026."
+  status: validado com limitação
+  validado_em: 2026-11-13
+
+- id: caraguatatuba-camara-portal
+  nome: Câmara Municipal de Caraguatatuba, portal institucional (comissões e listas de presença)
+  orgao: Câmara Municipal de Caraguatatuba
+  esfera: municipal
+  ente: "3510500"
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://caraguatatuba.sp.leg.br/
+  formato: HTML e JSON
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "API interna do portal, sem documentação. Listas de presença só de 2025 e 2026. Comissões só com a composição atual, sem data. A lista de vereadores traz telefone e e-mail e não é coletada."
+  status: validado com limitação
+  validado_em: 2026-11-13
+
+- id: caraguatatuba-transparencia
+  nome: Município de Caraguatatuba, Portal da Transparência
+  orgao: Prefeitura Municipal de Caraguatatuba
+  esfera: municipal
+  ente: "3510500"
+  categoria: transparencia
+  nivel_confianca: T0
+  url_base: https://portaldatransparencia.caraguatatuba.sp.gov.br/
+  formato: JSON (API com documentação Swagger)
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "O portal atende Prefeitura, Câmara, fundação e instituto de previdência. Só as diárias da Câmara pagas a vereador são coletadas. O beneficiário vem só pelo nome, e o cargo fica em branco em parte dos registros de 2025."
+  status: validado com limitação
+  validado_em: 2026-11-13
+
+- id: caraguatatuba-pmc-diario-oficial
+  nome: Prefeitura de Caraguatatuba, Diário Oficial
+  orgao: Prefeitura Municipal de Caraguatatuba
+  esfera: municipal
+  ente: "3510500"
+  categoria: diario_oficial
+  nivel_confianca: T0
+  url_base: https://diariooficial.caraguatatuba.sp.gov.br/public/consulta
+  formato: HTML (índice) e PDF
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Edições só em PDF e ODT. Não é coletado: entra como link oficial."
+  status: validado com limitação
+  validado_em: 2026-11-13

@@ -80,7 +80,7 @@ public final class Publicador {
     static final List<String> VALORES_DE_EMENDA = List.of("valor_empenhado", "valor_liquidado", "valor_pago", "restos_inscritos",
             "restos_cancelados", "restos_pagos");
     static final int RECENTES = 20;
-    static final List<String> FONTES_CLI = List.of("camara", "senado", "tse", "executivo", "sapl", "tcesp", "cgu", "agenda", "contrib", "alesp", "executivosp", "almg", "alep", "alba", "alerj", "alrs", "alece", "alesc", "alego", "ales", "alepa", "alepe", "cldf", "almt", "alems", "alpb", "aleam", "aleal", "alero", "alepi", "alrn", "aleto", "alese", "alema", "aleac", "alerr", "alap", "cmsp");
+    static final List<String> FONTES_CLI = List.of("camara", "senado", "tse", "executivo", "sapl", "tcesp", "cgu", "agenda", "contrib", "alesp", "executivosp", "almg", "alep", "alba", "alerj", "alrs", "alece", "alesc", "alego", "ales", "alepa", "alepe", "cldf", "almt", "alems", "alpb", "aleam", "aleal", "alero", "alepi", "alrn", "aleto", "alese", "alema", "aleac", "alerr", "alap", "cmsp", "caraguatatuba");
 
     /** Perfil em construção, antes da validação. */
     static final class Perfil {
@@ -157,7 +157,8 @@ public final class Publicador {
                     return "executivosp";
                 }
                 if (cargos.contains("prefeito") && !cargos.contains("presidente")) {
-                    return "sapl";
+                    // Só o município do piloto tem atos pelo SAPL. Nos outros o bloco não tem coleta, e não envelhece.
+                    return etl.fontes.Sapl.IBGE.equals(ente) ? "sapl" : null;
                 }
             }
             if (nome.equals("despesas_executivo")) {
@@ -699,6 +700,9 @@ public final class Publicador {
             }
             if (externos.hasNonNull("sapl")) {
                 porChave.put("sapl:" + externos.get("sapl").stringValue(), id);
+            }
+            if (externos.hasNonNull("caraguatatuba")) {
+                porChave.put("caraguatatuba:" + externos.get("caraguatatuba").stringValue(), id);
             }
             for (var tse : externos.path("tse").properties()) {
                 porChave.put("tse:" + tse.getValue().stringValue(), id);

@@ -47,10 +47,11 @@ public final class Tse implements Fonte {
     record Municipio(String ibge, int primeiraEleicao) {
     }
 
-    /** Unidades eleitorais municipais cobertas, por código da UE no TSE (ADR-0007 e ADR-0027). */
+    /** Unidades eleitorais municipais cobertas, por código da UE no TSE (ADR-0007, ADR-0027 e ADR-0057). */
     static final Map<String, Municipio> UES_MUNICIPAIS = Map.of(
             "62910", new Municipio(Sapl.IBGE, 2020), // Campinas - SP
-            "71072", new Municipio(Cmsp.IBGE, 2024)); // São Paulo - SP
+            "71072", new Municipio(Cmsp.IBGE, 2024), // São Paulo - SP
+            "63118", new Municipio(Caraguatatuba.IBGE, 2020)); // Caraguatatuba - SP
     static final List<String> UFS = List.of("BR", "AC", "AL", "AM", "AP", "BA", "CE", "DF", "ES", "GO", "MA", "MG", "MS",
             "MT", "PA", "PB", "PE", "PI", "PR", "RJ", "RN", "RO", "RR", "RS", "SC", "SE", "SP", "TO");
 

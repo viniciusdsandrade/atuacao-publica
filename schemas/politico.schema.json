@@ -78,6 +78,7 @@
         "alap": { "type": "string", "pattern": "^[0-9]+$" },
         "cmsp": { "type": "string", "pattern": "^[0-9]+$" },
         "sapl": { "type": "string", "pattern": "^[0-9]+$" },
+        "caraguatatuba": { "description": "Código do parlamentar no sistema legislativo da Câmara Municipal de Caraguatatuba (ADR-0057).", "type": "string", "pattern": "^[0-9]+$" },
         "tse": {
           "description": "SQ_CANDIDATO por ano de eleição.",
           "type": "object",

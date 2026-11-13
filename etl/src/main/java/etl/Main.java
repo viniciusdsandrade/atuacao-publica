@@ -33,6 +33,7 @@ import etl.fontes.Aleac;
 import etl.fontes.Alerr;
 import etl.fontes.Alap;
 import etl.fontes.Camara;
+import etl.fontes.Caraguatatuba;
 import etl.fontes.Cgu;
 import etl.fontes.Cldf;
 import etl.fontes.Cmsp;
@@ -89,11 +90,12 @@ public final class Main {
         registrar(new Alerr());
         registrar(new Alap());
         registrar(new Cmsp());
+        registrar(new Caraguatatuba());
     }
 
     /** Fontes que rodam quando o comando não recebe fonte. contrib e fontes rodam só quando pedidas no fetch. */
-    private static final List<String> FETCH_PADRAO = List.of("camara", "senado", "tse", "executivo", "sapl", "tcesp", "cgu", "agenda", "alesp", "executivosp", "almg", "alep", "alba", "alerj", "alrs", "alece", "alesc", "alego", "ales", "alepa", "alepe", "cldf", "almt", "alems", "alpb", "aleam", "aleal", "alero", "alepi", "alrn", "aleto", "alese", "alema", "aleac", "alerr", "alap", "cmsp");
-    private static final List<String> NORMALIZE_PADRAO = List.of("camara", "senado", "tse", "executivo", "contrib", "sapl", "tcesp", "cgu", "agenda", "alesp", "executivosp", "almg", "alep", "alba", "alerj", "alrs", "alece", "alesc", "alego", "ales", "alepa", "alepe", "cldf", "almt", "alems", "alpb", "aleam", "aleal", "alero", "alepi", "alrn", "aleto", "alese", "alema", "aleac", "alerr", "alap", "cmsp");
+    private static final List<String> FETCH_PADRAO = List.of("camara", "senado", "tse", "executivo", "sapl", "tcesp", "cgu", "agenda", "alesp", "executivosp", "almg", "alep", "alba", "alerj", "alrs", "alece", "alesc", "alego", "ales", "alepa", "alepe", "cldf", "almt", "alems", "alpb", "aleam", "aleal", "alero", "alepi", "alrn", "aleto", "alese", "alema", "aleac", "alerr", "alap", "cmsp", "caraguatatuba");
+    private static final List<String> NORMALIZE_PADRAO = List.of("camara", "senado", "tse", "executivo", "contrib", "sapl", "tcesp", "cgu", "agenda", "alesp", "executivosp", "almg", "alep", "alba", "alerj", "alrs", "alece", "alesc", "alego", "ales", "alepa", "alepe", "cldf", "almt", "alems", "alpb", "aleam", "aleal", "alero", "alepi", "alrn", "aleto", "alese", "alema", "aleac", "alerr", "alap", "cmsp", "caraguatatuba");
 
     public static void main(String[] args) {
         // O validador de schema usa SLF4J sem provedor; o aviso de "no providers" não interessa aqui.

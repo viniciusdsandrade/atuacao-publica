@@ -30,7 +30,7 @@ public final class TceSp implements Fonte {
     public static final String FONTE_ID = "tce-sp-transparencia-api";
     public static final String API = "https://transparencia.tce.sp.gov.br/api/json";
     /** Código IBGE -> nome do município na API (lista `municipios`). */
-    static final Map<String, String> MUNICIPIOS = Map.of(Sapl.IBGE, "campinas");
+    static final Map<String, String> MUNICIPIOS = Map.of(Sapl.IBGE, "campinas", Caraguatatuba.IBGE, "caraguatatuba");
     /** Meses renovados toda semana: a fonte publica com defasagem e revisa os meses recentes. */
     static final int MESES_ABERTOS = 6;
 

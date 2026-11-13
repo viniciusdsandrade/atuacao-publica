@@ -15,6 +15,7 @@ import java.util.regex.Pattern;
 
 import etl.Publicador.Perfil;
 import etl.fontes.Alep;
+import etl.fontes.Caraguatatuba;
 import etl.fontes.Cmsp;
 import etl.fontes.Sapl;
 import etl.fontes.Tse;
@@ -63,6 +64,7 @@ final class Vinculo {
         perfis.addAll(legisladores(ctx, "alap", "alap", "alap"));
         perfis.addAll(legisladores(ctx, "cmsp", "cmsp", "cmsp"));
         perfis.addAll(legisladores(ctx, "sapl", "sapl-" + Sapl.IBGE, "sapl"));
+        perfis.addAll(legisladores(ctx, "caraguatatuba", "sagl-" + Caraguatatuba.IBGE, "caraguatatuba"));
         List<JsonNode> candidaturas = Tse.linhas(ctx);
         if (!candidaturas.isEmpty()) {
             Map<String, Tse.Chave> chaves = Tse.chaves(ctx);
@@ -456,6 +458,9 @@ final class Vinculo {
         Map<String, JsonNode> candPorSaplNomeUrna = new HashMap<>();
         Map<String, JsonNode> candPorCmspNomeCivil = new HashMap<>();
         Map<String, JsonNode> candPorCmspNomeUrna = new HashMap<>();
+        Map<String, JsonNode> candPorCaraguatatubaNomeCivil = new HashMap<>();
+        Map<String, JsonNode> candPorCaraguatatubaNomeUrna = new HashMap<>();
+        Map<String, String> caraguatatubaNomesCivis = lerNomesCivis(ctx, "caraguatatuba");
         Map<String, JsonNode> candPorAlespNomeCivil = new HashMap<>();
         Map<String, JsonNode> candPorAlespNomeUrna = new HashMap<>();
         Map<String, JsonNode> candPorAlmgNomeCivil = new HashMap<>();
@@ -580,6 +585,11 @@ final class Vinculo {
                         candPorSaplNomeCivil.merge(chave.nomeCivil(), c, Vinculo::maisRecente);
                         if (c.hasNonNull("nome_urna")) {
                             candPorSaplNomeUrna.merge(Texto.normalizarNome(c.get("nome_urna").stringValue()), c, Vinculo::maisRecente);
+                        }
+                    } else if (Caraguatatuba.IBGE.equals(enteDaCandidatura)) {
+                        candPorCaraguatatubaNomeCivil.merge(chave.nomeCivil(), c, Vinculo::maisRecente);
+                        if (c.hasNonNull("nome_urna")) {
+                            candPorCaraguatatubaNomeUrna.merge(semPontuacao(Texto.normalizarNome(c.get("nome_urna").stringValue())), c, Vinculo::maisRecente);
                         }
                     }
                 } else if ("DEPUTADO ESTADUAL".equals(chave.cargo()) && "SP".equals(chave.uf())) {
@@ -887,6 +897,18 @@ final class Vinculo {
                 JsonNode cand = candPorCmspNomeUrna.get(nomeParl);
                 if (cand == null) {
                     cand = candPorCmspNomeCivil.get(nomeParl);
+                }
+                if (cand != null) {
+                    candSapl = cand;
+                    chaveSapl = chaves.get(cand.get("sq").stringValue());
+                    cpf = chaveSapl == null ? null : chaveSapl.cpf();
+                }
+            } else if ("caraguatatuba".equals(p.fonteCli)) {
+                // O sistema legislativo da Câmara publica o nome civil. Sem candidatura com esse nome, vale o nome
+                // parlamentar contra o nome de urna, só sem a pontuação: casar por palavras ligaria homônimos parciais.
+                JsonNode cand = candPorCaraguatatubaNomeCivil.get(Texto.normalizarNome(caraguatatubaNomesCivis.get(p.ids.get("caraguatatuba"))));
+                if (cand == null) {
+                    cand = candPorCaraguatatubaNomeUrna.get(semPontuacao(Texto.normalizarNome(p.nome)));
                 }
                 if (cand != null) {
                     candSapl = cand;
