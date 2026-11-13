@@ -10,8 +10,8 @@
               <td role="cell" data-label="Cargo"><span class="v">{{ cargoELocal(r) }}</span></td>
               <td role="cell" data-label="Início"><span class="v">{{ data(r['inicio']) }}</span></td>
               <td role="cell" data-label="Fim"><span class="v">{{ data(r['fim']) }}</span></td>
-              <td role="cell" data-label="Situação"><span class="v">{{ texto(r['situacao']) }}</span></td>
-              <td role="cell" data-label="Condição"><span class="v">{{ texto(r['condicao']) }}</span></td>
+              <td role="cell" data-label="Situação"><span class="v" [class.ausente]="ausente(r['situacao'])">{{ texto(r['situacao']) }}</span></td>
+              <td role="cell" data-label="Condição"><span class="v" [class.ausente]="ausente(r['condicao'])">{{ texto(r['condicao']) }}</span></td>
               <td role="cell" data-label="Fonte"><span class="v">
                 <a [href]="r.url_origem" rel="noopener noreferrer" target="_blank">ver na fonte<span class="sr-only">: mandato iniciado em {{ data(r['inicio']) }}</span></a>
                 @if (r.snapshot_url) { · <a [href]="r.snapshot_url" rel="noopener noreferrer" target="_blank">ver snapshot<span class="sr-only">: mandato iniciado em {{ data(r['inicio']) }}</span></a> }
@@ -31,8 +31,8 @@
               <td role="cell" data-label="Ano"><span class="v">{{ r['periodo'] }}</span></td>
               <td role="cell" data-label="Votações nominais"><span class="v">{{ r['votacoes_nominais'] }}</span></td>
               <td role="cell" data-label="Votos registrados"><span class="v">{{ r['votos_registrados'] }}</span></td>
-              <td role="cell" data-label="Sem registro na lista da fonte"><span class="v">{{ r['sem_registro'] ?? 'não se aplica' }}</span></td>
-              <td role="cell" data-label="Registros por valor da fonte"><span class="v">{{ porTipo(r['por_tipo']) }}</span></td>
+              <td role="cell" data-label="Sem registro na lista da fonte"><span class="v" [class.ausente]="ausente(r['sem_registro'])">{{ r['sem_registro'] ?? 'não se aplica' }}</span></td>
+              <td role="cell" data-label="Registros por valor da fonte"><span class="v" [class.ausente]="!r['por_tipo']">{{ porTipo(r['por_tipo']) }}</span></td>
             </tr>
           }
         </tbody>
@@ -46,10 +46,10 @@
           @for (r of visiveis(); track $index) {
             <tr role="row">
               <td role="cell" data-label="Data"><span class="v">{{ data(r['data']) }}</span></td>
-              <td role="cell" data-label="Proposição"><span class="v">{{ texto(r['proposicao']) }}</span></td>
-              <td role="cell" data-label="Voto"><span class="v">{{ r['voto'] ?? '(vazio na fonte)' }}</span></td>
-              <td role="cell" data-label="Orientação do partido"><span class="v">{{ texto(r['orientacao_partido']) }}{{ r['orientacao_partido_bancada'] ? ' (' + r['orientacao_partido_bancada'] + ')' : '' }}</span></td>
-              <td role="cell" data-label="Orientação do governo"><span class="v">{{ texto(r['orientacao_governo']) }}</span></td>
+              <td role="cell" data-label="Proposição"><span class="v" [class.ausente]="ausente(r['proposicao'])">{{ texto(r['proposicao']) }}</span></td>
+              <td role="cell" data-label="Voto"><span class="v" [class.ausente]="ausente(r['voto'])">{{ r['voto'] ?? '(vazio na fonte)' }}</span></td>
+              <td role="cell" data-label="Orientação do partido"><span class="v" [class.ausente]="ausente(r['orientacao_partido'])">{{ texto(r['orientacao_partido']) }}{{ r['orientacao_partido_bancada'] ? ' (' + r['orientacao_partido_bancada'] + ')' : '' }}</span></td>
+              <td role="cell" data-label="Orientação do governo"><span class="v" [class.ausente]="ausente(r['orientacao_governo'])">{{ texto(r['orientacao_governo']) }}</span></td>
               <td role="cell" data-label="Fonte"><span class="v"><a [href]="r.url_origem" rel="noopener noreferrer" target="_blank">ver na fonte<span class="sr-only">: votação de {{ data(r['data']) }}, {{ texto(r['proposicao']) }}</span></a></span></td>
             </tr>
           }
@@ -59,16 +59,16 @@
     @case ('despesas') {
       <table role="table" data-cols="6">
         <caption [class.sr-only]="!legenda()">{{ legenda() || 'Despesas' }}</caption>
-        <thead role="rowgroup"><tr role="row"><th scope="col" role="columnheader">Data</th><th scope="col" role="columnheader">Categoria</th><th scope="col" role="columnheader">Fornecedor</th><th scope="col" role="columnheader">CNPJ</th><th scope="col" role="columnheader">Valor</th><th scope="col" role="columnheader">Documento</th></tr></thead>
+        <thead role="rowgroup"><tr role="row"><th scope="col" role="columnheader">Data</th><th scope="col" role="columnheader">Categoria</th><th scope="col" role="columnheader">Fornecedor</th><th scope="col" role="columnheader">CNPJ</th><th scope="col" role="columnheader" class="numero">Valor</th><th scope="col" role="columnheader">Documento</th></tr></thead>
         <tbody role="rowgroup">
           @for (r of visiveis(); track $index) {
             <tr role="row">
               <td role="cell" data-label="Data"><span class="v">{{ r['data'] ? data(r['data']) : r['mes'] + '/' + r['ano'] }}</span></td>
-              <td role="cell" data-label="Categoria"><span class="v">{{ texto(r['categoria']) }}</span></td>
-              <td role="cell" data-label="Fornecedor"><span class="v">{{ texto(r['fornecedor_nome']) }}</span></td>
-              <td role="cell" data-label="CNPJ"><span class="v">{{ texto(r['fornecedor_cnpj']) }}</span></td>
-              <td class="numero" role="cell" data-label="Valor"><span class="v">{{ moeda(numero(r['valor'])) }}</span></td>
-              <td role="cell" data-label="Documento"><span class="v">
+              <td role="cell" data-label="Categoria"><span class="v" [class.ausente]="ausente(r['categoria'])">{{ texto(r['categoria']) }}</span></td>
+              <td role="cell" data-label="Fornecedor"><span class="v" [class.ausente]="ausente(r['fornecedor_nome'])">{{ texto(r['fornecedor_nome']) }}</span></td>
+              <td role="cell" data-label="CNPJ"><span class="v" [class.ausente]="ausente(r['fornecedor_cnpj'])">{{ texto(r['fornecedor_cnpj']) }}</span></td>
+              <td class="numero" role="cell" data-label="Valor"><span class="v" [class.ausente]="numero(r['valor']) === null">{{ moeda(numero(r['valor'])) }}</span></td>
+              <td role="cell" data-label="Documento"><span class="v" [class.ausente]="!url(r['documento_url']) && ausente(r['documento_numero'])">
                 @if (url(r['documento_url']); as u) { <a [href]="u" rel="noopener noreferrer" target="_blank">documento<span class="sr-only">: {{ texto(r['fornecedor_nome']) }}, {{ r['data'] ? data(r['data']) : r['mes'] + '/' + r['ano'] }}</span></a> } @else { {{ texto(r['documento_numero']) }} }
               </span></td>
             </tr>
@@ -85,10 +85,10 @@
             <tr role="row">
               <td role="cell" data-label="Proposição"><span class="v"><a [href]="r.url_origem" rel="noopener noreferrer" target="_blank">{{ r['identificacao'] }}</a></span></td>
               <td role="cell" data-label="Apresentação"><span class="v">{{ data(r['data_apresentacao']) }}</span></td>
-              <td role="cell" data-label="Ementa"><span class="v">{{ texto(r['ementa']) }}</span></td>
-              <td role="cell" data-label="Situação"><span class="v">{{ texto(r['situacao']) }}</span></td>
-              <td role="cell" data-label="Temas"><span class="v">{{ r['temas'] === null ? 'a fonte não informa temas' : lista(r['temas']) }}</span></td>
-              <td role="cell" data-label="Texto"><span class="v">@if (url(r['url_texto']); as u) { <a [href]="u" rel="noopener noreferrer" target="_blank">inteiro teor</a> } @else { {{ semRegistro }} }</span></td>
+              <td role="cell" data-label="Ementa"><span class="v" [class.ausente]="ausente(r['ementa'])">{{ texto(r['ementa']) }}</span></td>
+              <td role="cell" data-label="Situação"><span class="v" [class.ausente]="ausente(r['situacao'])">{{ texto(r['situacao']) }}</span></td>
+              <td role="cell" data-label="Temas"><span class="v" [class.ausente]="ausente(r['temas'])">{{ r['temas'] === null ? 'a fonte não informa temas' : lista(r['temas']) }}</span></td>
+              <td role="cell" data-label="Texto"><span class="v" [class.ausente]="!url(r['url_texto'])">@if (url(r['url_texto']); as u) { <a [href]="u" rel="noopener noreferrer" target="_blank">inteiro teor</a> } @else { {{ semRegistro }} }</span></td>
             </tr>
           }
         </tbody>
@@ -103,7 +103,7 @@
             <tr role="row">
               <td role="cell" data-label="Data"><span class="v">{{ data(r['data']) }}</span></td>
               <td role="cell" data-label="Tipo"><span class="v">{{ texto(r['tipo']) }}{{ r['fase'] ? ' · ' + r['fase'] : '' }}</span></td>
-              <td role="cell" data-label="Resumo oficial"><span class="v">{{ texto(r['resumo']) }}</span></td>
+              <td role="cell" data-label="Resumo oficial"><span class="v" [class.ausente]="ausente(r['resumo'])">{{ texto(r['resumo']) }}</span></td>
               <td role="cell" data-label="Texto"><span class="v">
                 @if (url(r['transcricao_url']); as u) { <a [href]="u" rel="noopener noreferrer" target="_blank">transcrição<span class="sr-only">: discurso de {{ data(r['data']) }}</span></a> } @else { <a [href]="r.url_origem" rel="noopener noreferrer" target="_blank">ver na fonte<span class="sr-only">: discurso de {{ data(r['data']) }}</span></a> }
               </span></td>
@@ -120,10 +120,10 @@
           @for (r of visiveis(); track $index) {
             <tr role="row">
               <td role="cell" data-label="Data"><span class="v">{{ data(r['data']) }}</span></td>
-              <td role="cell" data-label="Tipo"><span class="v">{{ texto(r['tipo']) }}</span></td>
-              <td role="cell" data-label="Órgão"><span class="v">{{ texto(r['orgao']) }}</span></td>
-              <td class="longo" role="cell" data-label="Descrição oficial"><span class="v">{{ texto(r['titulo']) }}</span></td>
-              <td role="cell" data-label="Presença"><span class="v">{{ presenca(r['presenca']) }}</span></td>
+              <td role="cell" data-label="Tipo"><span class="v" [class.ausente]="ausente(r['tipo'])">{{ texto(r['tipo']) }}</span></td>
+              <td role="cell" data-label="Órgão"><span class="v" [class.ausente]="ausente(r['orgao'])">{{ texto(r['orgao']) }}</span></td>
+              <td class="longo" role="cell" data-label="Descrição oficial"><span class="v" [class.ausente]="ausente(r['titulo'])">{{ texto(r['titulo']) }}</span></td>
+              <td role="cell" data-label="Presença"><span class="v" [class.ausente]="presenca(r['presenca']) === semRegistro">{{ presenca(r['presenca']) }}</span></td>
               <td role="cell" data-label="Fonte"><span class="v"><a [href]="r.url_origem" rel="noopener noreferrer" target="_blank">ver na fonte<span class="sr-only">: evento de {{ data(r['data']) }}</span></a></span></td>
             </tr>
           }
@@ -191,7 +191,7 @@
         <tbody role="rowgroup">
           @for (r of visiveis(); track $index) {
             <tr role="row">
-              <td role="cell" data-label="Tipo"><span class="v">{{ rotuloTipoOrgao(textoOuNulo(r['tipo'])) }}</span></td>
+              <td role="cell" data-label="Tipo"><span class="v" [class.ausente]="ausente(r['tipo'])">{{ rotuloTipoOrgao(textoOuNulo(r['tipo'])) }}</span></td>
               <td role="cell" data-label="Nome">
                 <span class="v">
                   @if (r['sigla']) {
@@ -205,7 +205,7 @@
                 </span>
               </td>
               <td role="cell" data-label="Papel">
-                <span class="v">
+                <span class="v" [class.ausente]="ausente(r['papel'])">
                   @if (ePapelLideranca(textoOuNulo(r['papel']))) {
                     <span class="selo selo--lideranca">{{ texto(r['papel']) }}</span>
                   } @else {
@@ -231,18 +231,18 @@
     @case ('candidaturas') {
       <table role="table" data-cols="8">
         <caption [class.sr-only]="!legenda()">{{ legenda() || 'Candidaturas' }}</caption>
-        <thead role="rowgroup"><tr role="row"><th scope="col" role="columnheader">Eleição</th><th scope="col" role="columnheader">Cargo</th><th scope="col" role="columnheader">Local</th><th scope="col" role="columnheader">Partido</th><th scope="col" role="columnheader">Situação da candidatura</th><th scope="col" role="columnheader">Resultado</th><th scope="col" role="columnheader">Bens declarados (total)</th><th scope="col" role="columnheader">Plano de governo</th></tr></thead>
+        <thead role="rowgroup"><tr role="row"><th scope="col" role="columnheader">Eleição</th><th scope="col" role="columnheader">Cargo</th><th scope="col" role="columnheader">Local</th><th scope="col" role="columnheader">Partido</th><th scope="col" role="columnheader">Situação da candidatura</th><th scope="col" role="columnheader">Resultado</th><th scope="col" role="columnheader" class="numero">Bens declarados (total)</th><th scope="col" role="columnheader">Plano de governo</th></tr></thead>
         <tbody role="rowgroup">
           @for (r of visiveis(); track $index) {
             <tr role="row">
               <td role="cell" data-label="Eleição"><span class="v">{{ r['eleicao'] }} ({{ r['turno'] }}º turno)</span></td>
               <td role="cell" data-label="Cargo"><span class="v">{{ r['cargo'] }}</span></td>
               <td role="cell" data-label="Local"><span class="v">{{ localCandidatura(r) }}</span></td>
-              <td role="cell" data-label="Partido"><span class="v">{{ texto(r['partido']) }}</span></td>
-              <td role="cell" data-label="Situação da candidatura"><span class="v">{{ texto(r['situacao_candidatura']) }}</span></td>
-              <td role="cell" data-label="Resultado"><span class="v">{{ texto(r['resultado']) }}</span></td>
-              <td class="numero" role="cell" data-label="Bens declarados (total)"><span class="v">{{ moeda(numero(r['bens_total_declarado'])) }}</span></td>
-              <td role="cell" data-label="Plano de governo"><span class="v">
+              <td role="cell" data-label="Partido"><span class="v" [class.ausente]="ausente(r['partido'])">{{ texto(r['partido']) }}</span></td>
+              <td role="cell" data-label="Situação da candidatura"><span class="v" [class.ausente]="ausente(r['situacao_candidatura'])">{{ texto(r['situacao_candidatura']) }}</span></td>
+              <td role="cell" data-label="Resultado"><span class="v" [class.ausente]="ausente(r['resultado'])">{{ texto(r['resultado']) }}</span></td>
+              <td class="numero" role="cell" data-label="Bens declarados (total)"><span class="v" [class.ausente]="numero(r['bens_total_declarado']) === null">{{ moeda(numero(r['bens_total_declarado'])) }}</span></td>
+              <td role="cell" data-label="Plano de governo"><span class="v" [class.ausente]="!url(r['plano_de_governo_url'])">
                 @if (url(r['plano_de_governo_url']); as u) {
                   arquivo <code>{{ r['plano_de_governo_arquivo'] }}</code> no <a [href]="u" rel="noopener noreferrer">pacote oficial do TSE (ZIP)</a>
                 } @else { {{ semRegistro }} }
@@ -255,7 +255,7 @@
     @case ('emendas') {
       <table role="table" data-cols="8">
         <caption [class.sr-only]="!legenda()">{{ legenda() || 'Emendas' }}</caption>
-        <thead role="rowgroup"><tr role="row"><th scope="col" role="columnheader">Emenda</th><th scope="col" role="columnheader">Tipo</th><th scope="col" role="columnheader">Localidade</th><th scope="col" role="columnheader">Função e ação</th><th scope="col" role="columnheader">Empenhado</th><th scope="col" role="columnheader">Liquidado</th><th scope="col" role="columnheader">Pago</th><th scope="col" role="columnheader">Restos a pagar pagos</th></tr></thead>
+        <thead role="rowgroup"><tr role="row"><th scope="col" role="columnheader">Emenda</th><th scope="col" role="columnheader">Tipo</th><th scope="col" role="columnheader">Localidade</th><th scope="col" role="columnheader">Função e ação</th><th scope="col" role="columnheader" class="numero">Empenhado</th><th scope="col" role="columnheader" class="numero">Liquidado</th><th scope="col" role="columnheader" class="numero">Pago</th><th scope="col" role="columnheader" class="numero">Restos a pagar pagos</th></tr></thead>
         <tbody role="rowgroup">
           @for (r of visiveis(); track $index) {
             <tr role="row">
@@ -263,13 +263,13 @@
                 Nº {{ texto(r['numero']) }}, código {{ texto(r['codigo']) }}
                 @if (textoOuNulo(r['autor_na_fonte']); as autor) { <br><small>Autor na fonte: {{ autor }}</small> }
               </span></td>
-              <td role="cell" data-label="Tipo"><span class="v">{{ texto(r['tipo']) }}</span></td>
-              <td role="cell" data-label="Localidade"><span class="v">{{ texto(r['localidade']) }}</span></td>
-              <td role="cell" data-label="Função e ação"><span class="v">{{ texto(r['funcao']) }}: {{ texto(r['acao']) }}</span></td>
-              <td class="numero" role="cell" data-label="Empenhado"><span class="v">{{ moeda(numero(r['valor_empenhado'])) }}</span></td>
-              <td class="numero" role="cell" data-label="Liquidado"><span class="v">{{ moeda(numero(r['valor_liquidado'])) }}</span></td>
-              <td class="numero" role="cell" data-label="Pago"><span class="v">{{ moeda(numero(r['valor_pago'])) }}</span></td>
-              <td class="numero" role="cell" data-label="Restos a pagar pagos"><span class="v">{{ moeda(numero(r['restos_pagos'])) }}</span></td>
+              <td role="cell" data-label="Tipo"><span class="v" [class.ausente]="ausente(r['tipo'])">{{ texto(r['tipo']) }}</span></td>
+              <td role="cell" data-label="Localidade"><span class="v" [class.ausente]="ausente(r['localidade'])">{{ texto(r['localidade']) }}</span></td>
+              <td role="cell" data-label="Função e ação"><span class="v" [class.ausente]="ausente(r['funcao']) && ausente(r['acao'])">{{ texto(r['funcao']) }}: {{ texto(r['acao']) }}</span></td>
+              <td class="numero" role="cell" data-label="Empenhado"><span class="v" [class.ausente]="numero(r['valor_empenhado']) === null">{{ moeda(numero(r['valor_empenhado'])) }}</span></td>
+              <td class="numero" role="cell" data-label="Liquidado"><span class="v" [class.ausente]="numero(r['valor_liquidado']) === null">{{ moeda(numero(r['valor_liquidado'])) }}</span></td>
+              <td class="numero" role="cell" data-label="Pago"><span class="v" [class.ausente]="numero(r['valor_pago']) === null">{{ moeda(numero(r['valor_pago'])) }}</span></td>
+              <td class="numero" role="cell" data-label="Restos a pagar pagos"><span class="v" [class.ausente]="numero(r['restos_pagos']) === null">{{ moeda(numero(r['restos_pagos'])) }}</span></td>
             </tr>
           }
         </tbody>
@@ -285,7 +285,7 @@
               <td role="cell" data-label="Data"><span class="v">{{ data(r['data']) }}</span></td>
               <td role="cell" data-label="Tipo"><span class="v">{{ r['tipo'] }}</span></td>
               <td role="cell" data-label="Ato"><span class="v"><a [href]="r.url_origem" rel="noopener noreferrer" target="_blank">{{ texto(r['nome']) }}</a></span></td>
-              <td role="cell" data-label="Ementa"><span class="v">{{ texto(r['ementa']) }}</span></td>
+              <td role="cell" data-label="Ementa"><span class="v" [class.ausente]="ausente(r['ementa'])">{{ texto(r['ementa']) }}</span></td>
             </tr>
           }
         </tbody>

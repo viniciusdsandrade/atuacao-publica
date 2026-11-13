@@ -62,6 +62,16 @@
   white-space: nowrap;
 }
 
+/* O cabeçalho da coluna numérica fica alinhado com os valores dela. */
+.tabela-rolagem th.numero {
+  text-align: right;
+}
+
+/* Link curto de fonte não quebra no meio ("ver na fonte" em uma linha). */
+.tabela-rolagem td[data-label='Fonte'] a {
+  white-space: nowrap;
+}
+
 .tabela-rolagem td.longo {
   min-width: 16rem;
 }
@@ -268,12 +278,17 @@
   font-size: 0.8125rem;
   font-family: inherit;
   cursor: pointer;
-  transition: all 0.15s ease;
+  -webkit-tap-highlight-color: transparent;
+  transition: background var(--transicao), border-color var(--transicao), color var(--transicao);
 }
 
 .botao-filtro-tabela:hover {
   background: var(--superficie-2);
   color: var(--texto);
+}
+
+.botao-filtro-tabela:active {
+  background: var(--superficie-3);
 }
 
 .botao-filtro-tabela[aria-pressed='true'] {

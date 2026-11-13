@@ -126,6 +126,11 @@ export class Tabela {
     return valor === null || valor === undefined || valor === '' ? SEM_REGISTRO : String(valor);
   }
 
+  /** Valor que a fonte não traz. A célula mostra a frase de ausência em tom mais baixo, para o dado presente aparecer primeiro. */
+  protected ausente(valor: unknown): boolean {
+    return valor === null || valor === undefined || valor === '' || (Array.isArray(valor) && valor.length === 0);
+  }
+
   protected numero(valor: unknown): number | null {
     return typeof valor === 'number' ? valor : null;
   }

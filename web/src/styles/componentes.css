@@ -617,6 +617,11 @@ a.selo {
   }
 }
 
+/* Valor que a fonte não publica: a mesma frase em todo o site, em tom mais baixo que o dado presente. */
+.ausente {
+  color: var(--texto-3);
+}
+
 /* Estado vazio ou de erro. */
 .caixa-vazia {
   display: grid;

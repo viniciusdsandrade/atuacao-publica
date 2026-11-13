@@ -277,8 +277,8 @@
                           <thead role="rowgroup">
                             <tr role="row">
                               <th scope="col" role="columnheader">{{ b === 'despesas' ? 'Categoria' : 'Órgão' }}</th>
-                              <th scope="col" role="columnheader">Valor</th>
-                              <th scope="col" role="columnheader">{{ unidade(b) === 'pagamentos' ? 'Pagamentos' : 'Lançamentos' }}</th>
+                              <th scope="col" role="columnheader" class="numero">Valor</th>
+                              <th scope="col" role="columnheader" class="numero">{{ unidade(b) === 'pagamentos' ? 'Pagamentos' : 'Lançamentos' }}</th>
                             </tr>
                           </thead>
                           <tbody role="rowgroup">
@@ -313,8 +313,8 @@
                               <thead role="rowgroup">
                                 <tr role="row">
                                   <th scope="col" role="columnheader">{{ t.coluna }}</th>
-                                  <th scope="col" role="columnheader">Valor</th>
-                                  <th scope="col" role="columnheader">Lançamentos</th>
+                                  <th scope="col" role="columnheader" class="numero">Valor</th>
+                                  <th scope="col" role="columnheader" class="numero">Lançamentos</th>
                                 </tr>
                               </thead>
                               <tbody role="rowgroup">
@@ -338,14 +338,14 @@
                               <tr role="row">
                                 <th scope="col" role="columnheader">Fornecedor</th>
                                 <th scope="col" role="columnheader">CNPJ</th>
-                                <th scope="col" role="columnheader">Valor contratado</th>
-                                <th scope="col" role="columnheader">Lançamentos</th>
+                                <th scope="col" role="columnheader" class="numero">Valor contratado</th>
+                                <th scope="col" role="columnheader" class="numero">Lançamentos</th>
                               </tr>
                             </thead>
                             <tbody role="rowgroup">
                               @for (f of c.despesas?.maiores_fornecedores ?? []; track f.cnpj) {
                                 <tr role="row">
-                                  <td role="cell" data-label="Fornecedor"><span class="v">{{ f.nome ?? semRegistro }}</span></td>
+                                  <td role="cell" data-label="Fornecedor"><span class="v" [class.ausente]="!f.nome">{{ f.nome ?? semRegistro }}</span></td>
                                   <td role="cell" data-label="CNPJ"><span class="v"><code>{{ f.cnpj }}</code></span></td>
                                   <td role="cell" class="numero" data-label="Valor contratado"><span class="v">{{ moeda(f.valor) }}</span></td>
                                   <td role="cell" class="numero" data-label="Lançamentos"><span class="v">{{ inteiro(f.quantidade) }}</span></td>
@@ -389,11 +389,11 @@
                     <thead role="rowgroup">
                       <tr role="row">
                         <th scope="col" role="columnheader">Ano</th>
-                        <th scope="col" role="columnheader">Emendas</th>
-                        <th scope="col" role="columnheader">Empenhado</th>
-                        <th scope="col" role="columnheader">Liquidado</th>
-                        <th scope="col" role="columnheader">Pago</th>
-                        <th scope="col" role="columnheader">Restos a pagar pagos</th>
+                        <th scope="col" role="columnheader" class="numero">Emendas</th>
+                        <th scope="col" role="columnheader" class="numero">Empenhado</th>
+                        <th scope="col" role="columnheader" class="numero">Liquidado</th>
+                        <th scope="col" role="columnheader" class="numero">Pago</th>
+                        <th scope="col" role="columnheader" class="numero">Restos a pagar pagos</th>
                       </tr>
                     </thead>
                     <tbody role="rowgroup">
