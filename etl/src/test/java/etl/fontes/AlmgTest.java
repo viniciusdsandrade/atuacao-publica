@@ -295,6 +295,46 @@ class AlmgTest {
         assertEquals(Almg.PROPOSICOES + "?ano=2024&tipo=CSV", fontes.get(0).path("url_origem").asText());
     }
 
+    @Test
+    void exDeputadoSomenteDaLegislatura19NaoFicaEmExercicio(@TempDir Path tempDir) throws Exception {
+        Path dados = tempDir.resolve("data");
+        Contexto ctx = new Contexto(tempDir, dados, null, null, Instant.parse("2026-11-03T12:00:00Z"), null);
+
+        Path rawAlmg = ctx.raw().resolve("almg");
+        Files.createDirectories(rawAlmg);
+
+        String pesquisa19Json = """
+                {
+                  "listaResultadoPesquisaDeputado": [
+                    {
+                      "codSituacao": 1,
+                      "numLegislatura": 19,
+                      "lista": [
+                        { "id": 26101, "nome": "Cleitinho Azevedo", "partido": "PSC", "temDetalhe": false }
+                      ]
+                    }
+                  ]
+                }
+                """;
+        Files.writeString(rawAlmg.resolve("pesquisa-leg-19.json"), pesquisa19Json);
+        gravarMetadado(rawAlmg, "pesquisa-leg-19.json", "https://dadosabertos.almg.gov.br/api/v2/legislaturas/pesquisa_deputados?leg=19&formato=json");
+
+        new Almg().normalize(ctx);
+
+        JsonNode pessoas = Json.ler(ctx.normalizado().resolve("almg/pessoas.json"));
+        assertEquals(1, pessoas.size());
+        JsonNode p = pessoas.get(0);
+        assertEquals("26101", p.path("id_fonte").asText());
+        assertFalse(p.path("em_exercicio").asBoolean());
+        assertEquals("mandato encerrado", p.path("situacao").asText());
+
+        JsonNode blocos = Json.ler(ctx.normalizado().resolve("almg/blocos/26101.json"));
+        JsonNode mandatos = blocos.path("mandatos");
+        assertEquals(1, mandatos.size());
+        assertEquals(19, mandatos.get(0).path("legislatura").asInt());
+        assertEquals("mandato encerrado", mandatos.get(0).path("situacao").asText());
+    }
+
     private void gravarMetadado(Path pastaRaw, String arquivo, String url) throws IOException {
         Path meta = pastaRaw.resolve(arquivo + ".meta.json");
         var arq = new Coleta.Arquivo(url, "raw/almg/" + arquivo, "hash", 100, Instant.now());

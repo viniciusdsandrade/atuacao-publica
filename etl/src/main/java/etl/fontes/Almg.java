@@ -182,12 +182,17 @@ public final class Almg implements Fonte {
 
             String nome = det != null && det.hasNonNull("nome") ? det.get("nome").asText() : dep.nome();
             String partido = det != null && det.hasNonNull("partido") ? det.get("partido").asText() : dep.partido();
+            boolean naLegAtual = naLegislaturaAtual(dep, det);
             int codSituacao = det != null && det.hasNonNull("codigoSituacao") ? det.get("codigoSituacao").asInt() : dep.codSituacao();
-            boolean emExercicio = codSituacao == 1;
-            String situacao = emExercicio ? "em exercício" : (det != null && det.hasNonNull("situacao") ? det.get("situacao").asText().toLowerCase() : "mandato encerrado");
+            boolean emExercicio = naLegAtual && codSituacao == 1;
+            String situacao = emExercicio
+                    ? "em exercício"
+                    : (!naLegAtual ? "mandato encerrado"
+                            : (det != null && det.hasNonNull("situacao") ? det.get("situacao").asText().toLowerCase() : "mandato encerrado"));
 
             String fotoUrl = SITE + "/export/sites/portal/a-assembleia/deputados/fotos/" + id + ".jpg";
-            Prov provDep = Prov.de(FONTE_DEPUTADOS, API + "/deputados/" + id, arqDet != null && arqDet.bytes() > 0 ? arqDet : arqBase);
+            Coleta.Arquivo arqLista = dep.legislatura() == LEGISLATURA_19 && arqLeg19 != null ? arqLeg19 : arqBase;
+            Prov provDep = Prov.de(FONTE_DEPUTADOS, API + "/deputados/" + id, arqDet != null && arqDet.bytes() > 0 ? arqDet : arqLista);
 
             List<LinkOficial> links = List.of(
                     new LinkOficial("Página na ALMG", SITE + "/deputados/conheca-os-deputados/deputado?idDeputado=" + id, provDep)
@@ -297,11 +302,23 @@ public final class Almg implements Fonte {
             int numLeg = dep.legislatura();
             LocalDate inicio = numLeg == LEGISLATURA_19 ? INICIO_LEG_19 : INICIO_LEG_20;
             LocalDate fim = numLeg == LEGISLATURA_19 ? FIM_LEG_19 : FIM_LEG_20;
-            String situacao = dep.codSituacao() == 1 ? "em exercício" : "mandato encerrado";
+            String situacao = numLeg == LEGISLATURA_20 && dep.codSituacao() == 1 ? "em exercício" : "mandato encerrado";
             int eleicao = numLeg == LEGISLATURA_19 ? 2018 : 2022;
             ac.mandatos.add(new Mandato("deputado_estadual", "estadual", UF, UF, inicio, fim,
                     situacao, "Efetivo", numLeg, eleicao, null, provDep));
         }
+    }
+
+    private static boolean naLegislaturaAtual(DeputadoBasico dep, JsonNode det) {
+        if (det != null && det.hasNonNull("legislaturas") && det.path("legislaturas").isArray()) {
+            for (JsonNode leg : det.path("legislaturas")) {
+                if (leg.path("numeroLegislatura").asInt() == LEGISLATURA_20) {
+                    return true;
+                }
+            }
+            return false;
+        }
+        return dep.legislatura() == LEGISLATURA_20;
     }
 
     private void processarComissoes(Contexto ctx, int id, Acumulado ac) {
