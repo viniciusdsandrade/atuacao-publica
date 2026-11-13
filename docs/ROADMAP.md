@@ -101,6 +101,13 @@ Estado real de cada fase. Atualizado ao fechar cada fase.
 - CMSP: 4 dos 55 vereadores ficaram sem vínculo com o TSE porque o nome parlamentar difere do nome de urna (por exemplo, uma palavra só). O vínculo ignora só a pontuação ("Jr.", "Dra."), porque casar por palavras soltas ligaria homônimos parciais e atribuiria candidaturas e bens a outra pessoa.
 - CMSP: a fonte deixa cargo antigo da Mesa sem data de fim quando há sucessor. Em cargo exclusivo (Mesa, presidência e vice-presidência de comissão), vale o de início mais recente entre os vereadores em exercício.
 - Capital: a eleição de 2020 não entra, porque o eleito prefeito deixou o cargo em 2021 e a regra de mandato do projeto supõe os quatro anos do eleito. A despesa do Executivo também não: a API do TCE-SP devolve lista vazia para a capital, e o Diário Oficial da Cidade respondeu 403 à requisição direta.
+- Caraguatatuba (ADR-0057): o sistema legislativo da Câmara não mantém a situação de tramitação (69 de 70 projetos de lei de 2024 constavam "em tramitação" em 2026-11-13). O campo sai vazio, e a nota do bloco diz por quê.
+- Caraguatatuba: sem votação nominal, sem discurso e sem ato do prefeito com fonte validada. A agenda do prefeito é um calendário do Google, cujo endereço tem e-mail, e fica fora.
+- Caraguatatuba: presença só de 2025 e 2026, e comissões sem registro em 2023 e 2024. A composição atual das comissões vem sem data.
+- Caraguatatuba: o bloco de despesas do vereador traz só diárias, ligadas pelo nome do beneficiário. Em 2025 a fonte deixa o cargo em branco em 47 de 96 registros; neles só vale o nome idêntico ao nome civil. Destino e motivo da diária ficam na fonte.
+- Caraguatatuba: a leitura do sistema legislativo e do portal é de HTML sem contrato. Mudança de marcação quebra a coleta, e o perfil fica com a última cópia válida. A saída do `normalize` conta a matéria anunciada pela pesquisa e não lida.
+- Até 2026-11-13, o recorte da prestação de contas do TSE ficava no cache para sempre nas eleições fechadas, e quem entrava na cobertura depois ficava sem o bloco de financiamento. No site daquele dia, deputados estaduais do AP, de RR e de MT tinham candidaturas e nenhum registro de financiamento. O `fetch tse` passou a refazer o recorte da eleição quando as candidaturas cobertas mudam (ADR-0057).
+- Cartão "Total no período" das despesas: valor com dez dígitos antes da vírgula quebra a linha no meio do número, na largura de 1366 px. Visto no prefeito de Caraguatatuba no ensaio de 2026-11-13. Sem correção.
 - Até 2026-11-06, nove adaptadores (ALECE, ALEGO, ALEPE, ALERJ, ALEPA, ALES, ALRS, ALESC e CLDF) gravavam o bloco `fontes` como lista, e o `Vinculo` lê um objeto por bloco. Os perfis dessas casas saíam com os blocos sem fonte e com `atualizado_em` nulo (verificado no perfil `alerj-505` publicado). Corrigido: as fontes de cada bloco vêm da proveniência dos registros (`Registros.fontesDosBlocos`), e o `Vinculo` interrompe o `publish` se receber uma lista. No ensaio local das treze casas, nenhum bloco com registro ficou sem fonte.
 - Até 2026-11-07, a ALESP repetia a mesma fonte a cada registro (um perfil citava 2.106 vezes o mesmo arquivo de despesas), e o bloco de participação em votações saía sem fonte. Corrigido no adaptador. O `publish` passou a tirar fontes repetidas de qualquer bloco e, se um adaptador não declarar a fonte de um bloco com registro, a citar a proveniência dos registros, com o caso contado no log.
 - Até 2026-11-06, o cargo `deputado_distrital` não estava na tabela de blocos do `Publicador`, e os perfis da CLDF saíam sem bloco nenhum, nem mandato. Corrigido, com um teste que confere os blocos de todo cargo do schema.
@@ -575,6 +582,23 @@ Limitações:
     | ALETO | não implementado | implementado via SAPL (ADR-0046) | não encontrado (Mesa Diretora integrada em orgaos_e_frentes) |
     | ALESE | não implementado | não implementado | não encontrado (Mesa Diretora integrada em orgaos_e_frentes) |
     | ALAP | implementado em 2026-11-12, pela coleta local cifrada; CEAP por gabinete e subelemento desde 2023-02 | não implementado | não encontrado |
+
+24. Terceiro município: Caraguatatuba, Câmara Municipal e Prefeitura (ADR-0057): implementado e ensaiado em 2026-11-13. Publicação pendente.
+    - Fontes catalogadas e validadas em `docs/FONTES.md`: sistema legislativo da Câmara (`caraguatatuba-camara-sagl`), portal da Câmara (`caraguatatuba-camara-portal`), Portal da Transparência do município (`caraguatatuba-transparencia`) e Diário Oficial (`caraguatatuba-pmc-diario-oficial`).
+    - Modelo e identificador: `sagl-3510500-{cod_parlamentar}` e chave `caraguatatuba` em `ids_externos`. Cargo `vereador`, esfera `municipal`, ente `3510500`.
+    - Adaptador `Caraguatatuba.java` (`CaraguatatubaTest.java`, 31 testes com dado sintético): fichas, matérias por autor e ano, composição das comissões, listas de presença e diárias.
+    - Primeira coleta, com o cliente do projeto: 199 arquivos em 5 minutos e meio, a 1 segundo por servidor, sem falha. O cache bruto ocupa 3,4 MB.
+    - Ensaio local: 24 vereadores com mandato a partir de 2022 (15 em exercício), 3.859 proposições, 80 sessões com presença (1.178 presenças, 11 faltas justificadas e 1 falta; 10 licenças ficam fora) e 46 diárias em 9 vereadores.
+    - As contagens do ensaio batem com as do levantamento, feito à parte sobre as mesmas páginas. Nenhuma matéria anunciada pela pesquisa ficou sem leitura.
+    - Vínculo com o TSE: a unidade eleitoral `63118` entra desde 2020. Os 24 vereadores foram vinculados pelo nome civil que a Câmara publica.
+    - Executivo: prefeito e vice de 2020 e de 2024, com regras de mandato do ente `3510500`. Despesas da prefeitura pelo TCE-SP: 75.146 pagamentos de 2022 a 2024 e 46.173 de 2025 a 2026.
+    - No ensaio, 28 perfis do município: 24 vereadores, 2 prefeitos e 2 vices. Todos passaram no schema, sem rejeição.
+    - Privacidade: telefone, e-mail e biografia saem da ficha antes do cache; das diárias, só as de vereador são gravadas, sem nome e sem matrícula. As 25 fichas do cache foram conferidas.
+    - Site: município nos rótulos, nome da coleta em "Estado das coletas", título e nota próprios para as despesas na esfera municipal, nota das proposições e dos atos, e selo de liderança que quebra a linha.
+    - Pipeline e workflow: registro em `Main.java`, `Publicador.java`, `Vinculo.java`, `Tse.java` e `TceSp.java`, e passo `fetch caraguatatuba` em `.github/workflows/dados.yml`.
+    - Recorte da prestação de contas refeito quando a cobertura muda. No ensaio, o `fetch tse` refez as cinco eleições em 2 minutos, e o `normalize tse` achou prestação de contas em 77.877 candidaturas.
+    - Verificação: 375 testes do ETL, 22 unitários do site e 93 de ponta a ponta, com axe nos dois temas, no desktop e no celular. No site local com os dados do ensaio, as páginas do município abriram sem erro de console e sem requisição a terceiros.
+    - Não validado: a coleta a partir do runner do GitHub Actions. Se a Câmara recusar conexão de fora do país, a casa entra na coleta local cifrada (ADR-0034).
 
 ### Redes sociais
 
