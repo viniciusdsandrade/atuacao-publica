@@ -53,14 +53,12 @@ class AlapTest {
         assertEquals("ALDILENE MATOS DE SOUZA", d1.nomeCompleto());
         assertEquals("PDT", d1.partido());
         assertEquals("https://www.al.ap.leg.br/fotodeputado/230828122115Aldilene%20Souza.jpg", d1.fotoUrl());
-        assertEquals("Administradora", d1.profissao());
 
         Alap.DeputadoCard d2 = deputados.get(1);
         assertEquals("75", d2.id());
         assertEquals("Alliny Serrão", d2.nomeParlamentar());
         assertEquals("ALLINY SOUSA DA ROCHA SERRÃO", d2.nomeCompleto());
         assertEquals("UNIÃO", d2.partido());
-        assertEquals("Empresária", d2.profissao());
     }
 
     @Test
@@ -132,10 +130,7 @@ class AlapTest {
         assertTrue(Files.exists(arqBloco), "bloco 75.json deve existir");
         JsonNode bloco = Json.ler(arqBloco);
 
-        // Biografia não deve conter CPF
-        String bio = bloco.get("biografia").stringValue();
-        assertFalse(bio.contains("123.456.789-00"), "CPF deve ter sido removido pela Guarda");
-        assertTrue(bio.contains("Empresária e líder comunitária"));
+        assertNull(bloco.get("biografia"), "A biografia não é guardada no bloco normalizado");
 
         // Órgãos (Mesa Diretora)
         JsonNode orgaos = bloco.get("orgaos_e_frentes");
@@ -222,10 +217,10 @@ class AlapTest {
     @Test
     void resolverGabineteDesambiguaERejeitaAmbiguidade() {
         List<Alap.DeputadoCard> deputados = List.of(
-                new Alap.DeputadoCard("61", "Pastor Oliveira", "CARLOS ANTONIO OLIVEIRA SANTOS", "REPUBLICANOS", null, null, null),
-                new Alap.DeputadoCard("66", "Roberto Góes", "ROBERTO CARLOS FERREIRA GÓES", "UNIÃO", null, null, null),
-                new Alap.DeputadoCard("90", "Silva Junior", "JOÃO SILVA SANTOS", "PDT", null, null, null),
-                new Alap.DeputadoCard("91", "Maria Silva", "MARIA SILVA SANTOS", "PSD", null, null, null));
+                new Alap.DeputadoCard("61", "Pastor Oliveira", "CARLOS ANTONIO OLIVEIRA SANTOS", "REPUBLICANOS", null, null),
+                new Alap.DeputadoCard("66", "Roberto Góes", "ROBERTO CARLOS FERREIRA GÓES", "UNIÃO", null, null),
+                new Alap.DeputadoCard("90", "Silva Junior", "JOÃO SILVA SANTOS", "PDT", null, null),
+                new Alap.DeputadoCard("91", "Maria Silva", "MARIA SILVA SANTOS", "PSD", null, null));
 
         assertEquals("66", Alap.resolverGabinete(new Alap.GabineteCeap("1", "ROBERTO GOES -UNIÃO"), deputados).id());
         assertEquals("61", Alap.resolverGabinete(new Alap.GabineteCeap("2", "OLIVEIRA SANTOS - REPUBLICANOS"), deputados).id());

@@ -34,7 +34,7 @@ import etl.Texto;
 /**
  * Câmara Legislativa do Distrito Federal (CLDF, ADR-0026).
  * Coleta os 24 deputados distritais em exercício na 9ª legislatura (2023–2027),
- * fotografias oficiais, biografias e comissões permanentes.
+ * fotografias oficiais e comissões permanentes.
  */
 public final class Cldf implements Fonte {
 
@@ -64,9 +64,6 @@ public final class Cldf implements Fonte {
             "<a[^>]+class=[\"'][^\"']*template-card[^\"']*[\"'][^>]+href=[\"']([^\"']+)[\"'][^>]*>.*?<img[^>]+src=[\"']([^\"']+)[\"'].*?<span class=[\"']card-title[\"']>([^<]+)</span>\\s*<span class=[\"']card-text[\"']>([^<]+)</span>",
             Pattern.DOTALL | Pattern.CASE_INSENSITIVE);
 
-    public static final Pattern PARAGRAFO_PATTERN = Pattern.compile(
-            "<p[^>]*>(.*?)</p>",
-            Pattern.DOTALL | Pattern.CASE_INSENSITIVE);
 
     public static final Pattern REDES_PATTERN = Pattern.compile(
             "href=[\"'](https?://(?:www\\.)?(?:facebook|instagram|twitter|x|youtube)\\.com/[^\"'#\\s]+)[\"']",
@@ -159,7 +156,6 @@ public final class Cldf implements Fonte {
             String nome = d.nome();
             String partido = d.partido();
             String fotoUrl = d.fotoUrl();
-            String biografia = null;
 
             String urlPerfil = d.href().startsWith("http") ? d.href() : SITE + d.href();
             Coleta.Arquivo arqPerfil = Coleta.metadados(ctx, nome(), "perfis/" + slug + ".html");
@@ -172,22 +168,6 @@ public final class Cldf implements Fonte {
                 try {
                     String htmlPerfil = Texto.lerArquivo(Coleta.caminho(ctx, arqPerfil));
 
-                    List<String> paragrafosBio = new ArrayList<>();
-                    Matcher mP = PARAGRAFO_PATTERN.matcher(htmlPerfil);
-                    while (mP.find()) {
-                        String textoP = mP.group(1).replaceAll("<[^>]+>", " ")
-                                .replaceAll("&nbsp;", " ")
-                                .replaceAll("\\s+", " ").trim();
-                        if (textoP.length() > 60 && !textoP.contains("ouvidoria@cl.df.gov.br")
-                                && !textoP.contains("Barra de busca")
-                                && !textoP.contains("Redes Sociais")
-                                && !textoP.contains("Horário de atendimento")) {
-                            paragrafosBio.add(textoP);
-                        }
-                    }
-                    if (!paragrafosBio.isEmpty()) {
-                        biografia = String.join("\n\n", paragrafosBio);
-                    }
 
                     Matcher mRedes = REDES_PATTERN.matcher(htmlPerfil);
                     Set<String> redesVistas = new HashSet<>();
@@ -219,9 +199,6 @@ public final class Cldf implements Fonte {
             blocosNode.set("despesas", Json.SAIDA.createArrayNode());
             blocosNode.set("proposicoes", Json.SAIDA.valueToTree(proposicoesPorNome.getOrDefault(chaveNome, List.of())));
             blocosNode.set("fontes", Json.SAIDA.valueToTree(Registros.fontesDosBlocos(blocosNode)));
-            if (biografia != null) {
-                blocosNode.put("biografia", biografia);
-            }
 
             try {
                 Path arquivoBloco = pastaBlocos.resolve(id + ".json");

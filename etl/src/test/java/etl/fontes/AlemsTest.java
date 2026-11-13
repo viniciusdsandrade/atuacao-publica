@@ -3,6 +3,7 @@ package etl.fontes;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
@@ -77,7 +78,7 @@ class AlemsTest {
     }
 
     @Test
-    void parsePerfilExtraiDadosEBiografiaMinimizada() {
+    void parsePerfilExtraiNomePartidoEFoto() {
         String html = """
                 <section id="content">
                     <div class="container">
@@ -106,9 +107,6 @@ class AlemsTest {
         assertEquals("Gerson Claro", perfil.nomeParlamentar());
         assertEquals("PP", perfil.partido());
         assertEquals("https://al.ms.gov.br/upload/Deputy/2025_02_13_08_42_23_41382d6a-cf14-40b5-9cf6-036eb701f302.jpg", perfil.fotoUrl());
-        assertNotNull(perfil.biografia());
-        assertTrue(perfil.biografia().contains("Gerson Claro nasceu em Itaporã"));
-        assertFalse(perfil.biografia().contains("123.456.789-00")); // CPF minimizado por Guarda.semCpf
         assertTrue(perfil.redes().isEmpty()); // redes institucionais da ALEMS no rodapé ignoradas
     }
 
@@ -221,7 +219,7 @@ class AlemsTest {
         Path arqBloco = ctx.normalizado().resolve("alems/blocos/35.json");
         assertTrue(Files.exists(arqBloco));
         JsonNode bloco = Json.ler(arqBloco);
-        assertEquals("Historiador e advogado.", bloco.get("biografia").stringValue());
+        assertNull(bloco.get("biografia"), "A biografia não é guardada no bloco normalizado");
         assertEquals(1, bloco.get("orgaos_e_frentes").size());
         assertEquals("Presidente", bloco.get("orgaos_e_frentes").get(0).get("papel").stringValue());
     }

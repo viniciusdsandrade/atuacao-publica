@@ -35,7 +35,7 @@ import etl.Texto;
 /**
  * Assembleia Legislativa do Estado do Pará (ALEPA, ADR-0024).
  * Coleta os 41 deputados estaduais em exercício na 60ª legislatura (2023–2027),
- * dados de mandato, comissões permanentes e representações, biografias, fotografias e links institucionais.
+ * dados de mandato, comissões permanentes e representações, fotografias e links institucionais.
  */
 public final class Alepa implements Fonte {
 
@@ -95,9 +95,6 @@ public final class Alepa implements Fonte {
             "<div class=[\"']card-politico-img-wrapper[\"']>.*?<img src=[\"']([^\"']+)[\"']",
             Pattern.DOTALL | Pattern.CASE_INSENSITIVE);
 
-    public static final Pattern BIO_PATTERN = Pattern.compile(
-            "<div id=[\"']bioContent[\"']>(.*?)</div>",
-            Pattern.DOTALL | Pattern.CASE_INSENSITIVE);
 
     public static final Pattern COMISSAO_ITEM_PATTERN = Pattern.compile(
             "<div class=[\"']comissoes-item[\"']>.*?<div class=[\"']comissoes-header[\"']><h1>([^<]+)</h1></div>.*?<div class=[\"']comissoes-content[\"']>(.*?)</div>\\s*</div>",
@@ -404,7 +401,6 @@ public final class Alepa implements Fonte {
             String fotoUrl = d.fotoUrl();
             String nomeCivil = null;
             LocalDate nascimento = null;
-            String biografia = null;
 
             Coleta.Arquivo arqPerfil = Coleta.metadados(ctx, nome(), "perfis/" + id + ".html");
             Prov provPerfil = Prov.de(FONTE_DETALHES, SITE + "/Institucional/Deputado/" + id, arqPerfil);
@@ -442,13 +438,6 @@ public final class Alepa implements Fonte {
                         }
                     }
 
-                    Matcher mBio = BIO_PATTERN.matcher(htmlPerfil);
-                    if (mBio.find()) {
-                        String bioTexto = mBio.group(1).replaceAll("<[^>]+>", " ").replaceAll("\\s+", " ").trim();
-                        if (!bioTexto.isBlank()) {
-                            biografia = decodificarHtml(bioTexto);
-                        }
-                    }
                 } catch (Exception e) {
                     System.err.println("alepa: erro ao ler perfil de " + id + ": " + e.getMessage());
                 }

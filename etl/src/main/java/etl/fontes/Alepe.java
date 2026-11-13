@@ -47,7 +47,7 @@ import tools.jackson.databind.JsonNode;
 /**
  * Assembleia Legislativa do Estado de Pernambuco (ALEPE, ADR-0025).
  * Coleta os 49 deputados estaduais em exercício na 20ª legislatura (2023–2027),
- * dados biográficos, fotos oficiais, comissões temáticas e mandatos.
+ * fotos oficiais, comissões temáticas e mandatos.
  */
 public final class Alepe implements Fonte {
 
@@ -118,9 +118,6 @@ public final class Alepe implements Fonte {
             "<dt>Naturalidade:</dt>\\s*<dd>([^<]+)</dd>",
             Pattern.CASE_INSENSITIVE);
 
-    public static final Pattern BIO_PATTERN = Pattern.compile(
-            "<div class=[\"']resume[\"']>(.*?)</div>",
-            Pattern.DOTALL | Pattern.CASE_INSENSITIVE);
 
     public static final Pattern FOTO_PERFIL_PATTERN = Pattern.compile(
             "<figure class=[\"']figure figure-avatar[\"']>\\s*<img[^>]+src=[\"']([^\"']+)[\"']",
@@ -327,7 +324,6 @@ public final class Alepe implements Fonte {
             String partido = normalizarPartido(d.partido());
             String fotoUrl = normalizarUrlFoto(d.fotoUrl());
             String nomeCivil = null;
-            String biografia = null;
 
             Coleta.Arquivo arqPerfil = Coleta.metadados(ctx, nome(), "perfis/" + slug + ".html");
             Prov provPerfil = Prov.de(FONTE_DETALHES, SITE + "/parlamentar/" + slug + "/", arqPerfil);
@@ -355,13 +351,6 @@ public final class Alepe implements Fonte {
                         }
                     }
 
-                    Matcher mBio = BIO_PATTERN.matcher(htmlPerfil);
-                    if (mBio.find()) {
-                        String bioTexto = limparHtml(mBio.group(1));
-                        if (bioTexto != null && bioTexto.length() > 30) {
-                            biografia = bioTexto;
-                        }
-                    }
 
                     Matcher mRedes = REDES_SOCIAIS_PATTERN.matcher(htmlPerfil);
                     Set<String> redesVistas = new HashSet<>();
@@ -392,9 +381,6 @@ public final class Alepe implements Fonte {
             blocosNode.set("despesas", Json.SAIDA.valueToTree(despesasPorDeputado.getOrDefault(slug, List.of())));
             blocosNode.set("proposicoes", Json.SAIDA.valueToTree(proposicoesPorDeputado.getOrDefault(slug, List.of())));
             blocosNode.set("fontes", Json.SAIDA.valueToTree(Registros.fontesDosBlocos(blocosNode)));
-            if (biografia != null) {
-                blocosNode.put("biografia", biografia);
-            }
             if (nomeCivil != null) {
                 blocosNode.put("nome_civil", nomeCivil);
             }

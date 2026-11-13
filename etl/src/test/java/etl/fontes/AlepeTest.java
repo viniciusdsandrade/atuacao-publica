@@ -2,6 +2,7 @@ package etl.fontes;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.ByteArrayInputStream;
@@ -399,7 +400,7 @@ class AlepeTest {
         assertEquals("Vice-Presidente", orgaos.get(0).get("papel").stringValue());
 
         assertEquals("Abimael dos Santos Pereira", bloco.get("nome_civil").stringValue());
-        assertTrue(bloco.get("biografia").stringValue().contains("Abimael Santos é deputado estadual"));
+        assertNull(bloco.get("biografia"), "A biografia não é guardada no bloco normalizado");
     }
 
     private static void gravarMetadado(Path dir, String arquivo, String url) throws IOException {

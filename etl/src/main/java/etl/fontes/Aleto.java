@@ -21,7 +21,6 @@ import etl.Coleta;
 import etl.Coleta.Politica;
 import etl.Contexto;
 import etl.Fonte;
-import etl.Guarda;
 import etl.Json;
 import etl.Registros;
 import etl.Registros.LinkOficial;
@@ -29,13 +28,12 @@ import etl.Registros.Mandato;
 import etl.Registros.OrgaoOuFrente;
 import etl.Registros.Pessoa;
 import etl.Registros.Prov;
-import etl.Texto;
 
 /**
  * Assembleia Legislativa do Estado do Tocantins (ALETO, ADR-0046).
  * Coleta os deputados estaduais em exercício na 10ª Legislatura (2023 a 2027) via API REST JSON
  * do SAPL 3 (Sistema de Apoio ao Processo Legislativo do Interlegis), dados de mandato,
- * composição da Mesa Diretora, biografias, fotografias oficiais e proposições legislativas.
+ * composição da Mesa Diretora, fotografias oficiais e proposições legislativas.
  */
 public final class Aleto implements Fonte {
 
@@ -171,7 +169,6 @@ public final class Aleto implements Fonte {
 
             String nomeParlamentar = null;
             String nomeCompleto = null;
-            String biografia = null;
             String fotoUrl = null;
             boolean ativo = true;
 
@@ -181,17 +178,6 @@ public final class Aleto implements Fonte {
                 nomeCompleto = Json.texto(parlNode, "nome_completo");
                 ativo = parlNode.path("ativo").asBoolean(true);
 
-                String bioHtml = Json.texto(parlNode, "biografia");
-                if (bioHtml != null && !bioHtml.isBlank()) {
-                    String bioLimpa = bioHtml.replaceAll("<[^>]+>", " ")
-                            .replaceAll("&nbsp;", " ")
-                            .replaceAll("&amp;", "&")
-                            .replaceAll("\\s+", " ").trim();
-                    bioLimpa = Texto.semEntidades(bioLimpa);
-                    if (!bioLimpa.isBlank()) {
-                        biografia = Guarda.semCpf(bioLimpa);
-                    }
-                }
 
                 String fotoRaw = Json.texto(parlNode, "fotografia");
                 if (fotoRaw != null && !fotoRaw.isBlank()) {
@@ -241,9 +227,6 @@ public final class Aleto implements Fonte {
             blocosNode.set("despesas", Json.SAIDA.createArrayNode());
             blocosNode.set("proposicoes", Json.SAIDA.valueToTree(proposicoes));
             blocosNode.set("fontes", Json.SAIDA.valueToTree(Registros.fontesDosBlocos(blocosNode)));
-            if (biografia != null) {
-                blocosNode.put("biografia", biografia);
-            }
 
             try {
                 Path arquivoBloco = pastaBlocos.resolve(idStr + ".json");

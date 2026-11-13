@@ -3,6 +3,7 @@ package etl.fontes;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
@@ -80,20 +81,6 @@ class AleseTest {
                 </div>
                 """;
         assertEquals("Adailton Martins de Oliveira Filho", Alese.parseNomeCivil(html));
-    }
-
-    @Test
-    void parseBiografiaHigienizaHtmlESanitizaDadosSensíveis() {
-        String html = """
-                <div id="texto_biografia" class="kt-section texto-biografia">
-                    <p>Natural de Aracaju, exerceu cargo público. CPF: 123.456.789-00 e telefone (79) 99999-9999.</p>
-                </div>
-                """;
-        String bio = Alese.parseBiografia(html);
-        assertNotNull(bio);
-        assertTrue(bio.contains("Natural de Aracaju, exerceu cargo público."));
-        assertFalse(bio.contains("123.456.789-00"));
-        assertFalse(bio.contains("(79) 99999-9999"));
     }
 
     @Test
@@ -224,10 +211,7 @@ class AleseTest {
         assertTrue(Files.exists(arqBloco), "bloco 545.json deve existir");
         JsonNode bloco = Json.ler(arqBloco);
 
-        // Biografia não deve conter CPF
-        String bio = bloco.get("biografia").stringValue();
-        assertFalse(bio.contains("123.456.789-00"), "CPF deve ter sido removido pela Guarda");
-        assertTrue(bio.contains("Natural de Aracaju"));
+        assertNull(bloco.get("biografia"), "A biografia não é guardada no bloco normalizado");
 
         // Órgãos (Mesa Diretora)
         JsonNode orgaos = bloco.get("orgaos_e_frentes");

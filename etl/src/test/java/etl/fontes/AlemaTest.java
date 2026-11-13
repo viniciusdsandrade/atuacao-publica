@@ -3,6 +3,7 @@ package etl.fontes;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
@@ -61,27 +62,11 @@ class AlemaTest {
         assertEquals("MDB", d1.partido());
         assertEquals("https://www.al.ma.leg.br/sitealema/wp-content/uploads/2024/12/Abigail-Cunha.jpg", d1.fotoUrl());
         assertEquals("https://www.al.ma.leg.br/sitealema/deputado/abigail-cunha/", d1.link());
-        assertEquals("Empresária e bacharel em Direito", d1.profissao());
 
         Alema.DeputadoCard d2 = deputados.get(1);
         assertEquals("carlos-lula", d2.slug());
         assertEquals("Carlos Lula", d2.nome());
         assertEquals("PSB", d2.partido());
-        assertEquals("Advogado e professor universitário", d2.profissao());
-    }
-
-    @Test
-    void parseBiografiaHigienizaHtmlESanitizaDadosSensíveis() {
-        String html = """
-                <div class="entry-content">
-                    <p>Iracema Vale é enfermeira e deputada estadual. CPF 123.456.789-00 e contato (98) 99999-9999.</p>
-                </div>
-                """;
-        String bio = Alema.parseBiografia(html);
-        assertNotNull(bio);
-        assertTrue(bio.contains("Iracema Vale é enfermeira e deputada estadual."));
-        assertFalse(bio.contains("123.456.789-00"));
-        assertFalse(bio.contains("(98) 99999-9999"));
     }
 
     @Test
@@ -141,10 +126,7 @@ class AlemaTest {
         assertTrue(Files.exists(arqBloco), "bloco iracema-vale.json deve existir");
         JsonNode bloco = Json.ler(arqBloco);
 
-        // Biografia não deve conter CPF
-        String bio = bloco.get("biografia").stringValue();
-        assertFalse(bio.contains("123.456.789-00"), "CPF deve ter sido removido pela Guarda");
-        assertTrue(bio.contains("Iracema Cristina Vale Lima"));
+        assertNull(bloco.get("biografia"), "A biografia não é guardada no bloco normalizado");
 
         // Órgãos (Mesa Diretora)
         JsonNode orgaos = bloco.get("orgaos_e_frentes");

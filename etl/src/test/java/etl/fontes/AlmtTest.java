@@ -3,6 +3,7 @@ package etl.fontes;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
@@ -79,7 +80,7 @@ class AlmtTest {
     }
 
     @Test
-    void parsePerfilExtraiNomeCivilNomeParlamentarPartidoBiografiaERedes() {
+    void parsePerfilExtraiNomeCivilNomeParlamentarPartidoERedes() {
         String html = """
                 <div class="container">
                     <div class="row align-items-end">
@@ -135,8 +136,6 @@ class AlmtTest {
         assertEquals("Beto Dois a Um", perfil.nomeParlamentar());
         assertEquals("PODE", perfil.partido());
         assertEquals("https://storage.al.mt.gov.br/api/v1/download/image/570629?width=420px&quality=80", perfil.fotoUrl());
-        assertEquals("Alberto Machado, o Beto Dois a Um nasceu em 1976. Foi eleito deputado estadual em 2022 com 26.462 votos.",
-                perfil.biografia());
         assertEquals(2, perfil.redes().size());
         assertTrue(perfil.redes().contains("https://twitter.com/betodoisaum"));
         assertTrue(perfil.redes().contains("https://www.instagram.com/betodoisaum"));
@@ -266,7 +265,7 @@ class AlmtTest {
         JsonNode bloco = Json.ler(blocoPath);
         assertTrue(bloco.has("mandatos"));
         assertTrue(bloco.has("orgaos_e_frentes"));
-        assertEquals("Biografia do Beto.", bloco.get("biografia").stringValue());
+        assertNull(bloco.get("biografia"), "A biografia não é guardada no bloco normalizado");
         assertEquals(1, bloco.get("orgaos_e_frentes").size());
         assertEquals("Presidente", bloco.get("orgaos_e_frentes").get(0).get("papel").stringValue());
     }

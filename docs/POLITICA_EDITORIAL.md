@@ -15,6 +15,7 @@
 - Resumo factual de contribuidor, com até 300 caracteres, verificável na fonte e revisado antes do merge.
 
 O projeto não publica texto gerado por IA sobre político.
+O projeto não publica nem guarda a biografia que a casa legislativa escreve sobre o político (ADR-0054).
 O projeto não publica boato, notícia de imprensa, conteúdo de rede social de terceiros nem inferência.
 
 ## Dados que nunca entram

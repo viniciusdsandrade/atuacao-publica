@@ -2,6 +2,7 @@ package etl.fontes;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
@@ -266,7 +267,7 @@ class CldfTest {
         assertEquals("Comissão de Transporte e Mobilidade Urbana", orgaos.get(0).get("nome").stringValue());
         assertEquals("Presidente", orgaos.get(0).get("papel").stringValue());
 
-        assertTrue(bloco.get("biografia").stringValue().contains("Eleito com quase 45 mil votos"));
+        assertNull(bloco.get("biografia"), "A biografia não é guardada no bloco normalizado");
     }
 
     private static void gravarMetadado(Path dir, String arquivo, String url) throws IOException {

@@ -54,7 +54,7 @@ import etl.Texto;
  * Assembleia Legislativa do Estado do Amapá (ALAP, ADR-0051).
  * Coleta os 24 deputados estaduais em exercício na 9ª Legislatura (2023 a 2027)
  * a partir do portal institucional oficial, dados de mandato, composição da Mesa Diretora,
- * filiação partidária, profissão/biografia, fotografias oficiais e a CEAP do portal de transparência.
+ * filiação partidária, fotografias oficiais e a CEAP do portal de transparência.
  */
 public final class Alap implements Fonte {
 
@@ -84,7 +84,7 @@ public final class Alap implements Fonte {
     private static final String HTML = "text/html";
 
     public record DeputadoCard(String id, String nomeParlamentar, String nomeCompleto, String partido,
-                              String fotoUrl, String link, String profissao) {
+                              String fotoUrl, String link) {
     }
 
     public record MesaMembro(String id, String cargo, String nome) {
@@ -305,9 +305,6 @@ public final class Alap implements Fonte {
             blocosNode.set("despesas", Json.SAIDA.valueToTree(despesas));
             blocosNode.set("proposicoes", Json.SAIDA.createArrayNode());
             blocosNode.set("fontes", Json.SAIDA.valueToTree(Registros.fontesDosBlocos(blocosNode)));
-            if (d.profissao() != null && !d.profissao().isBlank()) {
-                blocosNode.put("biografia", d.profissao());
-            }
 
             try {
                 Path arquivoBloco = pastaBlocos.resolve(idStr + ".json");
@@ -353,7 +350,6 @@ public final class Alap implements Fonte {
             String nomeParlamentar = nomeTitulo;
             String nomeCompleto = null;
             String partido = "S/P";
-            String profissao = null;
 
             if (tip != null && !tip.isBlank()) {
                 Matcher mNomeComp = Pattern.compile("<b>Nome Completo:</b>\\s*([^<]+)", Pattern.CASE_INSENSITIVE).matcher(tip);
@@ -365,18 +361,11 @@ public final class Alap implements Fonte {
                     String partRaw = decodificarHtml(mPart.group(1).trim());
                     partido = normalizarPartido(partRaw);
                 }
-                Matcher mProf = Pattern.compile("<b>Profiss[^<]*:</b>\\s*([^<]+)", Pattern.CASE_INSENSITIVE).matcher(tip);
-                if (mProf.find()) {
-                    String profRaw = decodificarHtml(mProf.group(1).trim());
-                    if (!profRaw.isBlank()) {
-                        profissao = Guarda.semCpf(profRaw);
-                    }
-                }
             }
 
             String fotoUrl = formatarUrlFoto(fotoSrc);
             String link = URL_PARLAMENTAR + id;
-            lista.add(new DeputadoCard(id, nomeParlamentar, nomeCompleto, partido, fotoUrl, link, profissao));
+            lista.add(new DeputadoCard(id, nomeParlamentar, nomeCompleto, partido, fotoUrl, link));
         }
         lista.sort(Comparator.comparing(DeputadoCard::nomeParlamentar));
         return lista;

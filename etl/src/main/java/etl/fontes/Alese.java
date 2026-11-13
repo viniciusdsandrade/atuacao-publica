@@ -43,7 +43,7 @@ import etl.Texto;
  * Assembleia Legislativa do Estado de Sergipe (ALESE, ADR-0047).
  * Coleta os 24 deputados estaduais em exercício na 20ª Legislatura (2023 a 2027)
  * a partir do portal institucional oficial, dados de mandato, composição da Mesa Diretora,
- * filiação partidária, biografias e fotografias oficiais.
+ * filiação partidária e fotografias oficiais.
  */
 public final class Alese implements Fonte {
 
@@ -91,9 +91,6 @@ public final class Alese implements Fonte {
             "Nome civil:</span>\\s*<span[^>]*>([^<]+)</span>",
             Pattern.CASE_INSENSITIVE);
 
-    private static final Pattern PATTERN_BIO = Pattern.compile(
-            "id=[\"']texto_biografia[\"'][^>]*>(.*?)</div>",
-            Pattern.DOTALL | Pattern.CASE_INSENSITIVE);
 
     private static final Pattern PATTERN_MESA = Pattern.compile(
             "<div[^>]*align=[\"']left[\"']>\\s*([^<:]+):\\s*</div>.*?</td>\\s*<td><b>([^<]+)</b>",
@@ -553,7 +550,6 @@ public final class Alese implements Fonte {
             // Sem a ficha no cache (coleta que não alcançou o sistema legislativo), o link cita a lista de deputados.
             Prov provParl = arqDetalhe != null ? Prov.de(FONTE_PARLAMENTARES, urlDetalhe, arqDetalhe) : provDeputados;
 
-            String biografia = null;
             String nomeCivil = d.nome();
 
             if (arqDetalhe != null && Files.exists(Coleta.caminho(ctx, arqDetalhe))) {
@@ -563,7 +559,6 @@ public final class Alese implements Fonte {
                     if (nc != null && !nc.isBlank()) {
                         nomeCivil = nc;
                     }
-                    biografia = parseBiografia(htmlDetalhe);
                 } catch (Exception e) {
                     System.err.println("alese: aviso ao ler detalhe de " + id + ": " + e.getMessage());
                 }
@@ -598,9 +593,6 @@ public final class Alese implements Fonte {
             blocosNode.set("despesas", Json.SAIDA.createArrayNode());
             blocosNode.set("proposicoes", Json.SAIDA.valueToTree(proposicoes));
             blocosNode.set("fontes", Json.SAIDA.valueToTree(Registros.fontesDosBlocos(blocosNode)));
-            if (biografia != null && !biografia.isBlank()) {
-                blocosNode.put("biografia", biografia);
-            }
 
             try {
                 Path arquivoBloco = pastaBlocos.resolve(idStr + ".json");
@@ -670,26 +662,6 @@ public final class Alese implements Fonte {
         return null;
     }
 
-    public static String parseBiografia(String html) {
-        if (html == null || html.isBlank()) {
-            return null;
-        }
-        Matcher m = PATTERN_BIO.matcher(html);
-        if (m.find()) {
-            String bruta = m.group(1);
-            String limpa = bruta.replaceAll("<[^>]+>", " ");
-            limpa = decodificarHtml(limpa);
-            if (limpa.isBlank()) {
-                return null;
-            }
-            limpa = limpa.replaceAll("\\(?\\d{2}\\)?\\s*\\d{4,5}-?\\d{4}", " ");
-            limpa = limpa.replaceAll("[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}", " ");
-            limpa = Guarda.semCpf(limpa);
-            limpa = limpa.replaceAll("\\s+", " ").trim();
-            return limpa.isBlank() ? null : limpa;
-        }
-        return null;
-    }
 
     public static List<MesaMembro> parseMesa(String html) {
         if (html == null || html.isBlank()) {

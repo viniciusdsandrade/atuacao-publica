@@ -21,7 +21,6 @@ import etl.Coleta;
 import etl.Coleta.Politica;
 import etl.Contexto;
 import etl.Fonte;
-import etl.Guarda;
 import etl.Json;
 import etl.Registros;
 import etl.Registros.LinkOficial;
@@ -29,13 +28,12 @@ import etl.Registros.Mandato;
 import etl.Registros.OrgaoOuFrente;
 import etl.Registros.Pessoa;
 import etl.Registros.Prov;
-import etl.Texto;
 
 /**
  * Assembleia Legislativa do Estado da Paraíba (ALPB, ADR-0039).
  * Coleta os deputados estaduais em exercício na 20ª Legislatura (2023–2027) via API REST JSON
  * do SAPL 3 (Sistema de Apoio ao Processo Legislativo do Interlegis), dados de mandato,
- * composição da Mesa Diretora, filiações, biografias e fotografias.
+ * composição da Mesa Diretora, filiações e fotografias.
  */
 public final class Alpb implements Fonte {
 
@@ -157,7 +155,6 @@ public final class Alpb implements Fonte {
 
             String nomeParlamentar = null;
             String nomeCompleto = null;
-            String biografia = null;
             String fotoUrl = null;
             boolean ativo = true;
 
@@ -167,17 +164,6 @@ public final class Alpb implements Fonte {
                 nomeCompleto = Json.texto(parlNode, "nome_completo");
                 ativo = parlNode.hasNonNull("ativo") ? parlNode.get("ativo").asBoolean() : true;
 
-                String bioRaw = Json.texto(parlNode, "biografia");
-                if (bioRaw != null && !bioRaw.isBlank()) {
-                    String bioLimpa = bioRaw.replaceAll("<[^>]+>", " ")
-                            .replaceAll("&nbsp;", " ")
-                            .replaceAll("&amp;", "&")
-                            .replaceAll("\\s+", " ").trim();
-                    bioLimpa = Texto.semEntidades(bioLimpa);
-                    if (!bioLimpa.isBlank()) {
-                        biografia = Guarda.semCpf(bioLimpa);
-                    }
-                }
 
                 String fotoRaw = Json.texto(parlNode, "fotografia");
                 if (fotoRaw != null && !fotoRaw.isBlank()) {
@@ -227,9 +213,6 @@ public final class Alpb implements Fonte {
             blocosNode.set("despesas", Json.SAIDA.createArrayNode());
             blocosNode.set("proposicoes", Json.SAIDA.valueToTree(proposicoes));
             blocosNode.set("fontes", Json.SAIDA.valueToTree(Registros.fontesDosBlocos(blocosNode)));
-            if (biografia != null) {
-                blocosNode.put("biografia", biografia);
-            }
 
             try {
                 Path arquivoBloco = pastaBlocos.resolve(idStr + ".json");

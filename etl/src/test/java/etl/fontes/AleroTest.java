@@ -3,6 +3,7 @@ package etl.fontes;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
@@ -258,10 +259,7 @@ class AleroTest {
         assertTrue(Files.exists(arqBloco), "bloco 256.json deve existir");
         JsonNode bloco = Json.ler(arqBloco);
 
-        // Biografia não deve conter CPF
-        String bio = bloco.get("biografia").stringValue();
-        assertFalse(bio.contains("123.456.789-00"), "CPF deve ter sido removido pela Guarda");
-        assertTrue(bio.contains("Presidente da Assembleia Legislativa"));
+        assertNull(bloco.get("biografia"), "A biografia não é guardada no bloco normalizado");
 
         // Órgãos (Mesa Diretora)
         JsonNode orgaos = bloco.get("orgaos_e_frentes");

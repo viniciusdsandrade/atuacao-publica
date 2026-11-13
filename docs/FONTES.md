@@ -3,6 +3,7 @@
 Este documento lista as fontes usadas ou avaliadas pelo projeto.
 O catálogo legível por máquina fica em `contrib/fontes.yaml`.
 Os dois arquivos mudam juntos.
+A descrição diz o que a fonte traz. Biografia citada na descrição não é extraída nem publicada (ADR-0054).
 
 ## Como ler
 
@@ -1438,7 +1439,7 @@ Validação em 2026-11-03 com o User-Agent do projeto.
 ### `aleto-parlamentares`: cadastro individual e biografias
 
 - URL base: `https://sapl.al.to.leg.br/api/parlamentares/parlamentar/{id}/`
-- Cadastro detalhado do parlamentar com nome completo civil, nome parlamentar, fotografia oficial, forma de tratamento e biografia oficial sanitizada com `Guarda.semCpf`.
+- Cadastro detalhado do parlamentar com nome completo civil, nome parlamentar, fotografia oficial e forma de tratamento. A biografia da ficha não é usada (ADR-0054).
 
 ### `aleto-mesa-diretora`: composição da Mesa Diretora
 
@@ -1477,7 +1478,7 @@ Validação em 2026-11-03 com o User-Agent do projeto.
 ### `alese-parlamentares`: cadastro individual e biografias
 
 - URL base: `https://aleselegis.al.se.leg.br/spl/parlamentar.aspx?id={id}`
-- Ficha institucional individual no sistema legislativo com nome civil, mandatos, cargos em comissões e biografia sanitizada com `Guarda.semCpf`.
+- Ficha institucional individual no sistema legislativo com nome civil, mandatos, e cargos em comissões. A biografia da ficha não é usada (ADR-0054).
 
 ### `alese-proposicoes`: produção legislativa por autor
 
@@ -1513,7 +1514,7 @@ Validação em 2026-11-03 com o User-Agent do projeto.
 ### `alema-parlamentares`: fichas individuais e biografias
 
 - URL base: `https://www.al.ma.leg.br/sitealema/deputados/detalhes/{slug}`
-- Ficha institucional individual com foto oficial, partido, profissão e biografia parlamentar sanitizada com `Guarda.semCpf`.
+- Ficha institucional individual com foto oficial e partido. A profissão e a biografia da ficha não são usadas (ADR-0054).
 
 ### `alema-mesa-diretora`: composição da Mesa Diretora
 
@@ -1542,7 +1543,7 @@ Validação em 2026-11-03 com o User-Agent do projeto.
 ### `aleac-parlamentares`: cadastro individual e biografias
 
 - URL base: `https://sapl.al.ac.leg.br/api/parlamentares/parlamentar/{id}/`
-- Cadastro individual no SAPL com nome civil, mandatos, fotografia oficial e biografia parlamentar sanitizada com `Guarda.semCpf`.
+- Cadastro individual no SAPL com nome civil, mandatos e fotografia oficial. A biografia do cadastro não é usada (ADR-0054).
 
 ### `aleac-mesa-diretora`: composição da Mesa Diretora
 
@@ -1581,7 +1582,7 @@ Validação em 2026-11-03 com o User-Agent do projeto.
 ### `alerr-parlamentares`: cadastro individual e biografias
 
 - URL base: `https://sapl.al.rr.leg.br/api/parlamentares/parlamentar/{id}/`
-- Cadastro individual no SAPL com nome civil, mandatos, fotografia oficial e biografia parlamentar sanitizada com `Guarda.semCpf`.
+- Cadastro individual no SAPL com nome civil, mandatos e fotografia oficial. A biografia do cadastro não é usada (ADR-0054).
 
 ### `alerr-mesa-diretora`: composição da Mesa Diretora
 
@@ -1620,7 +1621,7 @@ Validação em 2026-11-03 com o User-Agent do projeto.
 ### `alap-parlamentares`: cadastro individual e biografias
 
 - URL base: `https://www.al.ap.leg.br/pagina.php?pg=exibir_parlamentar&iddeputado={id}`
-- Ficha institucional individual com foto oficial, partido, profissão e biografia parlamentar sanitizada com `Guarda.semCpf`.
+- Ficha institucional individual com foto oficial e partido. A profissão e a biografia da ficha não são usadas (ADR-0054).
 
 ### `alap-mesa-diretora`: composição da Mesa Diretora
 

@@ -33,7 +33,7 @@ import etl.Texto;
 /**
  * Assembleia Legislativa do Estado de Mato Grosso do Sul (ALEMS, ADR-0038).
  * Coleta os 24 deputados estaduais em exercício na 12ª legislatura (2023–2027),
- * dados de mandato, composição da Mesa Diretora, biografias, fotografias e links institucionais.
+ * dados de mandato, composição da Mesa Diretora, fotografias e links institucionais.
  */
 public final class Alems implements Fonte {
 
@@ -55,7 +55,7 @@ public final class Alems implements Fonte {
     }
 
     public record PerfilDeputado(String nomeParlamentar, String partido, String fotoUrl,
-                                 String biografia, List<String> redes) {
+                                 List<String> redes) {
     }
 
     public static final Pattern PARTY_BLOCK_PATTERN = Pattern.compile(
@@ -78,9 +78,6 @@ public final class Alems implements Fonte {
             "<img[^>]+src=[\"'](/upload/Deputy/[^\"']+)[\"']",
             Pattern.CASE_INSENSITIVE);
 
-    public static final Pattern BIO_PATTERN = Pattern.compile(
-            "<div class=[\"']col-lg-7 text-justify[\"']>(.*?)</div>",
-            Pattern.DOTALL | Pattern.CASE_INSENSITIVE);
 
     public static final Pattern MESA_ROW_PATTERN = Pattern.compile(
             "<tr>\\s*<td>\\s*([^<]+?)\\s*</td>\\s*<td>\\s*([^<]+?)\\s*</td>\\s*</tr>",
@@ -135,7 +132,6 @@ public final class Alems implements Fonte {
             String nomeParlamentar = d.nome();
             String partido = d.partido();
             String fotoUrl = d.fotoUrl();
-            String biografia = null;
 
             String urlPerfil = d.href().startsWith("http") ? d.href() : SITE + d.href();
             Coleta.Arquivo arqPerfil = Coleta.metadados(ctx, nome(), "perfis/" + id + ".html");
@@ -157,9 +153,6 @@ public final class Alems implements Fonte {
                     }
                     if (perfil.fotoUrl() != null && !perfil.fotoUrl().isBlank()) {
                         fotoUrl = perfil.fotoUrl();
-                    }
-                    if (perfil.biografia() != null && !perfil.biografia().isBlank()) {
-                        biografia = Guarda.semCpf(perfil.biografia());
                     }
                     for (String rede : perfil.redes()) {
                         links.add(new LinkOficial("Rede social", rede, provPerfil));
@@ -186,9 +179,6 @@ public final class Alems implements Fonte {
             blocosNode.set("despesas", Json.SAIDA.createArrayNode());
             blocosNode.set("proposicoes", Json.SAIDA.createArrayNode());
             blocosNode.set("fontes", Json.SAIDA.valueToTree(Registros.fontesDosBlocos(blocosNode)));
-            if (biografia != null) {
-                blocosNode.put("biografia", biografia);
-            }
 
             try {
                 Path arquivoBloco = pastaBlocos.resolve(id + ".json");
@@ -254,7 +244,6 @@ public final class Alems implements Fonte {
         String nomeParlamentar = null;
         String partido = null;
         String fotoUrl = null;
-        String biografia = null;
         List<String> redes = new ArrayList<>();
 
         Matcher mHeading = WIDGET_HEADING_PATTERN.matcher(html);
@@ -269,18 +258,6 @@ public final class Alems implements Fonte {
             fotoUrl = SITE + (caminhoFoto.startsWith("/") ? "" : "/") + caminhoFoto;
         }
 
-        Matcher mBio = BIO_PATTERN.matcher(html);
-        if (mBio.find()) {
-            String bioHtml = mBio.group(1);
-            String textoBio = bioHtml.replaceAll("<[^>]+>", " ")
-                    .replaceAll("&nbsp;", " ")
-                    .replaceAll("&amp;", "&")
-                    .replaceAll("\\s+", " ").trim();
-            textoBio = Texto.semEntidades(textoBio);
-            if (!textoBio.isBlank()) {
-                biografia = Guarda.semCpf(textoBio);
-            }
-        }
 
         // Extrai redes sociais de parlamentares se houver (fora do rodapé)
         int idxContent = html.indexOf("id=\"content\"");
@@ -303,7 +280,7 @@ public final class Alems implements Fonte {
             }
         }
 
-        return new PerfilDeputado(nomeParlamentar, partido, fotoUrl, biografia, redes);
+        return new PerfilDeputado(nomeParlamentar, partido, fotoUrl, redes);
     }
 
     public Map<String, List<OrgaoOuFrente>> extrairMesaDiretora(Contexto ctx, Prov provMesa) {

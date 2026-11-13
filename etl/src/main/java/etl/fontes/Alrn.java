@@ -35,7 +35,7 @@ import etl.Texto;
  * Assembleia Legislativa do Estado do Rio Grande do Norte (ALRN, ADR-0044).
  * Coleta os 24 deputados estaduais em exercício na 63ª Legislatura (2023–2027)
  * a partir do portal oficial, dados de mandato, composição da Mesa Diretora,
- * filiação partidária, biografias e fotografias oficiais.
+ * filiação partidária e fotografias oficiais.
  */
 public final class Alrn implements Fonte {
 
@@ -142,14 +142,13 @@ public final class Alrn implements Fonte {
             String urlDetalhe = SITE + "/deputado/" + id + "/" + d.slug();
             Prov provParl = Prov.de(FONTE_PARLAMENTARES, urlDetalhe, arqDetalhe);
 
-            String biografia = null;
             String nomeCivil = null;
 
             if (arqDetalhe != null && Files.exists(Coleta.caminho(ctx, arqDetalhe))) {
                 try {
                     String htmlDetalhe = Texto.lerArquivo(Coleta.caminho(ctx, arqDetalhe));
-                    biografia = extrairBiografia(htmlDetalhe);
-                    nomeCivil = extrairNomeCivilDaBio(biografia);
+                    // A ficha só traz o nome civil dentro do texto biográfico. O texto não é guardado.
+                    nomeCivil = extrairNomeCivilDaBio(extrairBiografia(htmlDetalhe));
                 } catch (Exception e) {
                     System.err.println("alrn: aviso ao ler detalhe de " + id + ": " + e.getMessage());
                 }
@@ -187,9 +186,6 @@ public final class Alrn implements Fonte {
             blocosNode.set("despesas", Json.SAIDA.createArrayNode());
             blocosNode.set("proposicoes", Json.SAIDA.createArrayNode());
             blocosNode.set("fontes", Json.SAIDA.valueToTree(Registros.fontesDosBlocos(blocosNode)));
-            if (biografia != null && !biografia.isBlank()) {
-                blocosNode.put("biografia", biografia);
-            }
 
             try {
                 Path arquivoBloco = pastaBlocos.resolve(idStr + ".json");

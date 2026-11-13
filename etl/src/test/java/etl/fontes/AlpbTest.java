@@ -3,6 +3,7 @@ package etl.fontes;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
@@ -241,9 +242,7 @@ class AlpbTest {
         Path arqBloco = ctx.normalizado().resolve("alpb/blocos/89.json");
         assertTrue(Files.exists(arqBloco));
         JsonNode bloco = Json.ler(arqBloco);
-        assertNotNull(bloco.get("biografia"));
-        assertTrue(bloco.get("biografia").stringValue().contains("Graduado em Engenharia Civil e Direito"));
-        assertFalse(bloco.get("biografia").stringValue().contains("123.456.789-00")); // CPF descartado por Guarda.semCpf
+        assertNull(bloco.get("biografia"), "A biografia não é guardada no bloco normalizado");
         assertEquals(1, bloco.get("orgaos_e_frentes").size());
         assertEquals("Presidente", bloco.get("orgaos_e_frentes").get(0).get("papel").stringValue());
 

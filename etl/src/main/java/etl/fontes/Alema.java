@@ -34,7 +34,7 @@ import etl.Texto;
  * Assembleia Legislativa do Estado do Maranhão (ALEMA, ADR-0048).
  * Coleta os 43 deputados estaduais em exercício na 20ª Legislatura (2023 a 2027)
  * a partir do portal institucional oficial, dados de mandato, composição da Mesa Diretora,
- * filiação partidária, biografias e fotografias oficiais.
+ * filiação partidária e fotografias oficiais.
  */
 public final class Alema implements Fonte {
 
@@ -54,7 +54,7 @@ public final class Alema implements Fonte {
 
     private static final String HTML = "text/html";
 
-    public record DeputadoCard(String slug, String nome, String partido, String fotoUrl, String link, String profissao) {
+    public record DeputadoCard(String slug, String nome, String partido, String fotoUrl, String link) {
     }
 
     public record MesaMembro(String cargo, String nome) {
@@ -67,9 +67,6 @@ public final class Alema implements Fonte {
                     "<p[^>]*class=[\"']news-card-chapeu[\"']>([^<]+)</p>",
             Pattern.DOTALL | Pattern.CASE_INSENSITIVE);
 
-    private static final Pattern PATTERN_PROFISSAO = Pattern.compile(
-            "<p[^>]*class=[\"'][^\"']*fs-6[^\"']*[\"'][^>]*>([^<]+)</p>",
-            Pattern.CASE_INSENSITIVE);
 
     private static final List<MesaMembro> MESA_DIRETORA_PADRAO = List.of(
             new MesaMembro("Presidente", "Iracema Vale"),
@@ -148,20 +145,8 @@ public final class Alema implements Fonte {
             String urlDetalhe = URL_PARLAMENTAR + slug + "/";
             Prov provParl = Prov.de(FONTE_PARLAMENTARES, urlDetalhe, arqDetalhe);
 
-            String biografia = d.profissao();
             String nomeCivil = d.nome();
 
-            if (arqDetalhe != null && Files.exists(Coleta.caminho(ctx, arqDetalhe))) {
-                try {
-                    String htmlDetalhe = Texto.lerArquivo(Coleta.caminho(ctx, arqDetalhe));
-                    String bio = parseBiografia(htmlDetalhe);
-                    if (bio != null && !bio.isBlank()) {
-                        biografia = bio;
-                    }
-                } catch (Exception e) {
-                    System.err.println("alema: aviso ao ler detalhe de " + slug + ": " + e.getMessage());
-                }
-            }
 
             nomesCivisPorSlug.put(slug, nomeCivil);
 
@@ -189,9 +174,6 @@ public final class Alema implements Fonte {
             blocosNode.set("despesas", Json.SAIDA.createArrayNode());
             blocosNode.set("proposicoes", Json.SAIDA.createArrayNode());
             blocosNode.set("fontes", Json.SAIDA.valueToTree(Registros.fontesDosBlocos(blocosNode)));
-            if (biografia != null && !biografia.isBlank()) {
-                blocosNode.put("biografia", biografia);
-            }
 
             try {
                 Path arquivoBloco = pastaBlocos.resolve(slug + ".json");
@@ -228,44 +210,15 @@ public final class Alema implements Fonte {
             String partido = decodificarHtml(m.group(5).trim());
             String link = URL_PARLAMENTAR + slug + "/";
 
-            String profissao = null;
-            Matcher mProf = PATTERN_PROFISSAO.matcher(html.substring(m.start(), Math.min(m.start() + 1000, html.length())));
-            if (mProf.find()) {
-                String prof = decodificarHtml(mProf.group(1).trim());
-                if (!prof.isBlank()) {
-                    profissao = prof;
-                }
-            }
 
             if (vistos.add(slug)) {
-                lista.add(new DeputadoCard(slug, nome, partido, fotoUrl, link, profissao));
+                lista.add(new DeputadoCard(slug, nome, partido, fotoUrl, link));
             }
         }
         lista.sort(Comparator.comparing(DeputadoCard::nome));
         return lista;
     }
 
-    public static String parseBiografia(String html) {
-        if (html == null || html.isBlank()) {
-            return null;
-        }
-        Pattern p = Pattern.compile("<div[^>]*class=[\"'][^\"']*entry-content[^\"']*[\"'][^>]*>(.*?)</div>", Pattern.DOTALL | Pattern.CASE_INSENSITIVE);
-        Matcher m = p.matcher(html);
-        if (m.find()) {
-            String bruta = m.group(1);
-            String limpa = bruta.replaceAll("<[^>]+>", " ");
-            limpa = decodificarHtml(limpa);
-            if (limpa.isBlank()) {
-                return null;
-            }
-            limpa = limpa.replaceAll("\\(?\\d{2}\\)?\\s*\\d{4,5}-?\\d{4}", " ");
-            limpa = limpa.replaceAll("[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}", " ");
-            limpa = Guarda.semCpf(limpa);
-            limpa = limpa.replaceAll("\\s+", " ").trim();
-            return limpa.isBlank() ? null : limpa;
-        }
-        return null;
-    }
 
     public static String decodificarHtml(String s) {
         if (s == null) {
