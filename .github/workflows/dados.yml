@@ -11,7 +11,7 @@ on:
       fonte:
         description: Fonte a coletar. As demais seguem do cache de dados brutos.
         type: choice
-        options: [todas, camara, senado, tse, executivo, sapl, tcesp, cgu, agenda, contrib, alesp, executivosp, almg, alep, alba, alerj, alrs, alece, alesc, alego, ales, alepa, alepe, cldf, almt, alems, alpb, aleam, aleal, alero, alepi, alrn, aleto, alese, alema, aleac, alerr, alap, cmsp]
+        options: [todas, camara, senado, tse, executivo, sapl, tcesp, cgu, agenda, contrib, alesp, executivosp, almg, alep, alba, alerj, alrs, alece, alesc, alego, ales, alepa, alepe, cldf, almt, alems, alpb, aleam, aleal, alero, alepi, alrn, aleto, alese, alema, aleac, alerr, alap, cmsp, caraguatatuba]
         default: todas
 
 permissions:
@@ -118,7 +118,7 @@ jobs:
           ETL_ORCAMENTO_MINUTOS: '75'
         run: java -Xmx4g -jar etl/target/etl.jar fetch sapl
       - name: fetch tcesp
-        # Despesas do município do piloto no TCE-SP: um arquivo por mês do mandato, os 6 últimos renovados toda semana.
+        # Despesas dos municípios paulistas cobertos, no TCE-SP: um arquivo por mês do mandato, os 6 últimos renovados toda semana.
         if: env.FONTE == 'todas' || env.FONTE == 'tcesp'
         continue-on-error: true
         timeout-minutes: 20
@@ -379,6 +379,15 @@ jobs:
         env:
           ETL_ORCAMENTO_MINUTOS: '15'
         run: java -Xmx2g -jar etl/target/etl.jar fetch cmsp
+      - name: fetch caraguatatuba
+        # Câmara Municipal de Caraguatatuba (ADR-0057): fichas, matérias, comissões, listas de presença e diárias.
+        # Cerca de 200 chamadas na primeira carga, a 1 segundo por servidor; depois, rodízio semanal.
+        if: env.FONTE == 'todas' || env.FONTE == 'caraguatatuba'
+        continue-on-error: true
+        timeout-minutes: 25
+        env:
+          ETL_ORCAMENTO_MINUTOS: '20'
+        run: java -Xmx2g -jar etl/target/etl.jar fetch caraguatatuba
       - name: fetch contrib
         # Confere se as URLs de origem e os snapshots dos registros manuais ainda respondem.
         if: env.FONTE == 'todas' || env.FONTE == 'contrib'
