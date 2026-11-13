@@ -73,3 +73,10 @@ test('aplicarTemaNoDocumento manipula atributo data-tema na raiz', () => {
   aplicarTemaNoDocumento('sistema', mockRaiz);
   assert.equal(atributos.has('data-tema'), false);
 });
+
+test('o script de arranque usa a mesma chave de storage do tema', async () => {
+  // public/arranque.js aplica o tema antes de o site iniciar; a chave precisa ser a mesma daqui.
+  const { readFile } = await import('node:fs/promises');
+  const arranque = await readFile(new URL('../../public/arranque.js', import.meta.url), 'utf8');
+  assert.ok(arranque.includes(`'${CHAVE_STORAGE_TEMA}'`));
+});

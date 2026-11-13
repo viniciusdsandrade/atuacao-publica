@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
-import { Injectable, inject } from '@angular/core';
-import { Observable, from, shareReplay, switchMap } from 'rxjs';
+import { Injectable, inject, signal } from '@angular/core';
+import { Observable, catchError, defer, from, shareReplay, switchMap, tap } from 'rxjs';
 
 import { Detalhe, Execucao, Fonte, Indice, Perfil } from './modelo';
 
@@ -19,13 +19,35 @@ export interface ManifestDumps {
   arquivos: ItemManifestDump[];
 }
 
+/** Na página inicial, public/arranque.js pede o índice antes de o site iniciar e deixa o pedido aqui. */
+type JanelaComIndice = Window & { indiceAdiantado?: Promise<Indice> };
+
 /** Lê os JSON publicados pelo ETL. Tudo vem do próprio site: nenhuma chamada a terceiros. */
 @Injectable({ providedIn: 'root' })
 export class Dados {
   private readonly http = inject(HttpClient);
   private readonly base = 'dados/';
 
-  readonly indice$: Observable<Indice> = this.http.get<Indice>(this.base + 'index.json').pipe(shareReplay(1));
+  /** O índice, quando já foi baixado. Serve a quem aproveita o que está em memória sem pedir o arquivo (prévia do perfil). */
+  readonly indiceEmMemoria = signal<Indice | null>(null);
+
+  /**
+   * O pedido adiantado vale uma vez. Sem ele, ou se ele falhar, o índice vem pelo caminho normal;
+   * nova tentativa depois de erro também.
+   */
+  readonly indice$: Observable<Indice> = defer(() => {
+    const pedido$ = this.http.get<Indice>(this.base + 'index.json');
+    const janela: JanelaComIndice | null = typeof window === 'undefined' ? null : window;
+    const adiantado = janela?.indiceAdiantado;
+    if (!janela || !adiantado) {
+      return pedido$;
+    }
+    janela.indiceAdiantado = undefined;
+    return from(adiantado).pipe(catchError(() => pedido$));
+  }).pipe(
+    tap((indice) => this.indiceEmMemoria.set(indice)),
+    shareReplay(1),
+  );
   readonly execucao$: Observable<Execucao> = this.http.get<Execucao>(this.base + '_meta/execucao.json').pipe(shareReplay(1));
   readonly fontes$: Observable<Fonte[]> = this.http.get<Fonte[]>(this.base + 'fontes.json').pipe(shareReplay(1));
   readonly manifestDumps$: Observable<ManifestDumps> = this.http.get<ManifestDumps>(this.base + 'dumps/manifest.json').pipe(shareReplay(1));
@@ -48,6 +70,14 @@ export class Dados {
     }
     this.perfis.set(id, perfil$);
     return perfil$;
+  }
+
+  /**
+   * Pede o perfil antes do clique (ponteiro parado sobre o cartão). A resposta fica na memória dos perfis.
+   * Falha aqui não aparece para ninguém: quem abrir o perfil pede de novo.
+   */
+  aquecerPerfil(id: string): void {
+    this.perfil(id).subscribe({ error: () => undefined });
   }
 
   /** Endereço do JSON publicado de um perfil, para quem quer os dados abertos. */
