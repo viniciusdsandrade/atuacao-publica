@@ -1685,6 +1685,75 @@ Validação em 2026-11-06.
 - Despesa do Executivo: a API do TCE-SP devolve lista vazia para a capital (2026-11-06). Sem fonte validada.
 - O Diário Oficial da Cidade (`diariooficial.prefeitura.sp.gov.br`) respondeu 403 à requisição direta de teste. Não foi catalogado.
 
+## Terceiro município: Caraguatatuba (Câmara e Prefeitura)
+
+Código IBGE `3510500` e unidade eleitoral `63118` no TSE (ADR-0057).
+Validação em 2026-11-13, com o cliente do projeto: 199 arquivos na primeira coleta, sem falha.
+
+| id | Fonte | Nível | Formato | Autenticação | Status | Validado em |
+|---|---|---|---|---|---|---|
+| `caraguatatuba-camara-sagl` | Câmara Municipal de Caraguatatuba, sistema legislativo (SAGL) | T0 | HTML | nenhuma | validado com limitação | 2026-11-13 |
+| `caraguatatuba-camara-portal` | Câmara Municipal de Caraguatatuba, portal institucional | T0 | HTML e JSON | nenhuma | validado com limitação | 2026-11-13 |
+| `caraguatatuba-transparencia` | Município de Caraguatatuba, Portal da Transparência | T0 | JSON | nenhuma | validado com limitação | 2026-11-13 |
+| `caraguatatuba-pmc-diario-oficial` | Prefeitura de Caraguatatuba, Diário Oficial | T0 | HTML e PDF | nenhuma | validado com limitação | 2026-11-13 |
+
+Ritmo da coleta: no mínimo 1 segundo entre chamadas a cada servidor.
+
+### `caraguatatuba-camara-sagl`: vereadores, mandatos, Mesa, comissões e matérias
+
+- URL base: `https://sistema.camaracaragua.sp.gov.br/`. É o SAGL, da OpenLegis. Não é SAPL e não tem API.
+- O servidor não tem `robots.txt` (404). O portal da Câmara, que embute este sistema, libera tudo no dele.
+- `consultas/parlamentar/parlamentar_index_html?hdn_num_legislatura={n}`: vereadores de uma legislatura. O seletor da página lista as legislaturas com os anos.
+- `consultas/parlamentar/parlamentar_mostrar_proc?cod_parlamentar={cod}`: ficha do vereador. Traz nome parlamentar, nome civil, a marca "Em exercício" ou "Inativo", foto, filiações com data, mandatos por legislatura (titular ou suplente, início e fim), cargos na Mesa com período e cargos em comissões com período.
+- A ficha também traz telefone, e-mail e biografia. Os três são retirados antes de o arquivo ir para o cache (ADR-0054 e ADR-0057).
+- A ficha liga o parlamentar ao código de autor (`hdn_cod_autor`), que é outro número.
+- `consultas/materia/materia_pesquisar_proc?hdn_cod_autor={autor}&txt_ano={ano}&step=200&page={n}`: matérias de um autor num ano, 200 por página. A página anuncia o total da pesquisa.
+- Cada matéria tem tipo, número, ano, ementa, data de apresentação e link do texto integral. O código da URL (`cod_materia`) é o identificador numérico em base64.
+- A pesquisa devolve as matérias em que o vereador é autor ou coautor, sem separar. O campo `proponente` fica nulo.
+- **A situação de tramitação não é mantida.** Em 2026-11-13, 69 dos 70 projetos de lei de 2024 e 577 dos 580 requerimentos de 2025 constavam "em tramitação". O campo não é publicado.
+- A exportação RSS da pesquisa (`generico/RSS2_materias`) só responde com o tipo de matéria informado. Não é usada.
+- Comissões: a ficha tem registros até 2022. As de 2025 em diante vêm do portal.
+- Sessões: o calendário tem uma sessão cadastrada, de 2023. Sem votação nominal.
+- Normas: a pesquisa de legislação não tem lei, lei complementar nem decreto de 2025 e de 2026.
+- Identificador canônico no projeto: `sagl-3510500-{cod_parlamentar}`. Chave `caraguatatuba` em `ids_externos`.
+- Medidas da primeira coleta: 25 fichas, 24 vereadores com mandato a partir de 2022 (15 em exercício) e 3.859 proposições.
+
+### `caraguatatuba-camara-portal`: comissões e listas de presença
+
+- URL base: `https://caraguatatuba.sp.leg.br/`. `robots.txt`: `Disallow:` vazio.
+- Termos de uso de 2026-07-06: é permitido "acessar e consultar conteúdos para fins informativos, educacionais, jornalísticos e de transparência".
+- `vereadores/comissoes`: composição atual das comissões permanentes, com nome do vereador e papel. Sem data de início e de fim.
+- `api/table-list/data?table=LegislativeAttendances&limit=100&page={n}`: listagem das listas de presença. Cada item traz o identificador da lista e a sessão: tipo, número e data.
+- `api/legislative/attendances/{id}/view`: a lista, em HTML dentro de JSON. Uma linha por vereador, com `P` (presença), `L` (licença), `FJ` (falta justificada) ou `F` (falta).
+- `api/legislative/attendances/{id}/pdf`: a mesma lista em PDF, com o timbre da Câmara. É o endereço de origem de cada registro de presença. O ETL lê a versão `view`.
+- A tabela da lista só traz dia e mês. O ano vem da listagem. Lista com mais de uma sessão não é lida, e não havia nenhuma em 2026-11-13.
+- Sessão futura já tem lista, vazia. Só entra a lista de sessão já realizada.
+- Medidas da primeira coleta: 86 listas, de 2025 e de 2026. 82 de sessão já realizada, 80 com marcação: 1.178 presenças, 11 faltas justificadas, 1 falta e 10 licenças.
+- A lista de vereadores (`vereadores-da-casa`) traz telefone e e-mail. Não é coletada.
+- O portal grafa o nome civil de um vereador com uma letra a menos que o sistema legislativo. A ligação entre os dois segue o ADR-0057.
+
+### `caraguatatuba-transparencia`: diárias
+
+- URL base: `https://portaldatransparencia.caraguatatuba.sp.gov.br/`. API documentada em `/api-docs` (Swagger).
+- O portal atende quatro entidades (`api/sis_entidade`): o Município, a Câmara (`id_entidade=1`), a fundação cultural e o instituto de previdência.
+- `api/execucao/diarias/diarias?id_entidade=1&cp_ano={ano}-01-01`: diárias da Câmara no ano. O parâmetro do ano é uma data. Só com o ano, a API responde 500.
+- Campos: beneficiário, matrícula, cargo, empenho, motivo, destino, quantidade, valor e datas de concessão, empenho, saída e retorno.
+- A maior parte das diárias é de servidor. O cache guarda só as de vereador, sem nome e sem matrícula: código do parlamentar, valor, datas e número do empenho.
+- O beneficiário vem só pelo nome. Em 2025 o cargo está em branco em 47 de 96 registros.
+- Medidas da primeira coleta: nenhuma diária em 2022; 215 em 2023 e 200 em 2024, nenhuma de vereador; 96 em 2025, 1 de vereador; 183 em 2026, 45 de vereador.
+- Uma diária de 2026 tem cargo "vereadora" e nome que não é de vereador. Fica fora e é contada na saída do `normalize`.
+- O bloco de despesas publica a categoria "Diária", o valor, a data de concessão e o número do empenho. Destino e motivo ficam na fonte.
+- O portal é o link oficial de transparência nos perfis do prefeito e do vice.
+
+### Executivo municipal
+
+- Prefeito e vice entram pelas candidaturas do TSE de 2020 e de 2024.
+- A galeria de ex-prefeitos (`a-camara/galeria-de-ex-prefeitos`) e a página de legislaturas (`a-camara/legislatura`) do portal da Câmara registram o prefeito eleito em 2020 no cargo de 01/01/2021 a 31/12/2024 e o vice de 2021 a 2024. Por isso a eleição de 2020 entra.
+- Despesa do Executivo: `despesas/caraguatatuba/{ano}/{mes}` do TCE-SP. O órgão é "PREFEITURA MUNICIPAL DE CARAGUATATUBA". A fonte traz também a Câmara, a fundação cultural e o instituto de previdência, que ficam fora (ADR-0008).
+- `caraguatatuba-pmc-diario-oficial` (`https://diariooficial.caraguatatuba.sp.gov.br/public/consulta`): edições em PDF e ODT. Não é coletado. Entra como link oficial.
+- Agenda do prefeito (`www.caraguatatuba.sp.gov.br/pmc/agenda-do-prefeito`): é um calendário do Google embutido. O endereço do calendário tem e-mail. Fica fora.
+- Legislação compilada: fica em serviço de terceiro (`leisonline.org` e `legislacaocompilada.com.br`). Não foi validada, e o bloco de atos do prefeito fica vazio.
+
 
 ## Fora da política de fontes
 

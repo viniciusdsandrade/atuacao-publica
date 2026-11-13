@@ -114,6 +114,15 @@ Não é presença. É a contagem de votos registrados em votações nominais.
 - Reprografia e correspondência vêm só em quantidade, sem valor, e ficam fora.
 - Não há verba de gabinete nem ressarcimento na fonte. O total não é comparável com a cota parlamentar federal.
 
+### Câmara Municipal de Caraguatatuba (ADR-0057)
+
+- Fonte: `execucao/diarias/diarias` da API do Portal da Transparência do município, entidade Câmara, por ano.
+- Categoria única: `Diária`. Valor e data de concessão como a fonte registra. Sem a data de concessão, vale a do empenho e, sem ela, a da saída.
+- `documento_numero` traz o número do empenho. Destino e motivo ficam na fonte.
+- A fonte identifica o beneficiário só pelo nome. Entra a diária cujo beneficiário tem o nome civil do vereador e cuja data cai num mandato dele. Com o cargo "vereador" ou "presidente" na fonte, vale também o nome civil seguido de mais sobrenomes.
+- Diária de servidor não é lida nem guardada.
+- A fonte não publica fornecedor, CNPJ nem documento fiscal. Não há outra despesa por vereador com fonte validada.
+
 ### Assembleias com total por categoria
 
 - ALRS e ALES não publicam fornecedor nem nota. Cada linha é um total por categoria (ALRS) ou por produto (ALES) em um mês, sem CNPJ. Não é uma nota fiscal, e o total do deputado é a soma dessas linhas.
@@ -138,6 +147,7 @@ Não é presença. É a contagem de votos registrados em votações nominais.
 - **ALBA.** API pública do NoPaper, por ano, de 2022 em diante. Entram todos os tipos com autor ou coautor deputado em exercício. O autor vem pelo nome civil, ligado ao nome civil do perfil, sem a marca "(INATIVO)" que a fonte põe no fim do nome. O primeiro autor é o proponente. Sequência de 11 dígitos na ementa (CPF) é removida.
 - **ALESE.** Consulta de produção legislativa do sistema da casa (`consulta-producao.aspx`), por autor e por tipo, a partir dos pares que a ficha do parlamentar lista. Entram as proposições com data de apresentação de 2022 em diante; sem data, vale o ano do título. Tipo, número, ano, ementa, data e situação vêm da listagem. O projeto não distingue autor de coautor nessa listagem, e os temas ficam vazios. Telefone, e-mail e sequência de 11 dígitos na ementa são removidos.
 - **Câmara municipal (piloto).** `materia/materialegislativa?autores={autor}&ano={ano}` do SAPL, por ano da legislatura vigente. O `autor` vem de `base/autor` pelo `object_id` do parlamentar. Entram todos os tipos de matéria, inclusive indicações e requerimentos. Situação: `resultado` da fonte, ou "Em tramitação" e "Tramitação encerrada" pelo campo `em_tramitacao`. Temas ficam vazios: a fonte não classifica.
+- **Câmara Municipal de Caraguatatuba (ADR-0057).** Pesquisa de matérias do sistema legislativo (SAGL), por código de autor e ano de mandato desde 2022. Entram todos os tipos, com tipo, número, ano, ementa, data de apresentação e link do texto integral. A pesquisa não separa autor de coautor: `proponente` fica `null`. A situação fica `null`: a Câmara não mantém o campo de tramitação, e o site não publica um "em tramitação" que a fonte não sustenta. Telefone, e-mail e CPF são removidos da ementa.
 
 ## Emendas parlamentares (ADR-0030)
 
@@ -166,6 +176,7 @@ Não é presença. É a contagem de votos registrados em votações nominais.
 - **ALESC.** Presença em sessão plenária ordinária, pela página de presença de cada sessão no e-Legis. A fonte lista os deputados da sessão como "Presente" ou "Ausência justificada", e as duas situações entram: `registrada` e `ausencia_justificada`. Na contagem por tipo do perfil, a ausência justificada conta à parte. A sessão extraordinária não tem presença publicada e fica fora. O projeto não calcula taxa de presença.
 - **ALBA.** Presença em sessão plenária, pela página de presença de cada sessão no NoPaper. A fonte lista os deputados da sessão como "Presente", "Falta Justificada" ou "Falta", e as três situações entram: `registrada`, `ausencia_justificada` e `falta`. Na contagem por tipo do perfil, a ausência justificada e a falta contam à parte da presença registrada. A situação "Licenciado" fica fora por indicar afastamento temporário do mandato e não comparecimento à sessão. O projeto não calcula taxa de presença.
 - **Câmara municipal (piloto).** Presença em sessão plenária de `sessao/sessaoplenariapresenca` do SAPL, nas sessões da legislatura vigente já realizadas. Tipo, número e data vêm de `sessao/sessaoplenaria`. A fonte lista só presentes. O projeto não calcula taxa de presença.
+- **Câmara Municipal de Caraguatatuba (ADR-0057).** Lista de presença de cada sessão, do portal da Câmara, em 2025 e 2026. A fonte marca cada vereador com `P`, `FJ`, `F` ou `L`. Entram `registrada`, `ausencia_justificada` e `falta`. Licença (`L`) não vira evento. Tipo, número e data da sessão vêm da listagem das listas. Lista sem marcação e sessão futura ficam fora. O endereço de origem de cada registro é a lista da sessão em PDF. Na contagem por tipo do perfil, a ausência justificada e a falta contam à parte.
 
 ## Órgãos e frentes
 
@@ -180,6 +191,7 @@ Não é presença. É a contagem de votos registrados em votações nominais.
 - **ALEPI.** Composição da Mesa Diretora nas sessões legislativas da 20ª Legislatura (2023–2027) via SAPL, com cargos institucionais (Presidente, Vice-Presidentes e Secretários).
 - **ALRN.** Composição oficial da Mesa Diretora da 63ª Legislatura (2023–2027) via portal institucional, com cargos institucionais (Presidente, Vice-Presidentes e Secretários).
 - **Câmara municipal (piloto).** `comissoes/participacao` do SAPL por vereador, com a comissão e o período vindos de `comissoes/composicao` (coletada por período), `comissoes/comissao` e `comissoes/periodo`. Papel: cargo da fonte (`Presidente`, `Membro`, `Relator`, `Suplente`); membro não titular recebe o sufixo "(suplente)". Entram as participações cujo fim é posterior ao início da cobertura ou está aberto.
+- **Câmara Municipal de Caraguatatuba (ADR-0057).** Cargos na Mesa Diretora e em comissões da ficha do vereador no sistema legislativo, com o período da fonte, quando o período toca a cobertura. A ficha para em 2022 nas comissões. A composição atual vem da página de comissões do portal, com o papel da fonte e sem data de início e de fim.
 
 ## Candidaturas
 
@@ -195,6 +207,7 @@ Não é presença. É a contagem de votos registrados em votações nominais.
 - Ficam fora: endereço que leva a telefone ou e-mail (WhatsApp, exceto canal; Telegram por número; `tel:` e `mailto:`), texto que não é endereço e o que passa de 20 endereços por candidatura, na ordem declarada. Esquema e domínio vão para minúsculas; o caminho fica como a fonte publica.
 - O topo do perfil mostra os endereços da candidatura mais recente que declarou algum, com o ano da eleição. O endereço é o declarado naquela eleição: a conta pode ter mudado depois.
 - **Piloto municipal.** Eleições de 2020 e 2024 (`consulta_cand` e `bem_candidato`), filtradas pelo município piloto. O SAPL não publica CPF: a candidatura mais recente com o mesmo nome civil ou nome de urna normalizado, dentro do município, serve de ponte; as demais eleições da pessoa vêm pelo CPF dessa candidatura, em memória, como nas outras casas. Planos de governo municipais: só a partir de 2022, como no federal; 2020 fica sem plano.
+- **Caraguatatuba (ADR-0057).** Eleições de 2020 e 2024, filtradas pela unidade eleitoral do município. O sistema legislativo da Câmara publica o nome civil: a candidatura mais recente com o mesmo nome civil, sem acento e sem caixa, dentro do município, serve de ponte. Sem ela, vale o nome parlamentar contra o nome de urna, só sem a pontuação. As demais eleições da pessoa vêm pelo CPF dessa candidatura, em memória.
 
 ## Financiamento de campanha (ADR-0032)
 
@@ -206,6 +219,7 @@ Não é presença. É a contagem de votos registrados em votações nominais.
 - Doador e fornecedor pessoa física entram só nas somas. Nome e CPF nunca são publicados. Fornecedor com CNPJ aparece pelo nome da Receita Federal, quando a fonte traz, sem a sequência de CPF do nome de MEI.
 - Ficam fora: despesas pagas (regime de caixa) e doador originário.
 - A eleição mais recente renova por semana: a prestação final chega até o 30º dia depois da eleição, ou até o 20º depois do segundo turno, e ainda pode ser retificada.
+- O recorte de cada eleição guarda só as candidaturas cobertas quando foi feito. Estado ou município que entra depois muda a assinatura da cobertura, e o recorte daquela eleição é refeito (ADR-0057).
 
 ## Executivo
 
@@ -217,6 +231,7 @@ Não é presença. É a contagem de votos registrados em votações nominais.
 - **Despesas do Executivo municipal (piloto, ADR-0008).** Bloco `despesas_executivo` do prefeito. Fonte: `despesas/{municipio}/{ano}/{mes}` da API do TCE-SP, para cada mês do mandato já iniciado. Entram só os lançamentos do órgão cujo nome começa com "PREFEITURA MUNICIPAL" (administração direta) e do evento `Valor Pago`. O ETL soma por mês e por órgão e conta os pagamentos. Fornecedor, empenho e data de cada lançamento não são publicados. Os 6 meses mais recentes são renovados toda semana; os anteriores vêm do cache. Mês sem resposta da fonte fica sem registro.
 - **Atos normativos municipais (piloto, ADR-0009).** Leis, leis complementares e decretos de `norma/normajuridica` do SAPL, por ano e tipo, publicados no período de cada mandato de prefeito. Os tipos seguem o schema federal: `LEI`, `LCP` e `DEC`. A fonte não informa quem assinou cada ato: o bloco se chama "atos normativos do município no período do mandato".
 - **Prefeito e vice-prefeito (piloto).** Os perfis vêm das candidaturas eleitas no TSE de 2020 e de 2024. Os mandatos vêm de `contrib/mandatos.yaml` (posse em 1º de janeiro do ano seguinte à eleição e fim na posse do sucessor, art. 29 da Constituição). A prefeitura não publica dados abertos: agenda entra por contribuição com fonte T0.
+- **Prefeito e vice-prefeito de Caraguatatuba (ADR-0057).** Mesmas regras do piloto: candidaturas eleitas em 2020 e em 2024, mandatos de `contrib/mandatos.yaml` e despesas do TCE-SP (`despesas/caraguatatuba/{ano}/{mes}`). O portal da Câmara registra que os eleitos em 2020 ficaram no cargo de 2021 a 2024. Atos normativos e agenda: sem fonte validada.
 
 ## Validação antes de publicar
 

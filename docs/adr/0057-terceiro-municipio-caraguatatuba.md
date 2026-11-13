@@ -42,11 +42,11 @@ Dois defeitos das fontes pesaram na decisão:
 3. **Identificador**: `sagl-3510500-{cod_parlamentar}`, no padrão do ADR-0007 (sistema, código IBGE e identificador). Chave `caraguatatuba` em `ids_externos`, regex `^[0-9]+$`.
 4. **Vereador em exercício**: quem o sistema legislativo marca "Em exercício" e tem mandato vigente na data.
 5. **Partido**: o da filiação vigente na data de referência. A sigla sai como a fonte grafa, sem os dígitos que o sistema cola no fim ("AGIR36" vira "AGIR").
-6. **Mandatos, Mesa e comissões**: da ficha do vereador no sistema legislativo, com as datas da fonte. As comissões de 2025 em diante vêm da página "Composição atual" do portal, sem data, porque o sistema legislativo parou em 2022.
+6. **Mandatos, Mesa e comissões**: da ficha do vereador no sistema legislativo, com as datas da fonte. O órgão sai como "Mesa Diretora", que é como a ficha o chama. As comissões de 2025 em diante vêm da página "Composição atual" do portal, sem data, porque o sistema legislativo parou em 2022.
 7. **Proposições**: pesquisa de matérias por autor e ano, 200 por página. Entram tipo, número, ano, ementa, data de apresentação e o link do texto integral.
 8. **A situação de tramitação não é publicada.** O campo fica vazio.
-9. **Presença**: uma lista por sessão. `P` vira presença registrada, `FJ` vira ausência justificada e `F` vira falta. `L` (licença) não vira evento, como as outras situações na ALBA. Lista sem marcação e sessão futura ficam fora.
-10. **Diárias**: bloco de despesas, categoria "Diária", com o valor, a data de concessão e o número do empenho. Destino e motivo não entram: o schema de despesa não tem campo para eles.
+9. **Presença**: uma lista por sessão. `P` vira presença registrada, `FJ` vira ausência justificada e `F` vira falta. `L` (licença) não vira evento, como as outras situações na ALBA. Lista sem marcação e sessão futura ficam fora. O link de cada registro leva à mesma lista em PDF, que é a versão que a Câmara oferece para impressão.
+10. **Diárias**: bloco de despesas, categoria "Diária", com o valor, a data de concessão e o número do empenho. Destino e motivo não entram: o schema de despesa não tem campo para eles. Só entra a diária com data dentro de um mandato do vereador: quem foi vereador e virou servidor não leva diária de servidor para o perfil.
 11. **Só diária de vereador vai para o cache.** A derivação guarda o código do vereador, valor, datas e empenho. Nome de servidor e matrícula não são gravados.
 12. **Ligação por nome entre os sistemas**, nesta ordem:
     - nome idêntico, sem acento e sem caixa, ao nome civil ou ao nome parlamentar da ficha;
@@ -77,6 +77,10 @@ Sem a marca, o recorte é refeito uma vez.
 - A primeira execução do `fetch tse` depois desta mudança refaz o recorte das cinco eleições: cerca de 530 MB lidos por Range.
 - A primeira carga da Câmara faz cerca de 230 chamadas. As seguintes renovam o ano aberto e as sessões recentes, em rodízio semanal.
 - A nota do bloco de eventos no site passa a citar a Câmara Municipal de Caraguatatuba.
+- Na esfera municipal, o bloco de despesas do vereador passa a se chamar "Despesas informadas pela câmara municipal", com nota que diz o que cada câmara publica. Nenhuma das três câmaras tem cota parlamentar como a federal.
+- O bloco de proposições dos vereadores de Caraguatatuba ganha nota que explica a situação vazia.
+- A nota dos atos normativos municipais passa a dizer, fora do piloto, que não há fonte validada.
+- O selo de liderança do perfil passa a quebrar a linha. Colegiado sem sigla entra pelo nome inteiro, e o selo alargava a página no celular.
 
 ## Limitações
 
