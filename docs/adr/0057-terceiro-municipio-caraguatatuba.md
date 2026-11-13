@@ -75,7 +75,7 @@ Sem a marca, o recorte é refeito uma vez.
 - O perfil do vereador de Caraguatatuba tem mandatos, Mesa, comissões, proposições, presença em sessão, diárias, candidaturas e financiamento de campanha.
 - O perfil do prefeito tem mandato, candidaturas, financiamento e despesas da prefeitura.
 - A primeira execução do `fetch tse` depois desta mudança refaz o recorte das cinco eleições: cerca de 530 MB lidos por Range.
-- A primeira carga da Câmara faz cerca de 230 chamadas. As seguintes renovam o ano aberto e as sessões recentes, em rodízio semanal.
+- A primeira carga da Câmara baixou 199 arquivos. As seguintes renovam o ano aberto e as sessões recentes, em rodízio semanal.
 - A nota do bloco de eventos no site passa a citar a Câmara Municipal de Caraguatatuba.
 - Na esfera municipal, o bloco de despesas do vereador passa a se chamar "Despesas informadas pela câmara municipal", com nota que diz o que cada câmara publica. Nenhuma das três câmaras tem cota parlamentar como a federal.
 - O bloco de proposições dos vereadores de Caraguatatuba ganha nota que explica a situação vazia.
