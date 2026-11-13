@@ -46,3 +46,8 @@ O favorecido pessoa física vem com nome e documento mascarado.
 - Vínculo por palavras soltas do nome: liga homônimos parciais, risco que o vínculo dos vereadores da capital já evita.
 - Lista de todas as emendas no perfil: um parlamentar passa de cem emendas, e os maiores perfis já passam do orçamento de tamanho (ADR-0001).
 - Tabela de aliases revisada para os códigos fora do vínculo: fica para depois. Cada entrada precisa de conferência humana com fonte oficial.
+
+## Atualização em 2026-11-13
+
+- O ADR-0052 revê os itens 5 e 6 da decisão: entram o nome civil da casa e o nome sem título, e o homônimo é desempatado pelo mandato federal nos anos das emendas.
+- No ensaio local de 2026-11-13, os 7 códigos que estavam fora foram ligados.

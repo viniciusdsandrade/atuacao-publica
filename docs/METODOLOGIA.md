@@ -145,7 +145,8 @@ Não é presença. É a contagem de votos registrados em votações nominais.
 - Emendas de bancada, de comissão e de relator ficam fora. A fonte não as atribui a um parlamentar.
 - Valores como a fonte publica, por emenda: empenhado, liquidado, pago e restos a pagar inscritos, cancelados e pagos. O perfil soma cada campo por ano do orçamento. Um campo nunca é somado a outro.
 - Localidade de aplicação como na fonte: município com UF, estado com "(UF)", "Nacional" ou "MÚLTIPLO".
-- Vínculo com o perfil: pelo código do autor na fonte. O código liga ao deputado ou senador cujo nome é um dos nomes do autor na fonte, sem acento e sem pontuação. Sem perfil com esse nome, vale o nome de urna de uma candidatura do perfil. Código com mais de um perfil possível fica fora.
+- Vínculo com o perfil: pelo código do autor na fonte. O código liga ao deputado ou senador cujo nome parlamentar é um dos nomes do autor na fonte, sem acento e sem pontuação. Sem perfil com esse nome, valem, nesta ordem, o nome de urna de uma candidatura do perfil, o nome civil que a Câmara ou o Senado publica e o nome sem título (ADR-0052).
+- Código com mais de um perfil possível só entra se um único deles teve mandato federal em todos os anos de orçamento das emendas do código. Senão, fica fora.
 - Quando o nome do autor na linha difere do nome mais frequente do código, a emenda mostra o texto da fonte como "Autor na fonte". É o caso da emenda de ex-parlamentar indicada por outro.
 - Favorecidos e convênios não entram: o arquivo de favorecidos traz nome de pessoa física.
 

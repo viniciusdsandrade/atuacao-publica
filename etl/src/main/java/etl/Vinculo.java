@@ -127,9 +127,9 @@ final class Vinculo {
 
     /**
      * Emendas individuais ao Orçamento da União (ADR-0030). O código do autor na fonte liga as emendas ao perfil federal
-     * cujo nome é um dos nomes do autor na fonte, sem pontuação. Sem perfil com esse nome, vale o nome de urna de uma
-     * candidatura do perfil. Código com mais de um perfil possível fica fora, como o sem perfil: homônimos não recebem
-     * emenda de outra pessoa.
+     * cujo nome é um dos nomes do autor na fonte, sem acento e sem pontuação. Sem perfil com esse nome, valem o nome de
+     * urna, o nome civil oficial da casa e, como último recurso, a remoção de título. Homônimos só desambiguam quando
+     * apenas um perfil teve mandato federal cobrindo todos os anos das emendas do código.
      */
     private static void emendas(Contexto ctx, List<Perfil> perfis) {
         Path arquivo = ctx.normalizado().resolve("cgu").resolve("emendas.json");
@@ -138,13 +138,37 @@ final class Vinculo {
         }
         Map<String, Set<Perfil>> porNome = new HashMap<>();
         Map<String, Set<Perfil>> porNomeDeUrna = new HashMap<>();
+        Map<String, Set<Perfil>> porNomeCivil = new HashMap<>();
+        Map<String, Set<Perfil>> porNomeSemTitulo = new HashMap<>();
         for (Perfil p : perfis) {
-            if (p.cargos.contains("deputado_federal") || p.cargos.contains("senador")) {
-                if (p.nome != null) {
-                    porNome.computeIfAbsent(semPontos(Texto.normalizarNome(p.nome)), k -> new HashSet<>()).add(p);
+            if (!p.cargos.contains("deputado_federal") && !p.cargos.contains("senador")) {
+                continue;
+            }
+            Set<String> nomesParl = new HashSet<>(p.nomesParlamentares);
+            if (p.nome != null) {
+                nomesParl.add(p.nome);
+            }
+            for (String nome : nomesParl) {
+                String norm = semPontuacao(Texto.normalizarNome(nome));
+                if (norm != null && !norm.isBlank()) {
+                    porNome.computeIfAbsent(norm, k -> new HashSet<>()).add(p);
+                    String semTitulo = semPontuacao(Texto.normalizarNome(limparTitulo(nome)));
+                    if (semTitulo != null && !semTitulo.isBlank()) {
+                        porNomeSemTitulo.computeIfAbsent(semTitulo, k -> new HashSet<>()).add(p);
+                    }
                 }
-                for (String nome : nomesDeUrna(p)) {
-                    porNomeDeUrna.computeIfAbsent(nome, k -> new HashSet<>()).add(p);
+            }
+            for (String nome : nomesDeUrna(p)) {
+                porNomeDeUrna.computeIfAbsent(nome, k -> new HashSet<>()).add(p);
+                String semTitulo = semPontuacao(Texto.normalizarNome(limparTitulo(nome)));
+                if (semTitulo != null && !semTitulo.isBlank()) {
+                    porNomeSemTitulo.computeIfAbsent(semTitulo, k -> new HashSet<>()).add(p);
+                }
+            }
+            for (String nome : p.nomesCivis) {
+                String norm = semPontuacao(Texto.normalizarNome(nome));
+                if (norm != null && !norm.isBlank()) {
+                    porNomeCivil.computeIfAbsent(norm, k -> new HashSet<>()).add(p);
                 }
             }
         }
@@ -154,9 +178,18 @@ final class Vinculo {
         int semPerfil = 0;
         int foraDoVinculo = 0;
         for (JsonNode autor : Json.ler(arquivo)) {
-            Set<Perfil> possiveis = perfisDoAutor(autor, porNome);
+            Set<Perfil> possiveis = perfisDoAutor(autor, porNome, false);
             if (possiveis.isEmpty()) {
-                possiveis = perfisDoAutor(autor, porNomeDeUrna);
+                possiveis = perfisDoAutor(autor, porNomeDeUrna, false);
+            }
+            if (possiveis.isEmpty()) {
+                possiveis = perfisDoAutor(autor, porNomeCivil, false);
+            }
+            if (possiveis.isEmpty()) {
+                possiveis = perfisDoAutor(autor, porNomeSemTitulo, true);
+            }
+            if (possiveis.size() > 1) {
+                possiveis = desambiguarPorMandatoFederal(autor, possiveis);
             }
             JsonNode lista = autor.path("emendas");
             if (possiveis.size() != 1) {
@@ -182,21 +215,71 @@ final class Vinculo {
                 + " sem perfil), com " + foraDoVinculo + " emenda(s)");
     }
 
-    private static Set<Perfil> perfisDoAutor(JsonNode autor, Map<String, Set<Perfil>> indice) {
+    private static Set<Perfil> perfisDoAutor(JsonNode autor, Map<String, Set<Perfil>> indice, boolean semTitulo) {
         Set<Perfil> possiveis = new HashSet<>();
         for (JsonNode nome : autor.path("nomes")) {
-            possiveis.addAll(indice.getOrDefault(semPontos(Texto.normalizarNome(nome.stringValue())), Set.of()));
+            String base = semTitulo ? limparTitulo(nome.stringValue()) : nome.stringValue();
+            String chave = semPontuacao(Texto.normalizarNome(base));
+            if (chave != null && !chave.isBlank()) {
+                possiveis.addAll(indice.getOrDefault(chave, Set.of()));
+            }
         }
         return possiveis;
     }
 
-    /** Nomes de urna das candidaturas do perfil, normalizados e sem pontos. */
+    private static Set<Perfil> desambiguarPorMandatoFederal(JsonNode autor, Set<Perfil> candidatos) {
+        Set<Integer> anos = new HashSet<>();
+        for (JsonNode emenda : autor.path("emendas")) {
+            if (emenda.hasNonNull("ano")) {
+                anos.add(emenda.get("ano").asInt());
+            }
+        }
+        if (anos.isEmpty()) {
+            return candidatos;
+        }
+        Set<Perfil> filtrados = new HashSet<>();
+        for (Perfil p : candidatos) {
+            if (mandatoFederalCobreTodosOsAnos(p, anos)) {
+                filtrados.add(p);
+            }
+        }
+        return filtrados.size() == 1 ? filtrados : candidatos;
+    }
+
+    private static boolean mandatoFederalCobreTodosOsAnos(Perfil p, Set<Integer> anos) {
+        List<JsonNode> mandatos = p.registros.getOrDefault("mandatos", List.of());
+        for (int ano : anos) {
+            LocalDate inicioAno = LocalDate.of(ano, 1, 1);
+            LocalDate fimAno = LocalDate.of(ano, 12, 31);
+            boolean coberto = false;
+            for (JsonNode m : mandatos) {
+                String cargo = Json.texto(m, "cargo");
+                if (!"deputado_federal".equals(cargo) && !"senador".equals(cargo)) {
+                    continue;
+                }
+                String iniStr = Json.texto(m, "inicio");
+                LocalDate ini = iniStr != null ? LocalDate.parse(iniStr) : LocalDate.MIN;
+                String fimStr = Json.texto(m, "fim");
+                LocalDate fim = fimStr != null ? LocalDate.parse(fimStr) : LocalDate.MAX;
+                if (!ini.isAfter(fimAno) && !fim.isBefore(inicioAno)) {
+                    coberto = true;
+                    break;
+                }
+            }
+            if (!coberto) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /** Nomes de urna das candidaturas do perfil, normalizados e sem pontuação. */
     private static Set<String> nomesDeUrna(Perfil p) {
         Set<String> nomes = new HashSet<>();
         for (JsonNode candidatura : p.registros.getOrDefault("candidaturas", List.of())) {
             String urna = Json.texto(candidatura, "nome_urna");
             if (urna != null) {
-                nomes.add(semPontos(Texto.normalizarNome(urna)));
+                nomes.add(semPontuacao(Texto.normalizarNome(urna)));
             }
         }
         return nomes;
@@ -240,11 +323,12 @@ final class Vinculo {
     }
 
     private static Set<String> palavras(String texto) {
-        if (texto == null || texto.isBlank()) {
+        String limpo = semPontuacao(texto);
+        if (limpo == null || limpo.isBlank()) {
             return Set.of();
         }
         Set<String> set = new HashSet<>();
-        for (String p : texto.split("\\s+")) {
+        for (String p : limpo.split("\\s+")) {
             if (!p.isBlank()) {
                 set.add(p);
             }
@@ -252,7 +336,7 @@ final class Vinculo {
         return set;
     }
 
-    private static final Pattern TITULO_PATTERN = Pattern.compile("^(?:DEPUTADO\\.|DEPUTADA\\.|DEPUTADO|DEPUTADA|PADRE|DR\\.|DRA\\.|PROF\\.|PROFESSOR\\.|PROFESSORA\\.|DELEGADO\\.|DELEGADA\\.|CAPITAO\\.|PASTOR\\.|DR|DRA|PROF|PROFESSOR|PROFESSORA)\\s+", Pattern.CASE_INSENSITIVE);
+    private static final Pattern TITULO_PATTERN = Pattern.compile("^(?:DEPUTADO\\.|DEPUTADA\\.|DEPUTADO|DEPUTADA|PADRE|DR\\.|DRA\\.|DOUTOR\\.|DOUTORA\\.|ENGENHEIRO\\.|ENGENHEIRA\\.|ENG\\.|AP\\.|APOSTOLO\\.|PROF\\.|PROFESSOR\\.|PROFESSORA\\.|DELEGADO\\.|DELEGADA\\.|CAPITAO\\.|PASTOR\\.|DR|DRA|DOUTOR|DOUTORA|ENGENHEIRO|ENGENHEIRA|ENG|AP|APOSTOLO|PROF|PROFESSOR|PROFESSORA)\\s+", Pattern.CASE_INSENSITIVE);
 
     private static String limparTitulo(String nome) {
         if (nome == null || nome.isBlank()) {
@@ -275,6 +359,9 @@ final class Vinculo {
             p.chaveExterna = fonte + ":" + idFonte;
             p.fonteCli = fonte;
             p.nome = Json.texto(pessoa, "nome");
+            if (p.nome != null) {
+                p.nomesParlamentares.add(p.nome);
+            }
             boolean emExercicio = !pessoa.hasNonNull("em_exercicio") || pessoa.get("em_exercicio").asBoolean();
             p.papel(Json.texto(pessoa, "cargo"), Json.texto(pessoa, "esfera"), Json.texto(pessoa, "ente"), Json.texto(pessoa, "uf"),
                     Json.texto(pessoa, "partido"), Json.texto(pessoa, "situacao"),
@@ -303,11 +390,14 @@ final class Vinculo {
         return perfis;
     }
 
-    /** Câmara por CPF; Senado por nome civil, UF e data de nascimento; SAPL por nome civil e de urna (ADR-0007). */
+    /** Câmara por CPF; Senado por nome civil, UF e data de nascimento (com fallback único); SAPL por nome e urna (ADR-0007). */
     private static void vincularLegisladores(Contexto ctx, List<Perfil> perfis, Ligacoes ligacoes, List<JsonNode> candidaturas) {
+        int eleicaoVigente = eleicaoEstadualVigente(ctx.hoje());
         Map<String, Tse.Chave> chaves = ligacoes.chaves();
         Map<String, List<JsonNode>> porCpf = ligacoes.porCpf();
         Map<String, String> cpfPorSenadoChave = new HashMap<>();
+        Map<String, String> cpfPorPessoaUnico = new HashMap<>();
+        Set<String> pessoasComCpfDuplicado = new HashSet<>();
         Map<String, JsonNode> candPorSaplNomeCivil = new HashMap<>();
         Map<String, JsonNode> candPorSaplNomeUrna = new HashMap<>();
         Map<String, JsonNode> candPorCmspNomeCivil = new HashMap<>();
@@ -319,6 +409,9 @@ final class Vinculo {
         Map<String, String> cpfPorAlmgChave = new HashMap<>();
         Map<String, JsonNode> candPorAlepNomeCivil = new HashMap<>();
         Map<String, JsonNode> candPorAlepNomeUrna = new HashMap<>();
+        Map<String, JsonNode> candPorAlepNomeUrnaSemTitulo = new HashMap<>();
+        Map<String, String> alepSemTituloPessoa = new HashMap<>();
+        Set<String> alepSemTituloAmbiguos = new HashSet<>();
         Map<String, String> cpfPorAlepChave = new HashMap<>();
         Map<String, JsonNode> candPorAlbaNomeCivil = new HashMap<>();
         Map<String, JsonNode> candPorAlbaNomeUrna = new HashMap<>();
@@ -408,6 +501,16 @@ final class Vinculo {
         for (JsonNode c : candidaturas) {
             Tse.Chave chave = chaves.get(c.get("sq").stringValue());
             if (chave != null) {
+                if (chave.cpf() != null && chave.nomeCivil() != null && chave.nascimento() != null) {
+                    String pessoaChave = chave.nomeCivil() + "|" + chave.nascimento();
+                    if (!pessoasComCpfDuplicado.contains(pessoaChave)) {
+                        String anterior = cpfPorPessoaUnico.putIfAbsent(pessoaChave, chave.cpf());
+                        if (anterior != null && !anterior.equals(chave.cpf())) {
+                            cpfPorPessoaUnico.remove(pessoaChave);
+                            pessoasComCpfDuplicado.add(pessoaChave);
+                        }
+                    }
+                }
                 if (chave.cpf() != null && chave.cargo().matches("SENADOR|1º SUPLENTE|2º SUPLENTE")) {
                     cpfPorSenadoChave.put(chave.nomeCivil() + "|" + chave.uf() + "|" + chave.nascimento(), chave.cpf());
                 } else if ("VEREADOR".equals(chave.cargo())) {
@@ -417,7 +520,7 @@ final class Vinculo {
                     if (Cmsp.IBGE.equals(enteDaCandidatura)) {
                         candPorCmspNomeCivil.merge(chave.nomeCivil(), c, Vinculo::maisRecente);
                         if (c.hasNonNull("nome_urna")) {
-                            candPorCmspNomeUrna.merge(semPontos(Texto.normalizarNome(c.get("nome_urna").stringValue())), c, Vinculo::maisRecente);
+                            candPorCmspNomeUrna.merge(semPontuacao(Texto.normalizarNome(c.get("nome_urna").stringValue())), c, Vinculo::maisRecente);
                         }
                     } else if (Sapl.IBGE.equals(enteDaCandidatura)) {
                         candPorSaplNomeCivil.merge(chave.nomeCivil(), c, Vinculo::maisRecente);
@@ -426,214 +529,226 @@ final class Vinculo {
                         }
                     }
                 } else if ("DEPUTADO ESTADUAL".equals(chave.cargo()) && "SP".equals(chave.uf())) {
-                    candPorAlespNomeCivil.merge(chave.nomeCivil(), c, Vinculo::maisRecente);
+                    candPorAlespNomeCivil.merge(chave.nomeCivil(), c, (a, b) -> preferidaEstadual(eleicaoVigente, a, b));
                     if (c.hasNonNull("nome_urna")) {
-                        candPorAlespNomeUrna.merge(Texto.normalizarNome(c.get("nome_urna").stringValue()), c, Vinculo::maisRecente);
+                        candPorAlespNomeUrna.merge(Texto.normalizarNome(c.get("nome_urna").stringValue()), c, (a, b) -> preferidaEstadual(eleicaoVigente, a, b));
                     }
                 } else if ("DEPUTADO ESTADUAL".equals(chave.cargo()) && "MG".equals(chave.uf())) {
-                    candPorAlmgNomeCivil.merge(chave.nomeCivil(), c, Vinculo::maisRecente);
+                    candPorAlmgNomeCivil.merge(chave.nomeCivil(), c, (a, b) -> preferidaEstadual(eleicaoVigente, a, b));
                     if (c.hasNonNull("nome_urna")) {
-                        candPorAlmgNomeUrna.merge(Texto.normalizarNome(c.get("nome_urna").stringValue()), c, Vinculo::maisRecente);
+                        candPorAlmgNomeUrna.merge(Texto.normalizarNome(c.get("nome_urna").stringValue()), c, (a, b) -> preferidaEstadual(eleicaoVigente, a, b));
                     }
                     if (chave.cpf() != null) {
                         cpfPorAlmgChave.put(chave.nomeCivil() + "|" + chave.nascimento(), chave.cpf());
                     }
                 } else if ("DEPUTADO ESTADUAL".equals(chave.cargo()) && "PR".equals(chave.uf())) {
-                    candPorAlepNomeCivil.merge(chave.nomeCivil(), c, Vinculo::maisRecente);
+                    candPorAlepNomeCivil.merge(chave.nomeCivil(), c, (a, b) -> preferidaEstadual(eleicaoVigente, a, b));
                     if (c.hasNonNull("nome_urna")) {
-                        candPorAlepNomeUrna.merge(Texto.normalizarNome(c.get("nome_urna").stringValue()), c, Vinculo::maisRecente);
+                        String urnaNorm = Texto.normalizarNome(c.get("nome_urna").stringValue());
+                        candPorAlepNomeUrna.merge(urnaNorm, c, (a, b) -> preferidaEstadual(eleicaoVigente, a, b));
+                        String semTitulo = semPontuacao(Texto.normalizarNome(limparTitulo(urnaNorm)));
+                        String pessoaChave = pessoa(chave);
+                        if (semTitulo != null && !semTitulo.isBlank() && !alepSemTituloAmbiguos.contains(semTitulo)) {
+                            String anterior = alepSemTituloPessoa.putIfAbsent(semTitulo, pessoaChave != null ? pessoaChave : c.get("sq").stringValue());
+                            if (anterior != null && !anterior.equals(pessoaChave)) {
+                                candPorAlepNomeUrnaSemTitulo.remove(semTitulo);
+                                alepSemTituloAmbiguos.add(semTitulo);
+                            } else {
+                                candPorAlepNomeUrnaSemTitulo.merge(semTitulo, c, (a, b) -> preferidaEstadual(eleicaoVigente, a, b));
+                            }
+                        }
                     }
                     if (chave.cpf() != null) {
                         cpfPorAlepChave.put(chave.nomeCivil() + "|" + chave.nascimento(), chave.cpf());
                     }
                 } else if ("DEPUTADO ESTADUAL".equals(chave.cargo()) && "BA".equals(chave.uf())) {
-                    candPorAlbaNomeCivil.merge(chave.nomeCivil(), c, Vinculo::maisRecente);
+                    candPorAlbaNomeCivil.merge(chave.nomeCivil(), c, (a, b) -> preferidaEstadual(eleicaoVigente, a, b));
                     if (c.hasNonNull("nome_urna")) {
-                        candPorAlbaNomeUrna.merge(Texto.normalizarNome(c.get("nome_urna").stringValue()), c, Vinculo::maisRecente);
+                        candPorAlbaNomeUrna.merge(Texto.normalizarNome(c.get("nome_urna").stringValue()), c, (a, b) -> preferidaEstadual(eleicaoVigente, a, b));
                     }
                     if (chave.cpf() != null) {
                         cpfPorAlbaChave.put(chave.nomeCivil() + "|" + chave.nascimento(), chave.cpf());
                     }
                 } else if ("DEPUTADO ESTADUAL".equals(chave.cargo()) && "RJ".equals(chave.uf())) {
-                    candPorAlerjNomeCivil.merge(chave.nomeCivil(), c, Vinculo::maisRecente);
+                    candPorAlerjNomeCivil.merge(chave.nomeCivil(), c, (a, b) -> preferidaEstadual(eleicaoVigente, a, b));
                     if (c.hasNonNull("nome_urna")) {
-                        candPorAlerjNomeUrna.merge(Texto.normalizarNome(c.get("nome_urna").stringValue()), c, Vinculo::maisRecente);
+                        candPorAlerjNomeUrna.merge(Texto.normalizarNome(c.get("nome_urna").stringValue()), c, (a, b) -> preferidaEstadual(eleicaoVigente, a, b));
                     }
                     if (chave.cpf() != null) {
                         cpfPorAlerjChave.put(chave.nomeCivil() + "|" + chave.nascimento(), chave.cpf());
                     }
                 } else if ("DEPUTADO ESTADUAL".equals(chave.cargo()) && "RS".equals(chave.uf())) {
-                    candPorAlrsNomeCivil.merge(chave.nomeCivil(), c, Vinculo::maisRecente);
+                    candPorAlrsNomeCivil.merge(chave.nomeCivil(), c, (a, b) -> preferidaEstadual(eleicaoVigente, a, b));
                     if (c.hasNonNull("nome_urna")) {
-                        candPorAlrsNomeUrna.merge(Texto.normalizarNome(c.get("nome_urna").stringValue()), c, Vinculo::maisRecente);
+                        candPorAlrsNomeUrna.merge(Texto.normalizarNome(c.get("nome_urna").stringValue()), c, (a, b) -> preferidaEstadual(eleicaoVigente, a, b));
                     }
                     if (chave.cpf() != null) {
                         cpfPorAlrsChave.put(chave.nomeCivil() + "|" + chave.nascimento(), chave.cpf());
                     }
                 } else if ("DEPUTADO ESTADUAL".equals(chave.cargo()) && "CE".equals(chave.uf())) {
-                    candPorAleceNomeCivil.merge(chave.nomeCivil(), c, Vinculo::maisRecente);
+                    candPorAleceNomeCivil.merge(chave.nomeCivil(), c, (a, b) -> preferidaEstadual(eleicaoVigente, a, b));
                     if (c.hasNonNull("nome_urna")) {
-                        candPorAleceNomeUrna.merge(Texto.normalizarNome(c.get("nome_urna").stringValue()), c, Vinculo::maisRecente);
+                        candPorAleceNomeUrna.merge(Texto.normalizarNome(c.get("nome_urna").stringValue()), c, (a, b) -> preferidaEstadual(eleicaoVigente, a, b));
                     }
                     if (chave.cpf() != null) {
                         cpfPorAleceChave.put(chave.nomeCivil() + "|" + chave.nascimento(), chave.cpf());
                     }
                 } else if ("DEPUTADO ESTADUAL".equals(chave.cargo()) && "SC".equals(chave.uf())) {
-                    candPorAlescNomeCivil.merge(chave.nomeCivil(), c, Vinculo::maisRecente);
+                    candPorAlescNomeCivil.merge(chave.nomeCivil(), c, (a, b) -> preferidaEstadual(eleicaoVigente, a, b));
                     if (c.hasNonNull("nome_urna")) {
-                        candPorAlescNomeUrna.merge(Texto.normalizarNome(c.get("nome_urna").stringValue()), c, Vinculo::maisRecente);
+                        candPorAlescNomeUrna.merge(Texto.normalizarNome(c.get("nome_urna").stringValue()), c, (a, b) -> preferidaEstadual(eleicaoVigente, a, b));
                     }
                     if (chave.cpf() != null) {
                         cpfPorAlescChave.put(chave.nomeCivil() + "|" + chave.nascimento(), chave.cpf());
                     }
                 } else if ("DEPUTADO ESTADUAL".equals(chave.cargo()) && "GO".equals(chave.uf())) {
-                    candPorAlegoNomeCivil.merge(chave.nomeCivil(), c, Vinculo::maisRecente);
+                    candPorAlegoNomeCivil.merge(chave.nomeCivil(), c, (a, b) -> preferidaEstadual(eleicaoVigente, a, b));
                     if (c.hasNonNull("nome_urna")) {
-                        candPorAlegoNomeUrna.merge(Texto.normalizarNome(c.get("nome_urna").stringValue()), c, Vinculo::maisRecente);
+                        candPorAlegoNomeUrna.merge(Texto.normalizarNome(c.get("nome_urna").stringValue()), c, (a, b) -> preferidaEstadual(eleicaoVigente, a, b));
                     }
                     if (chave.cpf() != null) {
                         cpfPorAlegoChave.put(chave.nomeCivil() + "|" + chave.nascimento(), chave.cpf());
                     }
                 } else if ("DEPUTADO ESTADUAL".equals(chave.cargo()) && "ES".equals(chave.uf())) {
-                    candPorAlesNomeCivil.merge(chave.nomeCivil(), c, Vinculo::maisRecente);
+                    candPorAlesNomeCivil.merge(chave.nomeCivil(), c, (a, b) -> preferidaEstadual(eleicaoVigente, a, b));
                     if (c.hasNonNull("nome_urna")) {
-                        candPorAlesNomeUrna.merge(Texto.normalizarNome(c.get("nome_urna").stringValue()), c, Vinculo::maisRecente);
+                        candPorAlesNomeUrna.merge(Texto.normalizarNome(c.get("nome_urna").stringValue()), c, (a, b) -> preferidaEstadual(eleicaoVigente, a, b));
                     }
                     if (chave.cpf() != null) {
                         cpfPorAlesChave.put(chave.nomeCivil() + "|" + chave.nascimento(), chave.cpf());
                     }
                 } else if ("DEPUTADO ESTADUAL".equals(chave.cargo()) && "PA".equals(chave.uf())) {
-                    candPorAlepaNomeCivil.merge(chave.nomeCivil(), c, Vinculo::maisRecente);
+                    candPorAlepaNomeCivil.merge(chave.nomeCivil(), c, (a, b) -> preferidaEstadual(eleicaoVigente, a, b));
                     if (c.hasNonNull("nome_urna")) {
-                        candPorAlepaNomeUrna.merge(Texto.normalizarNome(c.get("nome_urna").stringValue()), c, Vinculo::maisRecente);
+                        candPorAlepaNomeUrna.merge(Texto.normalizarNome(c.get("nome_urna").stringValue()), c, (a, b) -> preferidaEstadual(eleicaoVigente, a, b));
                     }
                     if (chave.cpf() != null) {
                         cpfPorAlepaChave.put(chave.nomeCivil() + "|" + chave.nascimento(), chave.cpf());
                     }
                 } else if ("DEPUTADO ESTADUAL".equals(chave.cargo()) && "PE".equals(chave.uf())) {
-                    candPorAlepeNomeCivil.merge(chave.nomeCivil(), c, Vinculo::maisRecente);
+                    candPorAlepeNomeCivil.merge(chave.nomeCivil(), c, (a, b) -> preferidaEstadual(eleicaoVigente, a, b));
                     if (c.hasNonNull("nome_urna")) {
-                        candPorAlepeNomeUrna.merge(Texto.normalizarNome(c.get("nome_urna").stringValue()), c, Vinculo::maisRecente);
+                        candPorAlepeNomeUrna.merge(Texto.normalizarNome(c.get("nome_urna").stringValue()), c, (a, b) -> preferidaEstadual(eleicaoVigente, a, b));
                     }
                     if (chave.cpf() != null) {
                         cpfPorAlepeChave.put(chave.nomeCivil() + "|" + chave.nascimento(), chave.cpf());
                     }
                 } else if (("DEPUTADO ESTADUAL".equals(chave.cargo()) || "DEPUTADO DISTRITAL".equals(chave.cargo())) && "DF".equals(chave.uf())) {
-                    candPorCldfNomeCivil.merge(chave.nomeCivil(), c, Vinculo::maisRecente);
+                    candPorCldfNomeCivil.merge(chave.nomeCivil(), c, (a, b) -> preferidaEstadual(eleicaoVigente, a, b));
                     if (c.hasNonNull("nome_urna")) {
-                        candPorCldfNomeUrna.merge(Texto.normalizarNome(c.get("nome_urna").stringValue()), c, Vinculo::maisRecente);
+                        candPorCldfNomeUrna.merge(Texto.normalizarNome(c.get("nome_urna").stringValue()), c, (a, b) -> preferidaEstadual(eleicaoVigente, a, b));
                     }
                     if (chave.cpf() != null) {
                         cpfPorCldfChave.put(chave.nomeCivil() + "|" + chave.nascimento(), chave.cpf());
                     }
                 } else if ("DEPUTADO ESTADUAL".equals(chave.cargo()) && "MT".equals(chave.uf())) {
-                    candPorAlmtNomeCivil.merge(chave.nomeCivil(), c, Vinculo::maisRecente);
+                    candPorAlmtNomeCivil.merge(chave.nomeCivil(), c, (a, b) -> preferidaEstadual(eleicaoVigente, a, b));
                     if (c.hasNonNull("nome_urna")) {
-                        candPorAlmtNomeUrna.merge(Texto.normalizarNome(c.get("nome_urna").stringValue()), c, Vinculo::maisRecente);
+                        candPorAlmtNomeUrna.merge(Texto.normalizarNome(c.get("nome_urna").stringValue()), c, (a, b) -> preferidaEstadual(eleicaoVigente, a, b));
                     }
                     if (chave.cpf() != null) {
                         cpfPorAlmtChave.put(chave.nomeCivil() + "|" + chave.nascimento(), chave.cpf());
                     }
                 } else if ("DEPUTADO ESTADUAL".equals(chave.cargo()) && "MS".equals(chave.uf())) {
-                    candPorAlemsNomeCivil.merge(chave.nomeCivil(), c, Vinculo::maisRecente);
+                    candPorAlemsNomeCivil.merge(chave.nomeCivil(), c, (a, b) -> preferidaEstadual(eleicaoVigente, a, b));
                     if (c.hasNonNull("nome_urna")) {
-                        candPorAlemsNomeUrna.merge(Texto.normalizarNome(c.get("nome_urna").stringValue()), c, Vinculo::maisRecente);
+                        candPorAlemsNomeUrna.merge(Texto.normalizarNome(c.get("nome_urna").stringValue()), c, (a, b) -> preferidaEstadual(eleicaoVigente, a, b));
                     }
                     if (chave.cpf() != null) {
                         cpfPorAlemsChave.put(chave.nomeCivil() + "|" + chave.nascimento(), chave.cpf());
                     }
                 } else if ("DEPUTADO ESTADUAL".equals(chave.cargo()) && "PB".equals(chave.uf())) {
-                    candPorAlpbNomeCivil.merge(chave.nomeCivil(), c, Vinculo::maisRecente);
+                    candPorAlpbNomeCivil.merge(chave.nomeCivil(), c, (a, b) -> preferidaEstadual(eleicaoVigente, a, b));
                     if (c.hasNonNull("nome_urna")) {
-                        candPorAlpbNomeUrna.merge(Texto.normalizarNome(c.get("nome_urna").stringValue()), c, Vinculo::maisRecente);
+                        candPorAlpbNomeUrna.merge(Texto.normalizarNome(c.get("nome_urna").stringValue()), c, (a, b) -> preferidaEstadual(eleicaoVigente, a, b));
                     }
                     if (chave.cpf() != null) {
                         cpfPorAlpbChave.put(chave.nomeCivil() + "|" + chave.nascimento(), chave.cpf());
                     }
                 } else if ("DEPUTADO ESTADUAL".equals(chave.cargo()) && "AM".equals(chave.uf())) {
-                    candPorAleamNomeCivil.merge(chave.nomeCivil(), c, Vinculo::maisRecente);
+                    candPorAleamNomeCivil.merge(chave.nomeCivil(), c, (a, b) -> preferidaEstadual(eleicaoVigente, a, b));
                     if (c.hasNonNull("nome_urna")) {
-                        candPorAleamNomeUrna.merge(Texto.normalizarNome(c.get("nome_urna").stringValue()), c, Vinculo::maisRecente);
+                        candPorAleamNomeUrna.merge(Texto.normalizarNome(c.get("nome_urna").stringValue()), c, (a, b) -> preferidaEstadual(eleicaoVigente, a, b));
                     }
                     if (chave.cpf() != null) {
                         cpfPorAleamChave.put(chave.nomeCivil() + "|" + chave.nascimento(), chave.cpf());
                     }
                 } else if ("DEPUTADO ESTADUAL".equals(chave.cargo()) && "AL".equals(chave.uf())) {
-                    candPorAlealNomeCivil.merge(chave.nomeCivil(), c, Vinculo::maisRecente);
+                    candPorAlealNomeCivil.merge(chave.nomeCivil(), c, (a, b) -> preferidaEstadual(eleicaoVigente, a, b));
                     if (c.hasNonNull("nome_urna")) {
-                        candPorAlealNomeUrna.merge(Texto.normalizarNome(c.get("nome_urna").stringValue()), c, Vinculo::maisRecente);
+                        candPorAlealNomeUrna.merge(Texto.normalizarNome(c.get("nome_urna").stringValue()), c, (a, b) -> preferidaEstadual(eleicaoVigente, a, b));
                     }
                     if (chave.cpf() != null) {
                         cpfPorAlealChave.put(chave.nomeCivil() + "|" + chave.nascimento(), chave.cpf());
                     }
                 } else if ("DEPUTADO ESTADUAL".equals(chave.cargo()) && "RO".equals(chave.uf())) {
-                    candPorAleroNomeCivil.merge(chave.nomeCivil(), c, Vinculo::maisRecente);
+                    candPorAleroNomeCivil.merge(chave.nomeCivil(), c, (a, b) -> preferidaEstadual(eleicaoVigente, a, b));
                     if (c.hasNonNull("nome_urna")) {
-                        candPorAleroNomeUrna.merge(Texto.normalizarNome(c.get("nome_urna").stringValue()), c, Vinculo::maisRecente);
+                        candPorAleroNomeUrna.merge(Texto.normalizarNome(c.get("nome_urna").stringValue()), c, (a, b) -> preferidaEstadual(eleicaoVigente, a, b));
                     }
                     if (chave.cpf() != null) {
                         cpfPorAleroChave.put(chave.nomeCivil() + "|" + chave.nascimento(), chave.cpf());
                     }
                 } else if ("DEPUTADO ESTADUAL".equals(chave.cargo()) && "PI".equals(chave.uf())) {
-                    candPorAlepiNomeCivil.merge(chave.nomeCivil(), c, Vinculo::maisRecente);
+                    candPorAlepiNomeCivil.merge(chave.nomeCivil(), c, (a, b) -> preferidaEstadual(eleicaoVigente, a, b));
                     if (c.hasNonNull("nome_urna")) {
-                        candPorAlepiNomeUrna.merge(Texto.normalizarNome(c.get("nome_urna").stringValue()), c, Vinculo::maisRecente);
+                        candPorAlepiNomeUrna.merge(Texto.normalizarNome(c.get("nome_urna").stringValue()), c, (a, b) -> preferidaEstadual(eleicaoVigente, a, b));
                     }
                     if (chave.cpf() != null) {
                         cpfPorAlepiChave.put(chave.nomeCivil() + "|" + chave.nascimento(), chave.cpf());
                     }
                 } else if ("DEPUTADO ESTADUAL".equals(chave.cargo()) && "RN".equals(chave.uf())) {
-                    candPorAlrnNomeCivil.merge(chave.nomeCivil(), c, Vinculo::maisRecente);
+                    candPorAlrnNomeCivil.merge(chave.nomeCivil(), c, (a, b) -> preferidaEstadual(eleicaoVigente, a, b));
                     if (c.hasNonNull("nome_urna")) {
-                        candPorAlrnNomeUrna.merge(Texto.normalizarNome(c.get("nome_urna").stringValue()), c, Vinculo::maisRecente);
+                        candPorAlrnNomeUrna.merge(Texto.normalizarNome(c.get("nome_urna").stringValue()), c, (a, b) -> preferidaEstadual(eleicaoVigente, a, b));
                     }
                     if (chave.cpf() != null) {
                         cpfPorAlrnChave.put(chave.nomeCivil() + "|" + chave.nascimento(), chave.cpf());
                     }
                 } else if ("DEPUTADO ESTADUAL".equals(chave.cargo()) && "TO".equals(chave.uf())) {
-                    candPorAletoNomeCivil.merge(chave.nomeCivil(), c, Vinculo::maisRecente);
+                    candPorAletoNomeCivil.merge(chave.nomeCivil(), c, (a, b) -> preferidaEstadual(eleicaoVigente, a, b));
                     if (c.hasNonNull("nome_urna")) {
-                        candPorAletoNomeUrna.merge(Texto.normalizarNome(c.get("nome_urna").stringValue()), c, Vinculo::maisRecente);
+                        candPorAletoNomeUrna.merge(Texto.normalizarNome(c.get("nome_urna").stringValue()), c, (a, b) -> preferidaEstadual(eleicaoVigente, a, b));
                     }
                     if (chave.cpf() != null) {
                         cpfPorAletoChave.put(chave.nomeCivil() + "|" + chave.nascimento(), chave.cpf());
                     }
                 } else if ("DEPUTADO ESTADUAL".equals(chave.cargo()) && "SE".equals(chave.uf())) {
-                    candPorAleseNomeCivil.merge(chave.nomeCivil(), c, Vinculo::maisRecente);
+                    candPorAleseNomeCivil.merge(chave.nomeCivil(), c, (a, b) -> preferidaEstadual(eleicaoVigente, a, b));
                     if (c.hasNonNull("nome_urna")) {
-                        candPorAleseNomeUrna.merge(Texto.normalizarNome(c.get("nome_urna").stringValue()), c, Vinculo::maisRecente);
+                        candPorAleseNomeUrna.merge(Texto.normalizarNome(c.get("nome_urna").stringValue()), c, (a, b) -> preferidaEstadual(eleicaoVigente, a, b));
                     }
                     if (chave.cpf() != null) {
                         cpfPorAleseChave.put(chave.nomeCivil() + "|" + chave.nascimento(), chave.cpf());
                     }
                 } else if ("DEPUTADO ESTADUAL".equals(chave.cargo()) && "MA".equals(chave.uf())) {
-                    candPorAlemaNomeCivil.merge(chave.nomeCivil(), c, Vinculo::maisRecente);
+                    candPorAlemaNomeCivil.merge(chave.nomeCivil(), c, (a, b) -> preferidaEstadual(eleicaoVigente, a, b));
                     if (c.hasNonNull("nome_urna")) {
-                        candPorAlemaNomeUrna.merge(Texto.normalizarNome(c.get("nome_urna").stringValue()), c, Vinculo::maisRecente);
+                        candPorAlemaNomeUrna.merge(Texto.normalizarNome(c.get("nome_urna").stringValue()), c, (a, b) -> preferidaEstadual(eleicaoVigente, a, b));
                     }
                     if (chave.cpf() != null) {
                         cpfPorAlemaChave.put(chave.nomeCivil() + "|" + chave.nascimento(), chave.cpf());
                     }
                 } else if ("DEPUTADO ESTADUAL".equals(chave.cargo()) && "AC".equals(chave.uf())) {
-                    candPorAleacNomeCivil.merge(chave.nomeCivil(), c, Vinculo::maisRecente);
+                    candPorAleacNomeCivil.merge(chave.nomeCivil(), c, (a, b) -> preferidaEstadual(eleicaoVigente, a, b));
                     if (c.hasNonNull("nome_urna")) {
-                        candPorAleacNomeUrna.merge(Texto.normalizarNome(c.get("nome_urna").stringValue()), c, Vinculo::maisRecente);
+                        candPorAleacNomeUrna.merge(Texto.normalizarNome(c.get("nome_urna").stringValue()), c, (a, b) -> preferidaEstadual(eleicaoVigente, a, b));
                     }
                     if (chave.cpf() != null) {
                         cpfPorAleacChave.put(chave.nomeCivil() + "|" + chave.nascimento(), chave.cpf());
                     }
                 } else if ("DEPUTADO ESTADUAL".equals(chave.cargo()) && "RR".equals(chave.uf())) {
-                    candPorAlerrNomeCivil.merge(chave.nomeCivil(), c, Vinculo::maisRecente);
+                    candPorAlerrNomeCivil.merge(chave.nomeCivil(), c, (a, b) -> preferidaEstadual(eleicaoVigente, a, b));
                     if (c.hasNonNull("nome_urna")) {
-                        candPorAlerrNomeUrna.merge(Texto.normalizarNome(c.get("nome_urna").stringValue()), c, Vinculo::maisRecente);
+                        candPorAlerrNomeUrna.merge(Texto.normalizarNome(c.get("nome_urna").stringValue()), c, (a, b) -> preferidaEstadual(eleicaoVigente, a, b));
                     }
                     if (chave.cpf() != null) {
                         cpfPorAlerrChave.put(chave.nomeCivil() + "|" + chave.nascimento(), chave.cpf());
                     }
                 } else if ("DEPUTADO ESTADUAL".equals(chave.cargo()) && "AP".equals(chave.uf())) {
-                    candPorAlapNomeCivil.merge(chave.nomeCivil(), c, Vinculo::maisRecente);
+                    candPorAlapNomeCivil.merge(chave.nomeCivil(), c, (a, b) -> preferidaEstadual(eleicaoVigente, a, b));
                     if (c.hasNonNull("nome_urna")) {
-                        candPorAlapNomeUrna.merge(Texto.normalizarNome(c.get("nome_urna").stringValue()), c, Vinculo::maisRecente);
+                        candPorAlapNomeUrna.merge(Texto.normalizarNome(c.get("nome_urna").stringValue()), c, (a, b) -> preferidaEstadual(eleicaoVigente, a, b));
                     }
                     if (chave.cpf() != null) {
                         cpfPorAlapChave.put(chave.nomeCivil() + "|" + chave.nascimento(), chave.cpf());
@@ -653,16 +768,44 @@ final class Vinculo {
             if ("camara".equals(p.fonteCli)) {
                 Coleta.Arquivo arq = Coleta.metadados(ctx, "camara", "deputados/" + p.ids.get("camara") + ".json");
                 if (arq != null) {
-                    String bruto = Texto.digitos(Json.texto(Json.ler(Coleta.caminho(ctx, arq)).path("dados"), "cpf"));
+                    JsonNode dados = Json.ler(Coleta.caminho(ctx, arq)).path("dados");
+                    String bruto = Texto.digitos(Json.texto(dados, "cpf"));
                     cpf = bruto.length() == 11 ? bruto : null;
+                    String nomeCivil = Json.texto(dados, "nomeCivil");
+                    if (nomeCivil != null) {
+                        p.nomesCivis.add(nomeCivil);
+                    }
+                    JsonNode ultimo = dados.path("ultimoStatus");
+                    String nomeEleitoral = Json.texto(ultimo, "nomeEleitoral");
+                    if (nomeEleitoral != null) {
+                        p.nomesParlamentares.add(nomeEleitoral);
+                    }
+                    String nomeUltimo = Json.texto(ultimo, "nome");
+                    if (nomeUltimo != null) {
+                        p.nomesParlamentares.add(nomeUltimo);
+                    }
                 }
             } else if ("senado".equals(p.fonteCli)) {
                 Coleta.Arquivo arq = Coleta.metadados(ctx, "senado", "senador/" + p.ids.get("senado") + ".json");
                 if (arq != null) {
                     JsonNode s = Json.ler(Coleta.caminho(ctx, arq)).path("DetalheParlamentar").path("Parlamentar");
-                    String chave = Texto.normalizarNome(Json.texto(s.path("IdentificacaoParlamentar"), "NomeCompletoParlamentar"))
-                            + "|" + p.uf + "|" + Json.texto(s.path("DadosBasicosParlamentar"), "DataNascimento");
-                    cpf = cpfPorSenadoChave.get(chave);
+                    JsonNode ident = s.path("IdentificacaoParlamentar");
+                    String nomeParl = Json.texto(ident, "NomeParlamentar");
+                    if (nomeParl != null) {
+                        p.nomesParlamentares.add(nomeParl);
+                    }
+                    String nomeCompleto = Json.texto(ident, "NomeCompletoParlamentar");
+                    if (nomeCompleto != null) {
+                        p.nomesCivis.add(nomeCompleto);
+                    }
+                    String nomeNorm = Texto.normalizarNome(nomeCompleto);
+                    String nasc = Json.texto(s.path("DadosBasicosParlamentar"), "DataNascimento");
+                    if (nomeNorm != null && nasc != null) {
+                        cpf = cpfPorSenadoChave.get(nomeNorm + "|" + p.uf + "|" + nasc);
+                        if (cpf == null) {
+                            cpf = cpfPorPessoaUnico.get(nomeNorm + "|" + nasc);
+                        }
+                    }
                 }
             } else if ("sapl".equals(p.fonteCli)) {
                 Coleta.Arquivo arq = Coleta.metadados(ctx, "sapl", "parlamentares/" + p.ids.get("sapl") + ".json");
@@ -686,7 +829,7 @@ final class Vinculo {
             } else if ("cmsp".equals(p.fonteCli)) {
                 // O serviço da CMSP só tem o nome parlamentar, que costuma ser o nome de urna. Só a pontuação ("Jr.", "Dra.")
                 // é ignorada: casar por palavras soltas ligaria homônimos parciais, e isso atribuiria candidaturas e bens a outra pessoa.
-                String nomeParl = semPontos(Texto.normalizarNome(p.nome));
+                String nomeParl = semPontuacao(Texto.normalizarNome(p.nome));
                 JsonNode cand = candPorCmspNomeUrna.get(nomeParl);
                 if (cand == null) {
                     cand = candPorCmspNomeCivil.get(nomeParl);
@@ -747,10 +890,16 @@ final class Vinculo {
                     }
                 }
             } else if ("alep".equals(p.fonteCli)) {
-                String nomeNorm = Texto.normalizarNome(p.nome);
+                String nomeNorm = semPontuacao(Texto.normalizarNome(p.nome));
                 JsonNode cand = candPorAlepNomeCivil.get(nomeNorm);
                 if (cand == null) {
                     cand = candPorAlepNomeUrna.get(nomeNorm);
+                }
+                if (cand == null) {
+                    String semTitulo = semPontuacao(Texto.normalizarNome(limparTitulo(p.nome)));
+                    if (semTitulo != null && !semTitulo.isBlank()) {
+                        cand = candPorAlepNomeUrnaSemTitulo.get(semTitulo);
+                    }
                 }
                 if (cand != null) {
                     candSapl = cand;
@@ -2201,13 +2350,42 @@ final class Vinculo {
         alvo.arquivosDeBlocos.addAll(outro.arquivosDeBlocos);
         alvo.aliases.add(outro.id);
         alvo.aliases.addAll(outro.aliases);
+        alvo.nomesParlamentares.addAll(outro.nomesParlamentares);
+        alvo.nomesCivis.addAll(outro.nomesCivis);
         if (alvo.foto == null) {
             alvo.foto = outro.foto;
         }
     }
 
-    private static String semPontos(String nome) {
-        return nome == null ? null : nome.replace(".", "");
+    private static String semPontuacao(String nome) {
+        if (nome == null) {
+            return null;
+        }
+        return nome.replace(".", "").replace(",", " ").replaceAll("\\s+", " ").trim();
+    }
+
+    private static int eleicaoEstadualVigente(LocalDate hoje) {
+        int eleicao = 2018;
+        while (!hoje.isBefore(LocalDate.of(eleicao + 5, 2, 1))) {
+            eleicao += 4;
+        }
+        return eleicao;
+    }
+
+    private static JsonNode preferidaEstadual(int eleicaoVigente, JsonNode a, JsonNode b) {
+        boolean eleitoA = a.path("eleito").asBoolean(false);
+        boolean eleitoB = b.path("eleito").asBoolean(false);
+        if (eleitoB != eleitoA) {
+            return eleitoB ? b : a;
+        }
+        int anoA = a.path("ano").asInt();
+        int anoB = b.path("ano").asInt();
+        boolean atualA = anoA <= eleicaoVigente;
+        boolean atualB = anoB <= eleicaoVigente;
+        if (atualA != atualB) {
+            return atualB ? b : a;
+        }
+        return anoB > anoA ? b : a;
     }
 
     private static JsonNode maisRecente(JsonNode a, JsonNode b) {

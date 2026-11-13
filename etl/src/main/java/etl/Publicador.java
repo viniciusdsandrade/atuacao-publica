@@ -108,6 +108,10 @@ public final class Publicador {
         final Set<String> aliases = new LinkedHashSet<>();
         /** Todos os cargos da pessoa na cobertura: o perfil traz os blocos de cada um (ADR-0006). */
         final Set<String> cargos = new LinkedHashSet<>();
+        /** Nomes parlamentares oficiais da pessoa nas casas em que atuou, para vínculo de emendas. */
+        final Set<String> nomesParlamentares = new LinkedHashSet<>();
+        /** Nomes civis oficiais da Câmara ou Senado, usados como último recurso no vínculo de emendas. */
+        final Set<String> nomesCivis = new LinkedHashSet<>();
         boolean emExercicio;
         /** Prioridade do papel principal: em exercício, depois posse prevista, depois fora de exercício. */
         int prioridade;
