@@ -4,11 +4,44 @@ import { expect, test } from '@playwright/test';
 // Os seletores usam papéis e rótulos acessíveis: se o teste não acha o controle, o leitor de tela também não acharia.
 
 test.describe('lista de políticos', () => {
-  test('mostra o título e os cartões do índice', async ({ page }) => {
+  test('a página inicial começa pelas portas de entrada, sem listar ninguém', async ({ page }) => {
     await page.goto('/');
     await expect(page.getByRole('heading', { level: 1 })).toContainText('Atividade de políticos brasileiros');
+    await expect(page.getByRole('heading', { level: 2, name: 'Por onde começar' })).toBeVisible();
+    await expect(page.getByRole('navigation', { name: 'Pelo estado' }).getByRole('link', { name: /São Paulo/ })).toBeVisible();
+    await expect(page.getByRole('navigation', { name: 'Pelo cargo' }).getByRole('link', { name: /Senador/ })).toBeVisible();
+    await expect(page.getByRole('link', { name: /Ana Exemplo/ })).toHaveCount(0);
+  });
+
+  test('o estado escolhido abre a lista, e Voltar retorna ao ponto de partida', async ({ page }) => {
+    await page.goto('/');
+    await page.getByRole('navigation', { name: 'Pelo estado' }).getByRole('link', { name: /Santa Catarina/ }).click();
+    await expect(page).toHaveURL(/uf=SC/);
+    await expect(page.getByRole('link', { name: /Irene Exemplo/ })).toBeVisible();
+    await expect(page.getByRole('link', { name: /Ana Exemplo/ })).toHaveCount(0);
+    await expect(page.getByRole('heading', { level: 2, name: /de [\d.]+ políticos/ })).toBeFocused();
+
+    await page.goBack();
+    await expect(page.getByRole('heading', { level: 2, name: 'Por onde começar' })).toBeVisible();
+    await expect(page.getByRole('link', { name: /Irene Exemplo/ })).toHaveCount(0);
+  });
+
+  test('"Ver todos" mostra os cartões do índice, e "Limpar tudo" volta ao ponto de partida', async ({ page }) => {
+    await page.goto('/');
+    await page.getByRole('link', { name: /Ver todos os \d+ em exercício/ }).click();
+    await expect(page).toHaveURL(/lista=completa/);
     await expect(page.getByRole('link', { name: /Ana Exemplo/ })).toBeVisible();
     await expect(page.getByRole('link', { name: /Leandro Exemplo/ })).toBeVisible();
+
+    await page.getByRole('button', { name: 'Limpar tudo' }).click();
+    await expect(page.getByRole('heading', { level: 2, name: 'Por onde começar' })).toBeVisible();
+  });
+
+  test('com um estado escolhido, os cargos do recorte viram chips', async ({ page }) => {
+    await page.goto('/#/?uf=SP');
+    await page.getByRole('radio', { name: /^Senador/ }).check({ force: true });
+    await expect(page.getByRole('link', { name: /Fabio Exemplo/ })).toBeVisible();
+    await expect(page.getByRole('link', { name: /Ana Exemplo/ })).toHaveCount(0);
   });
 
   test('busca por nome e limpa a busca', async ({ page }) => {
@@ -18,8 +51,10 @@ test.describe('lista de políticos', () => {
     await expect(page.getByRole('link', { name: /Leandro Exemplo/ })).toBeVisible();
     await expect(page.getByRole('link', { name: /Ana Exemplo/ })).toHaveCount(0);
 
+    // Sem busca e sem recorte, a página volta ao ponto de partida.
     await page.getByRole('button', { name: 'Limpar a busca' }).click();
-    await expect(page.getByRole('link', { name: /Ana Exemplo/ })).toBeVisible();
+    await expect(page.getByRole('heading', { level: 2, name: 'Por onde começar' })).toBeVisible();
+    await expect(page.getByRole('link', { name: /Leandro Exemplo/ })).toHaveCount(0);
   });
 
   test('Enter na busca leva o foco à contagem, logo acima dos cartões', async ({ page }) => {
@@ -33,7 +68,7 @@ test.describe('lista de políticos', () => {
   });
 
   test('filtra por UF no seletor', async ({ page }) => {
-    await page.goto('/');
+    await page.goto('/#/?lista=completa');
     const uf = page.getByLabel('UF', { exact: true });
     if (!(await uf.isVisible())) {
       // No celular os filtros extras ficam recolhidos.
@@ -45,7 +80,7 @@ test.describe('lista de políticos', () => {
   });
 
   test('chip de partido filtra a lista e o filtro pode ser removido', async ({ page }) => {
-    await page.goto('/');
+    await page.goto('/#/?lista=completa');
     await page.getByRole('radio', { name: /^PT\b/ }).check({ force: true });
     await expect(page.getByRole('link', { name: /Bruno Exemplo/ })).toBeVisible();
     await expect(page.getByRole('link', { name: /Ana Exemplo/ })).toHaveCount(0);
@@ -57,7 +92,7 @@ test.describe('lista de políticos', () => {
 
 test.describe('perfil', () => {
   test('abre o perfil pelo cartão e mostra os blocos', async ({ page }) => {
-    await page.goto('/');
+    await page.goto('/#/?lista=completa');
     await page.getByRole('link', { name: /Ana Exemplo/ }).first().click();
     await expect(page).toHaveURL(/#\/politico\/cam-900001$/);
     await expect(page.getByRole('heading', { level: 1 })).toContainText('Ana Exemplo');

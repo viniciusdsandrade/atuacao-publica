@@ -84,6 +84,8 @@
     <button type="button" class="botao botao--primario" (click)="tentarDeNovo()">Tentar de novo</button>
   </div>
 } @else if (indice(); as i) {
+  @if (comRecorte()) {
+  <div id="recorte" class="recorte">
   <div class="painel painel-busca" role="group" aria-label="Filtrar a lista">
     <div class="filtros-segmentos">
       <div class="segmentos" role="radiogroup" aria-labelledby="rotulo-situacao">
@@ -97,6 +99,20 @@
           }
         </div>
       </div>
+      <!-- Com um estado escolhido, o passo seguinte é o cargo: os cargos do recorte entram no lugar da esfera. -->
+      @if (filtros().uf && segmentosCargo().length) {
+        <div class="segmentos segmentos--cargo" role="radiogroup" aria-labelledby="rotulo-cargo-chips">
+          <span id="rotulo-cargo-chips" class="campo-rotulo">Cargos neste estado</span>
+          <div class="segmentos-lista">
+            @for (c of segmentosCargo(); track c.valor) {
+              <label class="segmento">
+                <input type="radio" name="cargo-chip" [value]="c.valor" [checked]="filtros().cargo === c.valor" (change)="alterar({ cargo: c.valor })" />
+                <span>{{ c.rotulo }} <small>{{ inteiro(c.total) }}</small></span>
+              </label>
+            }
+          </div>
+        </div>
+      } @else {
       <div class="segmentos" role="radiogroup" aria-labelledby="rotulo-esfera">
         <span id="rotulo-esfera" class="campo-rotulo">Esfera</span>
         <div class="segmentos-lista">
@@ -108,6 +124,7 @@
           }
         </div>
       </div>
+      }
       @if (filtros().esfera === 'estadual') {
         <div class="segmentos segmentos--uf so-largo" role="radiogroup" aria-labelledby="rotulo-uf-chips">
           <span id="rotulo-uf-chips" class="campo-rotulo">Estado (UF)</span>
@@ -204,22 +221,7 @@
       <h2 id="titulo-resultados" class="resultados-titulo" tabindex="-1">
         <strong>{{ inteiro(resultado().length) }}</strong> de {{ inteiro(i.total) }} políticos
       </h2>
-      <p class="resultados-meta">
-        <span>Dados de {{ data(i.gerado_em) }}</span>
-        @if (resumoColetas(); as r) {
-          <a routerLink="/estado">
-            @if (r.comAviso > 0) {
-              <app-icone nome="alerta" [pequeno]="true" />
-              {{ r.comAviso }} {{ r.comAviso === 1 ? 'fonte com aviso' : 'fontes com aviso' }} nas coletas
-            } @else {
-              <app-icone nome="verificado" [pequeno]="true" />
-              Coletas das {{ r.total }} fontes sem aviso
-            }
-          </a>
-        } @else {
-          <a routerLink="/estado">Estado das coletas</a>
-        }
-      </p>
+      <p class="resultados-meta"><ng-container *ngTemplateOutlet="estadoDosDados" /></p>
     </div>
     <p class="sr-only" role="status">{{ anuncio() }}</p>
 
@@ -290,21 +292,108 @@
       }
     }
   </section>
+  </div>
+  } @else {
+    <!-- Ponto de partida (ADR-0056): sem busca e sem recorte, a página não lista ninguém.
+         Mostra as portas de entrada, com a contagem de quem está em exercício. -->
+    <section class="partida surge" aria-labelledby="titulo-partida">
+      <div class="partida-topo">
+        <h2 id="titulo-partida">Por onde começar</h2>
+        <p>Escolha um estado ou um cargo, ou use a busca acima. Os números contam quem está em exercício.</p>
+      </div>
+      <div class="partida-grade">
+        <nav class="painel partida-bloco" aria-labelledby="titulo-estados">
+          <h3 id="titulo-estados">Pelo estado</h3>
+          <ul class="portas portas--estados">
+            @for (e of partida().estados; track e.uf) {
+              <li>
+                <a class="porta" [attr.href]="endereco({ uf: e.uf })" (click)="entrar($event, { uf: e.uf })">
+                  <span>{{ e.nome }}</span>
+                  <small class="numero">{{ inteiro(e.total) }}</small>
+                </a>
+              </li>
+            }
+          </ul>
+        </nav>
+        <nav class="painel partida-bloco" aria-labelledby="titulo-cargos">
+          <h3 id="titulo-cargos">Pelo cargo</h3>
+          @for (g of partida().esferas; track g.esfera) {
+            <p class="rotulo-secao" [id]="'esfera-' + g.esfera">{{ g.rotulo }}</p>
+            <ul class="portas" [attr.aria-labelledby]="'esfera-' + g.esfera">
+              @for (c of g.cargos; track c.cargo) {
+                <li>
+                  <a class="porta" [attr.href]="endereco({ cargo: c.cargo })" (click)="entrar($event, { cargo: c.cargo })">
+                    <span>{{ c.rotulo }}</span>
+                    <small class="numero">{{ inteiro(c.total) }}</small>
+                  </a>
+                </li>
+              }
+            </ul>
+          }
+        </nav>
+      </div>
+      <p class="partida-resto">
+        <a [attr.href]="endereco({ lista: true })" (click)="entrar($event, { lista: true })">
+          Ver todos os {{ inteiro(partida().situacoes.exercicio) }} em exercício
+        </a>
+        @if (partida().situacoes.posse > 0) {
+          <a [attr.href]="endereco({ situacao: 'posse' })" (click)="entrar($event, { situacao: 'posse' })">
+            {{ inteiro(partida().situacoes.posse) }} aguardando posse
+          </a>
+        }
+        @if (partida().situacoes.fora > 0) {
+          <a [attr.href]="endereco({ situacao: 'fora' })" (click)="entrar($event, { situacao: 'fora' })">
+            {{ inteiro(partida().situacoes.fora) }} fora de exercício
+          </a>
+        }
+      </p>
+      <p class="resultados-meta"><ng-container *ngTemplateOutlet="estadoDosDados" /></p>
+    </section>
+  }
+  <ng-template #estadoDosDados>
+    <span>Dados de {{ data(i.gerado_em) }}</span>
+    @if (resumoColetas(); as r) {
+      <a routerLink="/estado">
+        @if (r.comAviso > 0) {
+          <app-icone nome="alerta" [pequeno]="true" />
+          {{ r.comAviso }} {{ r.comAviso === 1 ? 'fonte com aviso' : 'fontes com aviso' }} nas coletas
+        } @else {
+          <app-icone nome="verificado" [pequeno]="true" />
+          Coletas das {{ r.total }} fontes sem aviso
+        }
+      </a>
+    } @else {
+      <a routerLink="/estado">Estado das coletas</a>
+    }
+  </ng-template>
 } @else {
   <p class="sr-only" role="status">Carregando o índice de políticos.</p>
-  <div class="painel painel-busca" aria-hidden="true">
-    <div class="esqueleto esqueleto--linha"></div>
-    <div class="esqueleto esqueleto--linha"></div>
-  </div>
-  <ul class="grade-cartoes" aria-hidden="true">
-    @for (n of esqueletos; track n) {
-      <li class="cartao cartao--esqueleto">
-        <span class="esqueleto avatar"></span>
-        <span class="cartao-corpo">
+  @if (comRecorte()) {
+    <div class="painel painel-busca" aria-hidden="true">
+      <div class="esqueleto esqueleto--linha"></div>
+      <div class="esqueleto esqueleto--linha"></div>
+    </div>
+    <ul class="grade-cartoes" aria-hidden="true">
+      @for (n of esqueletos; track n) {
+        <li class="cartao cartao--esqueleto">
+          <span class="esqueleto avatar"></span>
+          <span class="cartao-corpo">
+            <span class="esqueleto esqueleto--texto"></span>
+            <span class="esqueleto esqueleto--texto esqueleto--curto"></span>
+          </span>
+        </li>
+      }
+    </ul>
+  } @else {
+    <div class="partida-grade" aria-hidden="true">
+      @for (n of [1, 2]; track n) {
+        <div class="painel partida-bloco partida-bloco--esqueleto">
+          <span class="esqueleto esqueleto--titulo"></span>
+          <span class="esqueleto esqueleto--texto"></span>
           <span class="esqueleto esqueleto--texto"></span>
           <span class="esqueleto esqueleto--texto esqueleto--curto"></span>
-        </span>
-      </li>
-    }
-  </ul>
+        </div>
+      }
+    </div>
+  }
 }

@@ -1,7 +1,7 @@
 import { Location, NgTemplateOutlet } from '@angular/common';
 import { Component, Injector, afterNextRender, computed, effect, inject, signal } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
-import { ActivatedRoute, ParamMap, RouterLink } from '@angular/router';
+import { ActivatedRoute, ParamMap, Router, RouterLink } from '@angular/router';
 import { BehaviorSubject, catchError, map, of, startWith, switchMap } from 'rxjs';
 
 import { Dados } from '../dados';
@@ -29,6 +29,8 @@ const LOTE = 48;
 /** Acima disto, o partido fica só na lista de seleção (ADR-0035). */
 const MAXIMO_CHIPS_PARTIDO = 12;
 const LIMITE_MOSTRAR = 5000;
+/** Âncora da área de filtros e resultados: quem escolhe uma porta de entrada chega aqui. */
+const ANCORA_DO_RECORTE = 'recorte';
 /** Tempo com o ponteiro parado sobre o cartão antes de pedir o perfil: passar por cima não baixa nada. */
 const ESPERA_DO_AQUECIMENTO_MS = 120;
 const ORDEM_ESFERAS = ['federal', 'estadual', 'municipal'];
@@ -44,15 +46,17 @@ interface Filtros {
   cargo: string;
   uf: string;
   partido: string;
+  /** Lista completa pedida de propósito ("Ver todos"). Sem busca, recorte nem este pedido, a página não lista ninguém. */
+  lista: boolean;
   mostrar: number;
 }
 
 /** Começa em quem está em exercício. Quem saiu e quem aguarda posse ficam no arquivo, por este filtro. */
-const PADRAO: Filtros = { busca: '', situacao: 'exercicio', esfera: '', cargo: '', uf: '', partido: '', mostrar: LOTE };
+const PADRAO: Filtros = { busca: '', situacao: 'exercicio', esfera: '', cargo: '', uf: '', partido: '', lista: false, mostrar: LOTE };
 
 type Carga = { estado: 'carregando' } | { estado: 'erro' } | { estado: 'pronto'; indice: Indice };
 
-/** A busca vive no endereço: #/?q=ana&situacao=todos&esfera=municipal. Só o que difere do padrão entra. */
+/** A busca vive no endereço: #/?q=ana&situacao=todos&esfera=municipal&lista=completa. Só o que difere do padrão entra. */
 function dosParametros(p: ParamMap): Filtros {
   const situacao = p.get('situacao');
   const mostrar = Number(p.get('mostrar'));
@@ -63,6 +67,7 @@ function dosParametros(p: ParamMap): Filtros {
     cargo: p.get('cargo') ?? '',
     uf: p.get('uf') ?? '',
     partido: p.get('partido') ?? '',
+    lista: p.get('lista') === 'completa',
     mostrar: Number.isFinite(mostrar) && mostrar > LOTE ? Math.min(Math.ceil(mostrar / LOTE) * LOTE, LIMITE_MOSTRAR) : LOTE,
   };
 }
@@ -79,6 +84,9 @@ function paraParametros(f: Filtros): Record<string, string> {
     if (f[campo]) {
       saida[campo] = f[campo];
     }
+  }
+  if (f.lista) {
+    saida['lista'] = 'completa';
   }
   if (f.mostrar > LOTE) {
     saida['mostrar'] = String(f.mostrar);
@@ -109,6 +117,7 @@ function ordenar(valores: Iterable<string>, ordem: string[]): string[] {
 export class Lista {
   private readonly dados = inject(Dados);
   private readonly location = inject(Location);
+  private readonly router = inject(Router);
   private readonly memoria = inject(MemoriaLista);
   private readonly injector = inject(Injector);
 
@@ -167,7 +176,7 @@ export class Lista {
   private readonly termos = computed(() => chaveDeBusca(this.filtros().busca).split(/\s+/).filter(Boolean));
 
   /** Cada palavra da busca precisa aparecer no nome, no estado, no município, no partido ou no cargo. */
-  private filtrar(ignorar: 'situacao' | 'esfera' | 'uf' | 'partido' | null): EntradaIndice[] {
+  private filtrar(ignorar: 'situacao' | 'esfera' | 'cargo' | 'uf' | 'partido' | null): EntradaIndice[] {
     const f = this.filtros();
     const termos = this.termos();
     const chaves = this.chaves();
@@ -176,7 +185,7 @@ export class Lista {
         termos.every((t) => chaves[i].includes(t)) &&
         (ignorar === 'situacao' || !f.situacao || situacaoDe(p) === f.situacao) &&
         (ignorar === 'esfera' || !f.esfera || p.esfera === f.esfera) &&
-        (!f.cargo || p.cargo === f.cargo) &&
+        (ignorar === 'cargo' || !f.cargo || p.cargo === f.cargo) &&
         (ignorar === 'uf' || !f.uf || p.uf === f.uf) &&
         (ignorar === 'partido' || !f.partido || p.partido === f.partido),
     );
@@ -185,6 +194,7 @@ export class Lista {
   protected readonly resultado = computed(() => this.filtrar(null));
   private readonly semSituacao = computed(() => this.filtrar('situacao'));
   private readonly semEsfera = computed(() => this.filtrar('esfera'));
+  private readonly semCargo = computed(() => this.filtrar('cargo'));
   private readonly semUf = computed(() => this.filtrar('uf'));
   private readonly semPartido = computed(() => this.filtrar('partido'));
 
@@ -212,6 +222,29 @@ export class Lista {
     return [
       { valor: '', rotulo: 'Todas', total: base.length },
       ...this.esferas().map((e) => ({ valor: e, rotulo: rotuloEsfera(e), total: contagem.get(e) ?? 0 })),
+    ];
+  });
+
+  /**
+   * Com um estado escolhido, o passo seguinte é o cargo: os cargos do recorte viram chips com contagem,
+   * na ordem institucional, no lugar da esfera (ADR-0056). Fora disso, o cargo fica na lista de seleção.
+   */
+  protected readonly segmentosCargo = computed(() => {
+    const base = this.semCargo();
+    const contagem = new Map<string, number>();
+    for (const p of base) {
+      contagem.set(p.cargo, (contagem.get(p.cargo) ?? 0) + 1);
+    }
+    const selecionado = this.filtros().cargo;
+    if (selecionado && !contagem.has(selecionado)) {
+      contagem.set(selecionado, 0);
+    }
+    if (contagem.size < 2) {
+      return [];
+    }
+    return [
+      { valor: '', rotulo: 'Todos os cargos', total: base.length },
+      ...ordenar(contagem.keys(), ORDEM_CARGOS).map((cargo) => ({ valor: cargo, rotulo: rotuloCargo(cargo), total: contagem.get(cargo) ?? 0 })),
     ];
   });
 
@@ -292,7 +325,54 @@ export class Lista {
     if (f.partido) {
       lista.push({ chave: 'partido', rotulo: `Partido: ${f.partido}` });
     }
+    // Só o pedido de lista completa mantém a lista aberta: ele vira o chip que leva de volta ao ponto de partida.
+    if (f.lista && lista.length === 0) {
+      lista.push({ chave: 'lista', rotulo: 'Lista completa' });
+    }
     return lista;
+  });
+
+  /**
+   * A lista só aparece quando a pessoa pede: busca, algum recorte ou "Ver todos" (ADR-0056).
+   * Sem isso, a página mostra o ponto de partida e não lista ninguém.
+   */
+  protected readonly comRecorte = computed(() => {
+    const f = this.filtros();
+    return f.lista || f.busca.trim() !== '' || f.situacao !== PADRAO.situacao || !!(f.esfera || f.cargo || f.uf || f.partido);
+  });
+
+  /**
+   * Portas de entrada do ponto de partida: quem está em exercício, contado por estado e por cargo.
+   * Estados em ordem alfabética do nome; esferas e cargos na ordem institucional de sempre.
+   */
+  protected readonly partida = computed(() => {
+    const porUf = new Map<string, number>();
+    const porCargo = new Map<string, number>();
+    const esferaDoCargo = new Map<string, string>();
+    const situacoes: Record<Situacao, number> = { exercicio: 0, posse: 0, fora: 0 };
+    for (const p of this.politicos()) {
+      const situacao = situacaoDe(p);
+      situacoes[situacao]++;
+      if (situacao !== 'exercicio') {
+        continue;
+      }
+      if (p.uf) {
+        porUf.set(p.uf, (porUf.get(p.uf) ?? 0) + 1);
+      }
+      porCargo.set(p.cargo, (porCargo.get(p.cargo) ?? 0) + 1);
+      esferaDoCargo.set(p.cargo, p.esfera);
+    }
+    const estados = [...porUf]
+      .map(([uf, total]) => ({ uf, nome: NOMES_DAS_UFS[uf] ?? uf, total }))
+      .sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'));
+    const esferas = ordenar(new Set(esferaDoCargo.values()), ORDEM_ESFERAS).map((esfera) => ({
+      esfera,
+      rotulo: rotuloEsfera(esfera),
+      cargos: ordenar(porCargo.keys(), ORDEM_CARGOS)
+        .filter((cargo) => esferaDoCargo.get(cargo) === esfera)
+        .map((cargo) => ({ cargo, rotulo: rotuloCargo(cargo), total: porCargo.get(cargo) ?? 0 })),
+    }));
+    return { estados, esferas, situacoes };
   });
 
   protected readonly extrasAtivos = computed(() => {
@@ -429,6 +509,41 @@ export class Lista {
     const titulo = document.getElementById('titulo-resultados');
     titulo?.scrollIntoView();
     titulo?.focus({ preventScroll: true });
+  }
+
+  /** Endereço de um recorte, para o link de cada porta de entrada (abrir em outra aba, copiar). */
+  protected endereco(recorte: Partial<Filtros>): string {
+    const consulta = new URLSearchParams(paraParametros({ ...PADRAO, ...recorte })).toString();
+    return this.location.prepareExternalUrl(consulta ? '/?' + consulta : '/');
+  }
+
+  /**
+   * Porta de entrada escolhida: a lista abre naquele recorte, e a tela vai aos filtros e à contagem.
+   * A troca passa pelo roteador para ganhar entrada própria no histórico: Voltar retorna ao ponto de partida,
+   * na rolagem em que ele estava. Clique com tecla modificadora segue o link normal (outra aba ou janela).
+   */
+  protected entrar(evento: MouseEvent, recorte: Partial<Filtros>): void {
+    if (evento.button !== 0 || evento.metaKey || evento.ctrlKey || evento.shiftKey || evento.altKey) {
+      return;
+    }
+    evento.preventDefault();
+    this.gravarAgora();
+    const novo: Filtros = { ...PADRAO, ...recorte };
+    // 'reload': o roteador pode já ter visto este endereço antes de um "Limpar tudo", que não passa por ele.
+    void this.router
+      .navigate(['/'], { queryParams: paraParametros(novo), fragment: ANCORA_DO_RECORTE, onSameUrlNavigation: 'reload' })
+      .then(() => {
+        if (!iguais(novo, this.filtros())) {
+          this.filtros.set(novo);
+        }
+        afterNextRender(
+          () => {
+            document.getElementById(ANCORA_DO_RECORTE)?.scrollIntoView();
+            document.getElementById('titulo-resultados')?.focus({ preventScroll: true });
+          },
+          { injector: this.injector },
+        );
+      });
   }
 
   private aquecimento?: ReturnType<typeof setTimeout>;

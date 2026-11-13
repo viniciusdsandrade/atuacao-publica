@@ -6,7 +6,9 @@ import { expect, test, type Page } from '@playwright/test';
 const TAGS_WCAG = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'];
 
 const ROTAS: Array<[nome: string, caminho: string]> = [
-  ['lista', '/'],
+  ['ponto de partida', '/'],
+  ['lista completa', '/#/?lista=completa'],
+  ['lista de um estado, com chips de cargo', '/#/?uf=SP'],
   ['perfil de deputado federal', '/#/politico/cam-900001'],
   ['emendas de um ano', '/#/politico/cam-900001/emendas/2026'],
   ['perfil de vereador da capital', '/#/politico/cmsp-940012'],

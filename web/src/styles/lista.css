@@ -97,6 +97,115 @@
   font-size: 0.9375rem;
 }
 
+/* Ponto de partida (ADR-0056): sem busca e sem recorte, a página mostra portas de entrada, e não a lista.
+   Todas as portas têm o mesmo tamanho; a ordem é alfabética nos estados e institucional nos cargos.
+   Três colunas fecham os 27 estados em nove linhas inteiras; no celular estreito, duas. */
+.partida-topo {
+  margin-bottom: 0.875rem;
+}
+
+.partida-topo p {
+  max-width: 62ch;
+  margin: 0.25rem 0 0;
+  color: var(--texto-2);
+}
+
+.partida-grade {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1rem;
+}
+
+.partida-bloco {
+  padding: 1rem;
+}
+
+.partida-bloco h3 {
+  margin-bottom: 0.75rem;
+}
+
+.partida-bloco .rotulo-secao {
+  margin: 0.875rem 0 0.375rem;
+}
+
+.partida-bloco h3 + .rotulo-secao {
+  margin-top: 0;
+}
+
+.portas {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.375rem;
+  list-style: none;
+}
+
+.portas--estados {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.porta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  height: 100%;
+  min-height: 2.75rem;
+  padding: 0.375rem 0.75rem;
+  border: 1px solid var(--borda);
+  border-radius: var(--r-2);
+  background: var(--superficie);
+  color: var(--texto);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  line-height: 1.25;
+  text-decoration: none;
+  -webkit-tap-highlight-color: transparent;
+  transition: background var(--transicao), border-color var(--transicao), color var(--transicao);
+}
+
+.porta small {
+  flex: none;
+  color: var(--texto-3);
+  font-size: 0.8125rem;
+  font-weight: 500;
+}
+
+.porta:hover,
+.porta:active {
+  border-color: var(--destaque);
+  background: var(--destaque-suave);
+  color: var(--destaque);
+}
+
+.porta:hover small,
+.porta:active small {
+  color: inherit;
+}
+
+.partida-resto {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 1.25rem;
+  margin: 1rem 0 0;
+  font-size: 0.9375rem;
+}
+
+.partida-resto a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2rem;
+  font-weight: 600;
+}
+
+.partida .resultados-meta {
+  margin-top: 0.25rem;
+}
+
+.partida-bloco--esqueleto {
+  display: grid;
+  gap: 0.75rem;
+}
+
 .painel-busca {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
@@ -287,9 +396,19 @@
   background: none;
 }
 
+@media (min-width: 30rem) {
+  .portas--estados {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
 @media (min-width: 48rem) {
   .heroi {
     padding: 2rem 2.5rem;
+  }
+
+  .partida-bloco {
+    padding: 1.25rem 1.5rem;
   }
 
   .heroi-numeros {
@@ -341,6 +460,10 @@
 }
 
 @media (min-width: 64rem) {
+  .partida-grade {
+    grid-template-columns: minmax(0, 1.75fr) minmax(0, 1fr);
+  }
+
   .heroi {
     display: grid;
     grid-template-columns: minmax(0, 1fr) 15rem;
@@ -355,8 +478,13 @@
 }
 
 @media (forced-colors: active) {
-  .cartao {
+  .cartao,
+  .porta {
     border: 1px solid CanvasText;
+  }
+
+  .porta:hover {
+    border-color: Highlight;
   }
 
   .cartao:hover {
