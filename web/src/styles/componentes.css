@@ -406,11 +406,16 @@
   color: var(--texto);
 }
 
+/* Colegiado sem sigla entra pelo nome inteiro: o selo quebra a linha em vez de alargar a página.
+   O raio de 1rem dá a mesma pílula em uma linha e um canto discreto em duas. */
 .selo--lideranca {
+  max-width: 100%;
+  border-radius: 1rem;
   background: var(--destaque-suave);
   border-color: var(--destaque);
   color: var(--destaque);
   font-weight: 650;
+  white-space: normal;
 }
 
 /* Selo que é link: alvo de toque de pelo menos 32 px (ADR-0012). */
