@@ -248,6 +248,41 @@ class TseTest {
     }
 
     @Test
+    void assinaturaDaCoberturaMudaQuandoUmaCandidaturaEntraENaoDependeDaOrdem() {
+        String antes = Tse.assinaturaDaCobertura(java.util.Set.of("250001", "250002"));
+        assertEquals(antes, Tse.assinaturaDaCobertura(new java.util.LinkedHashSet<>(List.of("250002", "250001"))));
+        assertFalse(antes.equals(Tse.assinaturaDaCobertura(java.util.Set.of("250001", "250002", "250003"))));
+        // Sem separador, "25" + "0001" e "250" + "001" dariam a mesma assinatura.
+        assertFalse(Tse.assinaturaDaCobertura(java.util.Set.of("25", "0001")).equals(Tse.assinaturaDaCobertura(java.util.Set.of("250", "001"))));
+    }
+
+    @Test
+    void recorteDasContasERefeitoQuandoACoberturaMuda() {
+        assertEquals(etl.Coleta.Politica.SEMPRE, Tse.politicaDasContas(true, false), "eleição fechada com cobertura nova");
+        assertEquals(etl.Coleta.Politica.SEMPRE, Tse.politicaDasContas(true, true));
+        assertEquals(etl.Coleta.Politica.SE_AUSENTE, Tse.politicaDasContas(false, false), "eleição fechada sem mudança fica no cache");
+        assertEquals(etl.Coleta.Politica.SEMANAL, Tse.politicaDasContas(false, true));
+    }
+
+    @Test
+    void recorteSemMarcaContaComoCoberturaDesconhecida(@org.junit.jupiter.api.io.TempDir java.nio.file.Path pasta) throws Exception {
+        java.nio.file.Path marca = pasta.resolve("cobertura-2022.sha256");
+        assertNull(Tse.lerMarca(marca), "recorte de antes da marca: a cobertura dele não se conhece");
+        String assinatura = Tse.assinaturaDaCobertura(java.util.Set.of("250001"));
+        java.nio.file.Files.writeString(marca, assinatura + "\n");
+        assertEquals(assinatura, Tse.lerMarca(marca));
+    }
+
+    @Test
+    void soContaComoRefeitoORecorteBaixadoNestaExecucao() {
+        java.time.Instant agora = java.time.Instant.parse("2026-11-13T12:00:00Z");
+        etl.Contexto ctx = new etl.Contexto(java.nio.file.Path.of("."), java.nio.file.Path.of("data"), null, null, agora, null);
+        assertTrue(Tse.feitoAgora(ctx, new etl.Coleta.Arquivo("u", "c", "h", 1, agora)));
+        assertFalse(Tse.feitoAgora(ctx, new etl.Coleta.Arquivo("u", "c", "h", 1, agora.minusSeconds(86400))), "cópia anterior, usada depois de uma falha");
+        assertFalse(Tse.feitoAgora(ctx, null));
+    }
+
+    @Test
     void ueMunicipalTrazOCodigoIbgeDoEnte() {
         assertEquals("3509502", Tse.UES_MUNICIPAIS.get("62910").ibge());
         assertEquals("3550308", Tse.UES_MUNICIPAIS.get("71072").ibge());

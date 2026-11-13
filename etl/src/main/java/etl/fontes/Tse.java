@@ -147,12 +147,22 @@ public final class Tse implements Fonte {
                     cobertas.add(l.get("SQ_CANDIDATO"));
                 }
             });
-            Politica politicaDasContas = ano == ultima ? Politica.SEMANAL : Politica.SE_AUSENTE;
+            // O recorte vale só para as candidaturas cobertas quando foi feito. Estado ou município que entra depois
+            // muda a assinatura, e o recorte da eleição é refeito (ADR-0057).
+            String assinatura = assinaturaDaCobertura(cobertas);
+            Path marca = marcaDaCobertura(ctx, ano);
+            boolean coberturaMudou = !assinatura.equals(lerMarca(marca));
+            Politica politicaDasContas = politicaDasContas(coberturaMudou, ano == ultima);
             List<String> entradas = entradasDeContas(ano);
-            coleta.extrairDoZip(zipDeContas(ano), entradas.get(0), recorteDeContas(entradas.get(0)), politicaDasContas,
-                    (dados, destino) -> recortarCandidaturas(dados, destino, cobertas, COLUNAS_DE_RECEITA));
-            coleta.extrairDoZip(zipDeContas(ano), entradas.get(1), recorteDeContas(entradas.get(1)), politicaDasContas,
-                    (dados, destino) -> recortarCandidaturas(dados, destino, cobertas, COLUNAS_DE_DESPESA));
+            Coleta.Arquivo receitas = coleta.extrairDoZip(zipDeContas(ano), entradas.get(0), recorteDeContas(entradas.get(0)),
+                    politicaDasContas, (dados, destino) -> recortarCandidaturas(dados, destino, cobertas, COLUNAS_DE_RECEITA));
+            Coleta.Arquivo despesas = coleta.extrairDoZip(zipDeContas(ano), entradas.get(1), recorteDeContas(entradas.get(1)),
+                    politicaDasContas, (dados, destino) -> recortarCandidaturas(dados, destino, cobertas, COLUNAS_DE_DESPESA));
+            // A marca só é gravada com os dois recortes refeitos nesta execução: falha deixa a próxima tentar de novo.
+            if (coberturaMudou && feitoAgora(ctx, receitas) && feitoAgora(ctx, despesas)) {
+                Files.createDirectories(marca.getParent());
+                Files.writeString(marca, assinatura + "\n");
+            }
         }
         coleta.contar("eleicoes", anos.size());
         coleta.periodo(new Meta.Periodo(java.time.LocalDate.of(anos.getFirst(), 1, 1), ctx.hoje()));
@@ -184,6 +194,46 @@ public final class Tse implements Fonte {
 
     static String recorteDeContas(String entrada) {
         return "prestacao_contas/" + entrada + ".gz";
+    }
+
+    /** Cobertura mudou: refaz já. Sem mudança, a eleição mais recente renova por semana e as fechadas ficam no cache. */
+    static Politica politicaDasContas(boolean coberturaMudou, boolean eleicaoMaisRecente) {
+        if (coberturaMudou) {
+            return Politica.SEMPRE;
+        }
+        return eleicaoMaisRecente ? Politica.SEMANAL : Politica.SE_AUSENTE;
+    }
+
+    /** SHA-256 dos SQ_CANDIDATO cobertos, em ordem: muda quando uma candidatura entra na cobertura ou sai dela. */
+    static String assinaturaDaCobertura(Set<String> cobertas) {
+        try {
+            java.security.MessageDigest sha = java.security.MessageDigest.getInstance("SHA-256");
+            for (String sq : new java.util.TreeSet<>(cobertas)) {
+                sha.update(sq.getBytes(StandardCharsets.UTF_8));
+                sha.update((byte) '\n');
+            }
+            return java.util.HexFormat.of().formatHex(sha.digest());
+        } catch (java.security.NoSuchAlgorithmException e) {
+            throw new IllegalStateException(e);
+        }
+    }
+
+    static Path marcaDaCobertura(Contexto ctx, int ano) {
+        return ctx.raw().resolve("tse").resolve("prestacao_contas").resolve("cobertura-" + ano + ".sha256");
+    }
+
+    /** Assinatura gravada com o recorte, ou null: recorte de antes da marca, feito com uma cobertura que não se conhece. */
+    static String lerMarca(Path marca) {
+        try {
+            return Files.exists(marca) ? Files.readString(marca).strip() : null;
+        } catch (IOException e) {
+            return null;
+        }
+    }
+
+    /** O arquivo foi baixado nesta execução, e não reaproveitado do cache depois de uma falha. */
+    static boolean feitoAgora(Contexto ctx, Coleta.Arquivo arquivo) {
+        return arquivo != null && ctx.agora().equals(arquivo.capturadoEm());
     }
 
     /**
