@@ -1,6 +1,6 @@
 # ADR-0056: Ponto de partida na página inicial
 
-- **Status**: Proposta
+- **Status**: Aceita
 - **Data**: 2026-11-13
 
 ## Contexto
