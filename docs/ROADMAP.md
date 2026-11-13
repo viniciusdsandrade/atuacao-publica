@@ -36,6 +36,7 @@ Estado real de cada fase. Atualizado ao fechar cada fase.
 - A API da Câmara responde 504 e recusa conexões em escala a partir do runner do GitHub Actions (execuções de 2026-11-01 e 2026-11-02), e também respondeu 504 em 2026-10-30 de outra rede. Com o cache preenchido, os blocos usam a cópia anterior e ficam marcados como desatualizados. Desde 2026-11-02 a coleta tem orçamento de tempo, discursos são complementares e a falha em poucos deputados deixa a fonte parcial, não em falha. A execução diária roda às 06:17 UTC. Em 2026-11-10 o orçamento de 75 minutos se esgotou, mas as requisições que já esperavam vaga no cliente HTTP seguiram tentando contra os 504, e o passo foi encerrado no limite de 90 minutos. A Câmara saiu parcial, com a cópia anterior de 93 arquivos de discursos. Corrigido: o cliente HTTP também respeita o prazo da coleta.
 - Proposições da ALES no ano aberto: em 2026-11-10, o cache tinha todas as páginas de 2026, mas menos itens únicos que o total da API (1.549 de 1.626 indicações, 540 de 550 projetos de lei). As páginas do ano aberto renovam em rodízio semanal, uma por dia, e a lista desloca a cada proposição nova: item que muda de página entre duas renovações fica de fora até o rodízio seguinte. No site, 2.195 autorias de 2026, contra 2.241 na publicação anterior. Corrigido no mesmo dia: as páginas de uma lista que desloca (proposições da ALES, da ALECE e da ALESC, verba e proposições da ALBA) renovam todas no mesmo dia da semana (`SEMANAL_EM_LISTA`). No ensaio local, os 2.374 itens de 2026 da API da ALES voltaram a bater com o total declarado. No site desde a publicação de 2026-11-10 às 19:48 UTC: 2.298 autorias de 2026 e 12.331 no total. O deploy do Pages expirou quatro vezes antes de passar, sem incidente no status do GitHub.
 - DivulgaCandContas bloqueia o User-Agent do projeto. O ETL usa os arquivos do TSE.
+- Entidade HTML sem decodificar em dado publicado, observada em 2026-11-13 no índice de 2026-11-11: 4 perfis da ALES com o partido `UNI&#227;O` e 4 `foto_url` com entidade no nome do arquivo (2 da ALEPA e 2 da ALERJ). O site mostra o texto como vem. Correção no ETL pendente.
 - A agenda presidencial existe só em HTML, uma página por dia. Desde 2026-11-02 é coletada pela página do dia (ADR-0011); 2022 vem do Internet Archive, e dias sem captura ficam sem registro.
 - O e-Agendas não traz a Presidência da República.
 - O Planalto recusou conexão a partir do ambiente de validação. Os atos normativos vêm da API do Senado.
@@ -224,6 +225,56 @@ Limitações:
 - Em 1366 px, a busca da inicial ficou a 331 px do topo. A meta do ADR-0035 era abaixo de 300 px.
 - Não validado: teste com pessoas (roteiro no ADR-0035), leitor de tela real, Firefox e WebKit.
 - Fica fora: link de cada coleta para a seção dela em Fontes (ver ADR-0035).
+
+## Refino da experiência (ADR-0055)
+
+Implementado em 2026-11-13, sem mudar dado, rota nem parâmetro de URL.
+A estrutura do ADR-0035 fica. A revisão trata de carga, retorno da busca, erros, toque, movimento e leitura das tabelas.
+
+| Frente | Entrega | Estado |
+|---|---|---|
+| Carga | Perfil pedido sem esperar o índice; cabeçalho do perfil imediato a partir do índice em memória; índice pedido antes de o site iniciar; tema salvo aplicado antes da primeira pintura; páginas secundárias em arquivos separados, baixados em segundo plano; perfil pedido com o mouse parado sobre o cartão | concluída |
+| Busca | Contagem e "Ver na lista" ao lado do campo; Enter leva a tela e o foco à contagem e fecha o teclado do celular; termo marcado no cartão; estado na busca, pela sigla e pelo nome | concluída |
+| Erros | Falha de rede separada de perfil inexistente; "Tentar de novo" no perfil, no detalhe anual e nos documentos | concluída |
+| Toque e movimento | Estado pressionado em botões, chips, cartões e menu; troca de página e de tema com esmaecer de 160 ms; sanfona com altura animada onde há suporte; ícone de sol ou lua no interruptor de tema | concluída |
+| Leitura | Valor ausente em tom mais baixo, com a mesma frase; cabeçalho de coluna numérica alinhado aos valores; "ver na fonte" em uma linha; `text-wrap: pretty` | concluída |
+| Compartilhar e inclusão | Botão "Compartilhar" no perfil; metadados Open Graph de título e descrição; `prefers-contrast: more`; lugar reservado para a barra de rolagem | concluída |
+
+Medidas no Chromium, com build de produção e os dados publicados em 2026-11-11.
+Carga: servidor local com HTTP/2 e gzip, processador 4 vezes mais lento, cache frio, mediana de 5 execuções.
+Rede lenta: 1,6 Mbit/s e 150 ms. Rede típica: 9 Mbit/s e 85 ms.
+
+| Medida | Antes | Depois |
+|---|---|---|
+| JS inicial (bruto / transferido) | 451,68 kB / 116,51 kB | 375,08 kB / 101,13 kB |
+| CSS (bruto / transferido) | 45,83 kB / 7,88 kB | 49,63 kB / 8,43 kB |
+| Perfil por link direto até o primeiro bloco, rede lenta | 2.494 ms | 1.532 ms |
+| Perfil por link direto até o primeiro bloco, rede típica | 941 ms | 910 ms |
+| Bytes transferidos no perfil por link direto | 257 kB | 137 kB |
+| Página inicial até o primeiro cartão, rede lenta | 1.991 ms | 1.982 ms |
+| Página inicial até o primeiro cartão, rede típica | 948 ms | 909 ms |
+| Bytes transferidos na página inicial | 244 kB | 225 kB |
+| Do clique no cartão ao nome no perfil, rede lenta | 229 ms | 74 ms |
+| Do clique no cartão ao nome no perfil, rede típica | 158 ms | 76 ms |
+| Topo do campo de busca em 390 px | 360 px | 382 px |
+| Topo da contagem em 1366 px | 805 px | 839 px |
+| Topo da contagem em 390 px | 1.007 px | 1.063 px |
+
+Verificação de 2026-11-13, antes do push:
+
+- Build de produção sem aviso. Testes unitários: 21 de 21. Novos: marcação do termo da busca e chave do tema no script de arranque.
+- E2E com axe: 73 testes passaram e 1 foi pulado (o de teclado no celular emulado). Novos: Enter na busca e nova tentativa no perfil.
+- Roteiro local com 27 conferências, no Chromium, no WebKit e no Firefox: índice baixado uma vez na inicial; perfil por link direto sem baixar o índice; identificador antigo leva ao perfil vigente; cabeçalho imediato vindo da lista; rolagem restaurada ao voltar; tema aplicado antes de o site iniciar; "Compartilhar" copia o endereço; falha de rede recupera com "Tentar de novo"; sem transbordo lateral em 320 px em 6 rotas.
+- axe-core (WCAG 2.0, 2.1 e 2.2, A e AA) sem achados nos estados novos, em 390 e 1366 px, nos dois temas: busca digitada com marcação, busca sem resultado, prévia do perfil, perfil com falha de rede e perfil carregado.
+- Nenhuma requisição a terceiros e nenhum erro de console.
+
+Limitações:
+
+- Na página inicial o ganho de carga é pequeno: nenhum em rede lenta e 4 % em rede típica. O tempo depende do total de bytes, que quase não mudou.
+- A linha de retorno da busca e o rótulo mais longo desceram a lista: 34 px em 1366 px e 56 px em 390 px. Enter leva à lista.
+- `withViewTransitions` do Angular 21.2 está marcado como prévia para desenvolvedores. Sem a API no navegador, a troca de página é direta.
+- Não validado: teste com pessoas, leitor de tela real, aparelho real e a prévia do link em aplicativos de mensagem.
+- Fica fora: sugestões abaixo da busca do cabeçalho, filtros em coluna lateral e uso sem rede (ver ADR-0055).
 
 ## Fase 2 (depois da POC)
 
