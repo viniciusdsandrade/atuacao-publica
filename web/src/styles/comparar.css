@@ -75,10 +75,12 @@
   font: inherit;
   text-align: left;
   cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
   transition: background var(--transicao), border-color var(--transicao);
 }
 
-.lado-resultado:hover {
+.lado-resultado:hover,
+.lado-resultado:active {
   border-color: var(--destaque);
   background: var(--destaque-suave);
 }

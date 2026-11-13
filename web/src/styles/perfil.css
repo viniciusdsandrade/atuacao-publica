@@ -210,11 +210,17 @@ html:has(.perfil-nav) {
   font-weight: 600;
   text-decoration: none;
   white-space: nowrap;
+  -webkit-tap-highlight-color: transparent;
+  transition: background var(--transicao), border-color var(--transicao), color var(--transicao);
 }
 
 .perfil-nav a:hover {
   background: var(--superficie-2);
   color: var(--texto);
+}
+
+.perfil-nav a:active {
+  background: var(--superficie-3);
 }
 
 .perfil-nav a[aria-current='location'] {
@@ -268,6 +274,7 @@ html:has(.perfil-nav) {
   height: 2rem;
   border-radius: var(--r-pilula);
   color: var(--texto-3);
+  transition: background var(--transicao), color var(--transicao);
 }
 
 .bloco-ancora:hover {
@@ -395,6 +402,8 @@ html:has(.perfil-nav) {
   color: var(--texto);
   font-weight: 600;
   text-decoration: none;
+  -webkit-tap-highlight-color: transparent;
+  transition: background var(--transicao), border-color var(--transicao), color var(--transicao);
 }
 
 .chip-link small {
@@ -403,7 +412,8 @@ html:has(.perfil-nav) {
   font-weight: 500;
 }
 
-.chip-link:hover {
+.chip-link:hover,
+.chip-link:active {
   border-color: var(--destaque);
   background: var(--destaque-suave);
   color: var(--destaque);
@@ -522,7 +532,11 @@ html:has(.perfil-nav) {
   border-radius: 0 0 var(--r-2) var(--r-2);
 }
 
-/* Carregamento. */
+/* Carregamento. Com a prévia do índice, o cabeçalho já mostra quem é; as linhas marcam o que falta chegar. */
+.perfil-topo > .perfil-esqueleto-texto {
+  max-width: 28rem;
+}
+
 .perfil-topo--esqueleto {
   display: flex;
   align-items: center;

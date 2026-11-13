@@ -60,7 +60,9 @@
             [attr.aria-checked]="!escuro()"
             (click)="alternarTema()"
           >
-            <span class="interruptor-trilho" aria-hidden="true"><span class="interruptor-botao"></span></span>
+            <span class="interruptor-trilho" aria-hidden="true">
+              <span class="interruptor-botao"><app-icone [nome]="escuro() ? 'lua' : 'sol'" /></span>
+            </span>
           </button>
         </div>
         <p class="tema-nota">Sem escolha salva, o site segue o tema do aparelho.</p>
@@ -76,7 +78,9 @@
       [title]="tituloInterruptor()"
       (click)="alternarTema()"
     >
-      <span class="interruptor-trilho" aria-hidden="true"><span class="interruptor-botao"></span></span>
+      <span class="interruptor-trilho" aria-hidden="true">
+              <span class="interruptor-botao"><app-icone [nome]="escuro() ? 'lua' : 'sol'" /></span>
+            </span>
     </button>
   </div>
 </header>

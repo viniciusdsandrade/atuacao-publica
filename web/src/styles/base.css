@@ -36,7 +36,10 @@
   --r-pilula: 999px;
   --sombra-1: 0 1px 2px rgb(15 23 32 / 0.06), 0 1px 1px rgb(15 23 32 / 0.04);
   --sombra-2: 0 8px 24px rgb(15 23 32 / 0.1);
-  --transicao: 140ms ease;
+  /* Movimento: sai rápido e assenta devagar. Uma curva e duas durações para o site todo. */
+  --curva: cubic-bezier(0.2, 0, 0, 1);
+  --transicao: 140ms var(--curva);
+  --transicao-lenta: 220ms var(--curva);
 }
 
 /* Tema escuro por preferência do sistema (quando não forçado para claro) */
@@ -116,16 +119,29 @@
   --sombra-2: 0 8px 24px rgb(15 23 32 / 0.1);
 }
 
+/* Quem pede mais contraste ao sistema recebe moldura mais forte e um só tom de texto, nos dois temas.
+   O seletor repetido empata em especificidade com os blocos de tema acima e vence por vir depois. */
+@media (prefers-contrast: more) {
+  :root:root {
+    --borda: var(--borda-controle);
+    --texto-2: var(--texto);
+    --texto-3: var(--texto);
+  }
+}
+
 *,
 *::before,
 *::after {
   box-sizing: border-box;
 }
 
+/* scrollbar-gutter reserva o lugar da barra de rolagem: a página não pula de lado
+   quando o conteúdo chega e a barra aparece. */
 html {
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
   scroll-padding-top: 1rem;
+  scrollbar-gutter: stable;
 }
 
 @media (prefers-reduced-motion: no-preference) {
@@ -158,11 +174,13 @@ h4 {
 h1 {
   font-size: clamp(1.75rem, 1.35rem + 1.7vw, 2.5rem);
   font-weight: 750;
+  letter-spacing: -0.022em;
 }
 
 h2 {
   font-size: clamp(1.25rem, 1.12rem + 0.6vw, 1.5rem);
   font-weight: 700;
+  letter-spacing: -0.016em;
 }
 
 h3 {
@@ -170,8 +188,10 @@ h3 {
   font-weight: 650;
 }
 
+/* text-wrap: pretty evita palavra sozinha na última linha. Navegador sem suporte quebra como antes. */
 p {
   margin: 0 0 0.75rem;
+  text-wrap: pretty;
 }
 
 ul,
@@ -202,6 +222,15 @@ code {
 ::selection {
   background: var(--destaque);
   color: var(--sobre-destaque);
+}
+
+/* Trecho que casou com a busca. O texto mantém a cor: só o fundo muda. */
+mark {
+  border-radius: 0.2em;
+  background: color-mix(in srgb, var(--destaque) 22%, transparent);
+  color: inherit;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
 }
 
 /* Foco visível com contraste de pelo menos 3:1 sobre o fundo (WCAG 2.2, 2.4.11 e 1.4.11). */
@@ -249,6 +278,25 @@ code {
   font-variant-numeric: tabular-nums;
 }
 
+/* Troca de página e de tema: esmaecer curto, pela API View Transitions (ADR-0055).
+   Navegador sem suporte troca direto. O conteúdo que chega depois da carga sobe 4 px ao aparecer. */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 160ms;
+  animation-timing-function: ease-out;
+}
+
+@keyframes surgir {
+  from {
+    opacity: 0;
+    transform: translateY(0.25rem);
+  }
+}
+
+.surge {
+  animation: surgir var(--transicao-lenta);
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -258,10 +306,21 @@ code {
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
+
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+  }
 }
 
 @media (forced-colors: active) {
   :where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
     outline-color: Highlight;
+  }
+
+  mark {
+    background: Mark;
+    color: MarkText;
   }
 }

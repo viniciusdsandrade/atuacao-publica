@@ -1,12 +1,15 @@
 import { ApplicationConfig, Injectable, provideBrowserGlobalErrorListeners } from '@angular/core';
 import { provideHttpClient, withFetch } from '@angular/common/http';
 import {
+  ActivatedRouteSnapshot,
   PreloadingStrategy,
   Route,
+  ViewTransitionInfo,
   provideRouter,
   withHashLocation,
   withInMemoryScrolling,
   withPreloading,
+  withViewTransitions,
 } from '@angular/router';
 import { EMPTY, Observable, switchMap, timer } from 'rxjs';
 
@@ -31,6 +34,26 @@ export class PrecargaTardia implements PreloadingStrategy {
   }
 }
 
+/** Caminho de uma rota ativa, sem busca nem fragmento. */
+function caminhoDaRota(raiz: ActivatedRouteSnapshot): string {
+  const partes: string[] = [];
+  for (let rota: ActivatedRouteSnapshot | null = raiz; rota; rota = rota.firstChild) {
+    partes.push(...rota.url.map((segmento) => segmento.path));
+  }
+  return partes.join('/');
+}
+
+/**
+ * Só a troca de página esmaece. Mudança de filtro ou de fragmento na mesma página não anima,
+ * e quem pede menos movimento ao sistema não vê animação nenhuma (ADR-0055).
+ */
+function aoCriarTransicao({ transition, from, to }: ViewTransitionInfo): void {
+  const menosMovimento = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (menosMovimento || caminhoDaRota(from) === caminhoDaRota(to)) {
+    transition.skipTransition();
+  }
+}
+
 // Rotas com hash: o GitHub Pages serve arquivos estáticos e não reescreve URLs.
 // Voltar restaura a rolagem; página nova começa no topo; fragmento rola até o bloco.
 // As páginas fora da lista e do perfil vêm em arquivos separados, baixados em segundo plano (PrecargaTardia).
@@ -43,6 +66,7 @@ export const appConfig: ApplicationConfig = {
       withHashLocation(),
       withInMemoryScrolling({ scrollPositionRestoration: 'enabled', anchorScrolling: 'enabled' }),
       withPreloading(PrecargaTardia),
+      withViewTransitions({ skipInitialTransition: true, onViewTransitionCreated: aoCriarTransicao }),
     ),
   ],
 };

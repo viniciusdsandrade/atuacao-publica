@@ -61,11 +61,16 @@
   font: inherit;
   font-weight: 600;
   cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
   transition: background var(--transicao), border-color var(--transicao), color var(--transicao);
 }
 
 .botao-menu:hover {
   background: var(--superficie-2);
+}
+
+.botao-menu:active {
+  background: var(--superficie-3);
 }
 
 .botao-menu[aria-expanded='true'] {
@@ -84,6 +89,7 @@
 
 .menu-painel.aberto {
   display: grid;
+  animation: surgir var(--transicao-lenta);
 }
 
 .nav-principal {
@@ -111,6 +117,7 @@
   color: var(--texto-2);
   font-weight: 550;
   text-decoration: none;
+  -webkit-tap-highlight-color: transparent;
   transition: background var(--transicao), color var(--transicao);
 }
 
@@ -123,6 +130,10 @@
   color: var(--texto);
 }
 
+.nav-principal a:active {
+  background: var(--superficie-3);
+}
+
 .nav-principal a.ativo {
   background: var(--destaque-suave);
   color: var(--destaque);
@@ -131,6 +142,7 @@
 }
 
 /* Interruptor de tema: trilho em pílula e bolinha. Desligado (à esquerda) no escuro, ligado (à direita) no claro.
+   A bolinha leva o ícone do tema que está na tela: lua no escuro, sol no claro.
    O botão em volta do trilho dá o alvo de toque; o trilho é só o desenho. */
 .interruptor-tema {
   display: inline-grid;
@@ -143,6 +155,7 @@
   border-radius: var(--r-pilula);
   background: none;
   cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .interruptor-trilho {
@@ -159,13 +172,22 @@
 .interruptor-botao {
   position: absolute;
   top: 50%;
-  left: 0.25rem;
-  width: 1rem;
-  height: 1rem;
+  left: 0.125rem;
+  display: grid;
+  place-items: center;
+  width: 1.25rem;
+  height: 1.25rem;
   border-radius: 50%;
   background: var(--destaque);
+  color: var(--sobre-destaque);
   transform: translateY(-50%);
-  transition: transform var(--transicao);
+  transition: transform var(--transicao-lenta);
+}
+
+.interruptor-botao .icone {
+  width: 0.8125rem;
+  height: 0.8125rem;
+  stroke-width: 2.5;
 }
 
 .interruptor-tema[aria-checked='true'] .interruptor-botao {
@@ -342,8 +364,9 @@ main {
     font-size: 0.9375rem;
   }
 
+  /* Na linha do cabeçalho, o item ativo é a pílula inteira: fundo, cor e peso. */
   .nav-principal a.ativo {
-    box-shadow: inset 0 -2px 0 var(--destaque);
+    box-shadow: none;
   }
 
   .interruptor-topo {
@@ -383,6 +406,7 @@ main {
 
   .interruptor-botao {
     background: ButtonText;
+    color: ButtonFace;
   }
 
   .marca-logo rect {

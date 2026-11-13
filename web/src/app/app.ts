@@ -86,8 +86,15 @@ export class App {
     atualizarCorDoNavegador(tema);
   }
 
+  /** A troca de tema esmaece de um para o outro onde o navegador tem View Transitions; nos demais, troca direto. */
   protected alternarTema(): void {
-    this.definirTema(temaAoAlternar(this.escuro() ? 'escuro' : 'claro', this.sistemaEscuro()));
+    const novo = temaAoAlternar(this.escuro() ? 'escuro' : 'claro', this.sistemaEscuro());
+    const menosMovimento = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (typeof document.startViewTransition === 'function' && !menosMovimento) {
+      document.startViewTransition(() => this.definirTema(novo));
+    } else {
+      this.definirTema(novo);
+    }
   }
 
   protected tituloInterruptor(): string {
