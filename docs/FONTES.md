@@ -1477,7 +1477,14 @@ Validação em 2026-11-03 com o User-Agent do projeto.
 ### `alese-parlamentares`: cadastro individual e biografias
 
 - URL base: `https://aleselegis.al.se.leg.br/spl/parlamentar.aspx?id={id}`
-- Ficha institucional individual no sistema legislativo com nome civil, mandatos e biografia sanitizada com `Guarda.semCpf`.
+- Ficha institucional individual no sistema legislativo com nome civil, mandatos, cargos em comissões e biografia sanitizada com `Guarda.semCpf`.
+
+### `alese-proposicoes`: produção legislativa por autor
+
+- URL base: `https://aleselegis.al.se.leg.br/spl/consulta-producao.aspx?tipo={tipo}&autor={autor}`
+- Listagem HTML das proposições por autor e tipo, no sistema legislativo da ALESE. A ficha do parlamentar dá os pares de tipo e autor e a contagem de cada um.
+- Formulário ASP.NET: a listagem com mais de 10 itens é pedida com 100 itens por página e paginada por `__doPostBack`, com o `__VIEWSTATE` da página anterior.
+- Entram as proposições apresentadas desde 2022. O sistema não aceita conexão do runner do GitHub Actions: a casa vem da coleta local cifrada (ADR-0034).
 
 ### `alese-mesa-diretora`: composição da Mesa Diretora
 

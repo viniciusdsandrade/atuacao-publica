@@ -23,3 +23,14 @@ Com a inclusão de Sergipe, a cobertura da Região Nordeste sobe para 8 de seus 
 - O projeto alcança 23 entes federativos integrados (União, 21 estados, DF e 2 municípios).
 - A Região Nordeste atinge 88,9% de cobertura territorial e representativa.
 - Cidadãos de Sergipe passam a contar com visão consolidada da atuação de seus 24 deputados estaduais e do Governador.
+
+## Atualização em 2026-11-13: proposições e comissões
+
+- A ficha do parlamentar no sistema legislativo lista os cargos em comissões e conselhos, com datas, e os pares de tipo e autor da produção legislativa, com a contagem de cada um.
+- O adaptador passa a ler os cargos da legislatura em curso para o bloco de órgãos e frentes. Conselho entra como órgão.
+- As proposições vêm da consulta de produção (`consulta-producao.aspx?tipo={tipo}&autor={autor}`), catalogada como `alese-proposicoes`. Entram as apresentadas desde 2022.
+- A consulta é um formulário ASP.NET. Listagem com mais de 10 itens é pedida com 100 por página. A página seguinte sai de um `__doPostBack` com o `__VIEWSTATE` da anterior. A coleta para na primeira página cujo último item é anterior a 2022.
+- Ementa passa por `Guarda.sanitizar`, que tira CPF, telefone e e-mail.
+- Ensaio local de 2026-11-13: 178 listagens, 27.800 proposições nos 24 deputados. As listagens vêm em ordem decrescente de data, sem inversão nos 29.134 itens lidos. Nenhuma parou antes de chegar a 2022.
+- O sistema legislativo não aceita conexão do runner do CI. A casa vem da coleta local cifrada (ADR-0034).
+- Sem a ficha no cache, o deputado segue no perfil pela lista do portal, sem biografia, comissões e proposições.

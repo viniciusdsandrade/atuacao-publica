@@ -3117,6 +3117,21 @@
   status: validado
   validado_em: 2026-11-11
 
+- id: alese-proposicoes
+  nome: Assembleia Legislativa do Estado de Sergipe, produção legislativa
+  orgao: Assembleia Legislativa do Estado de Sergipe
+  esfera: estadual
+  ente: SE
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://aleselegis.al.se.leg.br/spl/consulta-producao.aspx
+  formato: HTML
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Proposições por autor e tipo na consulta pública do sistema legislativo desde 2022."
+  status: validado
+  validado_em: 2026-11-12
+
 - id: alese-portal
   nome: Assembleia Legislativa do Estado de Sergipe, portal institucional e imagens
   orgao: Assembleia Legislativa do Estado de Sergipe

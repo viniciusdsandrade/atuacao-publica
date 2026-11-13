@@ -111,6 +111,18 @@ public final class Coleta {
         reserva(grupo, null, erro);
     }
 
+    /** Indica se há cópia em cache da URL exata ainda válida pela política. */
+    public boolean emCacheValido(String url, String caminho, Politica politica) {
+        Path destino = ctx.raw().resolve(fonte).resolve(caminho);
+        Arquivo emCache = emCache(lateral(destino));
+        return emCache != null && url.equals(emCache.url()) && valeACopia(politica, caminho, emCache);
+    }
+
+    /** Indica se o orçamento de tempo desta coleta já se esgotou. */
+    public boolean orcamentoExaurido() {
+        return orcamentoEsgotado();
+    }
+
     public Arquivo obter(String url, String caminho, String accept, Politica politica)
             throws IOException, InterruptedException {
         return obter(url, caminho, accept, politica, false, null, false, Map.of());
