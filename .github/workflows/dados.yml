@@ -55,7 +55,7 @@ jobs:
             data/publicado/index.json
           key: dados-${{ github.run_id }}-${{ github.run_attempt }}
           restore-keys: dados-
-      - name: semente da coleta local para ALMG, ALRS, ALES, ALEPE, CLDF, ALBA, ALEMA, ALERR, ALAP e ALESE
+      - name: semente da coleta local para ALMG, ALRS, ALES, ALEPE, CLDF, ALBA, ALEMA, ALERR, ALAP, ALESE e Câmara de Caraguatatuba
         # Essas casas recusam conexão ou respondem 403 de fora do Brasil.
         # O mantenedor coleta na rede dele e envia o cache cifrado (ADR-0034). Sem o segredo, o passo não faz nada.
         # As casas restauradas pulam a coleta abaixo.
@@ -382,7 +382,9 @@ jobs:
       - name: fetch caraguatatuba
         # Câmara Municipal de Caraguatatuba (ADR-0057): fichas, matérias, comissões, listas de presença e diárias.
         # Cerca de 200 chamadas na primeira carga, a 1 segundo por servidor; depois, rodízio semanal.
-        if: env.FONTE == 'todas' || env.FONTE == 'caraguatatuba'
+        # O sistema legislativo da Câmara não aceita conexão do runner: a casa vem da coleta local cifrada (ADR-0034),
+        # e este passo só roda sem a semente.
+        if: (env.FONTE == 'todas' || env.FONTE == 'caraguatatuba') && !contains(env.SEMENTE, ' caraguatatuba ')
         continue-on-error: true
         timeout-minutes: 25
         env:

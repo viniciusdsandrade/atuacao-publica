@@ -1703,6 +1703,7 @@ Ritmo da coleta: no mínimo 1 segundo entre chamadas a cada servidor.
 
 - URL base: `https://sistema.camaracaragua.sp.gov.br/`. É o SAGL, da OpenLegis. Não é SAPL e não tem API.
 - O servidor não tem `robots.txt` (404). O portal da Câmara, que embute este sistema, libera tudo no dele.
+- O servidor não aceitou conexão do runner do GitHub Actions em 2026-11-13: cinco tentativas, todas com tempo esgotado. Da rede do mantenedor, respondeu. A casa vem da coleta local cifrada (ADR-0034).
 - `consultas/parlamentar/parlamentar_index_html?hdn_num_legislatura={n}`: vereadores de uma legislatura. O seletor da página lista as legislaturas com os anos.
 - `consultas/parlamentar/parlamentar_mostrar_proc?cod_parlamentar={cod}`: ficha do vereador. Traz nome parlamentar, nome civil, a marca "Em exercício" ou "Inativo", foto, filiações com data, mandatos por legislatura (titular ou suplente, início e fim), cargos na Mesa com período e cargos em comissões com período.
 - A ficha também traz telefone, e-mail e biografia. Os três são retirados antes de o arquivo ir para o cache (ADR-0054 e ADR-0057).

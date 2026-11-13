@@ -53,11 +53,11 @@ O pipeline de dados não roda e não publica nada até o mantenedor ativar:
 
 ## Atualizar a semente da coleta local (ADR-0034)
 
-ALMG, ALRS, ALES, ALEPE, CLDF, ALEMA e ALAP recusam conexão de fora do Brasil; na ALBA e na ALERR, as APIs respondem 403 ao runner do GitHub. Na ALESE, o sistema legislativo (`aleselegis.al.se.leg.br`) não aceita conexão do runner. Enquanto o túnel não estiver ativo, os dados dessas dez casas vêm da sua rede.
+ALMG, ALRS, ALES, ALEPE, CLDF, ALEMA e ALAP recusam conexão de fora do Brasil; na ALBA e na ALERR, as APIs respondem 403 ao runner do GitHub. Na ALESE, o sistema legislativo (`aleselegis.al.se.leg.br`) não aceita conexão do runner. Na Câmara Municipal de Caraguatatuba, o sistema legislativo (`sistema.camaracaragua.sp.gov.br`) também não. Enquanto o túnel não estiver ativo, os dados dessas onze casas vêm da sua rede.
 
 1. Na raiz do repositório, compile o ETL: `cd etl && ./mvnw -q package -DskipTests && cd ..`.
-2. Com o `gh` autenticado, rode `scripts/semente-enviar.sh`. Ele coleta as dez casas, cifra o cache com uma chave nova e envia o pacote à release `semente-coleta-local`, trocando o segredo `SEMENTE_CHAVE`.
-3. A execução seguinte do `dados` restaura a semente e publica as dez casas. O relatório mostra a data da coleta local.
+2. Com o `gh` autenticado, rode `scripts/semente-enviar.sh`. Ele coleta as onze casas, cifra o cache com uma chave nova e envia o pacote à release `semente-coleta-local`, trocando o segredo `SEMENTE_CHAVE`.
+3. A execução seguinte do `dados` restaura a semente e publica as onze casas. O relatório mostra a data da coleta local.
 4. Repita quando o alerta de fonte sem coleta válida abrir issue para uma delas, ou quando quiser dados mais novos.
 5. Com o túnel ativo, apague a release (`gh release delete semente-coleta-local --cleanup-tag`) e o segredo.
 

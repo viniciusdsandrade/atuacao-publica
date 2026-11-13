@@ -3518,7 +3518,7 @@
   formato: HTML
   autenticacao: nenhuma
   licenca: null
-  limitacoes: "Sem API: fichas e pesquisa de matérias em HTML. A situação de tramitação não é mantida e não é publicada. Comissões só até 2022. Uma sessão cadastrada, de 2023: sem votação nominal. Sem normas de 2025 e 2026."
+  limitacoes: "Sem API: fichas e pesquisa de matérias em HTML. A situação de tramitação não é mantida e não é publicada. Comissões só até 2022. Uma sessão cadastrada, de 2023: sem votação nominal. Sem normas de 2025 e 2026. Não aceita conexão do runner do CI: vem da coleta local cifrada (ADR-0034)."
   status: validado com limitação
   validado_em: 2026-11-13
 

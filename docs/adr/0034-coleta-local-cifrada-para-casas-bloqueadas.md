@@ -46,6 +46,13 @@ O cache bruto dessas casas tem CPF de fornecedor (verbas da ALMG) e telefone e e
 - A ALESE entrou na semente: o script de envio coleta as dez casas, o de restauração aceita o cache e o cursor da ALESE, e o passo da ALESE no CI só roda sem semente.
 - A ALEMA, a ALERR e a ALAP tinham entrado em 2026-11-12, pelo mesmo motivo.
 
+## Atualização em 2026-11-13: Câmara Municipal de Caraguatatuba
+
+- Na execução do `dados` de 2026-11-13 às 22:04 UTC, o sistema legislativo da Câmara Municipal de Caraguatatuba (`sistema.camaracaragua.sp.gov.br`) não aceitou conexão do runner do GitHub Actions: cinco tentativas, todas com tempo esgotado na conexão. Da rede do mantenedor, respondeu 200 no mesmo dia.
+- A coleta para na primeira chamada, que é a esse servidor. O portal da Câmara e o portal da transparência do município não chegaram a ser chamados pelo runner.
+- A casa entrou na semente (ADR-0057): o script de envio coleta as onze casas, o de restauração aceita o cache e o cursor de `caraguatatuba`, e o passo da casa no CI só roda sem semente.
+- O cache da casa não tem telefone, e-mail nem biografia de vereador, nem nome de servidor: a coleta já os retira.
+
 ## Alternativas consideradas
 
 - Release sem cifra: descartada. O repositório é público, e o cache tem CPF e contatos de gabinete.
