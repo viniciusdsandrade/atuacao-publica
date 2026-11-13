@@ -132,6 +132,16 @@ test.describe('perfil', () => {
     await expect(page.getByText('São Paulo').first()).toBeVisible();
   });
 
+  test('perfil de vereador de Caraguatatuba diz o que a câmara publica', async ({ page }) => {
+    await page.goto('/#/politico/sagl-3510500-950016');
+    await expect(page.getByRole('heading', { level: 1 })).toContainText('Paula Exemplo');
+    await expect(page.getByText('Caraguatatuba (SP)').first()).toBeVisible();
+    // Diária não é cota parlamentar: na esfera municipal o bloco tem outro título (ADR-0057).
+    await expect(page.getByRole('heading', { level: 2, name: 'Despesas informadas pela câmara municipal' })).toBeVisible();
+    // A situação de tramitação fica vazia, e a nota do bloco diz por quê.
+    await expect(page.getByText(/não mantém a situação de tramitação/)).toBeVisible();
+  });
+
   test('falha de rede no perfil oferece tentar de novo e recupera', async ({ page }) => {
     let falhar = true;
     await page.route('**/dados/politicos/cam-900001.json', (rota) => (falhar ? rota.abort('failed') : rota.continue()));

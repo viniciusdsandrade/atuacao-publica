@@ -85,7 +85,7 @@ export class Detalhe {
 
   protected readonly esfera = computed(() => this.perfil()?.esfera ?? null);
   protected readonly titulo = computed(() => tituloDoBloco(this.parametros().bloco, this.esfera()));
-  protected readonly nota = computed(() => notaDoBloco(this.parametros().bloco, this.esfera()));
+  protected readonly nota = computed(() => notaDoBloco(this.parametros().bloco, this.esfera(), this.perfil()?.ente));
   protected readonly arquivos = computed(() => this.perfil()?.blocos[this.parametros().bloco]?.arquivos ?? []);
 
   protected readonly filtro = signal('');

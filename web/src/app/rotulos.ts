@@ -52,8 +52,14 @@ export const NOMES_DAS_UFS: Record<string, string> = {
 /** Entes municipais catalogados (código IBGE de 7 dígitos para nome do município). */
 export const ENTES_MUNICIPAIS: Record<string, string> = {
   '3509502': 'Campinas',
+  '3510500': 'Caraguatatuba',
   '3550308': 'São Paulo',
 };
+
+/** Município do piloto (ADR-0007): o único com atos normativos pelo SAPL. */
+const ENTE_DO_PILOTO = '3509502';
+/** Caraguatatuba (ADR-0057): a câmara não mantém a situação de tramitação. */
+const ENTE_DE_CARAGUATATUBA = '3510500';
 
 export const TIPOS_ORGAO: Record<string, string> = {
   comissao: 'Comissão',
@@ -109,7 +115,7 @@ export const NOTAS: Record<string, string> = {
   participacao_votacoes:
     'Conta votos registrados em votações nominais. Não é presença. A Câmara e o Senado registram ausências de forma diferente.',
   eventos:
-    'Na Câmara dos Deputados e no piloto municipal, a fonte lista só quem esteve presente. Na ALESC, lista também a ausência justificada em cada sessão ordinária; na ALBA, a falta justificada e a falta sem justificativa em cada sessão plenária. O site não calcula taxa de presença.',
+    'Na Câmara dos Deputados e no piloto municipal, a fonte lista só quem esteve presente. Na ALESC, lista também a ausência justificada em cada sessão ordinária; na ALBA e na Câmara Municipal de Caraguatatuba, a falta justificada e a falta sem justificativa em cada sessão plenária. O site não calcula taxa de presença.',
   despesas: 'Valores líquidos informados pela casa legislativa. Compensações negativas entram na soma.',
   atos_normativos: 'A fonte não informa quem assinou cada ato.',
   despesas_executivo:
@@ -216,6 +222,9 @@ export function inteiro(valor: number): string {
 
 /** O título do bloco muda com a esfera: a fonte dos atos do município é a câmara, não o Senado. */
 export function tituloDoBloco(bloco: string, esfera?: string | null): string {
+  if (bloco === 'despesas' && esfera === 'municipal') {
+    return 'Despesas informadas pela câmara municipal';
+  }
   if (bloco === 'atos_normativos' && esfera === 'municipal') {
     return 'Atos normativos do município no período do mandato';
   }
@@ -231,10 +240,19 @@ export function tituloDoBloco(bloco: string, esfera?: string | null): string {
   return rotuloBloco(bloco);
 }
 
-/** Nota de método do bloco, igual para todos os perfis da mesma esfera. */
-export function notaDoBloco(bloco: string, esfera?: string | null): string | null {
+/** Nota de método do bloco, igual para todos os perfis da mesma esfera e, na municipal, do mesmo município. */
+export function notaDoBloco(bloco: string, esfera?: string | null, ente?: string | null): string | null {
   if (bloco === 'atos_normativos' && esfera === 'municipal') {
+    if (ente && ente !== ENTE_DO_PILOTO) {
+      return 'O projeto ainda não tem fonte validada para os atos normativos deste município.';
+    }
     return 'Leis, leis complementares e decretos registrados pela câmara municipal no SAPL. A fonte não informa quem assinou cada ato.';
+  }
+  if (bloco === 'despesas' && esfera === 'municipal') {
+    return 'Só as despesas que a câmara publica por vereador. No piloto municipal: combustível, material de escritório, hospedagem e passagens. Na Câmara Municipal de Caraguatatuba: diárias, pela data de concessão.';
+  }
+  if (bloco === 'proposicoes' && ente === ENTE_DE_CARAGUATATUBA) {
+    return 'A Câmara Municipal de Caraguatatuba não mantém a situação de tramitação no sistema legislativo. Por isso o site não a publica.';
   }
   if (bloco === 'atos_normativos' && esfera === 'estadual') {
     return 'Decretos e leis do Poder Executivo estadual registrados no acervo oficial de legislação do Estado de São Paulo. A fonte não informa quem assinou cada ato.';
@@ -249,6 +267,9 @@ export function notaDoBloco(bloco: string, esfera?: string | null): string | nul
 }
 
 export function rotuloCurtoBloco(bloco: string, esfera?: string | null): string {
+  if (bloco === 'despesas' && esfera === 'municipal') {
+    return 'Despesas';
+  }
   if (bloco === 'despesas_executivo') {
     return esfera === 'federal' ? 'Cartão e viagens' : (esfera === 'estadual' ? 'Despesas do governo estadual' : 'Despesas da prefeitura');
   }

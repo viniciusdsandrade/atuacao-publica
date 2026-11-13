@@ -48,6 +48,7 @@ const NOMES: Record<string, string> = {
   alerr: 'Assembleia Legislativa do Estado de Roraima (ALERR)',
   alap: 'Assembleia Legislativa do Estado do Amapá (ALAP)',
   cmsp: 'Câmara Municipal de São Paulo (CMSP)',
+  caraguatatuba: 'Câmara Municipal de Caraguatatuba',
 };
 
 /** "Das 24 coletas, 17 concluídas, 2 incompletas e 5 com falha." Só entram os estados que aparecem. */

@@ -327,7 +327,7 @@ export class Perfil {
   }
 
   protected nota(bloco: string): string | null {
-    return notaDoBloco(bloco, this.perfil()?.esfera);
+    return notaDoBloco(bloco, this.perfil()?.esfera, this.perfil()?.ente);
   }
 
   protected porTipo(bloco: Bloco): [string, number][] {

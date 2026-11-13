@@ -17,6 +17,7 @@ import {
   moeda,
   data,
   notaDoBloco,
+  rotuloCurtoBloco,
   situacaoDe,
   tituloDoBloco,
   realcar,
@@ -93,6 +94,7 @@ test('rotuloLocal formata localização por esfera e ente', () => {
   assert.equal(rotuloLocal('municipal', '3509502', 'SP'), 'Campinas (SP)');
   assert.equal(rotuloLocal('municipal', '3509502', null), 'Campinas');
   assert.equal(rotuloLocal('municipal', '3550308', 'SP'), 'São Paulo (SP)');
+  assert.equal(rotuloLocal('municipal', '3510500', 'SP'), 'Caraguatatuba (SP)');
   assert.equal(rotuloLocal('estadual', 'SP', 'SP'), 'SP');
   assert.equal(rotuloLocal('estadual', 'ES', 'ES'), 'ES');
   assert.equal(rotuloLocal('estadual', 'GO', 'GO'), 'GO');
@@ -131,6 +133,24 @@ test('título e nota dos atos e das despesas do Executivo dependem da esfera', (
   assert.match(notaDoBloco('atos_normativos', 'federal') ?? '', /não informa quem assinou/);
   assert.match(notaDoBloco('despesas_executivo', 'estadual') ?? '', /Gabinete do Governador/);
   assert.equal(notaDoBloco('votos', 'federal'), null);
+});
+
+test('na esfera municipal, despesas, atos e proposições dizem o que cada câmara publica (ADR-0057)', () => {
+  assert.equal(tituloDoBloco('despesas', 'municipal'), 'Despesas informadas pela câmara municipal');
+  assert.equal(tituloDoBloco('despesas', 'federal'), 'Despesas da cota parlamentar');
+  assert.equal(rotuloCurtoBloco('despesas', 'municipal'), 'Despesas');
+  assert.equal(rotuloCurtoBloco('despesas', 'estadual'), 'Despesas da cota');
+  assert.match(notaDoBloco('despesas', 'municipal', '3510500') ?? '', /diárias, pela data de concessão/);
+  assert.match(notaDoBloco('despesas', 'federal') ?? '', /Valores líquidos/);
+  // Só o município do piloto tem atos pelo SAPL. Nos outros, a nota diz que não há fonte validada.
+  assert.match(notaDoBloco('atos_normativos', 'municipal', '3509502') ?? '', /SAPL/);
+  assert.match(notaDoBloco('atos_normativos', 'municipal', '3510500') ?? '', /ainda não tem fonte validada/);
+  assert.match(notaDoBloco('atos_normativos', 'municipal', '3550308') ?? '', /ainda não tem fonte validada/);
+  // A situação de tramitação fica vazia nos vereadores de Caraguatatuba: a nota diz por quê.
+  assert.match(notaDoBloco('proposicoes', 'municipal', '3510500') ?? '', /não mantém a situação de tramitação/);
+  assert.equal(notaDoBloco('proposicoes', 'municipal', '3509502'), null);
+  assert.equal(notaDoBloco('proposicoes', 'federal'), null);
+  assert.match(notaDoBloco('eventos', 'municipal', '3510500') ?? '', /Câmara Municipal de Caraguatatuba/);
 });
 
 test('data formata ISO para dd/mm/aaaa', () => {
