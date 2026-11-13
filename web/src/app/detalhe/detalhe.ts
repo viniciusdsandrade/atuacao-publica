@@ -2,7 +2,7 @@ import { Component, computed, effect, inject, signal, untracked } from '@angular
 import { toSignal } from '@angular/core/rxjs-interop';
 import { Title } from '@angular/platform-browser';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { catchError, map, of, startWith, switchMap } from 'rxjs';
+import { BehaviorSubject, catchError, combineLatest, map, of, startWith, switchMap } from 'rxjs';
 
 import { Dados } from '../dados';
 import { Icone } from '../icone/icone';
@@ -56,9 +56,11 @@ export class Detalhe {
     { requireSync: true },
   );
 
+  private readonly tentar$ = new BehaviorSubject<void>(undefined);
+
   private readonly carga = toSignal(
-    this.rota.paramMap.pipe(
-      switchMap((p) =>
+    combineLatest([this.rota.paramMap, this.tentar$]).pipe(
+      switchMap(([p]) =>
         this.dados.detalhe(`politicos/${p.get('id')}/${p.get('bloco')}-${p.get('ano')}.json.gz`).pipe(
           map((detalhe): Carga => ({ estado: 'pronto', detalhe })),
           startWith<Carga>({ estado: 'carregando' }),
@@ -148,5 +150,9 @@ export class Detalhe {
 
   protected valor(evento: Event): string {
     return (evento.target as HTMLInputElement).value;
+  }
+
+  protected tentarDeNovo(): void {
+    this.tentar$.next();
   }
 }

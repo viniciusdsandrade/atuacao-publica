@@ -1,25 +1,27 @@
-@if (perfil(); as p) {
+<!-- O cabeçalho usa a identidade: o perfil ou, antes de ele chegar, a entrada do índice já em memória.
+     Nome, cargo, partido e situação ficam no lugar quando o arquivo chega; só o resto entra depois. -->
+@if (identidade(); as i) {
   <article class="perfil">
     <nav class="migalhas" aria-label="Você está em">
       <ol>
         <li><a routerLink="/" [queryParams]="consulta">Políticos</a></li>
-        <li aria-current="page">{{ p.nome }}</li>
+        <li aria-current="page">{{ i.nome }}</li>
       </ol>
     </nav>
 
     <header class="perfil-topo painel">
       <div class="perfil-identidade">
-        <span class="avatar avatar--grande" aria-hidden="true">{{ iniciais(p.nome) }}</span>
+        <span class="avatar avatar--grande" aria-hidden="true">{{ iniciais(i.nome) }}</span>
         <div class="perfil-titulos">
-          <h1>{{ p.nome }}</h1>
+          <h1>{{ i.nome }}</h1>
           <p class="perfil-cargo">
-            {{ rotuloCargo(p.cargo_atual) }}
-            @if (rotuloLocal(p.esfera, p.ente, p.uf); as local) {
+            {{ rotuloCargo(i.cargo) }}
+            @if (rotuloLocal(i.esfera, i.ente, i.uf); as local) {
               · {{ local }}
             }
           </p>
           <p class="perfil-selos">
-            @switch (situacao()) {
+            @switch (i.situacao) {
               @case ('exercicio') {
                 <span class="selo selo--ativo">{{ SITUACOES.exercicio }}</span>
               }
@@ -30,7 +32,7 @@
                 <span class="selo selo--fora">{{ SITUACOES.fora }}</span>
               }
             }
-            <span class="selo selo--partido">Partido: {{ p.partido_atual ?? 'sem registro na fonte' }}</span>
+            <span class="selo selo--partido">Partido: {{ i.partido ?? 'sem registro na fonte' }}</span>
           </p>
           @if (liderancasAtivas(); as liderancas) {
             @if (liderancas.length > 0) {
@@ -52,6 +54,7 @@
         </div>
       </div>
 
+      @if (perfil(); as p) {
       @if (!p.em_exercicio) {
         <p class="callout" role="note">
           <app-icone nome="info" />
@@ -128,16 +131,40 @@
             </a>
           </li>
           <li>
+            <button type="button" (click)="compartilhar(p)">
+              <app-icone [nome]="copia() === 'feita' ? 'verificado' : 'compartilhar'" [pequeno]="true" />
+              {{ copia() === 'feita' ? 'Endereço copiado' : 'Compartilhar' }}
+            </button>
+          </li>
+          <li>
             <button type="button" (click)="imprimir()">
               <app-icone nome="imprimir" [pequeno]="true" />
               Imprimir ou salvar em PDF
             </button>
           </li>
         </ul>
+        <p class="sr-only" role="status">
+          @if (copia() === 'feita') {
+            Endereço do perfil copiado.
+          } @else if (copia() === 'falhou') {
+            Não foi possível copiar. O endereço do perfil está na barra do navegador.
+          }
+        </p>
+        @if (copia() === 'falhou') {
+          <p class="perfil-meta" aria-hidden="true">Não foi possível copiar. O endereço do perfil está na barra do navegador.</p>
+        }
       </div>
+      } @else {
+        <p class="sr-only" role="status">Carregando os registros do perfil.</p>
+        <div class="perfil-esqueleto-texto" aria-hidden="true">
+          <span class="esqueleto esqueleto--linha"></span>
+          <span class="esqueleto esqueleto--texto esqueleto--curto"></span>
+        </div>
+      }
     </header>
 
-    <div class="perfil-corpo">
+    @if (perfil(); as p) {
+    <div class="perfil-corpo surge">
       <nav class="perfil-nav" aria-label="Blocos do perfil">
         <p class="perfil-nav-titulo rotulo-secao" aria-hidden="true">Neste perfil</p>
         <ul>
@@ -409,12 +436,29 @@
         }
       </div>
     </div>
+    } @else {
+      <div aria-hidden="true">
+        @for (n of esqueletos; track n) {
+          <div class="painel bloco bloco--esqueleto"><span class="esqueleto esqueleto--texto"></span></div>
+        }
+      </div>
+    }
   </article>
-} @else if (erro()) {
+} @else if (falha() === 'rede') {
+  <div class="caixa-vazia" role="alert">
+    <app-icone nome="alerta" />
+    <h1>Não foi possível carregar o perfil</h1>
+    <p>O arquivo do perfil não respondeu. Confira a conexão e tente de novo.</p>
+    <div class="mais-acoes">
+      <button type="button" class="botao botao--primario" (click)="tentarDeNovo()">Tentar de novo</button>
+      <a class="botao" routerLink="/" [queryParams]="consulta">Voltar à lista</a>
+    </div>
+  </div>
+} @else if (falha()) {
   <div class="caixa-vazia" role="alert">
     <app-icone nome="alerta" />
     <h1>Perfil não encontrado</h1>
-    <p>Não há perfil publicado com este identificador, ou o arquivo não respondeu.</p>
+    <p>Não há perfil publicado com este identificador.</p>
     <a class="botao botao--primario" routerLink="/" [queryParams]="consulta">Voltar à lista</a>
   </div>
 } @else {

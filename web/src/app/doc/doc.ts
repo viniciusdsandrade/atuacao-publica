@@ -13,7 +13,7 @@ import {
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { marked } from 'marked';
-import { catchError, map, of, startWith, switchMap } from 'rxjs';
+import { BehaviorSubject, catchError, combineLatest, map, of, startWith, switchMap } from 'rxjs';
 
 import { Dados } from '../dados';
 import { Icone } from '../icone/icone';
@@ -64,9 +64,11 @@ export class Doc {
   private readonly fragmento = toSignal(inject(ActivatedRoute).fragment, { initialValue: null });
   private observador?: IntersectionObserver;
 
+  private readonly tentar$ = new BehaviorSubject<void>(undefined);
+
   protected readonly carga = toSignal(
-    inject(ActivatedRoute).data.pipe(
-      switchMap((d) =>
+    combineLatest([inject(ActivatedRoute).data, this.tentar$]).pipe(
+      switchMap(([d]) =>
         this.dados.documento(d['arquivo'] as string).pipe(
           map((texto): Carga => ({ estado: 'pronto', html: this.renderizar(texto) })),
           startWith<Carga>({ estado: 'carregando' }),
@@ -225,6 +227,10 @@ export class Doc {
     alvo?.focus({ preventScroll: true });
     this.ativo.set(id);
     this.sumarioAberto.set(false);
+  }
+
+  protected tentarDeNovo(): void {
+    this.tentar$.next();
   }
 
   protected voltarAoTopo(): void {

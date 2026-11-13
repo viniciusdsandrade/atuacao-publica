@@ -1,8 +1,10 @@
+import { Location } from '@angular/common';
+import { HttpErrorResponse } from '@angular/common/http';
 import { Component, DestroyRef, Injector, afterNextRender, computed, effect, inject, signal, untracked } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { Title } from '@angular/platform-browser';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { catchError, combineLatest, map, of, switchMap } from 'rxjs';
+import { BehaviorSubject, Observable, catchError, combineLatest, map, of, startWith, switchMap } from 'rxjs';
 
 import { Dados } from '../dados';
 import { Icone } from '../icone/icone';
@@ -27,6 +29,7 @@ import {
   rotuloCurtoBloco,
   rotuloLocal,
   SEM_REGISTRO,
+  Situacao,
   SITUACOES,
   situacaoDe,
   tituloDoBloco,
@@ -35,7 +38,22 @@ import { manterVisivel } from '../rolagem';
 import { Proveniencia } from './proveniencia';
 import { Tabela } from './tabela';
 
-type Estado = { perfil: PerfilPublicado | null; erro: boolean };
+/** 'inexistente': não há arquivo com este identificador. 'rede': o arquivo não respondeu, e vale tentar de novo. */
+type Falha = 'inexistente' | 'rede';
+type Estado = { perfil: PerfilPublicado | null; falha: Falha | null };
+
+const CARREGANDO: Estado = { perfil: null, falha: null };
+
+/** O que o cabeçalho mostra. Vem do perfil ou, antes de ele chegar, da entrada do índice que a lista já baixou. */
+interface Identidade {
+  nome: string;
+  cargo: string;
+  esfera: string;
+  ente: string;
+  uf: string | null;
+  partido: string | null;
+  situacao: Situacao;
+}
 
 interface DespesaDoAno {
   ano: number;
@@ -53,43 +71,55 @@ interface DespesaDoAno {
 export class Perfil {
   private readonly dados = inject(Dados);
   private readonly router = inject(Router);
+  private readonly rota = inject(ActivatedRoute);
+  private readonly location = inject(Location);
   private readonly tituloDaAba = inject(Title);
   private readonly injector = inject(Injector);
   protected readonly consulta = inject(MemoriaLista).consulta;
 
-  /** Identificador antigo (fusão de perfis) redireciona para o vigente. */
+  private readonly tentar$ = new BehaviorSubject<void>(undefined);
+  private readonly id = toSignal(this.rota.paramMap.pipe(map((p) => p.get('id') ?? '')), { requireSync: true });
+
+  /** O arquivo do perfil é pedido na hora, sem esperar o índice: quem chega por link direto não baixa a lista. */
   private readonly estado = toSignal(
-    combineLatest([
-      inject(ActivatedRoute).paramMap,
-      this.dados.indice$.pipe(catchError(() => of(null))),
-    ]).pipe(
-      switchMap(([parametros, indice]) => {
+    combineLatest([this.rota.paramMap, this.tentar$]).pipe(
+      switchMap(([parametros]) => {
         const id = parametros.get('id') ?? '';
-        const vigente = indice?.aliases[id];
-        if (vigente) {
-          this.router.navigate(['/politico', vigente], { replaceUrl: true });
-        }
-        return this.dados.perfil(vigente ?? id).pipe(
-          map((perfil): Estado => ({ perfil, erro: false })),
-          catchError(() => of<Estado>({ perfil: null, erro: true })),
+        return this.dados.perfil(id).pipe(
+          map((perfil): Estado => ({ perfil, falha: null })),
+          catchError((erro: unknown) => this.aoFalhar(id, erro)),
+          startWith(CARREGANDO),
         );
       }),
     ),
+    { initialValue: CARREGANDO },
   );
 
-  protected readonly perfil = computed(() => this.estado()?.perfil ?? null);
-  protected readonly erro = computed(() => this.estado()?.erro ?? false);
+  protected readonly perfil = computed(() => this.estado().perfil);
+  protected readonly falha = computed(() => this.estado().falha);
   protected readonly blocos = computed(() => Object.keys(this.perfil()?.blocos ?? {}));
+
+  /**
+   * Enquanto o arquivo do perfil não chega, o cabeçalho usa a entrada do índice que já está em memória
+   * (quem veio da lista). Nome, cargo, partido e situação aparecem na hora; os blocos, quando o arquivo chegar.
+   */
+  protected readonly identidade = computed((): Identidade | null => {
+    const p = this.perfil();
+    if (p) {
+      return { nome: p.nome, cargo: p.cargo_atual, esfera: p.esfera, ente: p.ente, uf: p.uf, partido: p.partido_atual, situacao: situacaoDe(p) };
+    }
+    if (this.falha()) {
+      return null;
+    }
+    const id = this.id();
+    const e = this.dados.indiceEmMemoria()?.politicos.find((entrada) => entrada.id === id);
+    return e ? { nome: e.nome, cargo: e.cargo, esfera: e.esfera, ente: e.ente, uf: e.uf, partido: e.partido, situacao: situacaoDe(e) } : null;
+  });
   /** O atalho para o lado a lado só vale para parlamentares (ADR-0036). */
   protected readonly eParlamentar = computed(() => {
     const p = this.perfil();
     return !!p && casaLegislativa(p.cargo_atual, p.uf, p.ente) !== null;
   });
-  protected readonly situacao = computed(() => {
-    const p = this.perfil();
-    return p ? situacaoDe(p) : 'exercicio';
-  });
-
   /** Cargos de comando em órgãos, comissões ou frentes atualmente em andamento. */
   protected readonly liderancasAtivas = computed(() => {
     const p = this.perfil();
@@ -135,6 +165,10 @@ export class Perfil {
   private readonly fragmento = toSignal(inject(ActivatedRoute).fragment, { initialValue: null });
   private observador?: IntersectionObserver;
 
+  /** Retorno do botão "Compartilhar" quando o endereço vai para a área de transferência. */
+  protected readonly copia = signal<'feita' | 'falhou' | null>(null);
+  private avisoDaCopia?: ReturnType<typeof setTimeout>;
+
   protected readonly SITUACOES = SITUACOES;
   protected readonly esqueletos = [1, 2, 3];
   protected readonly iniciais = iniciais;
@@ -149,11 +183,13 @@ export class Perfil {
   constructor() {
     // O título da aba leva o nome de quem está na tela.
     effect(() => {
-      const p = this.perfil();
-      if (p) {
-        this.tituloDaAba.setTitle(`${p.nome} · Atuação Pública`);
-      } else if (this.erro()) {
-        this.tituloDaAba.setTitle('Perfil não encontrado · Atuação Pública');
+      const identidade = this.identidade();
+      if (identidade) {
+        this.tituloDaAba.setTitle(`${identidade.nome} · Atuação Pública`);
+      } else if (this.falha()) {
+        this.tituloDaAba.setTitle(
+          this.falha() === 'rede' ? 'Perfil indisponível · Atuação Pública' : 'Perfil não encontrado · Atuação Pública',
+        );
       }
     });
 
@@ -192,7 +228,63 @@ export class Perfil {
       }
     });
 
-    inject(DestroyRef).onDestroy(() => this.observador?.disconnect());
+    inject(DestroyRef).onDestroy(() => {
+      this.observador?.disconnect();
+      clearTimeout(this.avisoDaCopia);
+    });
+  }
+
+  /**
+   * Sem resposta do servidor (status 0), o problema é de rede: a tela oferece tentar de novo.
+   * Arquivo ausente pode ser identificador antigo (fusão de perfis): o índice diz qual é o vigente.
+   */
+  private aoFalhar(id: string, erro: unknown): Observable<Estado> {
+    const status = erro instanceof HttpErrorResponse ? erro.status : 0;
+    if (status === 0) {
+      return of<Estado>({ perfil: null, falha: 'rede' });
+    }
+    return this.dados.indice$.pipe(
+      catchError(() => of(null)),
+      map((indice): Estado => {
+        const vigente = indice?.aliases[id];
+        if (vigente) {
+          this.router.navigate(['/politico', vigente], { replaceUrl: true });
+          return CARREGANDO;
+        }
+        return { perfil: null, falha: status === 404 ? 'inexistente' : 'rede' };
+      }),
+    );
+  }
+
+  protected tentarDeNovo(): void {
+    this.tentar$.next();
+  }
+
+  /**
+   * No celular e no tablet, abre o compartilhamento do aparelho. No computador, copia o endereço do perfil.
+   * O endereço vai sem o fragmento do bloco: quem recebe começa pelo topo do perfil.
+   */
+  protected async compartilhar(p: PerfilPublicado): Promise<void> {
+    const endereco = new URL(this.location.prepareExternalUrl('/politico/' + p.id), document.baseURI).href;
+    const toque = typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches;
+    if (toque && typeof navigator.share === 'function') {
+      try {
+        await navigator.share({ title: `${p.nome} · Atuação Pública`, url: endereco });
+        return;
+      } catch (erro) {
+        if (erro instanceof DOMException && erro.name === 'AbortError') {
+          return; // A pessoa fechou a janela de compartilhar.
+        }
+      }
+    }
+    try {
+      await navigator.clipboard.writeText(endereco);
+      this.copia.set('feita');
+    } catch {
+      this.copia.set('falhou');
+    }
+    clearTimeout(this.avisoDaCopia);
+    this.avisoDaCopia = setTimeout(() => this.copia.set(null), 4000);
   }
 
   /** Marca como ativo o primeiro bloco que cruza a faixa superior da janela. */

@@ -97,6 +97,16 @@ test.describe('perfil', () => {
     await expect(page.getByText('São Paulo').first()).toBeVisible();
   });
 
+  test('falha de rede no perfil oferece tentar de novo e recupera', async ({ page }) => {
+    let falhar = true;
+    await page.route('**/dados/politicos/cam-900001.json', (rota) => (falhar ? rota.abort('failed') : rota.continue()));
+    await page.goto('/#/politico/cam-900001');
+    await expect(page.getByRole('heading', { level: 1 })).toContainText('Não foi possível carregar o perfil');
+    falhar = false;
+    await page.getByRole('button', { name: 'Tentar de novo' }).click();
+    await expect(page.getByRole('heading', { level: 1 })).toContainText('Ana Exemplo');
+  });
+
   test('perfil inexistente mostra a mensagem de erro', async ({ page }) => {
     await page.goto('/#/politico/nao-existe');
     await expect(page.getByRole('heading', { level: 1 })).toContainText('Perfil não encontrado');

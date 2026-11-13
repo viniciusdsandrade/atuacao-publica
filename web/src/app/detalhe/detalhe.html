@@ -41,7 +41,10 @@
     <app-icone nome="alerta" />
     <h2>Arquivo não encontrado</h2>
     <p>Não há registros publicados deste bloco neste ano, ou o arquivo não respondeu.</p>
-    <a class="botao botao--primario" [routerLink]="['/politico', parametros().id]">Voltar ao perfil</a>
+    <div class="mais-acoes">
+      <button type="button" class="botao botao--primario" (click)="tentarDeNovo()">Tentar de novo</button>
+      <a class="botao" [routerLink]="['/politico', parametros().id]">Voltar ao perfil</a>
+    </div>
   </div>
 } @else if (detalhe(); as d) {
   <p class="meta-pagina">{{ inteiro(d.registros.length) }} registros. Arquivo gerado em {{ data(d.gerado_em) }}.</p>

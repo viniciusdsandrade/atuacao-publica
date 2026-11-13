@@ -3,8 +3,11 @@
     <div class="caixa-vazia" role="alert">
       <app-icone nome="alerta" />
       <h1>Documento indisponível</h1>
-      <p>O arquivo do documento não respondeu. Tente de novo mais tarde.</p>
-      <a class="botao botao--primario" routerLink="/">Ir para a lista de políticos</a>
+      <p>O arquivo do documento não respondeu. Confira a conexão e tente de novo.</p>
+      <div class="mais-acoes">
+        <button type="button" class="botao botao--primario" (click)="tentarDeNovo()">Tentar de novo</button>
+        <a class="botao" routerLink="/">Ir para a lista de políticos</a>
+      </div>
     </div>
   }
   @case ('carregando') {
