@@ -19,6 +19,7 @@ import {
   notaDoBloco,
   situacaoDe,
   tituloDoBloco,
+  realcar,
 } from './rotulos.ts';
 
 test('rotuloCargo retorna nome legível dos cargos municipais e gerais', () => {
@@ -136,4 +137,36 @@ test('data formata ISO para dd/mm/aaaa', () => {
   assert.equal(data('2025-01-01'), '01/01/2025');
   assert.equal(data('2024-10-06T15:30:00Z'), '06/10/2024');
   assert.equal(data(null), '-');
+});
+
+test('realcar marca o termo sem acento nem caixa e devolve o texto original inteiro', () => {
+  assert.deepEqual(realcar('João Tábata', ['tab']), [
+    { t: 'João ', m: false },
+    { t: 'Táb', m: true },
+    { t: 'ata', m: false },
+  ]);
+  assert.deepEqual(realcar('São Paulo', ['sao', 'pa']), [
+    { t: 'São', m: true },
+    { t: ' ', m: false },
+    { t: 'Pa', m: true },
+    { t: 'ulo', m: false },
+  ]);
+  // Acento escrito como caractere solto depois da letra entra no trecho marcado.
+  assert.deepEqual(realcar('Jose\u0301 Silva', ['jose']), [
+    { t: 'Jose\u0301', m: true },
+    { t: ' Silva', m: false },
+  ]);
+  for (const [texto, termos] of [
+    ['Ana Exemplo', ['ana', 'exe']],
+    ['Luiz Philippe de Orleans e Bragança', ['e', 'ca']],
+    ['Deputado(a) federal', ['zzz']],
+  ] as [string, string[]][]) {
+    assert.equal(realcar(texto, termos).map((trecho) => trecho.t).join(''), texto);
+  }
+});
+
+test('realcar sem termo ou sem texto devolve um trecho só, sem marca', () => {
+  assert.deepEqual(realcar('Ana Exemplo', []), [{ t: 'Ana Exemplo', m: false }]);
+  assert.deepEqual(realcar('', ['ana']), [{ t: '', m: false }]);
+  assert.deepEqual(realcar('Ana Exemplo', ['bruno']), [{ t: 'Ana Exemplo', m: false }]);
 });

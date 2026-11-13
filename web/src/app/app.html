@@ -20,7 +20,7 @@
     <div id="menu-painel" class="menu-painel" [class.aberto]="menuAberto()">
       @if (!naLista()) {
         <form class="busca-topo" role="search" aria-label="Buscar políticos" (submit)="buscar($event, campoTopo)">
-          <label class="sr-only" for="busca-topo">Buscar políticos por nome, município, cargo ou partido</label>
+          <label class="sr-only" for="busca-topo">Buscar políticos por nome, estado, município, cargo ou partido</label>
           <div class="busca">
             <app-icone class="icone-busca" nome="busca" />
             <input

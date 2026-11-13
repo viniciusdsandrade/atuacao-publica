@@ -6,8 +6,8 @@
       municipal desde 2022.
     </p>
     @if (!erro()) {
-      <form class="heroi-busca campo" role="search" aria-label="Buscar políticos" (submit)="$event.preventDefault(); gravarAgora()">
-        <label for="busca">Buscar por nome, município, cargo ou partido</label>
+      <form class="heroi-busca campo" role="search" aria-label="Buscar políticos" (submit)="$event.preventDefault(); irAosResultados(campoBusca)">
+        <label for="busca">Buscar por nome, estado, município, cargo ou partido</label>
         <div class="busca">
           <app-icone class="icone-busca" nome="busca" />
           <input
@@ -29,6 +29,26 @@
             </button>
           }
         </div>
+        <!-- Retorno da busca ao lado do campo: a lista fica abaixo dos filtros, fora da primeira tela.
+             A linha tem altura fixa: nada pula quando a contagem entra. -->
+        <p class="busca-retorno">
+          @if (filtros().busca.trim() && indice()) {
+            <span>
+              @if (resultado().length === 0) {
+                Nenhum resultado.
+              } @else {
+                <strong class="numero">{{ inteiro(resultado().length) }}</strong>
+                {{ resultado().length === 1 ? 'político.' : 'políticos.' }}
+              }
+            </span>
+            <button type="submit" class="busca-ir">
+              {{ resultado().length === 0 ? 'Ver opções' : 'Ver na lista' }}
+              <app-icone nome="seta-baixo" [pequeno]="true" />
+            </button>
+          } @else {
+            A busca ignora acento e maiúscula.
+          }
+        </p>
       </form>
     }
     <p class="heroi-regras">
@@ -181,7 +201,7 @@
 
   <section aria-labelledby="titulo-resultados">
     <div class="resultados-topo">
-      <h2 id="titulo-resultados" class="resultados-titulo">
+      <h2 id="titulo-resultados" class="resultados-titulo" tabindex="-1">
         <strong>{{ inteiro(resultado().length) }}</strong> de {{ inteiro(i.total) }} políticos
       </h2>
       <p class="resultados-meta">
@@ -221,14 +241,19 @@
         </div>
       </div>
     } @else {
-      <ul class="grade-cartoes">
+      <ul class="grade-cartoes surge">
         @for (c of visiveis(); track c.p.id; let n = $index) {
           <li [attr.data-i]="n">
-            <a class="cartao" [routerLink]="['/politico', c.p.id]">
+            <a
+              class="cartao"
+              [routerLink]="['/politico', c.p.id]"
+              (pointerenter)="aquecer(c.p.id, $event)"
+              (pointerleave)="cancelarAquecimento()"
+            >
               <span class="avatar" aria-hidden="true">{{ c.iniciais }}</span>
               <span class="cartao-corpo">
-                <span class="cartao-nome">{{ c.p.nome }}</span>
-                <span class="cartao-cargo">{{ c.cargo }}@if (c.local) { · {{ c.local }} }</span>
+                <span class="cartao-nome"><ng-container *ngTemplateOutlet="trechos; context: { $implicit: c.nome }" /></span>
+                <span class="cartao-cargo"><ng-container *ngTemplateOutlet="trechos; context: { $implicit: c.cargo }" />@if (c.local[0].t) { · <ng-container *ngTemplateOutlet="trechos; context: { $implicit: c.local }" /> }</span>
                 @if (c.p.partido || c.situacao !== 'exercicio') {
                   <span class="cartao-rodape">
                     @if (c.p.partido) {
@@ -250,6 +275,8 @@
           </li>
         }
       </ul>
+      <!-- Texto em trechos, com o que casou com a busca marcado. Sem espaço entre as marcas: o nome não se parte. -->
+      <ng-template #trechos let-lista>@for (t of lista; track $index) {@if (t.m) {<mark>{{ t.t }}</mark>} @else {<ng-container>{{ t.t }}</ng-container>}}</ng-template>
       @if (restantes() > 0) {
         <div class="mais">
           <p>Exibindo {{ inteiro(visiveis().length) }} de {{ inteiro(resultado().length) }}.</p>

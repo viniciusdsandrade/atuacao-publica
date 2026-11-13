@@ -22,6 +22,16 @@ test.describe('lista de políticos', () => {
     await expect(page.getByRole('link', { name: /Ana Exemplo/ })).toBeVisible();
   });
 
+  test('Enter na busca leva o foco à contagem, logo acima dos cartões', async ({ page }) => {
+    await page.goto('/');
+    const busca = page.getByLabel(/Buscar por nome/);
+    await busca.fill('Leandro');
+    // O retorno fica ao lado do campo: a lista está abaixo dos filtros, fora da primeira tela.
+    await expect(page.getByRole('button', { name: 'Ver na lista' })).toBeVisible();
+    await busca.press('Enter');
+    await expect(page.getByRole('heading', { level: 2, name: /de [\d.]+ políticos/ })).toBeFocused();
+  });
+
   test('filtra por UF no seletor', async ({ page }) => {
     await page.goto('/');
     const uf = page.getByLabel('UF', { exact: true });

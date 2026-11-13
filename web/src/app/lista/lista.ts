@@ -1,4 +1,4 @@
-import { Location } from '@angular/common';
+import { Location, NgTemplateOutlet } from '@angular/common';
 import { Component, Injector, afterNextRender, computed, effect, inject, signal } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, ParamMap, RouterLink } from '@angular/router';
@@ -8,6 +8,7 @@ import { Dados } from '../dados';
 import { Icone } from '../icone/icone';
 import { EntradaIndice, Indice } from '../modelo';
 import {
+  NOMES_DAS_UFS,
   Situacao,
   SITUACOES,
   chaveDeBusca,
@@ -15,6 +16,7 @@ import {
   iniciais,
   inteiro,
   nomeDoEnte,
+  realcar,
   rotuloCargo,
   rotuloEsfera,
   rotuloLocal,
@@ -27,6 +29,8 @@ const LOTE = 48;
 /** Acima disto, o partido fica só na lista de seleção (ADR-0035). */
 const MAXIMO_CHIPS_PARTIDO = 12;
 const LIMITE_MOSTRAR = 5000;
+/** Tempo com o ponteiro parado sobre o cartão antes de pedir o perfil: passar por cima não baixa nada. */
+const ESPERA_DO_AQUECIMENTO_MS = 120;
 const ORDEM_ESFERAS = ['federal', 'estadual', 'municipal'];
 const ORDEM_CARGOS = [
   'presidente', 'governador', 'prefeito', 'vice_prefeito', 'senador', 'deputado_federal', 'deputado_estadual',
@@ -99,7 +103,7 @@ function ordenar(valores: Iterable<string>, ordem: string[]): string[] {
 
 @Component({
   selector: 'app-lista',
-  imports: [RouterLink, Icone],
+  imports: [RouterLink, Icone, NgTemplateOutlet],
   templateUrl: './lista.html',
 })
 export class Lista {
@@ -142,10 +146,15 @@ export class Lista {
 
   private readonly politicos = computed(() => this.indice()?.politicos ?? []);
 
-  /** Texto de busca de cada político, sem acento nem caixa, calculado uma vez por índice. */
+  /**
+   * Texto de busca de cada político, sem acento nem caixa, calculado uma vez por índice.
+   * O estado entra pela sigla e pelo nome: "silva sp" e "deputado bahia" acham o que se espera.
+   */
   private readonly chaves = computed(() =>
     this.politicos().map((p) =>
-      chaveDeBusca([p.nome, nomeDoEnte(p.ente), p.partido ?? '', rotuloCargo(p.cargo)].join(' ')),
+      chaveDeBusca(
+        [p.nome, nomeDoEnte(p.ente), p.uf ?? '', NOMES_DAS_UFS[p.uf ?? ''] ?? '', p.partido ?? '', rotuloCargo(p.cargo)].join(' '),
+      ),
     ),
   );
 
@@ -154,10 +163,13 @@ export class Lista {
   protected readonly ufs = computed(() => ordenar(this.valores((p) => p.uf), []));
   protected readonly partidos = computed(() => ordenar(this.valores((p) => p.partido), []));
 
-  /** Cada palavra da busca precisa aparecer no nome, no município, no partido ou no cargo. */
+  /** Palavras da busca, sem acento nem caixa. */
+  private readonly termos = computed(() => chaveDeBusca(this.filtros().busca).split(/\s+/).filter(Boolean));
+
+  /** Cada palavra da busca precisa aparecer no nome, no estado, no município, no partido ou no cargo. */
   private filtrar(ignorar: 'situacao' | 'esfera' | 'uf' | 'partido' | null): EntradaIndice[] {
     const f = this.filtros();
-    const termos = chaveDeBusca(f.busca).split(/\s+/).filter(Boolean);
+    const termos = this.termos();
     const chaves = this.chaves();
     return this.politicos().filter(
       (p, i) =>
@@ -243,17 +255,20 @@ export class Lista {
     ];
   });
 
-  protected readonly visiveis = computed(() =>
-    this.resultado()
+  /** Nome, cargo e local vão em trechos: o que casou com a busca aparece marcado no cartão. */
+  protected readonly visiveis = computed(() => {
+    const termos = this.termos();
+    return this.resultado()
       .slice(0, this.filtros().mostrar)
       .map((p) => ({
         p,
         situacao: situacaoDe(p),
-        cargo: rotuloCargo(p.cargo),
-        local: rotuloLocal(p.esfera, p.ente, p.uf),
+        nome: realcar(p.nome, termos),
+        cargo: realcar(rotuloCargo(p.cargo), termos),
+        local: realcar(rotuloLocal(p.esfera, p.ente, p.uf), termos),
         iniciais: iniciais(p.nome),
-      })),
-  );
+      }));
+  });
   protected readonly restantes = computed(() => Math.max(0, this.resultado().length - this.visiveis().length));
 
   protected readonly ativos = computed(() => {
@@ -402,6 +417,37 @@ export class Lista {
   /** Ao fim da digitação, grava o endereço na hora (o usuário pode sair da página em seguida). */
   protected gravarAgora(): void {
     this.espelhar(paraParametros(this.filtros()));
+  }
+
+  /**
+   * Enter, a tecla de busca do celular ou "Ver na lista": a tela vai à contagem, logo acima dos cartões.
+   * Tirar o foco do campo fecha o teclado do celular, que cobriria a lista.
+   */
+  protected irAosResultados(campo: HTMLInputElement): void {
+    this.gravarAgora();
+    campo.blur();
+    const titulo = document.getElementById('titulo-resultados');
+    titulo?.scrollIntoView();
+    titulo?.focus({ preventScroll: true });
+  }
+
+  private aquecimento?: ReturnType<typeof setTimeout>;
+
+  /**
+   * Ponteiro parado sobre um cartão: o perfil começa a baixar antes do clique.
+   * Só com mouse (no toque, rolar a lista dispararia o pedido) e fora do modo de economia de dados.
+   */
+  protected aquecer(id: string, evento: PointerEvent): void {
+    const conexao = (navigator as Navigator & { connection?: { saveData?: boolean } }).connection;
+    if (evento.pointerType !== 'mouse' || conexao?.saveData) {
+      return;
+    }
+    clearTimeout(this.aquecimento);
+    this.aquecimento = setTimeout(() => this.dados.aquecerPerfil(id), ESPERA_DO_AQUECIMENTO_MS);
+  }
+
+  protected cancelarAquecimento(): void {
+    clearTimeout(this.aquecimento);
   }
 
   protected mostrarMais(todos: boolean): void {

@@ -312,3 +312,53 @@ export function data(valor: unknown): string {
 export function chaveDeBusca(texto: string): string {
   return texto.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase().trim();
 }
+
+/** Pedaço de um texto, marcado ou não como trecho que casou com a busca. */
+export interface Trecho {
+  t: string;
+  m: boolean;
+}
+
+/**
+ * Parte o texto em trechos e marca onde aparece cada termo da busca.
+ * A comparação ignora acento e caixa, como `chaveDeBusca`. O texto mostrado é o original:
+ * juntar os trechos devolve o texto sem nenhuma alteração.
+ */
+export function realcar(texto: string, termos: string[]): Trecho[] {
+  if (!texto || termos.length === 0) {
+    return [{ t: texto, m: false }];
+  }
+  // Chave de comparação, com a posição de cada caractere dela no texto original.
+  let chave = '';
+  const origem: number[] = [];
+  for (let i = 0; i < texto.length; i++) {
+    const base = texto[i].normalize('NFD').replace(/\p{M}/gu, '').toLowerCase();
+    for (let k = 0; k < base.length; k++) {
+      chave += base[k];
+      origem.push(i);
+    }
+  }
+  const marcado = new Array<boolean>(texto.length).fill(false);
+  for (const termo of termos) {
+    if (!termo) {
+      continue;
+    }
+    for (let de = chave.indexOf(termo); de !== -1; de = chave.indexOf(termo, de + termo.length)) {
+      const ate = de + termo.length;
+      // Vai até o próximo caractere da chave: o acento solto depois da última letra entra junto.
+      const fim = ate < origem.length ? origem[ate] : texto.length;
+      for (let i = origem[de]; i < fim; i++) {
+        marcado[i] = true;
+      }
+    }
+  }
+  const trechos: Trecho[] = [];
+  let inicio = 0;
+  for (let i = 1; i <= texto.length; i++) {
+    if (i === texto.length || marcado[i] !== marcado[inicio]) {
+      trechos.push({ t: texto.slice(inicio, i), m: marcado[inicio] });
+      inicio = i;
+    }
+  }
+  return trechos;
+}

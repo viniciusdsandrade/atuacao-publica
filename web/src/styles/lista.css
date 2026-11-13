@@ -45,7 +45,49 @@
 
 .heroi-busca {
   max-width: 40rem;
-  margin: 1.125rem 0 0.875rem;
+  margin: 1.125rem 0 0.625rem;
+}
+
+/* Retorno da busca: dica com o campo vazio; contagem e atalho para a lista enquanto se digita.
+   A altura mínima é a do atalho, para a troca não empurrar o resto da página. */
+.busca-retorno {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0 0.75rem;
+  min-height: 2rem;
+  margin: 0;
+  color: var(--texto-2);
+  font-size: 0.9375rem;
+}
+
+.busca-retorno > span {
+  white-space: nowrap;
+}
+
+.busca-retorno strong {
+  color: var(--texto);
+  font-weight: 750;
+}
+
+.busca-ir {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  min-height: 2rem;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--destaque);
+  font: inherit;
+  font-weight: 650;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.busca-ir:hover {
+  text-decoration: underline;
+  text-underline-offset: 0.18em;
 }
 
 .heroi-regras {
@@ -166,12 +208,20 @@
   box-shadow: var(--sombra-1);
   color: var(--texto);
   text-decoration: none;
-  transition: border-color var(--transicao), box-shadow var(--transicao);
+  -webkit-tap-highlight-color: transparent;
+  transition: border-color var(--transicao), box-shadow var(--transicao), background var(--transicao);
 }
 
 .cartao:hover {
   border-color: var(--destaque);
   box-shadow: var(--sombra-2);
+}
+
+/* Pressionado: o cartão assenta (sem sombra, fundo um passo abaixo) antes de a página trocar. */
+.cartao:active {
+  border-color: var(--destaque);
+  background: var(--superficie-2);
+  box-shadow: none;
 }
 
 .cartao:hover .cartao-nome {
@@ -220,6 +270,12 @@
 
 .cartao-seta {
   color: var(--texto-3);
+  transition: transform var(--transicao), color var(--transicao);
+}
+
+.cartao:hover .cartao-seta {
+  color: var(--destaque);
+  transform: translateX(0.125rem);
 }
 
 .cartao--esqueleto {
