@@ -25,7 +25,7 @@ O texto ficava no cache normalizado sem uso.
 
 - Ensaio local de 2026-11-13 nas 17 casas, antes e depois: 464 blocos traziam biografia, e nenhum traz depois.
 - `pessoas.json` e os nomes civis de cada casa ficaram iguais. O vínculo com o TSE não muda.
-- O site não muda: o campo nunca foi publicado.
+- O site não muda: o campo nunca foi publicado. A publicação do CI de 2026-11-13 das 15:27 UTC saiu com este código, com os mesmos 2.523 perfis e 118 aliases da anterior.
 - Os testes de cada adaptador passam a conferir que o bloco não tem biografia.
 - As descrições de fonte em `docs/FONTES.md` e `contrib/fontes.yaml` seguem citando biografia quando a página da casa a traz. Elas descrevem a fonte, não o que o projeto usa.
 - Os ADRs de integração de cada casa (0037 a 0051) citam biografia higienizada. Vale este ADR.

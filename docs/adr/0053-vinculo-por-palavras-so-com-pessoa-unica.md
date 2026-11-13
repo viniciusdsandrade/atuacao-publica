@@ -30,12 +30,13 @@ Nenhum vínculo errado foi achado. Em 3 dos 41, duas pessoas do TSE cabiam na re
 - Ensaio local de 2026-11-13, com o código anterior e o novo sobre os mesmos dados de 22 das 23 casas: 2.344 perfis nos dois.
 - Um perfil mudou: `alese-569` ganhou as candidaturas de 2018, 2022 e 2026, pelo nome igual a menos do espaço. Nenhum perfil perdeu vínculo.
 - Nenhum caso caiu no log de mais de uma pessoa: os 3 casos com duas pessoas foram resolvidos pela eleita no ciclo vigente ou por etapa anterior.
+- Publicação do CI de 2026-11-13 das 15:27 UTC, com as 23 casas: comparados os 2.523 perfis com os da publicação das 13:04 UTC, só `alese-569` mudou de vínculo. Nenhum perfil perdeu vínculo nem trocou de candidaturas, e o log não registrou caso com mais de uma pessoa.
 - A publicação deixa de depender da ordem de um mapa.
 - O `Vinculo` perdeu cerca de 490 linhas repetidas.
 
 ## Limitações
 
-- A ALEGO ficou fora do ensaio: a fonte não respondia em 2026-11-13, e não havia cópia local.
+- A ALEGO ficou fora do ensaio local: a fonte não respondia em 2026-11-13, e não havia cópia local. Na publicação do CI, feita com o cache da casa, os vínculos dela não mudaram.
 - Suplente em exercício com homônimo parcial eleito no mesmo ciclo fica sem vínculo por esse caminho, ou ligado ao eleito se só o eleito couber na regra. Não há caso conhecido.
 - Nome parlamentar que não é nome de urna, nem parte dele, segue sem vínculo. É o caso de "Carminha Paiva", com nome de urna "CARMINHA".
 
