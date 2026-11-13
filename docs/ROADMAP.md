@@ -105,8 +105,9 @@ Estado real de cada fase. Atualizado ao fechar cada fase.
 - Caraguatatuba: sem votação nominal, sem discurso e sem ato do prefeito com fonte validada. A agenda do prefeito é um calendário do Google, cujo endereço tem e-mail, e fica fora.
 - Caraguatatuba: presença só de 2025 e 2026, e comissões sem registro em 2023 e 2024. A composição atual das comissões vem sem data.
 - Caraguatatuba: o bloco de despesas do vereador traz só diárias, ligadas pelo nome do beneficiário. Em 2025 a fonte deixa o cargo em branco em 47 de 96 registros; neles só vale o nome idêntico ao nome civil. Destino e motivo da diária ficam na fonte.
+- Caraguatatuba: o sistema legislativo da Câmara (`sistema.camaracaragua.sp.gov.br`) não aceitou conexão do runner do GitHub Actions em 2026-11-13 (cinco tentativas, todas com tempo esgotado). A casa vem da coleta local cifrada (ADR-0034), e os dados dos vereadores só atualizam quando a coleta local roda. O portal da Câmara e o portal da transparência não chegaram a ser chamados pelo runner.
 - Caraguatatuba: a leitura do sistema legislativo e do portal é de HTML sem contrato. Mudança de marcação quebra a coleta, e o perfil fica com a última cópia válida. A saída do `normalize` conta a matéria anunciada pela pesquisa e não lida.
-- Até 2026-11-13, o recorte da prestação de contas do TSE ficava no cache para sempre nas eleições fechadas, e quem entrava na cobertura depois ficava sem o bloco de financiamento. No site daquele dia, deputados estaduais do AP, de RR e de MT tinham candidaturas e nenhum registro de financiamento. O `fetch tse` passou a refazer o recorte da eleição quando as candidaturas cobertas mudam (ADR-0057).
+- Até 2026-11-13, o recorte da prestação de contas do TSE ficava no cache para sempre nas eleições fechadas, e quem entrava na cobertura depois ficava sem o bloco de financiamento. No site daquele dia, deputados estaduais do AP, de RR e de MT tinham candidaturas e nenhum registro de financiamento. O `fetch tse` passou a refazer o recorte da eleição quando as candidaturas cobertas mudam (ADR-0057). Na publicação de 2026-11-13 das 21:42 UTC, as candidaturas com prestação de contas foram de 63.534 a 77.877, e os perfis com o bloco de financiamento, de 2.077 a 2.457.
 - Cartão "Total no período" das despesas: valor com dez dígitos antes da vírgula quebra a linha no meio do número, na largura de 1366 px. Visto no prefeito de Caraguatatuba no ensaio de 2026-11-13. Sem correção.
 - Até 2026-11-06, nove adaptadores (ALECE, ALEGO, ALEPE, ALERJ, ALEPA, ALES, ALRS, ALESC e CLDF) gravavam o bloco `fontes` como lista, e o `Vinculo` lê um objeto por bloco. Os perfis dessas casas saíam com os blocos sem fonte e com `atualizado_em` nulo (verificado no perfil `alerj-505` publicado). Corrigido: as fontes de cada bloco vêm da proveniência dos registros (`Registros.fontesDosBlocos`), e o `Vinculo` interrompe o `publish` se receber uma lista. No ensaio local das treze casas, nenhum bloco com registro ficou sem fonte.
 - Até 2026-11-07, a ALESP repetia a mesma fonte a cada registro (um perfil citava 2.106 vezes o mesmo arquivo de despesas), e o bloco de participação em votações saía sem fonte. Corrigido no adaptador. O `publish` passou a tirar fontes repetidas de qualquer bloco e, se um adaptador não declarar a fonte de um bloco com registro, a citar a proveniência dos registros, com o caso contado no log.
@@ -121,6 +122,7 @@ Estado real de cada fase. Atualizado ao fechar cada fase.
 
 Estado da publicação de 2026-11-10, às 23:06 UTC, com 2.116 perfis. "Perfis" conta os perfis com o identificador da casa, inclusive os fundidos com outra casa.
 As linhas de ALMT a ALAP foram medidas na publicação de 2026-11-13, às 13:04 UTC, com 2.523 perfis: os 424 perfis dessas 14 casas foram baixados do site e contados. Até 2026-11-13, essas linhas repetiam o número de vagas da casa, e não o que estava publicado.
+A linha da Câmara de Caraguatatuba foi medida na publicação de 2026-11-13, às 22:58 UTC, com 2.551 perfis: os 28 perfis do município foram baixados do site e contados.
 
 | Casa | Coleta no CI | Perfis | Vínculo com o TSE | Blocos além de mandato e candidaturas |
 |---|---|---|---|---|
@@ -152,6 +154,7 @@ As linhas de ALMT a ALAP foram medidas na publicação de 2026-11-13, às 13:04 
 | ALERR (RR) | ok, pela coleta local cifrada | 25, com 24 em exercício | 25 | cargos em órgãos (53 em 16 deputados) e proposições (1.134 em 11 deputados) |
 | ALAP (AP) | ok, pela coleta local cifrada | 24 | 24 | cargos em órgãos (6 em 6 deputados) e despesas da CEAP (6.013 lançamentos em 24 deputados) |
 | CMSP (capital) | ok | 55 | 51 | comissões e proposições (6.547) |
+| Câmara de Caraguatatuba | ok, pela coleta local cifrada | 24, com 15 em exercício | 24 | Mesa e comissões (44 cargos), proposições (3.859 em 24 vereadores), presença em sessão plenária (1.190 registros em 15 vereadores, sendo 1.178 presenças, 11 faltas justificadas e 1 falta) e diárias (46 em 9 vereadores) |
 | Câmara do piloto (SAPL) | ok | 50 | 50 | votos, presença, falas, matérias, despesas e comissões |
 
 Conferido nos 841 perfis das 14 casas da tabela, inclusive os fundidos com outra casa: os 5.175 blocos com registro citam fonte e data. As linhas de ALMG e CLDF repetem a conferência anterior: perfis fundidos com a Câmara somam os blocos das duas casas, e a contagem só da casa não foi refeita. Os 9 registros da ALEPE (e-mail na ementa), os 23 da CLDF e os 3 da ALRS (número de telefone na ementa) que a guarda do `publish` removeu não entram nas contagens. A participação em votações da ALESP saía sem fonte até 2026-11-07 (ver "Limitações conhecidas"). Os oito governadores eleitos em 2022 que concorreram a outro cargo saíram de em exercício (ADR-0033), e restam 19 governadores em exercício.
@@ -583,7 +586,7 @@ Limitações:
     | ALESE | não implementado | não implementado | não encontrado (Mesa Diretora integrada em orgaos_e_frentes) |
     | ALAP | implementado em 2026-11-12, pela coleta local cifrada; CEAP por gabinete e subelemento desde 2023-02 | não implementado | não encontrado |
 
-24. Terceiro município: Caraguatatuba, Câmara Municipal e Prefeitura (ADR-0057): implementado e ensaiado em 2026-11-13. Publicação pendente.
+24. Terceiro município: Caraguatatuba, Câmara Municipal e Prefeitura (ADR-0057): concluído e publicado em 2026-11-13.
     - Fontes catalogadas e validadas em `docs/FONTES.md`: sistema legislativo da Câmara (`caraguatatuba-camara-sagl`), portal da Câmara (`caraguatatuba-camara-portal`), Portal da Transparência do município (`caraguatatuba-transparencia`) e Diário Oficial (`caraguatatuba-pmc-diario-oficial`).
     - Modelo e identificador: `sagl-3510500-{cod_parlamentar}` e chave `caraguatatuba` em `ids_externos`. Cargo `vereador`, esfera `municipal`, ente `3510500`.
     - Adaptador `Caraguatatuba.java` (`CaraguatatubaTest.java`, 31 testes com dado sintético): fichas, matérias por autor e ano, composição das comissões, listas de presença e diárias.
@@ -598,7 +601,10 @@ Limitações:
     - Pipeline e workflow: registro em `Main.java`, `Publicador.java`, `Vinculo.java`, `Tse.java` e `TceSp.java`, e passo `fetch caraguatatuba` em `.github/workflows/dados.yml`.
     - Recorte da prestação de contas refeito quando a cobertura muda. No ensaio, o `fetch tse` refez as cinco eleições em 2 minutos, e o `normalize tse` achou prestação de contas em 77.877 candidaturas.
     - Verificação: 375 testes do ETL, 22 unitários do site e 93 de ponta a ponta, com axe nos dois temas, no desktop e no celular. No site local com os dados do ensaio, as páginas do município abriram sem erro de console e sem requisição a terceiros.
-    - Não validado: a coleta a partir do runner do GitHub Actions. Se a Câmara recusar conexão de fora do país, a casa entra na coleta local cifrada (ADR-0034).
+    - Publicação em quatro execuções do `dados`, todas com sucesso. Às 21:32 UTC, o TSE: recorte refeito e prefeitos e vices no site. Às 21:47, o TCE-SP: despesas da prefeitura. Às 22:04, a Câmara: o sistema legislativo não aceitou conexão do runner, e o alerta de coleta abriu a issue 15. Às 22:54, a Câmara pela coleta local cifrada (ADR-0034): os 24 vereadores entraram, e a issue fechou sozinha.
+    - No site, na publicação das 22:58 UTC: 2.551 perfis, 28 do município (24 vereadores, 2 prefeitos e 2 vices), com as mesmas contagens do ensaio local. Os 24 vereadores têm candidaturas e financiamento. Nenhum bloco sem fonte nem marcado como desatualizado.
+    - Conferência no site publicado: as nove páginas do município abriram no Chromium, no WebKit e no Firefox, em 390 e 1366 px e nos dois temas, sem erro de console, sem rolagem lateral e sem requisição a terceiros. 108 varreduras do axe nessas páginas e 56 nas rotas gerais, sem violação.
+    - Não validado: leitor de tela real e aparelho real. O portal da Câmara e o portal da transparência a partir do runner.
 
 ### Redes sociais
 
