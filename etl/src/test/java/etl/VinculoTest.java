@@ -91,6 +91,38 @@ class VinculoTest {
     }
 
     @Test
+    void nomePorPalavrasSoVinculaPessoaUnicaOuUnicaEleitaNoCiclo(@TempDir Path tmp) throws IOException {
+        Fixture f = new Fixture(tmp);
+        f.pessoa("alese", "1", "Jose Luis", "deputado_estadual", "SE", true, "2023-02-01", "2027-01-31");
+        f.pessoa("alese", "2", "Maria Lima", "deputado_estadual", "SE", true, "2023-02-01", "2027-01-31");
+        f.pessoa("alese", "3", "Hashioka", "deputado_estadual", "SE", true, "2023-02-01", "2027-01-31");
+        f.pessoa("alese", "4", "Luizão Donatrampi", "deputado_estadual", "SE", true, "2023-02-01", "2027-01-31");
+
+        // Uma só pessoa contém as palavras do nome parlamentar: vincula.
+        f.candidatura(2022, "260001", "DEPUTADO ESTADUAL", "SE", "JOSE LUIS DA FEIRA", "AAA", true,
+                "JOSE LUIS SANTOS", "11122233344", "01/01/1970");
+        // Duas pessoas contêm as palavras, e nenhuma foi eleita no ciclo vigente: não escolhe.
+        f.candidatura(2022, "260002", "DEPUTADO ESTADUAL", "SE", "MARIA LIMA DA SAUDE", "AAA", false,
+                "MARIA LIMA SOUZA", "22233344455", "02/02/1971");
+        f.candidatura(2022, "260003", "DEPUTADO ESTADUAL", "SE", "PROFESSORA MARIA LIMA", "BBB", false,
+                "MARIA LIMA COSTA", "33344455566", "03/03/1972");
+        // Duas pessoas contêm a palavra, e só uma foi eleita no ciclo vigente: vale a eleita.
+        f.candidatura(2022, "260004", "DEPUTADO ESTADUAL", "SE", "ROBERTO HASHIOKA", "AAA", true,
+                "ROBERTO HASHIOKA SOARES", "44455566600", "04/04/1973");
+        f.candidatura(2022, "260005", "DEPUTADO ESTADUAL", "SE", "PAULO HASHIOKA", "BBB", false,
+                "PAULO HASHIOKA SOARES", "55566677700", "05/05/1974");
+        // O nome de urna difere só no espaço.
+        f.candidatura(2022, "260006", "DEPUTADO ESTADUAL", "SE", "LUIZAO DONA TRAMPI", "AAA", true,
+                "JOSE LUIZ CRUZ", "66677788800", "06/06/1975");
+
+        List<Perfil> perfis = f.vincular();
+        assertEquals("260001", porId(perfis, "alese", "1").tse.get("2022"));
+        assertTrue(porId(perfis, "alese", "2").tse.isEmpty(), "Entre dois homônimos parciais não eleitos, o vínculo não escolhe");
+        assertEquals("260004", porId(perfis, "alese", "3").tse.get("2022"));
+        assertEquals("260006", porId(perfis, "alese", "4").tse.get("2022"));
+    }
+
+    @Test
     void pontuacaoETitulosVinculamTseSemAmbiguidade(@TempDir Path tmp) throws IOException {
         Fixture f = new Fixture(tmp);
         f.pessoa("alrs", "10", "Neri, O Carteiro", "deputado_estadual", "RS", true, "2023-02-01", "2027-01-31");

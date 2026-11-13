@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.regex.Pattern;
 
 import etl.Publicador.Perfil;
@@ -320,6 +321,59 @@ final class Vinculo {
     static String pessoa(Tse.Chave chave) {
         return chave == null || chave.nomeCivil() == null || chave.nascimento() == null ? null
                 : chave.nomeCivil() + "|" + chave.nascimento();
+    }
+
+    /**
+     * Último recurso do vínculo das casas estaduais: a candidatura cujo nome, sem espaços, é igual ao nome parlamentar
+     * ou cujas palavras contêm todas as do nome parlamentar. Só vale quando aponta para uma única pessoa. Com mais de
+     * uma, vale a única eleita no ciclo vigente. Sem isso não há vínculo: ficar com a primeira encontrada atribuiria
+     * candidaturas e bens a um homônimo parcial.
+     */
+    static JsonNode unicaPorPalavras(Map<String, JsonNode> indice, String nome, Map<String, Tse.Chave> chaves, int eleicaoVigente) {
+        Set<String> procuradas = palavras(nome);
+        if (procuradas.isEmpty()) {
+            return null;
+        }
+        String junto = String.join("", semPontuacao(nome).split("\\s+"));
+        Map<String, JsonNode> iguais = new TreeMap<>();
+        Map<String, JsonNode> contidas = new TreeMap<>();
+        for (var entrada : indice.entrySet()) {
+            String chaveDoNome = semPontuacao(entrada.getKey());
+            if (chaveDoNome == null || chaveDoNome.isBlank()) {
+                continue;
+            }
+            JsonNode candidatura = entrada.getValue();
+            String sq = candidatura.get("sq").stringValue();
+            String pessoa = pessoa(chaves.get(sq));
+            String quem = pessoa != null ? pessoa : "sq:" + sq;
+            if (junto.equals(String.join("", chaveDoNome.split("\\s+")))) {
+                iguais.merge(quem, candidatura, (a, b) -> preferidaEstadual(eleicaoVigente, a, b));
+            }
+            if (palavras(chaveDoNome).containsAll(procuradas)) {
+                contidas.merge(quem, candidatura, (a, b) -> preferidaEstadual(eleicaoVigente, a, b));
+            }
+        }
+        Map<String, JsonNode> possiveis = iguais.isEmpty() ? contidas : iguais;
+        if (possiveis.size() == 1) {
+            return possiveis.values().iterator().next();
+        }
+        if (possiveis.isEmpty()) {
+            return null;
+        }
+        JsonNode eleita = null;
+        int eleitas = 0;
+        for (JsonNode candidatura : possiveis.values()) {
+            if (candidatura.path("eleito").asBoolean(false) && candidatura.path("ano").asInt() == eleicaoVigente) {
+                eleita = candidatura;
+                eleitas++;
+            }
+        }
+        if (eleitas == 1) {
+            return eleita;
+        }
+        System.out.println("vinculo: \"" + nome + "\" casa por palavras com " + possiveis.size()
+                + " pessoas do TSE e fica sem vínculo por esse caminho");
+        return null;
     }
 
     private static Set<String> palavras(String texto) {
@@ -952,22 +1006,10 @@ final class Vinculo {
                     cand = candPorAlerjNomeCivil.get(nomeNorm);
                 }
                 if (cand == null) {
-                    Set<String> palavras = palavras(nomeNorm);
-                    for (var entry : candPorAlerjNomeUrna.entrySet()) {
-                        if (palavras(entry.getKey()).containsAll(palavras)) {
-                            cand = entry.getValue();
-                            break;
-                        }
-                    }
+                    cand = unicaPorPalavras(candPorAlerjNomeUrna, nomeNorm, chaves, eleicaoVigente);
                 }
                 if (cand == null) {
-                    Set<String> palavras = palavras(nomeNorm);
-                    for (var entry : candPorAlerjNomeCivil.entrySet()) {
-                        if (palavras(entry.getKey()).containsAll(palavras)) {
-                            cand = entry.getValue();
-                            break;
-                        }
-                    }
+                    cand = unicaPorPalavras(candPorAlerjNomeCivil, nomeNorm, chaves, eleicaoVigente);
                 }
                 if (cand != null) {
                     candSapl = cand;
@@ -990,40 +1032,16 @@ final class Vinculo {
                     }
                 }
                 if (cand == null) {
-                    Set<String> palavras = palavras(nomeNorm);
-                    for (var entry : candPorAlrsNomeUrna.entrySet()) {
-                        if (palavras(entry.getKey()).containsAll(palavras)) {
-                            cand = entry.getValue();
-                            break;
-                        }
-                    }
+                    cand = unicaPorPalavras(candPorAlrsNomeUrna, nomeNorm, chaves, eleicaoVigente);
                 }
                 if (cand == null) {
-                    Set<String> palavras = palavras(nomeNorm);
-                    for (var entry : candPorAlrsNomeCivil.entrySet()) {
-                        if (palavras(entry.getKey()).containsAll(palavras)) {
-                            cand = entry.getValue();
-                            break;
-                        }
-                    }
+                    cand = unicaPorPalavras(candPorAlrsNomeCivil, nomeNorm, chaves, eleicaoVigente);
                 }
                 if (cand == null && !nomeLimpo.equals(nomeNorm)) {
-                    Set<String> palavras = palavras(nomeLimpo);
-                    for (var entry : candPorAlrsNomeUrna.entrySet()) {
-                        if (palavras(entry.getKey()).containsAll(palavras)) {
-                            cand = entry.getValue();
-                            break;
-                        }
-                    }
+                    cand = unicaPorPalavras(candPorAlrsNomeUrna, nomeLimpo, chaves, eleicaoVigente);
                 }
                 if (cand == null && !nomeLimpo.equals(nomeNorm)) {
-                    Set<String> palavras = palavras(nomeLimpo);
-                    for (var entry : candPorAlrsNomeCivil.entrySet()) {
-                        if (palavras(entry.getKey()).containsAll(palavras)) {
-                            cand = entry.getValue();
-                            break;
-                        }
-                    }
+                    cand = unicaPorPalavras(candPorAlrsNomeCivil, nomeLimpo, chaves, eleicaoVigente);
                 }
                 if (cand != null) {
                     candSapl = cand;
@@ -1046,40 +1064,16 @@ final class Vinculo {
                     }
                 }
                 if (cand == null) {
-                    Set<String> palavras = palavras(nomeNorm);
-                    for (var entry : candPorAleceNomeUrna.entrySet()) {
-                        if (palavras(entry.getKey()).containsAll(palavras)) {
-                            cand = entry.getValue();
-                            break;
-                        }
-                    }
+                    cand = unicaPorPalavras(candPorAleceNomeUrna, nomeNorm, chaves, eleicaoVigente);
                 }
                 if (cand == null) {
-                    Set<String> palavras = palavras(nomeNorm);
-                    for (var entry : candPorAleceNomeCivil.entrySet()) {
-                        if (palavras(entry.getKey()).containsAll(palavras)) {
-                            cand = entry.getValue();
-                            break;
-                        }
-                    }
+                    cand = unicaPorPalavras(candPorAleceNomeCivil, nomeNorm, chaves, eleicaoVigente);
                 }
                 if (cand == null && !nomeLimpo.equals(nomeNorm)) {
-                    Set<String> palavras = palavras(nomeLimpo);
-                    for (var entry : candPorAleceNomeUrna.entrySet()) {
-                        if (palavras(entry.getKey()).containsAll(palavras)) {
-                            cand = entry.getValue();
-                            break;
-                        }
-                    }
+                    cand = unicaPorPalavras(candPorAleceNomeUrna, nomeLimpo, chaves, eleicaoVigente);
                 }
                 if (cand == null && !nomeLimpo.equals(nomeNorm)) {
-                    Set<String> palavras = palavras(nomeLimpo);
-                    for (var entry : candPorAleceNomeCivil.entrySet()) {
-                        if (palavras(entry.getKey()).containsAll(palavras)) {
-                            cand = entry.getValue();
-                            break;
-                        }
-                    }
+                    cand = unicaPorPalavras(candPorAleceNomeCivil, nomeLimpo, chaves, eleicaoVigente);
                 }
                 if (cand != null) {
                     candSapl = cand;
@@ -1102,40 +1096,16 @@ final class Vinculo {
                     }
                 }
                 if (cand == null) {
-                    Set<String> palavras = palavras(nomeNorm);
-                    for (var entry : candPorAlescNomeUrna.entrySet()) {
-                        if (palavras(entry.getKey()).containsAll(palavras)) {
-                            cand = entry.getValue();
-                            break;
-                        }
-                    }
+                    cand = unicaPorPalavras(candPorAlescNomeUrna, nomeNorm, chaves, eleicaoVigente);
                 }
                 if (cand == null) {
-                    Set<String> palavras = palavras(nomeNorm);
-                    for (var entry : candPorAlescNomeCivil.entrySet()) {
-                        if (palavras(entry.getKey()).containsAll(palavras)) {
-                            cand = entry.getValue();
-                            break;
-                        }
-                    }
+                    cand = unicaPorPalavras(candPorAlescNomeCivil, nomeNorm, chaves, eleicaoVigente);
                 }
                 if (cand == null && !nomeLimpo.equals(nomeNorm)) {
-                    Set<String> palavras = palavras(nomeLimpo);
-                    for (var entry : candPorAlescNomeUrna.entrySet()) {
-                        if (palavras(entry.getKey()).containsAll(palavras)) {
-                            cand = entry.getValue();
-                            break;
-                        }
-                    }
+                    cand = unicaPorPalavras(candPorAlescNomeUrna, nomeLimpo, chaves, eleicaoVigente);
                 }
                 if (cand == null && !nomeLimpo.equals(nomeNorm)) {
-                    Set<String> palavras = palavras(nomeLimpo);
-                    for (var entry : candPorAlescNomeCivil.entrySet()) {
-                        if (palavras(entry.getKey()).containsAll(palavras)) {
-                            cand = entry.getValue();
-                            break;
-                        }
-                    }
+                    cand = unicaPorPalavras(candPorAlescNomeCivil, nomeLimpo, chaves, eleicaoVigente);
                 }
                 if (cand != null) {
                     candSapl = cand;
@@ -1161,40 +1131,16 @@ final class Vinculo {
                     }
                 }
                 if (cand == null) {
-                    Set<String> palavras = palavras(nomeNorm);
-                    for (var entry : candPorAlegoNomeUrna.entrySet()) {
-                        if (palavras(entry.getKey()).containsAll(palavras)) {
-                            cand = entry.getValue();
-                            break;
-                        }
-                    }
+                    cand = unicaPorPalavras(candPorAlegoNomeUrna, nomeNorm, chaves, eleicaoVigente);
                 }
                 if (cand == null) {
-                    Set<String> palavras = palavras(nomeNorm);
-                    for (var entry : candPorAlegoNomeCivil.entrySet()) {
-                        if (palavras(entry.getKey()).containsAll(palavras)) {
-                            cand = entry.getValue();
-                            break;
-                        }
-                    }
+                    cand = unicaPorPalavras(candPorAlegoNomeCivil, nomeNorm, chaves, eleicaoVigente);
                 }
                 if (cand == null && !nomeLimpo.equals(nomeNorm)) {
-                    Set<String> palavras = palavras(nomeLimpo);
-                    for (var entry : candPorAlegoNomeUrna.entrySet()) {
-                        if (palavras(entry.getKey()).containsAll(palavras)) {
-                            cand = entry.getValue();
-                            break;
-                        }
-                    }
+                    cand = unicaPorPalavras(candPorAlegoNomeUrna, nomeLimpo, chaves, eleicaoVigente);
                 }
                 if (cand == null && !nomeLimpo.equals(nomeNorm)) {
-                    Set<String> palavras = palavras(nomeLimpo);
-                    for (var entry : candPorAlegoNomeCivil.entrySet()) {
-                        if (palavras(entry.getKey()).containsAll(palavras)) {
-                            cand = entry.getValue();
-                            break;
-                        }
-                    }
+                    cand = unicaPorPalavras(candPorAlegoNomeCivil, nomeLimpo, chaves, eleicaoVigente);
                 }
                 if (cand != null) {
                     candSapl = cand;
@@ -1217,40 +1163,16 @@ final class Vinculo {
                     }
                 }
                 if (cand == null) {
-                    Set<String> palavras = palavras(nomeNorm);
-                    for (var entry : candPorAlesNomeUrna.entrySet()) {
-                        if (palavras(entry.getKey()).containsAll(palavras)) {
-                            cand = entry.getValue();
-                            break;
-                        }
-                    }
+                    cand = unicaPorPalavras(candPorAlesNomeUrna, nomeNorm, chaves, eleicaoVigente);
                 }
                 if (cand == null) {
-                    Set<String> palavras = palavras(nomeNorm);
-                    for (var entry : candPorAlesNomeCivil.entrySet()) {
-                        if (palavras(entry.getKey()).containsAll(palavras)) {
-                            cand = entry.getValue();
-                            break;
-                        }
-                    }
+                    cand = unicaPorPalavras(candPorAlesNomeCivil, nomeNorm, chaves, eleicaoVigente);
                 }
                 if (cand == null && !nomeLimpo.equals(nomeNorm)) {
-                    Set<String> palavras = palavras(nomeLimpo);
-                    for (var entry : candPorAlesNomeUrna.entrySet()) {
-                        if (palavras(entry.getKey()).containsAll(palavras)) {
-                            cand = entry.getValue();
-                            break;
-                        }
-                    }
+                    cand = unicaPorPalavras(candPorAlesNomeUrna, nomeLimpo, chaves, eleicaoVigente);
                 }
                 if (cand == null && !nomeLimpo.equals(nomeNorm)) {
-                    Set<String> palavras = palavras(nomeLimpo);
-                    for (var entry : candPorAlesNomeCivil.entrySet()) {
-                        if (palavras(entry.getKey()).containsAll(palavras)) {
-                            cand = entry.getValue();
-                            break;
-                        }
-                    }
+                    cand = unicaPorPalavras(candPorAlesNomeCivil, nomeLimpo, chaves, eleicaoVigente);
                 }
                 if (cand != null) {
                     candSapl = cand;
@@ -1273,40 +1195,16 @@ final class Vinculo {
                     }
                 }
                 if (cand == null) {
-                    Set<String> palavras = palavras(nomeNorm);
-                    for (var entry : candPorAlepaNomeUrna.entrySet()) {
-                        if (palavras(entry.getKey()).containsAll(palavras)) {
-                            cand = entry.getValue();
-                            break;
-                        }
-                    }
+                    cand = unicaPorPalavras(candPorAlepaNomeUrna, nomeNorm, chaves, eleicaoVigente);
                 }
                 if (cand == null) {
-                    Set<String> palavras = palavras(nomeNorm);
-                    for (var entry : candPorAlepaNomeCivil.entrySet()) {
-                        if (palavras(entry.getKey()).containsAll(palavras)) {
-                            cand = entry.getValue();
-                            break;
-                        }
-                    }
+                    cand = unicaPorPalavras(candPorAlepaNomeCivil, nomeNorm, chaves, eleicaoVigente);
                 }
                 if (cand == null && !nomeLimpo.equals(nomeNorm)) {
-                    Set<String> palavras = palavras(nomeLimpo);
-                    for (var entry : candPorAlepaNomeUrna.entrySet()) {
-                        if (palavras(entry.getKey()).containsAll(palavras)) {
-                            cand = entry.getValue();
-                            break;
-                        }
-                    }
+                    cand = unicaPorPalavras(candPorAlepaNomeUrna, nomeLimpo, chaves, eleicaoVigente);
                 }
                 if (cand == null && !nomeLimpo.equals(nomeNorm)) {
-                    Set<String> palavras = palavras(nomeLimpo);
-                    for (var entry : candPorAlepaNomeCivil.entrySet()) {
-                        if (palavras(entry.getKey()).containsAll(palavras)) {
-                            cand = entry.getValue();
-                            break;
-                        }
-                    }
+                    cand = unicaPorPalavras(candPorAlepaNomeCivil, nomeLimpo, chaves, eleicaoVigente);
                 }
                 if (cand != null) {
                     candSapl = cand;
@@ -1329,40 +1227,16 @@ final class Vinculo {
                     }
                 }
                 if (cand == null) {
-                    Set<String> palavras = palavras(nomeNorm);
-                    for (var entry : candPorAlepeNomeUrna.entrySet()) {
-                        if (palavras(entry.getKey()).containsAll(palavras)) {
-                            cand = entry.getValue();
-                            break;
-                        }
-                    }
+                    cand = unicaPorPalavras(candPorAlepeNomeUrna, nomeNorm, chaves, eleicaoVigente);
                 }
                 if (cand == null) {
-                    Set<String> palavras = palavras(nomeNorm);
-                    for (var entry : candPorAlepeNomeCivil.entrySet()) {
-                        if (palavras(entry.getKey()).containsAll(palavras)) {
-                            cand = entry.getValue();
-                            break;
-                        }
-                    }
+                    cand = unicaPorPalavras(candPorAlepeNomeCivil, nomeNorm, chaves, eleicaoVigente);
                 }
                 if (cand == null && !nomeLimpo.equals(nomeNorm)) {
-                    Set<String> palavras = palavras(nomeLimpo);
-                    for (var entry : candPorAlepeNomeUrna.entrySet()) {
-                        if (palavras(entry.getKey()).containsAll(palavras)) {
-                            cand = entry.getValue();
-                            break;
-                        }
-                    }
+                    cand = unicaPorPalavras(candPorAlepeNomeUrna, nomeLimpo, chaves, eleicaoVigente);
                 }
                 if (cand == null && !nomeLimpo.equals(nomeNorm)) {
-                    Set<String> palavras = palavras(nomeLimpo);
-                    for (var entry : candPorAlepeNomeCivil.entrySet()) {
-                        if (palavras(entry.getKey()).containsAll(palavras)) {
-                            cand = entry.getValue();
-                            break;
-                        }
-                    }
+                    cand = unicaPorPalavras(candPorAlepeNomeCivil, nomeLimpo, chaves, eleicaoVigente);
                 }
                 if (cand != null) {
                     candSapl = cand;
@@ -1385,40 +1259,16 @@ final class Vinculo {
                     }
                 }
                 if (cand == null) {
-                    Set<String> palavras = palavras(nomeNorm);
-                    for (var entry : candPorCldfNomeUrna.entrySet()) {
-                        if (palavras(entry.getKey()).containsAll(palavras)) {
-                            cand = entry.getValue();
-                            break;
-                        }
-                    }
+                    cand = unicaPorPalavras(candPorCldfNomeUrna, nomeNorm, chaves, eleicaoVigente);
                 }
                 if (cand == null) {
-                    Set<String> palavras = palavras(nomeNorm);
-                    for (var entry : candPorCldfNomeCivil.entrySet()) {
-                        if (palavras(entry.getKey()).containsAll(palavras)) {
-                            cand = entry.getValue();
-                            break;
-                        }
-                    }
+                    cand = unicaPorPalavras(candPorCldfNomeCivil, nomeNorm, chaves, eleicaoVigente);
                 }
                 if (cand == null && !nomeLimpo.equals(nomeNorm)) {
-                    Set<String> palavras = palavras(nomeLimpo);
-                    for (var entry : candPorCldfNomeUrna.entrySet()) {
-                        if (palavras(entry.getKey()).containsAll(palavras)) {
-                            cand = entry.getValue();
-                            break;
-                        }
-                    }
+                    cand = unicaPorPalavras(candPorCldfNomeUrna, nomeLimpo, chaves, eleicaoVigente);
                 }
                 if (cand == null && !nomeLimpo.equals(nomeNorm)) {
-                    Set<String> palavras = palavras(nomeLimpo);
-                    for (var entry : candPorCldfNomeCivil.entrySet()) {
-                        if (palavras(entry.getKey()).containsAll(palavras)) {
-                            cand = entry.getValue();
-                            break;
-                        }
-                    }
+                    cand = unicaPorPalavras(candPorCldfNomeCivil, nomeLimpo, chaves, eleicaoVigente);
                 }
                 if (cand != null) {
                     candSapl = cand;
@@ -1448,40 +1298,16 @@ final class Vinculo {
                     }
                 }
                 if (cand == null) {
-                    Set<String> palavras = palavras(nomeNorm);
-                    for (var entry : candPorAlmtNomeUrna.entrySet()) {
-                        if (palavras(entry.getKey()).containsAll(palavras)) {
-                            cand = entry.getValue();
-                            break;
-                        }
-                    }
+                    cand = unicaPorPalavras(candPorAlmtNomeUrna, nomeNorm, chaves, eleicaoVigente);
                 }
                 if (cand == null) {
-                    Set<String> palavras = palavras(nomeNorm);
-                    for (var entry : candPorAlmtNomeCivil.entrySet()) {
-                        if (palavras(entry.getKey()).containsAll(palavras)) {
-                            cand = entry.getValue();
-                            break;
-                        }
-                    }
+                    cand = unicaPorPalavras(candPorAlmtNomeCivil, nomeNorm, chaves, eleicaoVigente);
                 }
                 if (cand == null && !nomeLimpo.equals(nomeNorm)) {
-                    Set<String> palavras = palavras(nomeLimpo);
-                    for (var entry : candPorAlmtNomeUrna.entrySet()) {
-                        if (palavras(entry.getKey()).containsAll(palavras)) {
-                            cand = entry.getValue();
-                            break;
-                        }
-                    }
+                    cand = unicaPorPalavras(candPorAlmtNomeUrna, nomeLimpo, chaves, eleicaoVigente);
                 }
                 if (cand == null && !nomeLimpo.equals(nomeNorm)) {
-                    Set<String> palavras = palavras(nomeLimpo);
-                    for (var entry : candPorAlmtNomeCivil.entrySet()) {
-                        if (palavras(entry.getKey()).containsAll(palavras)) {
-                            cand = entry.getValue();
-                            break;
-                        }
-                    }
+                    cand = unicaPorPalavras(candPorAlmtNomeCivil, nomeLimpo, chaves, eleicaoVigente);
                 }
                 if (cand != null) {
                     candSapl = cand;
@@ -1504,40 +1330,16 @@ final class Vinculo {
                     }
                 }
                 if (cand == null) {
-                    Set<String> palavras = palavras(nomeNorm);
-                    for (var entry : candPorAlemsNomeUrna.entrySet()) {
-                        if (palavras(entry.getKey()).containsAll(palavras)) {
-                            cand = entry.getValue();
-                            break;
-                        }
-                    }
+                    cand = unicaPorPalavras(candPorAlemsNomeUrna, nomeNorm, chaves, eleicaoVigente);
                 }
                 if (cand == null) {
-                    Set<String> palavras = palavras(nomeNorm);
-                    for (var entry : candPorAlemsNomeCivil.entrySet()) {
-                        if (palavras(entry.getKey()).containsAll(palavras)) {
-                            cand = entry.getValue();
-                            break;
-                        }
-                    }
+                    cand = unicaPorPalavras(candPorAlemsNomeCivil, nomeNorm, chaves, eleicaoVigente);
                 }
                 if (cand == null && !nomeLimpo.equals(nomeNorm)) {
-                    Set<String> palavras = palavras(nomeLimpo);
-                    for (var entry : candPorAlemsNomeUrna.entrySet()) {
-                        if (palavras(entry.getKey()).containsAll(palavras)) {
-                            cand = entry.getValue();
-                            break;
-                        }
-                    }
+                    cand = unicaPorPalavras(candPorAlemsNomeUrna, nomeLimpo, chaves, eleicaoVigente);
                 }
                 if (cand == null && !nomeLimpo.equals(nomeNorm)) {
-                    Set<String> palavras = palavras(nomeLimpo);
-                    for (var entry : candPorAlemsNomeCivil.entrySet()) {
-                        if (palavras(entry.getKey()).containsAll(palavras)) {
-                            cand = entry.getValue();
-                            break;
-                        }
-                    }
+                    cand = unicaPorPalavras(candPorAlemsNomeCivil, nomeLimpo, chaves, eleicaoVigente);
                 }
                 if (cand != null) {
                     candSapl = cand;
@@ -1567,40 +1369,16 @@ final class Vinculo {
                     }
                 }
                 if (cand == null) {
-                    Set<String> palavras = palavras(nomeNorm);
-                    for (var entry : candPorAlpbNomeUrna.entrySet()) {
-                        if (palavras(entry.getKey()).containsAll(palavras)) {
-                            cand = entry.getValue();
-                            break;
-                        }
-                    }
+                    cand = unicaPorPalavras(candPorAlpbNomeUrna, nomeNorm, chaves, eleicaoVigente);
                 }
                 if (cand == null) {
-                    Set<String> palavras = palavras(nomeNorm);
-                    for (var entry : candPorAlpbNomeCivil.entrySet()) {
-                        if (palavras(entry.getKey()).containsAll(palavras)) {
-                            cand = entry.getValue();
-                            break;
-                        }
-                    }
+                    cand = unicaPorPalavras(candPorAlpbNomeCivil, nomeNorm, chaves, eleicaoVigente);
                 }
                 if (cand == null && !nomeLimpo.equals(nomeNorm)) {
-                    Set<String> palavras = palavras(nomeLimpo);
-                    for (var entry : candPorAlpbNomeUrna.entrySet()) {
-                        if (palavras(entry.getKey()).containsAll(palavras)) {
-                            cand = entry.getValue();
-                            break;
-                        }
-                    }
+                    cand = unicaPorPalavras(candPorAlpbNomeUrna, nomeLimpo, chaves, eleicaoVigente);
                 }
                 if (cand == null && !nomeLimpo.equals(nomeNorm)) {
-                    Set<String> palavras = palavras(nomeLimpo);
-                    for (var entry : candPorAlpbNomeCivil.entrySet()) {
-                        if (palavras(entry.getKey()).containsAll(palavras)) {
-                            cand = entry.getValue();
-                            break;
-                        }
-                    }
+                    cand = unicaPorPalavras(candPorAlpbNomeCivil, nomeLimpo, chaves, eleicaoVigente);
                 }
                 if (cand != null) {
                     candSapl = cand;
@@ -1630,40 +1408,16 @@ final class Vinculo {
                     }
                 }
                 if (cand == null) {
-                    Set<String> palavras = palavras(nomeNorm);
-                    for (var entry : candPorAleamNomeUrna.entrySet()) {
-                        if (palavras(entry.getKey()).containsAll(palavras)) {
-                            cand = entry.getValue();
-                            break;
-                        }
-                    }
+                    cand = unicaPorPalavras(candPorAleamNomeUrna, nomeNorm, chaves, eleicaoVigente);
                 }
                 if (cand == null) {
-                    Set<String> palavras = palavras(nomeNorm);
-                    for (var entry : candPorAleamNomeCivil.entrySet()) {
-                        if (palavras(entry.getKey()).containsAll(palavras)) {
-                            cand = entry.getValue();
-                            break;
-                        }
-                    }
+                    cand = unicaPorPalavras(candPorAleamNomeCivil, nomeNorm, chaves, eleicaoVigente);
                 }
                 if (cand == null && !nomeLimpo.equals(nomeNorm)) {
-                    Set<String> palavras = palavras(nomeLimpo);
-                    for (var entry : candPorAleamNomeUrna.entrySet()) {
-                        if (palavras(entry.getKey()).containsAll(palavras)) {
-                            cand = entry.getValue();
-                            break;
-                        }
-                    }
+                    cand = unicaPorPalavras(candPorAleamNomeUrna, nomeLimpo, chaves, eleicaoVigente);
                 }
                 if (cand == null && !nomeLimpo.equals(nomeNorm)) {
-                    Set<String> palavras = palavras(nomeLimpo);
-                    for (var entry : candPorAleamNomeCivil.entrySet()) {
-                        if (palavras(entry.getKey()).containsAll(palavras)) {
-                            cand = entry.getValue();
-                            break;
-                        }
-                    }
+                    cand = unicaPorPalavras(candPorAleamNomeCivil, nomeLimpo, chaves, eleicaoVigente);
                 }
                 if (cand != null) {
                     candSapl = cand;
@@ -1693,40 +1447,16 @@ final class Vinculo {
                     }
                 }
                 if (cand == null) {
-                    Set<String> palavras = palavras(nomeNorm);
-                    for (var entry : candPorAlealNomeUrna.entrySet()) {
-                        if (palavras(entry.getKey()).containsAll(palavras)) {
-                            cand = entry.getValue();
-                            break;
-                        }
-                    }
+                    cand = unicaPorPalavras(candPorAlealNomeUrna, nomeNorm, chaves, eleicaoVigente);
                 }
                 if (cand == null) {
-                    Set<String> palavras = palavras(nomeNorm);
-                    for (var entry : candPorAlealNomeCivil.entrySet()) {
-                        if (palavras(entry.getKey()).containsAll(palavras)) {
-                            cand = entry.getValue();
-                            break;
-                        }
-                    }
+                    cand = unicaPorPalavras(candPorAlealNomeCivil, nomeNorm, chaves, eleicaoVigente);
                 }
                 if (cand == null && !nomeLimpo.equals(nomeNorm)) {
-                    Set<String> palavras = palavras(nomeLimpo);
-                    for (var entry : candPorAlealNomeUrna.entrySet()) {
-                        if (palavras(entry.getKey()).containsAll(palavras)) {
-                            cand = entry.getValue();
-                            break;
-                        }
-                    }
+                    cand = unicaPorPalavras(candPorAlealNomeUrna, nomeLimpo, chaves, eleicaoVigente);
                 }
                 if (cand == null && !nomeLimpo.equals(nomeNorm)) {
-                    Set<String> palavras = palavras(nomeLimpo);
-                    for (var entry : candPorAlealNomeCivil.entrySet()) {
-                        if (palavras(entry.getKey()).containsAll(palavras)) {
-                            cand = entry.getValue();
-                            break;
-                        }
-                    }
+                    cand = unicaPorPalavras(candPorAlealNomeCivil, nomeLimpo, chaves, eleicaoVigente);
                 }
                 if (cand != null) {
                     candSapl = cand;
@@ -1756,40 +1486,16 @@ final class Vinculo {
                     }
                 }
                 if (cand == null) {
-                    Set<String> palavras = palavras(nomeNorm);
-                    for (var entry : candPorAleroNomeUrna.entrySet()) {
-                        if (palavras(entry.getKey()).containsAll(palavras)) {
-                            cand = entry.getValue();
-                            break;
-                        }
-                    }
+                    cand = unicaPorPalavras(candPorAleroNomeUrna, nomeNorm, chaves, eleicaoVigente);
                 }
                 if (cand == null) {
-                    Set<String> palavras = palavras(nomeNorm);
-                    for (var entry : candPorAleroNomeCivil.entrySet()) {
-                        if (palavras(entry.getKey()).containsAll(palavras)) {
-                            cand = entry.getValue();
-                            break;
-                        }
-                    }
+                    cand = unicaPorPalavras(candPorAleroNomeCivil, nomeNorm, chaves, eleicaoVigente);
                 }
                 if (cand == null && !nomeLimpo.equals(nomeNorm)) {
-                    Set<String> palavras = palavras(nomeLimpo);
-                    for (var entry : candPorAleroNomeUrna.entrySet()) {
-                        if (palavras(entry.getKey()).containsAll(palavras)) {
-                            cand = entry.getValue();
-                            break;
-                        }
-                    }
+                    cand = unicaPorPalavras(candPorAleroNomeUrna, nomeLimpo, chaves, eleicaoVigente);
                 }
                 if (cand == null && !nomeLimpo.equals(nomeNorm)) {
-                    Set<String> palavras = palavras(nomeLimpo);
-                    for (var entry : candPorAleroNomeCivil.entrySet()) {
-                        if (palavras(entry.getKey()).containsAll(palavras)) {
-                            cand = entry.getValue();
-                            break;
-                        }
-                    }
+                    cand = unicaPorPalavras(candPorAleroNomeCivil, nomeLimpo, chaves, eleicaoVigente);
                 }
                 if (cand != null) {
                     candSapl = cand;
@@ -1819,40 +1525,16 @@ final class Vinculo {
                     }
                 }
                 if (cand == null) {
-                    Set<String> palavras = palavras(nomeNorm);
-                    for (var entry : candPorAlepiNomeUrna.entrySet()) {
-                        if (palavras(entry.getKey()).containsAll(palavras)) {
-                            cand = entry.getValue();
-                            break;
-                        }
-                    }
+                    cand = unicaPorPalavras(candPorAlepiNomeUrna, nomeNorm, chaves, eleicaoVigente);
                 }
                 if (cand == null) {
-                    Set<String> palavras = palavras(nomeNorm);
-                    for (var entry : candPorAlepiNomeCivil.entrySet()) {
-                        if (palavras(entry.getKey()).containsAll(palavras)) {
-                            cand = entry.getValue();
-                            break;
-                        }
-                    }
+                    cand = unicaPorPalavras(candPorAlepiNomeCivil, nomeNorm, chaves, eleicaoVigente);
                 }
                 if (cand == null && !nomeLimpo.equals(nomeNorm)) {
-                    Set<String> palavras = palavras(nomeLimpo);
-                    for (var entry : candPorAlepiNomeUrna.entrySet()) {
-                        if (palavras(entry.getKey()).containsAll(palavras)) {
-                            cand = entry.getValue();
-                            break;
-                        }
-                    }
+                    cand = unicaPorPalavras(candPorAlepiNomeUrna, nomeLimpo, chaves, eleicaoVigente);
                 }
                 if (cand == null && !nomeLimpo.equals(nomeNorm)) {
-                    Set<String> palavras = palavras(nomeLimpo);
-                    for (var entry : candPorAlepiNomeCivil.entrySet()) {
-                        if (palavras(entry.getKey()).containsAll(palavras)) {
-                            cand = entry.getValue();
-                            break;
-                        }
-                    }
+                    cand = unicaPorPalavras(candPorAlepiNomeCivil, nomeLimpo, chaves, eleicaoVigente);
                 }
                 if (cand != null) {
                     candSapl = cand;
@@ -1882,40 +1564,16 @@ final class Vinculo {
                     }
                 }
                 if (cand == null) {
-                    Set<String> palavras = palavras(nomeNorm);
-                    for (var entry : candPorAlrnNomeUrna.entrySet()) {
-                        if (palavras(entry.getKey()).containsAll(palavras)) {
-                            cand = entry.getValue();
-                            break;
-                        }
-                    }
+                    cand = unicaPorPalavras(candPorAlrnNomeUrna, nomeNorm, chaves, eleicaoVigente);
                 }
                 if (cand == null) {
-                    Set<String> palavras = palavras(nomeNorm);
-                    for (var entry : candPorAlrnNomeCivil.entrySet()) {
-                        if (palavras(entry.getKey()).containsAll(palavras)) {
-                            cand = entry.getValue();
-                            break;
-                        }
-                    }
+                    cand = unicaPorPalavras(candPorAlrnNomeCivil, nomeNorm, chaves, eleicaoVigente);
                 }
                 if (cand == null && !nomeLimpo.equals(nomeNorm)) {
-                    Set<String> palavras = palavras(nomeLimpo);
-                    for (var entry : candPorAlrnNomeUrna.entrySet()) {
-                        if (palavras(entry.getKey()).containsAll(palavras)) {
-                            cand = entry.getValue();
-                            break;
-                        }
-                    }
+                    cand = unicaPorPalavras(candPorAlrnNomeUrna, nomeLimpo, chaves, eleicaoVigente);
                 }
                 if (cand == null && !nomeLimpo.equals(nomeNorm)) {
-                    Set<String> palavras = palavras(nomeLimpo);
-                    for (var entry : candPorAlrnNomeCivil.entrySet()) {
-                        if (palavras(entry.getKey()).containsAll(palavras)) {
-                            cand = entry.getValue();
-                            break;
-                        }
-                    }
+                    cand = unicaPorPalavras(candPorAlrnNomeCivil, nomeLimpo, chaves, eleicaoVigente);
                 }
                 if (cand != null) {
                     candSapl = cand;
@@ -1945,40 +1603,16 @@ final class Vinculo {
                     }
                 }
                 if (cand == null) {
-                    Set<String> palavras = palavras(nomeNorm);
-                    for (var entry : candPorAletoNomeUrna.entrySet()) {
-                        if (palavras(entry.getKey()).containsAll(palavras)) {
-                            cand = entry.getValue();
-                            break;
-                        }
-                    }
+                    cand = unicaPorPalavras(candPorAletoNomeUrna, nomeNorm, chaves, eleicaoVigente);
                 }
                 if (cand == null) {
-                    Set<String> palavras = palavras(nomeNorm);
-                    for (var entry : candPorAletoNomeCivil.entrySet()) {
-                        if (palavras(entry.getKey()).containsAll(palavras)) {
-                            cand = entry.getValue();
-                            break;
-                        }
-                    }
+                    cand = unicaPorPalavras(candPorAletoNomeCivil, nomeNorm, chaves, eleicaoVigente);
                 }
                 if (cand == null && !nomeLimpo.equals(nomeNorm)) {
-                    Set<String> palavras = palavras(nomeLimpo);
-                    for (var entry : candPorAletoNomeUrna.entrySet()) {
-                        if (palavras(entry.getKey()).containsAll(palavras)) {
-                            cand = entry.getValue();
-                            break;
-                        }
-                    }
+                    cand = unicaPorPalavras(candPorAletoNomeUrna, nomeLimpo, chaves, eleicaoVigente);
                 }
                 if (cand == null && !nomeLimpo.equals(nomeNorm)) {
-                    Set<String> palavras = palavras(nomeLimpo);
-                    for (var entry : candPorAletoNomeCivil.entrySet()) {
-                        if (palavras(entry.getKey()).containsAll(palavras)) {
-                            cand = entry.getValue();
-                            break;
-                        }
-                    }
+                    cand = unicaPorPalavras(candPorAletoNomeCivil, nomeLimpo, chaves, eleicaoVigente);
                 }
                 if (cand != null) {
                     candSapl = cand;
@@ -2008,40 +1642,16 @@ final class Vinculo {
                     }
                 }
                 if (cand == null) {
-                    Set<String> palavras = palavras(nomeNorm);
-                    for (var entry : candPorAleseNomeUrna.entrySet()) {
-                        if (palavras(entry.getKey()).containsAll(palavras)) {
-                            cand = entry.getValue();
-                            break;
-                        }
-                    }
+                    cand = unicaPorPalavras(candPorAleseNomeUrna, nomeNorm, chaves, eleicaoVigente);
                 }
                 if (cand == null) {
-                    Set<String> palavras = palavras(nomeNorm);
-                    for (var entry : candPorAleseNomeCivil.entrySet()) {
-                        if (palavras(entry.getKey()).containsAll(palavras)) {
-                            cand = entry.getValue();
-                            break;
-                        }
-                    }
+                    cand = unicaPorPalavras(candPorAleseNomeCivil, nomeNorm, chaves, eleicaoVigente);
                 }
                 if (cand == null && !nomeLimpo.equals(nomeNorm)) {
-                    Set<String> palavras = palavras(nomeLimpo);
-                    for (var entry : candPorAleseNomeUrna.entrySet()) {
-                        if (palavras(entry.getKey()).containsAll(palavras)) {
-                            cand = entry.getValue();
-                            break;
-                        }
-                    }
+                    cand = unicaPorPalavras(candPorAleseNomeUrna, nomeLimpo, chaves, eleicaoVigente);
                 }
                 if (cand == null && !nomeLimpo.equals(nomeNorm)) {
-                    Set<String> palavras = palavras(nomeLimpo);
-                    for (var entry : candPorAleseNomeCivil.entrySet()) {
-                        if (palavras(entry.getKey()).containsAll(palavras)) {
-                            cand = entry.getValue();
-                            break;
-                        }
-                    }
+                    cand = unicaPorPalavras(candPorAleseNomeCivil, nomeLimpo, chaves, eleicaoVigente);
                 }
                 if (cand != null) {
                     candSapl = cand;
@@ -2071,40 +1681,16 @@ final class Vinculo {
                     }
                 }
                 if (cand == null) {
-                    Set<String> palavras = palavras(nomeNorm);
-                    for (var entry : candPorAlemaNomeUrna.entrySet()) {
-                        if (palavras(entry.getKey()).containsAll(palavras)) {
-                            cand = entry.getValue();
-                            break;
-                        }
-                    }
+                    cand = unicaPorPalavras(candPorAlemaNomeUrna, nomeNorm, chaves, eleicaoVigente);
                 }
                 if (cand == null) {
-                    Set<String> palavras = palavras(nomeNorm);
-                    for (var entry : candPorAlemaNomeCivil.entrySet()) {
-                        if (palavras(entry.getKey()).containsAll(palavras)) {
-                            cand = entry.getValue();
-                            break;
-                        }
-                    }
+                    cand = unicaPorPalavras(candPorAlemaNomeCivil, nomeNorm, chaves, eleicaoVigente);
                 }
                 if (cand == null && !nomeLimpo.equals(nomeNorm)) {
-                    Set<String> palavras = palavras(nomeLimpo);
-                    for (var entry : candPorAlemaNomeUrna.entrySet()) {
-                        if (palavras(entry.getKey()).containsAll(palavras)) {
-                            cand = entry.getValue();
-                            break;
-                        }
-                    }
+                    cand = unicaPorPalavras(candPorAlemaNomeUrna, nomeLimpo, chaves, eleicaoVigente);
                 }
                 if (cand == null && !nomeLimpo.equals(nomeNorm)) {
-                    Set<String> palavras = palavras(nomeLimpo);
-                    for (var entry : candPorAlemaNomeCivil.entrySet()) {
-                        if (palavras(entry.getKey()).containsAll(palavras)) {
-                            cand = entry.getValue();
-                            break;
-                        }
-                    }
+                    cand = unicaPorPalavras(candPorAlemaNomeCivil, nomeLimpo, chaves, eleicaoVigente);
                 }
                 if (cand != null) {
                     candSapl = cand;
@@ -2134,40 +1720,16 @@ final class Vinculo {
                     }
                 }
                 if (cand == null) {
-                    Set<String> palavras = palavras(nomeNorm);
-                    for (var entry : candPorAleacNomeUrna.entrySet()) {
-                        if (palavras(entry.getKey()).containsAll(palavras)) {
-                            cand = entry.getValue();
-                            break;
-                        }
-                    }
+                    cand = unicaPorPalavras(candPorAleacNomeUrna, nomeNorm, chaves, eleicaoVigente);
                 }
                 if (cand == null) {
-                    Set<String> palavras = palavras(nomeNorm);
-                    for (var entry : candPorAleacNomeCivil.entrySet()) {
-                        if (palavras(entry.getKey()).containsAll(palavras)) {
-                            cand = entry.getValue();
-                            break;
-                        }
-                    }
+                    cand = unicaPorPalavras(candPorAleacNomeCivil, nomeNorm, chaves, eleicaoVigente);
                 }
                 if (cand == null && !nomeLimpo.equals(nomeNorm)) {
-                    Set<String> palavras = palavras(nomeLimpo);
-                    for (var entry : candPorAleacNomeUrna.entrySet()) {
-                        if (palavras(entry.getKey()).containsAll(palavras)) {
-                            cand = entry.getValue();
-                            break;
-                        }
-                    }
+                    cand = unicaPorPalavras(candPorAleacNomeUrna, nomeLimpo, chaves, eleicaoVigente);
                 }
                 if (cand == null && !nomeLimpo.equals(nomeNorm)) {
-                    Set<String> palavras = palavras(nomeLimpo);
-                    for (var entry : candPorAleacNomeCivil.entrySet()) {
-                        if (palavras(entry.getKey()).containsAll(palavras)) {
-                            cand = entry.getValue();
-                            break;
-                        }
-                    }
+                    cand = unicaPorPalavras(candPorAleacNomeCivil, nomeLimpo, chaves, eleicaoVigente);
                 }
                 if (cand != null) {
                     candSapl = cand;
@@ -2197,40 +1759,16 @@ final class Vinculo {
                     }
                 }
                 if (cand == null) {
-                    Set<String> palavras = palavras(nomeNorm);
-                    for (var entry : candPorAlerrNomeUrna.entrySet()) {
-                        if (palavras(entry.getKey()).containsAll(palavras)) {
-                            cand = entry.getValue();
-                            break;
-                        }
-                    }
+                    cand = unicaPorPalavras(candPorAlerrNomeUrna, nomeNorm, chaves, eleicaoVigente);
                 }
                 if (cand == null) {
-                    Set<String> palavras = palavras(nomeNorm);
-                    for (var entry : candPorAlerrNomeCivil.entrySet()) {
-                        if (palavras(entry.getKey()).containsAll(palavras)) {
-                            cand = entry.getValue();
-                            break;
-                        }
-                    }
+                    cand = unicaPorPalavras(candPorAlerrNomeCivil, nomeNorm, chaves, eleicaoVigente);
                 }
                 if (cand == null && !nomeLimpo.equals(nomeNorm)) {
-                    Set<String> palavras = palavras(nomeLimpo);
-                    for (var entry : candPorAlerrNomeUrna.entrySet()) {
-                        if (palavras(entry.getKey()).containsAll(palavras)) {
-                            cand = entry.getValue();
-                            break;
-                        }
-                    }
+                    cand = unicaPorPalavras(candPorAlerrNomeUrna, nomeLimpo, chaves, eleicaoVigente);
                 }
                 if (cand == null && !nomeLimpo.equals(nomeNorm)) {
-                    Set<String> palavras = palavras(nomeLimpo);
-                    for (var entry : candPorAlerrNomeCivil.entrySet()) {
-                        if (palavras(entry.getKey()).containsAll(palavras)) {
-                            cand = entry.getValue();
-                            break;
-                        }
-                    }
+                    cand = unicaPorPalavras(candPorAlerrNomeCivil, nomeLimpo, chaves, eleicaoVigente);
                 }
                 if (cand != null) {
                     candSapl = cand;
@@ -2260,40 +1798,16 @@ final class Vinculo {
                     }
                 }
                 if (cand == null) {
-                    Set<String> palavras = palavras(nomeNorm);
-                    for (var entry : candPorAlapNomeUrna.entrySet()) {
-                        if (palavras(entry.getKey()).containsAll(palavras)) {
-                            cand = entry.getValue();
-                            break;
-                        }
-                    }
+                    cand = unicaPorPalavras(candPorAlapNomeUrna, nomeNorm, chaves, eleicaoVigente);
                 }
                 if (cand == null) {
-                    Set<String> palavras = palavras(nomeNorm);
-                    for (var entry : candPorAlapNomeCivil.entrySet()) {
-                        if (palavras(entry.getKey()).containsAll(palavras)) {
-                            cand = entry.getValue();
-                            break;
-                        }
-                    }
+                    cand = unicaPorPalavras(candPorAlapNomeCivil, nomeNorm, chaves, eleicaoVigente);
                 }
                 if (cand == null && !nomeLimpo.equals(nomeNorm)) {
-                    Set<String> palavras = palavras(nomeLimpo);
-                    for (var entry : candPorAlapNomeUrna.entrySet()) {
-                        if (palavras(entry.getKey()).containsAll(palavras)) {
-                            cand = entry.getValue();
-                            break;
-                        }
-                    }
+                    cand = unicaPorPalavras(candPorAlapNomeUrna, nomeLimpo, chaves, eleicaoVigente);
                 }
                 if (cand == null && !nomeLimpo.equals(nomeNorm)) {
-                    Set<String> palavras = palavras(nomeLimpo);
-                    for (var entry : candPorAlapNomeCivil.entrySet()) {
-                        if (palavras(entry.getKey()).containsAll(palavras)) {
-                            cand = entry.getValue();
-                            break;
-                        }
-                    }
+                    cand = unicaPorPalavras(candPorAlapNomeCivil, nomeLimpo, chaves, eleicaoVigente);
                 }
                 if (cand != null) {
                     candSapl = cand;
