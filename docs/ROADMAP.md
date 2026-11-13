@@ -228,7 +228,7 @@ Limitações:
 
 ## Refino da experiência (ADR-0055)
 
-Implementado em 2026-11-13, sem mudar dado, rota nem parâmetro de URL.
+Concluído e publicado em 2026-11-13, sem mudar dado, rota nem parâmetro de URL.
 A estrutura do ADR-0035 fica. A revisão trata de carga, retorno da busca, erros, toque, movimento e leitura das tabelas.
 
 | Frente | Entrega | Estado |
@@ -267,6 +267,13 @@ Verificação de 2026-11-13, antes do push:
 - Roteiro local com 27 conferências, no Chromium, no WebKit e no Firefox: índice baixado uma vez na inicial; perfil por link direto sem baixar o índice; identificador antigo leva ao perfil vigente; cabeçalho imediato vindo da lista; rolagem restaurada ao voltar; tema aplicado antes de o site iniciar; "Compartilhar" copia o endereço; falha de rede recupera com "Tentar de novo"; sem transbordo lateral em 320 px em 6 rotas.
 - axe-core (WCAG 2.0, 2.1 e 2.2, A e AA) sem achados nos estados novos, em 390 e 1366 px, nos dois temas: busca digitada com marcação, busca sem resultado, prévia do perfil, perfil com falha de rede e perfil carregado.
 - Nenhuma requisição a terceiros e nenhum erro de console.
+
+Publicação de 2026-11-13:
+
+- CI do commit `7e65616`: build, testes unitários e E2E com axe passaram (73 testes, 1 pulado).
+- Publicado pelo workflow `dados`, com a fonte `contrib` e as demais do cache.
+- No site publicado, o roteiro de 27 conferências passou no Chromium, no WebKit e no Firefox.
+- No site publicado, no Chromium: axe-core (WCAG 2.0, 2.1 e 2.2, A e AA) sem achados em 12 rotas, em 390 e 1366 px, nos dois temas. Nenhuma requisição a terceiros e nenhum erro de console.
 
 Limitações:
 
