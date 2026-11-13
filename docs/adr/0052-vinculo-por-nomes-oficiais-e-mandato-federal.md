@@ -46,10 +46,11 @@ O perfil `alesc-paulinha` recebeu a candidatura de 2026 de outra pessoa com o me
 - `alesc-paulinha` passou a ter as candidaturas de 2018, 2022 e 2026 da deputada eleita em 2022.
 - Dois perfis de eleitos em 2026 (`tse-10002544107` e `tse-240002538368`) eram a mesma pessoa de um perfil de casa legislativa. Passam a alias desse perfil.
 - Publicação sobre a anterior, no mesmo ensaio: 2.095 perfis, 18 aliases e nenhum identificador sumido. A trava do ADR-0006 não disparou.
+- Publicação do CI de 2026-11-13 das 07:18 UTC, com todas as casas: 29.695 emendas de 886 códigos ligadas, nenhum código fora, 2.523 perfis e 118 aliases. A trava não disparou, e os três identificadores antigos são aliases.
 
 ## Limitações
 
-- O ensaio usou o cache local, sem dez assembleias (ALEAC, ALEAL, ALEAM, ALEGO, ALEMS, ALEPI, ALERO, ALESP, ALETO e ALPB). Nelas, o efeito aparece só na publicação do CI.
+- O ensaio usou o cache local, sem dez assembleias (ALEAC, ALEAL, ALEAM, ALEGO, ALEMS, ALEPI, ALERO, ALESP, ALETO e ALPB). Nelas, o efeito apareceu só na publicação do CI, e a comparação perfil a perfil com a publicação anterior não foi feita.
 - Emenda de orçamento de um ano é apresentada no ano anterior. A regra do mandato usa o ano do orçamento, que é o que a fonte publica.
 - Código com dois perfis homônimos e mandatos nos mesmos anos continua fora.
 - O vínculo por nome civil e data de nascimento supõe que duas pessoas com os dois dados iguais tenham CPFs diferentes na base do TSE. O arquivo de 2024 mascara o CPF (ADR-0003).
