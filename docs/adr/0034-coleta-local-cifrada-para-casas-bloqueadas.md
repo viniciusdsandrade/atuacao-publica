@@ -39,6 +39,13 @@ O cache bruto dessas casas tem CPF de fornecedor (verbas da ALMG) e telefone e e
 - No mesmo dia, a lista da verba indenizatória no portal da ALBA respondeu a cerca de uma página a cada 9 segundos no CI, e o orçamento de 30 minutos não bastou para renovar o ano aberto.
 - A ALBA entrou na semente: o script de envio coleta as seis casas, o de restauração aceita o cache e o cursor da ALBA, e o passo da ALBA no CI só roda sem semente.
 
+## Atualização em 2026-11-13: ALESE
+
+- Nas execuções do `dados` de 2026-11-12, o sistema legislativo da ALESE (`aleselegis.al.se.leg.br`) não aceitou conexão do runner do GitHub Actions. Da rede do mantenedor, respondeu 200.
+- O portal da casa (`al.se.leg.br`) respondeu ao runner. Só ele não basta: fichas, comissões e proposições vêm do sistema legislativo.
+- A ALESE entrou na semente: o script de envio coleta as dez casas, o de restauração aceita o cache e o cursor da ALESE, e o passo da ALESE no CI só roda sem semente.
+- A ALEMA, a ALERR e a ALAP tinham entrado em 2026-11-12, pelo mesmo motivo.
+
 ## Alternativas consideradas
 
 - Release sem cifra: descartada. O repositório é público, e o cache tem CPF e contatos de gabinete.

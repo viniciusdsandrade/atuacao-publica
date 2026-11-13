@@ -12,7 +12,7 @@
 set -euo pipefail
 
 if [[ -z "${TUNEL_SSH_DESTINO:-}" || -z "${TUNEL_SSH_CHAVE:-}" || -z "${TUNEL_SSH_KNOWN_HOSTS:-}" ]]; then
-  echo "túnel: segredos ausentes. ALMG, ALRS, ALES, CLDF, ALEAC, ALEMA, ALERR e ALAP seguem sem coleta no CI."
+  echo "túnel: segredos ausentes. ALMG, ALRS, ALES, CLDF, ALEAC, ALEMA, ALERR, ALAP e ALESE seguem sem coleta no CI."
   exit 0
 fi
 
@@ -30,6 +30,7 @@ ROTAS=(
   "127.0.0.19 sapl.al.rr.leg.br 443"
   "127.0.0.20 www.al.ma.leg.br 443"
   "127.0.0.21 www.al.ap.leg.br 443"
+  "127.0.0.22 aleselegis.al.se.leg.br 443"
 )
 
 pasta=$(mktemp -d)
@@ -84,7 +85,8 @@ for url in "https://dadosabertos.almg.gov.br/api/v2/legislaturas/pesquisa_deputa
     "https://sapl.al.ac.leg.br/api/parlamentares/legislatura/" \
     "https://sapl.al.rr.leg.br/api/parlamentares/legislatura/" \
     "https://www.al.ma.leg.br/sitealema/deputados/" \
-    "https://www.al.ap.leg.br/pagina.php?pg=exibir_legislatura"; do
+    "https://www.al.ap.leg.br/pagina.php?pg=exibir_legislatura" \
+    "https://aleselegis.al.se.leg.br/spl/consulta-producao.aspx"; do
   codigo=$(curl -s -o /dev/null --max-time 30 -w '%{http_code}' "$url" || true)
   echo "túnel: ${url%%\?*} respondeu ${codigo:-sem resposta}"
 done

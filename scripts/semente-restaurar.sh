@@ -26,7 +26,7 @@ if ! openssl enc -d -aes-256-cbc -pbkdf2 -iter 200000 -md sha256 -pass env:SEMEN
 fi
 
 # Só entram caminhos esperados: cache bruto e cursores das casas da semente.
-if tar -tzf "$pasta/semente.tar.gz" | grep -vqE '^(raw/(almg|alrs|ales|alepe|cldf|alba|alema|alerr|alap)(/.*)?|publicado/_meta/(almg|alrs|ales|alepe|cldf|alba|alema|alerr|alap)\.json)$'; then
+if tar -tzf "$pasta/semente.tar.gz" | grep -vqE '^(raw/(almg|alrs|ales|alepe|cldf|alba|alema|alerr|alap|alese)(/.*)?|publicado/_meta/(almg|alrs|ales|alepe|cldf|alba|alema|alerr|alap|alese)\.json)$'; then
   echo "semente: o pacote traz caminho inesperado; nada restaurado"
   exit 1
 fi
