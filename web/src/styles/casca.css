@@ -34,18 +34,20 @@
   color: var(--destaque);
 }
 
+/* Logotipo de 48 por 32 (ADR-0060): assentos e tribuna em preenchimento, colchetes em traço.
+   Em bloco, sem o vão da linha de base: o desenho fica centrado na altura do nome. */
 .marca-logo {
-  width: 2rem;
+  display: block;
+  width: 3rem;
   height: 2rem;
   flex: none;
-}
-
-.marca-logo rect {
   fill: var(--destaque);
 }
 
 .marca-logo path {
-  stroke: var(--sobre-destaque);
+  fill: none;
+  stroke: var(--destaque);
+  stroke-width: 3;
 }
 
 .botao-menu {
@@ -256,8 +258,8 @@ main {
 }
 
 .rodape-marca .marca-logo {
-  width: 1.5rem;
-  height: 1.5rem;
+  width: 2.0625rem;
+  height: 1.375rem;
 }
 
 .rodape-titulo {
@@ -298,8 +300,8 @@ main {
   }
 
   .marca-logo {
-    width: 1.75rem;
-    height: 1.75rem;
+    width: 2.4375rem;
+    height: 1.625rem;
   }
 }
 
@@ -409,12 +411,12 @@ main {
     color: ButtonFace;
   }
 
-  .marca-logo rect {
+  .marca-logo {
     fill: CanvasText;
   }
 
   .marca-logo path {
-    stroke: Canvas;
+    stroke: CanvasText;
   }
 }
 
