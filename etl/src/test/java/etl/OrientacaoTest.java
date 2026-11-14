@@ -20,6 +20,8 @@ class OrientacaoTest {
         BANCADAS.put("Solidaried", "Sim");
         BANCADAS.put("Bl UniPpPsd...", "Sim");
         BANCADAS.put("Progressistas", "Obstrução");
+        BANCADAS.put("Podemos", "Não");
+        BANCADAS.put("Republica", "Sim");
         BANCADAS.put("Governo", "Sim");
     }
 
@@ -39,6 +41,10 @@ class OrientacaoTest {
     void rotuloTruncadoEApelido() {
         assertEquals("Sim", Orientacao.doPartido("SOLIDARIEDADE", BANCADAS).orientacao());
         assertEquals("Obstrução", Orientacao.doPartido("PP", BANCADAS).orientacao());
+        assertEquals("Não", Orientacao.doPartido("PODE", BANCADAS).orientacao());
+        assertEquals("Sim", Orientacao.doPartido("REPUBLICANOS", BANCADAS).orientacao());
+        assertEquals("Liberado", Orientacao.doPartido("PP", Map.of("PROGRES", "Liberado")).orientacao());
+        assertEquals("Sim", Orientacao.doPartido("UNIÃO", Map.of("União Brasil", "Sim")).orientacao());
     }
 
     @Test

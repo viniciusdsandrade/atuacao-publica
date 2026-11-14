@@ -9,8 +9,13 @@ import java.util.Map;
  */
 public final class Orientacao {
 
-    /** Rótulos da fonte que designam o mesmo partido com outro nome. */
-    private static final Map<String, String> APELIDOS = Map.of("PROGRESSISTAS", "PP");
+    /** Rótulos da fonte que designam o mesmo partido com outro nome ou abreviação vista no Senado/Câmara. */
+    private static final Map<String, String> APELIDOS = Map.of(
+            "PROGRESSISTAS", "PP",
+            "PROGRES", "PP",
+            "PODEMOS", "PODE",
+            "REPUBLICA", "REPUBLICANOS",
+            "UNIAOBRASIL", "UNIAO");
     private static final int PREFIXO_MINIMO = 6;
 
     public record Casamento(String bancada, String orientacao) {
