@@ -40,7 +40,16 @@ Não é presença. É a contagem de votos registrados em votações nominais.
 
 1. Universo: votações de `/votacao` em que o senador aparece em `votos[]`, nas sessões do Senado (`casaSessao = SF`) e do Congresso (`CN`). O Senado lista todos os senadores, inclusive ausentes. A coluna "órgão" dos votos mostra `SF` ou `CN`.
 2. `votos_registrados`: votos `Sim`, `Não`, `Abstenção`, `Obstrução` ou `Votou` (votação secreta).
-3. `por_tipo`: contagem de cada sigla da fonte, como `AP` (atividade parlamentar), `LS` (licença saúde), `NCom` (não compareceu), `P-NRV` (presente sem registrar voto) e `Presidente (art. 51 RISF)`.
+3. `por_tipo`: contagem de cada sigla da fonte (`descricaoVoto` do endpoint `/votacao` da API do Senado Federal):
+   - **AP** (*Atividade parlamentar*): ausência de voto em razão do exercício de outra atividade parlamentar oficial declarada na sessão.
+   - **LS** (*Licença saúde*): parlamentar em afastamento médico oficial no momento da votação.
+   - **NCom** (*Não Compareceu*): parlamentar que não registrou presença na sessão deliberativa.
+   - **P-NRV** (*Presente, não registrou voto*): parlamentar presente na sessão cujo voto não foi computado no painel eletrônico.
+   - **MIS** (*Missão da Casa no País/exterior*): parlamentar em missão oficial designada pelo Senado no Brasil ou no exterior.
+   - **LP** (*Licença Particular*): parlamentar afastado por licença de interesse particular no momento da votação.
+   - **LAP** (*Licença paternidade ou ao adotante*): parlamentar afastado em gozo de licença-paternidade ou licença ao adotante.
+   - **NA** (*Dispositivo não citado*): ocorrência sem classificação específica na listagem oficial de votos da sessão.
+   - **Presidente (art. 51 RISF)**: presidência da sessão deliberativa, em que o titular só vota nos casos regimentais previstos no art. 51 do Regimento Interno do Senado Federal.
 
 ### Câmara municipal (piloto, SAPL)
 
@@ -79,7 +88,7 @@ Não é presença. É a contagem de votos registrados em votações nominais.
 
 ## Orientação de voto
 
-- **Partido.** A orientação vale quando a sigla da bancada é a sigla do partido do parlamentar na data do voto. Também vale quando a bancada é uma federação (`Fdr PT-PCdoB-PV`) e o partido está no nome da federação. Comparação sem acento e sem diferença de maiúsculas. Rótulo truncado pela fonte (`Solidaried`) vale como prefixo de ao menos 6 letras. Apelidos fixos: `Progressistas` = `PP`.
+- **Partido.** A orientação vale quando a sigla da bancada é a sigla do partido do parlamentar na data do voto. Também vale quando a bancada é uma federação (`Fdr PT-PCdoB-PV`) e o partido está no nome da federação. Comparação sem acento e sem diferença de maiúsculas. Rótulo truncado pela fonte (`Solidaried`) vale como prefixo de ao menos 6 letras. Apelidos fixos: `Progressistas` = `PP`, `PROGRES` = `PP`, `Podemos` = `PODE`, `Republica` = `REPUBLICANOS`, `União Brasil` = `UNIÃO`.
 - **Bloco.** Bloco parlamentar com nome truncado (`Bl UniPpPsd...`) não permite saber os partidos. Nesse caso a orientação do partido fica `null`.
 - **Governo.** Bancada `Governo`.
 - O campo `orientacao_partido_bancada` guarda o rótulo da bancada usada.
@@ -200,8 +209,8 @@ Não é presença. É a contagem de votos registrados em votações nominais.
 - Cargos lidos: Presidente, vice, governador, vice, senador, suplentes de senador e deputado federal.
 - Resultado: `DS_SIT_TOT_TURNO` do último turno disputado.
 - Bens: soma de `VR_BEM_CANDIDATO` do candidato. A descrição de cada bem não é publicada.
-- Plano de governo (Presidência e governos estaduais): arquivo PDF dentro do ZIP `proposta_governo_{ano}_{UF}.zip` do TSE. O perfil publica a URL do ZIP e o caminho do arquivo. O ETL confere o nome no índice do ZIP: `{UF}/{ANO}{UF}{SQ}.pdf` em 2022 e `{UF}/{ANO}{UF}{SQ}_01.pdf` em 2026. Vale o primeiro arquivo do candidato.
-- Planos de governo: só das duas eleições mais recentes (2022 e 2026). Planos de 2018 ficam fora da POC.
+- Plano de governo (Presidência e governos estaduais): arquivo PDF dentro do ZIP `proposta_governo_{ano}_{UF}.zip` do TSE. O perfil publica a URL do ZIP e o caminho do arquivo. O ETL confere o nome no índice do ZIP: `{UF}/{ANO}{UF}{SQ}.pdf` (ou `{UF}/proposta_governo_{ANO}_{UF}_{SQ}.pdf` na eleição de 2018 em SP) e `{UF}/{ANO}{UF}{SQ}_01.pdf` em 2026. Vale o primeiro arquivo do candidato.
+- Planos de governo: eleições gerais a partir de 2018 (2018, 2022 e 2026) e municipais a partir de 2022 (`2020` fica fora).
 - Quando o ZIP da fonte não traz o arquivo do candidato, o campo fica "sem registro na fonte". Em 2022, 1 dos 28 eleitos para cargo executivo está nessa situação.
 - Vínculo com o perfil: CPF, em memória, para deputados. Nome civil, UF e data de nascimento, em memória, para senadores. O vínculo entre eleições usa CPF. Quando o TSE mascara o CPF (arquivo de 2024), o título de eleitor, completo no mesmo arquivo, traz o CPF da mesma pessoa em outra eleição. Isso só vale se a correspondência for inequívoca: um CPF por título, um título por CPF e a mesma data de nascimento. Sem ela, o vínculo usa nome civil e data de nascimento, também em memória. Quem passou de uma casa a outra dentro da cobertura (deputado que virou senador ou vereador) tem um perfil só, com os blocos das duas casas; a ponte é o CPF ou, sem ele, o nome civil com a data de nascimento. Nem CPF, nem título, nem data de nascimento são gravados.
 - Redes e sites (ADR-0031): endereços que o próprio candidato declarou ao TSE no registro da candidatura, do arquivo `rede_social_candidato`. Só o endereço é publicado, com o nome da rede tirado do domínio. O site não lê nem arquiva o conteúdo das páginas.
