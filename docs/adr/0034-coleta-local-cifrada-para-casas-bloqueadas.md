@@ -53,6 +53,15 @@ O cache bruto dessas casas tem CPF de fornecedor (verbas da ALMG) e telefone e e
 - A casa entrou na semente (ADR-0057): o script de envio coleta as onze casas, o de restauração aceita o cache e o cursor de `caraguatatuba`, e o passo da casa no CI só roda sem semente.
 - O cache da casa não tem telefone, e-mail nem biografia de vereador, nem nome de servidor: a coleta já os retira.
 
+## Atualização em 2026-11-14: troca sem janela, coleta agendada e alerta de semente antiga
+
+- **Troca de pacote e chave.** O envio apagava o asset, subia o novo e só então trocava o segredo. Uma execução do `dados` que começasse nesse intervalo ficava sem semente e tentava coletar as casas bloqueadas. O asset passa a ter no nome a impressão da chave (os 16 primeiros dígitos do SHA-256 dela), e o CI baixa o asset da chave que tem em mãos. O pacote anterior fica na release até o envio seguinte. O nome fixo de antes ainda é aceito enquanto existir.
+- **Coleta agendada.** `scripts/semente-agendar.sh` agenda a coleta diária no macOS, pelo launchd. Ela roda num clone separado do de trabalho, com cache próprio: atualiza para a `main` remota, compila e chama `scripts/semente-enviar.sh`. Uma trava impede duas coletas ao mesmo tempo.
+- **Horário.** O padrão é 01:30 no horário da máquina. O `dados` agendado roda às 06:17 UTC e pega a semente da noite. Se a máquina estiver dormindo, o launchd roda a coleta quando ela acordar.
+- **Alerta.** O texto deste ADR dizia que o alerta de coleta avisava da semente antiga. Não avisava: só olhava fonte com falha, e o cursor da semente diz "ok". `scripts/alerta-coleta.sh` passa a abrir issue quando a última coleta válida tem mais de três dias, com qualquer status.
+- **Simulação.** `SEMENTE_SIMULAR=1` monta e cifra o pacote com o cache que existe, sem coletar, sem enviar e sem trocar o segredo.
+- Com o agendamento ativo, a semente sai do clone agendado. O envio à mão a partir do clone de trabalho continua possível, mas leva o cache de lá, que deixa de ser o mais novo.
+
 ## Alternativas consideradas
 
 - Release sem cifra: descartada. O repositório é público, e o cache tem CPF e contatos de gabinete.

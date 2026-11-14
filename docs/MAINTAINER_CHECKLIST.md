@@ -58,8 +58,20 @@ ALMG, ALRS, ALES, ALEPE, CLDF, ALEMA e ALAP recusam conexão de fora do Brasil; 
 1. Na raiz do repositório, compile o ETL: `cd etl && ./mvnw -q package -DskipTests && cd ..`.
 2. Com o `gh` autenticado, rode `scripts/semente-enviar.sh`. Ele coleta as onze casas, cifra o cache com uma chave nova e envia o pacote à release `semente-coleta-local`, trocando o segredo `SEMENTE_CHAVE`.
 3. A execução seguinte do `dados` restaura a semente e publica as onze casas. O relatório mostra a data da coleta local.
-4. Repita quando o alerta de fonte sem coleta válida abrir issue para uma delas, ou quando quiser dados mais novos.
+4. Repita quando o alerta de fonte sem coleta válida abrir issue para uma delas, ou quando quiser dados mais novos. O alerta abre issue quando a última coleta local de uma casa passa de 3 dias.
 5. Com o túnel ativo, apague a release (`gh release delete semente-coleta-local --cleanup-tag`) e o segredo.
+
+## Agendar a coleta local no macOS (ADR-0034)
+
+O envio à mão acima vira uma coleta diária, feita pelo launchd num clone separado do de trabalho.
+
+1. Na raiz do clone de trabalho, com o `gh` autenticado: `scripts/semente-agendar.sh --copiar-cache`. Ele cria o clone em `~/.atuacao-publica/semente/repo`, leva para lá o cache das onze casas e agenda a coleta para as 01:30, no horário da máquina. `--hora HH:MM` muda o horário, e `--destino PASTA` muda a pasta.
+2. A cada execução, o clone vai para a `main` remota, o ETL é compilado e `scripts/semente-enviar.sh` roda. O registro fica em `~/.atuacao-publica/semente/logs/semente.log`.
+3. Para rodar na hora: `launchctl kickstart gui/$(id -u)/atuacao-publica.semente`.
+4. Para ensaiar sem coletar e sem enviar: `launchctl setenv SEMENTE_SIMULAR 1`, rode como no passo 3 e depois `launchctl unsetenv SEMENTE_SIMULAR`.
+5. Para tirar o agendamento: `scripts/semente-agendar.sh --remover`. O clone e o cache ficam na pasta.
+6. O token do `gh` não vai para o agendamento. A coleta usa a autenticação que o `gh` já guarda na máquina.
+7. A máquina precisa estar ligada. Dormindo no horário, a coleta roda quando ela acordar. Desligada, a coleta daquele dia não roda.
 
 ## Ativar o túnel pelo Brasil (ADR-0029)
 
