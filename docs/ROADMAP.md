@@ -110,7 +110,7 @@ Estado real de cada fase. Atualizado ao fechar cada fase.
 - Até 2026-11-13, o recorte da prestação de contas do TSE ficava no cache para sempre nas eleições fechadas, e quem entrava na cobertura depois ficava sem o bloco de financiamento. No site daquele dia, deputados estaduais do AP, de RR e de MT tinham candidaturas e nenhum registro de financiamento. O `fetch tse` passou a refazer o recorte da eleição quando as candidaturas cobertas mudam (ADR-0057). Na publicação de 2026-11-13 das 21:42 UTC, as candidaturas com prestação de contas foram de 63.534 a 77.877, e os perfis com o bloco de financiamento, de 2.077 a 2.457.
 - Cartão "Total no período" das despesas: até 2026-11-13, valor com dez dígitos antes da vírgula quebrava a linha no meio do número, na largura de 1366 px. Corrigido em 2026-11-14: de R$ 100 milhões para cima, o cartão usa letra menor.
 - Sigla de partido (ADR-0058): o partido na data de cada voto não é unificado, e a linha do voto mostra a grafia da casa. A tabela de nomes por extenso e abreviações é mantida à mão; grafia nova de uma casa volta a partir o filtro até entrar na tabela, e a saída do `publish` a lista.
-- Cache do GitHub Actions, conferido em 2026-11-13: o cache `dados-*` guarda em claro o cache bruto de todas as fontes (1 GB), com CPF e contato de gabinete que as fontes publicam e o projeto não. O cache é da `main`, o `ci.yml` roda em pull request, e a aprovação de workflow de fork só é exigida de quem contribui pela primeira vez. Um pull request de fork que altere o workflow conseguiria restaurar esse cache. O pacote da coleta local é cifrado por esse motivo (ADR-0034); o cache não é. Sem correção. Saídas: exigir aprovação para todo colaborador externo, nas configurações do repositório, ou cifrar o cache com um segredo.
+- Cache do GitHub Actions, conferido em 2026-11-13: o cache `dados-*` guarda em claro o cache bruto de todas as fontes (1 GB), com CPF e contato de gabinete que as fontes publicam e o projeto não. O cache é da `main`, o `ci.yml` roda em pull request, e a aprovação de workflow de fork só é exigida de quem contribui pela primeira vez. Um pull request de fork que altere o workflow conseguiria restaurar esse cache. O pacote da coleta local é cifrado por esse motivo (ADR-0034); o cache não é. Em 2026-11-14, a aprovação passou a ser exigida de todo colaborador externo (`all_external_contributors`, nas configurações do repositório). O cache continua em claro: quem aprova a execução de um pull request de fork precisa ler antes a mudança no workflow. Cifrar o cache com um segredo fica em aberto.
 - Coleta local agendada (ADR-0034): depende de a máquina do mantenedor estar ligada. Desligada por mais de três dias, o alerta de coleta abre uma issue para cada uma das onze casas.
 - Até 2026-11-06, nove adaptadores (ALECE, ALEGO, ALEPE, ALERJ, ALEPA, ALES, ALRS, ALESC e CLDF) gravavam o bloco `fontes` como lista, e o `Vinculo` lê um objeto por bloco. Os perfis dessas casas saíam com os blocos sem fonte e com `atualizado_em` nulo (verificado no perfil `alerj-505` publicado). Corrigido: as fontes de cada bloco vêm da proveniência dos registros (`Registros.fontesDosBlocos`), e o `Vinculo` interrompe o `publish` se receber uma lista. No ensaio local das treze casas, nenhum bloco com registro ficou sem fonte.
 - Até 2026-11-07, a ALESP repetia a mesma fonte a cada registro (um perfil citava 2.106 vezes o mesmo arquivo de despesas), e o bloco de participação em votações saía sem fonte. Corrigido no adaptador. O `publish` passou a tirar fontes repetidas de qualquer bloco e, se um adaptador não declarar a fonte de um bloco com registro, a citar a proveniência dos registros, com o caso contado no log.
@@ -609,20 +609,30 @@ Limitações:
     - Conferência no site publicado: as nove páginas do município abriram no Chromium, no WebKit e no Firefox, em 390 e 1366 px e nos dois temas, sem erro de console, sem rolagem lateral e sem requisição a terceiros. 108 varreduras do axe nessas páginas e 56 nas rotas gerais, sem violação.
     - Não validado: leitor de tela real e aparelho real. O portal da Câmara e o portal da transparência a partir do runner.
 
-25. Sigla de partido unificada pela grafia do TSE (ADR-0058): implementado e ensaiado em 2026-11-14. Publicação pendente.
+25. Sigla de partido unificada pela grafia do TSE (ADR-0058): concluído e publicado em 2026-11-14.
     - `Partidos.java` (`PartidosTest.java`): a sigla do perfil vira a do arquivo de candidaturas do TSE da eleição mais recente em que o partido aparece. A tabela de nomes por extenso e abreviações tem 11 entradas.
     - No índice de 2026-11-13 das 22:58 UTC havia 57 grafias. União Brasil tinha 7 e Republicanos, 6. Quem filtrava por `UNIÃO` via 182 dos 224 perfis do partido.
     - Ensaio local com 2.369 perfis: a sigla mudou em 173, e o índice ficou com 32 partidos mais "Sem partido". Nenhuma grafia ficou sem correspondência.
     - Endereço de foto: entidade HTML trocada e caractere não ASCII em percent-encoding, na publicação. Os 4 endereços com defeito saíram corretos no ensaio.
-26. Pendências fechadas em 2026-11-14. Publicação pendente.
+    - No site, na publicação de 2026-11-14 das 00:38 UTC: a sigla mudou em 186 dos 2.551 perfis, e o índice ficou com 32 partidos mais "Sem partido". Nenhuma grafia ficou sem correspondência. Nenhum outro campo do índice mudou, e nenhum perfil entrou ou saiu.
+    - No site, nenhum endereço de foto com entidade HTML, espaço ou caractere não ASCII.
+26. Pendências fechadas e publicadas em 2026-11-14.
     - Destino e motivo das diárias de Caraguatatuba: campo `descricao`, opcional, no schema de despesa. No ensaio, as diárias saíram com a descrição e as despesas das outras casas, sem o campo.
     - Cartão "Total no período" com valor de R$ 100 milhões para cima em letra menor, numa linha só.
     - README com o escopo de hoje.
-27. Coleta local agendada (ADR-0034): scripts prontos em 2026-11-14. Instalação na máquina do mantenedor pendente.
+    - No site: as 46 diárias têm descrição, 42 com destino e motivo e 4 só com motivo, porque a fonte traz só um traço no destino. Nenhuma descrição com padrão de CPF, e-mail ou telefone. As despesas das outras casas saem sem o campo.
+    - No site: o total das despesas da prefeitura, de R$ 1,9 bilhão, fica numa linha só em 1366 e em 390 px, no Chromium, no WebKit e no Firefox.
+    - Verificação: 386 testes do ETL, 23 unitários do site e 95 de ponta a ponta. No site publicado, 56 varreduras do axe nas rotas gerais, no Chromium, e 108 nas páginas de Caraguatatuba, no Chromium, no WebKit e no Firefox: sem violação, sem erro de console e sem requisição a terceiros. As páginas de Caraguatatuba abriram sem rolagem lateral.
+    - Não validado: leitor de tela real e aparelho real.
+27. Coleta local agendada (ADR-0034): scripts prontos, instalada e validada em 2026-11-14.
     - `scripts/semente-enviar.sh`: o asset leva a impressão da chave no nome, e o pacote anterior fica até o envio seguinte. A troca deixa de ter a janela em que uma execução do `dados` ficava sem semente.
     - `scripts/semente-agendada.sh` e `scripts/semente-agendar.sh`: coleta diária pelo launchd, num clone separado do de trabalho.
     - `scripts/alerta-coleta.sh`: issue também quando a última coleta válida passa de três dias com status "ok", que é a semente antiga.
     - Ensaios locais: restauração com pacote e chave descartáveis em seis situações, alerta com nove cursores fabricados e envio em simulação (22 itens, 173 MB).
+    - Instalação na máquina do mantenedor: agente do launchd com execução diária, num clone separado do de trabalho. Duas execuções disparadas à mão pelo launchd, uma em simulação e uma real, as duas com saída 0.
+    - A execução real coletou as onze casas, enviou o pacote (22 itens, 177 MB) com a impressão da chave no nome e trocou o segredo às 00:33 UTC. O release guarda o pacote novo e o anterior.
+    - O `dados` das 00:34 UTC restaurou esse pacote e publicou. No site, as onze casas saíram com status "ok" e coleta entre 00:11 e 00:32 UTC do mesmo dia.
+    - Não validado: a execução disparada pelo calendário do launchd, que ainda não ocorreu, e a coleta com a máquina dormindo no horário.
 
 ### Redes sociais
 
