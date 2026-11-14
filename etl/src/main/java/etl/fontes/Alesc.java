@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -184,9 +185,18 @@ public final class Alesc implements Fonte {
     @Override
     public void fetch(Contexto ctx, Coleta coleta) throws Exception {
         System.out.println("alesc: coleta iniciada");
+        registrarAtivosEmCache(ctx);
         coleta.obter(URL_DEPUTADOS, "deputados.html", "text/html", Politica.SEMANAL);
 
-        List<DeputadoBruto> deputados = extrairDeputados(ctx);
+        List<DeputadoBruto> ativos = extrairDeputados(ctx);
+        registrarAtivos(ctx, ativos);
+        for (int ano = 2023; ano <= 2026; ano++) {
+            coleta.obterOuVazio(URL_DESPESAS + ano, "despesas/" + ano + ".csv", "text/csv", Politica.porAno(ano, ctx.hoje()));
+        }
+        coleta.obterOpcional("https://www.alesc.sc.gov.br/post_team-sitemap.xml",
+                "sitemap-deputados.xml", "application/xml", Politica.SEMANAL);
+        coletarPerfisDoSitemap(ctx, coleta, ativos);
+        List<DeputadoBruto> deputados = deputadosDaLegislatura(ctx, ativos);
         for (DeputadoBruto d : deputados) {
             String urlPerfil = SITE + "/deputado/" + d.slug() + "/";
             coleta.obterOuVazio(urlPerfil, "perfis/" + d.slug() + ".html", "text/html", Politica.SEMANAL);
@@ -197,10 +207,6 @@ public final class Alesc implements Fonte {
         for (ComissaoMeta com : comissoes) {
             String urlModal = URL_COMISSOES + "/" + com.id();
             coleta.obterOuVazio(urlModal, "comissoes/" + com.id() + ".html", "text/html", Politica.SEMANAL, AJAX);
-        }
-
-        for (int ano = 2023; ano <= 2026; ano++) {
-            coleta.obterOuVazio(URL_DESPESAS + ano, "despesas/" + ano + ".csv", "text/csv", Politica.porAno(ano, ctx.hoje()));
         }
 
         // Proposições da 20ª legislatura por iniciativa (e-Legis). A lista desloca a cada proposição nova, e todas as páginas
@@ -563,14 +569,22 @@ public final class Alesc implements Fonte {
 
     @Override
     public void normalize(Contexto ctx) {
-        List<DeputadoBruto> deputados = extrairDeputados(ctx);
-        if (deputados.isEmpty()) {
+        Coleta.Arquivo arqDeputados = Coleta.metadados(ctx, nome(), "deputados.html");
+        Prov provDeputados = arqDeputados != null ? Prov.de(FONTE_DEPUTADOS, URL_DEPUTADOS, arqDeputados) : null;
+        List<DeputadoBruto> ativos = extrairDeputados(ctx);
+        List<HistoricoDeputados.Snapshot> suplementares = suplementaresDaLegislatura(
+                ctx, ativos, contasDeDespesasNaLegislatura(ctx));
+        List<HistoricoDeputados.Entrada> entradas = HistoricoDeputados.mesclar(
+                ctx, nome(), paraSnapshots(ativos, provDeputados), provDeputados, suplementares);
+        if (entradas.isEmpty()) {
             System.out.println("alesc: nenhum deputado para normalizar");
             return;
         }
 
-        Coleta.Arquivo arqDeputados = Coleta.metadados(ctx, nome(), "deputados.html");
-        Prov provDeputados = Prov.de(FONTE_DEPUTADOS, URL_DEPUTADOS, arqDeputados);
+        List<DeputadoBruto> deputados = new ArrayList<>(entradas.size());
+        for (HistoricoDeputados.Entrada e : entradas) {
+            deputados.add(new DeputadoBruto(e.id(), e.nome(), e.partido(), e.fotoUrl()));
+        }
 
         Path pastaBlocos = ctx.normalizado().resolve("alesc/blocos");
         try {
@@ -594,27 +608,32 @@ public final class Alesc implements Fonte {
 
         List<Pessoa> pessoas = new ArrayList<>();
 
-        for (DeputadoBruto d : deputados) {
-            String slug = d.slug();
-            String nomeFormatado = formatarNome(d.nome());
-            String partido = d.partido();
-            String fotoUrl = normalizarFotoUrl(d.fotoUrl());
+        for (HistoricoDeputados.Entrada e : entradas) {
+            String slug = e.id();
+            String nomeFormatado = formatarNome(e.nome());
+            String partido = e.partido();
+            String fotoUrl = normalizarFotoUrl(e.fotoUrl());
+            boolean emExercicio = e.emExercicio();
+            String situacao = e.situacao("Em exercício");
+            String condicao = condicaoDoPerfil(ctx, slug, emExercicio);
 
             String urlPerfil = SITE + "/deputado/" + slug + "/";
             Coleta.Arquivo arqPerfil = Coleta.metadados(ctx, nome(), "perfis/" + slug + ".html");
-            Prov provPerfil = arqPerfil != null ? Prov.de(FONTE_DETALHES, urlPerfil, arqPerfil) : provDeputados;
+            Prov provMandato = e.provOu(provDeputados);
+            Prov provPerfil = arqPerfil != null ? Prov.de(FONTE_DETALHES, urlPerfil, arqPerfil) : provMandato;
 
             List<Mandato> mandatos = new ArrayList<>();
             mandatos.add(new Mandato("deputado_estadual", "estadual", UF, UF,
-                    INICIO_LEG_20, FIM_LEG_20, "Em exercício", "Titular", LEGISLATURA_20, 2022,
-                    "Deputado Estadual na 20ª Legislatura (2023–2027)", provDeputados));
+                    INICIO_LEG_20, FIM_LEG_20, situacao, condicao, LEGISLATURA_20, 2022,
+                    "Deputado Estadual na 20ª Legislatura (2023–2027)", provMandato));
 
-            List<LinkOficial> links = List.of(
-                    new LinkOficial("Página na ALESC", urlPerfil, provPerfil));
+            List<LinkOficial> links = provPerfil != null
+                    ? List.of(new LinkOficial("Página na ALESC", urlPerfil, provPerfil))
+                    : List.of();
 
             Pessoa pessoa = new Pessoa(
                     "alesc", slug, nomeFormatado, "deputado_estadual", "estadual", UF, UF,
-                    partido, fotoUrl, "Em exercício", true, links);
+                    partido, fotoUrl, situacao, emExercicio, links);
             pessoas.add(pessoa);
 
             List<OrgaoOuFrente> orgaos = comissoesPorSlug.getOrDefault(slug, List.of());
@@ -899,6 +918,14 @@ public final class Alesc implements Fonte {
         return despesasPorSlug;
     }
 
+    private static final Map<String, String> CONTAS_EXTRAS = Map.of(
+            "ADILSON LUIZ GIRARDI", "adilson-girardi",
+            "DIRCE APARECIDA HEIDERSCHEIDT", "dirce-heiderscheidt",
+            "EDILSON MASSOCCO", "massocco",
+            "ESTENER SORATTO", "soratto",
+            "JANICE KRASNIACK", "janice-krasniak"
+    );
+
     public static String resolverSlugPorNome(String conta, Map<String, String> slugPorNomeNorm) {
         String limpo = conta.replaceAll("\\s*\\([^)]*\\)", "").trim();
         String norm = Texto.normalizarNome(limpo);
@@ -915,7 +942,255 @@ public final class Alesc implements Fonte {
         if (alternativo != null) {
             return alternativo;
         }
-        return slugPorNomeNorm.get(normOriginal);
+        slug = slugPorNomeNorm.get(normOriginal);
+        if (slug != null) {
+            return slug;
+        }
+        return CONTAS_EXTRAS.getOrDefault(norm, CONTAS_EXTRAS.get(normOriginal));
+    }
+
+    public record PerfilPagina(String nome, String partido, String fotoUrl, String condicao, LocalDate publicadoEm) {
+    }
+
+    public static List<String> parseSitemapSlugs(String xml) {
+        if (xml == null || xml.isBlank()) {
+            return List.of();
+        }
+        List<String> slugs = new ArrayList<>();
+        Set<String> vistos = new LinkedHashSet<>();
+        Matcher m = Pattern.compile("https?://[^<\\s]*/deputado/([a-z0-9-]+)/?").matcher(xml);
+        while (m.find()) {
+            String slug = m.group(1).trim();
+            if (!slug.isBlank() && vistos.add(slug)) {
+                slugs.add(slug);
+            }
+        }
+        return slugs;
+    }
+
+    public static PerfilPagina parsePerfilPagina(String html) {
+        if (html == null || html.isBlank()) {
+            return new PerfilPagina(null, null, null, null, null);
+        }
+        String nome = null;
+        Matcher mH1 = Pattern.compile("<h1[^>]*class=[\"'][^\"']*lab-title-big[^\"']*[\"'][^>]*>(.*?)</h1>", Pattern.DOTALL)
+                .matcher(html);
+        if (mH1.find()) {
+            nome = Texto.semEntidades(mH1.group(1).replaceAll("<[^>]+>", " ").replaceAll("\\s+", " ").trim());
+        }
+        if (nome == null || nome.isBlank()) {
+            Matcher mTitle = Pattern.compile("<title>(.*?)</title>", Pattern.DOTALL).matcher(html);
+            if (mTitle.find()) {
+                String t = Texto.semEntidades(mTitle.group(1).trim());
+                int idx = t.indexOf(" - Assembleia");
+                if (idx > 0) {
+                    nome = t.substring(0, idx).trim();
+                }
+            }
+        }
+        String partido = null;
+        Matcher mPart = Pattern.compile("<h1[^>]*class=[\"'][^\"']*lab-title-big[^\"']*[\"'][^>]*>.*?</h1>\\s*<span[^>]*class=[\"'][^\"']*lab-button[^\"']*[\"'][^>]*>([^<]+)</span>",
+                Pattern.DOTALL).matcher(html);
+        if (mPart.find()) {
+            String p = Texto.semEntidades(mPart.group(1).trim());
+            if (!p.isBlank()) {
+                partido = p;
+            }
+        }
+        String fotoUrl = null;
+        Matcher mFoto = Pattern.compile("<img[^>]+src=[\"']([^\"']+)[\"'][^>]*class=[\"'][^\"']*lab-team-img-single[^\"']*[\"']",
+                Pattern.CASE_INSENSITIVE).matcher(html);
+        if (mFoto.find()) {
+            fotoUrl = mFoto.group(1).trim();
+        }
+        String condicao = null;
+        Matcher mSit = Pattern.compile("Situação</h2>.*?<p[^>]*class=[\"'][^\"']*lab-title-sm[^\"']*[\"'][^>]*>([^<]+)</p>",
+                Pattern.DOTALL).matcher(html);
+        if (mSit.find()) {
+            String c = Texto.semEntidades(mSit.group(1).trim());
+            if ("Titular".equalsIgnoreCase(c)) {
+                condicao = "Titular";
+            } else if ("Suplente".equalsIgnoreCase(c)) {
+                condicao = "Suplente";
+            }
+        }
+        LocalDate publicadoEm = null;
+        Matcher mPub = Pattern.compile("\"datePublished\":\"(\\d{4}-\\d{2}-\\d{2})").matcher(html);
+        if (mPub.find()) {
+            try {
+                publicadoEm = LocalDate.parse(mPub.group(1));
+            } catch (Exception ignored) {
+            }
+        }
+        return new PerfilPagina(nome, partido, fotoUrl, condicao, publicadoEm);
+    }
+
+    private static List<HistoricoDeputados.Snapshot> paraSnapshots(List<DeputadoBruto> brutos, Prov prov) {
+        List<HistoricoDeputados.Snapshot> lista = new ArrayList<>(brutos.size());
+        for (DeputadoBruto d : brutos) {
+            lista.add(HistoricoDeputados.Snapshot.de(d.slug(), d.nome(), d.partido(), d.fotoUrl(), null, prov));
+        }
+        return lista;
+    }
+
+    private static void registrarAtivosEmCache(Contexto ctx) {
+        List<DeputadoBruto> anteriores = extrairDeputados(ctx);
+        registrarAtivos(ctx, anteriores);
+    }
+
+    private static void registrarAtivos(Contexto ctx, List<DeputadoBruto> ativos) {
+        if (ativos == null || ativos.isEmpty()) {
+            return;
+        }
+        Coleta.Arquivo arq = Coleta.metadados(ctx, "alesc", "deputados.html");
+        Prov prov = arq != null ? Prov.de(FONTE_DEPUTADOS, URL_DEPUTADOS, arq) : null;
+        HistoricoDeputados.registrar(ctx, "alesc", paraSnapshots(ativos, prov), prov);
+    }
+
+    private static List<String> slugsDoSitemap(Contexto ctx) {
+        Coleta.Arquivo arq = Coleta.metadados(ctx, "alesc", "sitemap-deputados.xml");
+        if (arq == null || arq.bytes() == 0 || !Files.exists(Coleta.caminho(ctx, arq))) {
+            return List.of();
+        }
+        try {
+            return parseSitemapSlugs(Texto.lerArquivo(Coleta.caminho(ctx, arq)));
+        } catch (Exception e) {
+            System.err.println("alesc: aviso ao ler sitemap-deputados.xml: " + e.getMessage());
+            return List.of();
+        }
+    }
+
+    private static void coletarPerfisDoSitemap(Contexto ctx, Coleta coleta, List<DeputadoBruto> ativos)
+            throws Exception {
+        Set<String> slugsColetados = new HashSet<>();
+        for (DeputadoBruto d : ativos) {
+            slugsColetados.add(d.slug());
+        }
+        for (String slug : slugsDoSitemap(ctx)) {
+            if (slugsColetados.add(slug)) {
+                coleta.obterOuVazio(SITE + "/deputado/" + slug + "/", "perfis/" + slug + ".html",
+                        "text/html", Politica.SEMANAL);
+            }
+        }
+    }
+
+    private static List<DeputadoBruto> deputadosDaLegislatura(Contexto ctx, List<DeputadoBruto> ativos) {
+        Coleta.Arquivo arqDeputados = Coleta.metadados(ctx, "alesc", "deputados.html");
+        Prov provDeputados = arqDeputados != null ? Prov.de(FONTE_DEPUTADOS, URL_DEPUTADOS, arqDeputados) : null;
+        List<HistoricoDeputados.Snapshot> suplementares = suplementaresDaLegislatura(
+                ctx, ativos, contasDeDespesasNaLegislatura(ctx));
+        List<HistoricoDeputados.Entrada> combinados = HistoricoDeputados.mesclar(
+                ctx, "alesc", paraSnapshots(ativos, provDeputados), provDeputados, suplementares);
+        List<DeputadoBruto> resultado = new ArrayList<>(combinados.size());
+        for (HistoricoDeputados.Entrada e : combinados) {
+            resultado.add(new DeputadoBruto(e.id(), e.nome(), e.partido(), e.fotoUrl()));
+        }
+        return resultado;
+    }
+
+    private static List<HistoricoDeputados.Snapshot> suplementaresDaLegislatura(
+            Contexto ctx, List<DeputadoBruto> ativos, Set<String> contasDespesas) {
+        Set<String> ativosSlugs = new HashSet<>();
+        for (DeputadoBruto d : ativos) {
+            ativosSlugs.add(d.slug());
+        }
+        Set<String> jaSalvos = new HashSet<>();
+        for (HistoricoDeputados.Entrada s : HistoricoDeputados.salvos(ctx, "alesc")) {
+            jaSalvos.add(s.id());
+        }
+        List<HistoricoDeputados.Snapshot> lista = new ArrayList<>();
+        for (String slug : slugsDoSitemap(ctx)) {
+            if (ativosSlugs.contains(slug)) {
+                continue;
+            }
+            Coleta.Arquivo arqPerfil = Coleta.metadados(ctx, "alesc", "perfis/" + slug + ".html");
+            if (arqPerfil == null || arqPerfil.bytes() == 0 || !Files.exists(Coleta.caminho(ctx, arqPerfil))) {
+                continue;
+            }
+            try {
+                PerfilPagina perfil = parsePerfilPagina(Texto.lerArquivo(Coleta.caminho(ctx, arqPerfil)));
+                if (perfil.nome() == null || perfil.nome().isBlank()) {
+                    continue;
+                }
+                boolean naLegislatura = jaSalvos.contains(slug)
+                        || (perfil.publicadoEm() != null && !perfil.publicadoEm().isBefore(INICIO_LEG_20))
+                        || temDespesaNaLegislatura(slug, perfil.nome(), contasDespesas);
+                if (!naLegislatura) {
+                    continue;
+                }
+                Prov prov = Prov.de(FONTE_DETALHES, SITE + "/deputado/" + slug + "/", arqPerfil);
+                lista.add(HistoricoDeputados.Snapshot.de(slug, perfil.nome(), perfil.partido(), perfil.fotoUrl(), null, prov));
+            } catch (Exception e) {
+                System.err.println("alesc: aviso ao ler perfil " + slug + ": " + e.getMessage());
+            }
+        }
+        return lista;
+    }
+
+    private static boolean temDespesaNaLegislatura(String slug, String nome, Set<String> contasNorm) {
+        if (contasNorm == null || contasNorm.isEmpty()) {
+            return false;
+        }
+        Map<String, String> mapa = Map.of(
+                Texto.normalizarNome(nome), slug,
+                Texto.normalizarNome(formatarNome(nome)), slug
+        );
+        for (String conta : contasNorm) {
+            if (slug.equals(resolverSlugPorNome(conta, mapa))) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static Set<String> contasDeDespesasNaLegislatura(Contexto ctx) {
+        Set<String> contas = new HashSet<>();
+        int anoAtual = ctx != null && ctx.agora() != null ? ctx.hoje().getYear() : LocalDate.now().getYear();
+        for (int ano = INICIO_LEG_20.getYear(); ano <= anoAtual; ano++) {
+            Coleta.Arquivo arq = Coleta.metadados(ctx, "alesc", "despesas/" + ano + ".csv");
+            if (arq == null || !Files.exists(Coleta.caminho(ctx, arq))) {
+                continue;
+            }
+            try {
+                List<String> linhas = Files.readAllLines(Coleta.caminho(ctx, arq), java.nio.charset.StandardCharsets.UTF_8);
+                for (int i = 1; i < linhas.size(); i++) {
+                    String[] cols = splitCsvPontoEVirgula(linhas.get(i));
+                    if (cols.length < 7) {
+                        continue;
+                    }
+                    String conta = cols[2].trim();
+                    String dataRef = cols[5].trim();
+                    if (conta.isEmpty()) {
+                        continue;
+                    }
+                    if (!dataRef.isEmpty()) {
+                        try {
+                            if (LocalDate.parse(dataRef, DATA_BR).isBefore(INICIO_LEG_20)) {
+                                continue;
+                            }
+                        } catch (Exception ignored) {
+                        }
+                    }
+                    contas.add(conta);
+                }
+            } catch (Exception ignored) {
+            }
+        }
+        return contas;
+    }
+
+    private static String condicaoDoPerfil(Contexto ctx, String slug, boolean emExercicio) {
+        Coleta.Arquivo arq = Coleta.metadados(ctx, "alesc", "perfis/" + slug + ".html");
+        if (arq != null && arq.bytes() > 0 && Files.exists(Coleta.caminho(ctx, arq))) {
+            try {
+                String c = parsePerfilPagina(Texto.lerArquivo(Coleta.caminho(ctx, arq))).condicao();
+                if (c != null) {
+                    return c;
+                }
+            } catch (Exception ignored) {
+            }
+        }
+        return emExercicio ? "Titular" : null;
     }
 
     public static String[] splitCsvPontoEVirgula(String linha) {

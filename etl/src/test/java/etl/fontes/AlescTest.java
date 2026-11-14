@@ -468,6 +468,137 @@ class AlescTest {
         org.junit.jupiter.api.Assertions.assertFalse(propsAutor2.get(0).proponente());
     }
 
+    @Test
+    void parseSitemapSlugsDeduplicaSlugsDeDeputados() {
+        String xml = """
+                <?xml version="1.0" encoding="UTF-8"?>
+                <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+                  <url><loc>https://www.alesc.sc.gov.br/todos-deputados/</loc></url>
+                  <url><loc>https://www.alesc.sc.gov.br/deputado/carolline-sarda/</loc></url>
+                  <url><loc>https://www.alesc.sc.gov.br/deputado/ana-campagnolo</loc></url>
+                  <url><loc>https://www.alesc.sc.gov.br/deputado/carolline-sarda/</loc></url>
+                </urlset>
+                """;
+        List<String> slugs = Alesc.parseSitemapSlugs(xml);
+        assertEquals(List.of("carolline-sarda", "ana-campagnolo"), slugs);
+    }
+
+    @Test
+    void parsePerfilPaginaExtraiDadosESituacaoEDatePublished() {
+        String html = """
+                <html><head>
+                  <title>CAROLLINE SARDA - Assembleia Legislativa</title>
+                  <script type="application/ld+json">{"datePublished":"2026-08-03T18:22:34+00:00"}</script>
+                </head><body>
+                  <h1 class="lab-title-big">CAROLLINE SARDA</h1>
+                  <span class="lab-button">PT</span>
+                  <img src="https://www.alesc.sc.gov.br/wp-content/uploads/2026/08/carolline.jpg" class="lab-team-img-single" />
+                  <h2>Situação</h2>
+                  <p class="lab-title-sm">Suplente</p>
+                </body></html>
+                """;
+        Alesc.PerfilPagina perfil = Alesc.parsePerfilPagina(html);
+        assertEquals("CAROLLINE SARDA", perfil.nome());
+        assertEquals("PT", perfil.partido());
+        assertEquals("https://www.alesc.sc.gov.br/wp-content/uploads/2026/08/carolline.jpg", perfil.fotoUrl());
+        assertEquals("Suplente", perfil.condicao());
+        assertEquals(java.time.LocalDate.of(2026, 8, 3), perfil.publicadoEm());
+    }
+
+    @Test
+    void normalizePreservaSuplenteDoSitemapExcluiLegislaturaAnteriorEMantemSaida(@org.junit.jupiter.api.io.TempDir Path temp)
+            throws IOException {
+        Path rawAlesc = temp.resolve("data/raw/alesc");
+        java.nio.file.Files.createDirectories(rawAlesc.resolve("perfis"));
+
+        String htmlDeputados1 = """
+                <article class="lab-card-team mt-5">
+                    <a href="https://www.alesc.sc.gov.br/deputado/ana-campagnolo/">
+                        <img src="https://www.alesc.sc.gov.br/foto/ana.jpg" alt="Ana Campagnolo" class="lab-team-img">
+                        <h3 class="lab-title-news">ANA CAMPAGNOLO</h3>
+                        <span class="lab-button">PL</span>
+                    </a>
+                </article>
+                """;
+        java.nio.file.Files.writeString(rawAlesc.resolve("deputados.html"), htmlDeputados1);
+        gravarMetadado(rawAlesc, "deputados.html", "https://www.alesc.sc.gov.br/todos-deputados/");
+
+        String sitemap1 = """
+                <urlset>
+                  <url><loc>https://www.alesc.sc.gov.br/deputado/ana-campagnolo/</loc></url>
+                  <url><loc>https://www.alesc.sc.gov.br/deputado/carolline-sarda/</loc></url>
+                  <url><loc>https://www.alesc.sc.gov.br/deputado/ada-de-luca/</loc></url>
+                </urlset>
+                """;
+        java.nio.file.Files.writeString(rawAlesc.resolve("sitemap-deputados.xml"), sitemap1);
+        gravarMetadado(rawAlesc, "sitemap-deputados.xml", "https://www.alesc.sc.gov.br/post_team-sitemap.xml");
+
+        String perfilCarol = """
+                <html><head><script>{"datePublished":"2026-08-03T10:00:00"}</script></head><body>
+                  <h1 class="lab-title-big">CAROLLINE SARDA</h1><span class="lab-button">PT</span>
+                  <h2>Situação</h2><p class="lab-title-sm">Suplente</p>
+                </body></html>
+                """;
+        java.nio.file.Files.writeString(rawAlesc.resolve("perfis/carolline-sarda.html"), perfilCarol);
+        gravarMetadado(rawAlesc, "perfis/carolline-sarda.html", "https://www.alesc.sc.gov.br/deputado/carolline-sarda/");
+
+        String perfilAda = """
+                <html><head><script>{"datePublished":"2021-05-06T10:00:00"}</script></head><body>
+                  <h1 class="lab-title-big">ADA DE LUCA</h1><span class="lab-button">MDB</span>
+                  <h2>Situação</h2><p class="lab-title-sm">Titular</p>
+                </body></html>
+                """;
+        java.nio.file.Files.writeString(rawAlesc.resolve("perfis/ada-de-luca.html"), perfilAda);
+        gravarMetadado(rawAlesc, "perfis/ada-de-luca.html", "https://www.alesc.sc.gov.br/deputado/ada-de-luca/");
+
+        etl.Contexto ctx = new etl.Contexto(
+                temp, temp.resolve("data"), null, null,
+                Instant.parse("2026-11-14T12:00:00Z"), "https://github.com/org/repo");
+
+        Alesc fonte = new Alesc();
+        fonte.normalize(ctx);
+
+        tools.jackson.databind.JsonNode pessoas1 = Json.ler(temp.resolve("data/normalizado/alesc/pessoas.json"));
+        java.util.Map<String, tools.jackson.databind.JsonNode> porId1 = new java.util.HashMap<>();
+        pessoas1.forEach(p -> porId1.put(p.get("id_fonte").asText(), p));
+
+        assertEquals(2, porId1.size());
+        assertTrue(porId1.get("ana-campagnolo").get("em_exercicio").asBoolean());
+        org.junit.jupiter.api.Assertions.assertFalse(porId1.get("carolline-sarda").get("em_exercicio").asBoolean());
+        assertEquals("Fora de exercício", porId1.get("carolline-sarda").get("situacao").asText());
+        org.junit.jupiter.api.Assertions.assertFalse(porId1.containsKey("ada-de-luca"));
+
+        tools.jackson.databind.JsonNode blocoCarol = Json.ler(
+                temp.resolve("data/normalizado/alesc/blocos/carolline-sarda.json"));
+        assertEquals("Suplente", blocoCarol.get("mandatos").get(0).get("condicao").asText());
+        assertEquals("Fora de exercício", blocoCarol.get("mandatos").get(0).get("situacao").asText());
+
+        // Segunda rodada: Ana e Carol saem até do sitemap, apenas Fulano Novo está ativo.
+        String htmlDeputados2 = """
+                <article class="lab-card-team mt-5">
+                    <a href="https://www.alesc.sc.gov.br/deputado/fulano-novo/">
+                        <img src="https://www.alesc.sc.gov.br/foto/fulano.jpg" alt="Fulano Novo" class="lab-team-img">
+                        <h3 class="lab-title-news">FULANO NOVO</h3>
+                        <span class="lab-button">PSD</span>
+                    </a>
+                </article>
+                """;
+        java.nio.file.Files.writeString(rawAlesc.resolve("deputados.html"), htmlDeputados2);
+        java.nio.file.Files.writeString(rawAlesc.resolve("sitemap-deputados.xml"), "<urlset></urlset>");
+
+        fonte.normalize(ctx);
+
+        tools.jackson.databind.JsonNode pessoas2 = Json.ler(temp.resolve("data/normalizado/alesc/pessoas.json"));
+        java.util.Map<String, tools.jackson.databind.JsonNode> porId2 = new java.util.HashMap<>();
+        pessoas2.forEach(p -> porId2.put(p.get("id_fonte").asText(), p));
+
+        assertEquals(3, porId2.size());
+        assertTrue(porId2.get("fulano-novo").get("em_exercicio").asBoolean());
+        org.junit.jupiter.api.Assertions.assertFalse(porId2.get("ana-campagnolo").get("em_exercicio").asBoolean());
+        assertEquals("Fora de exercício", porId2.get("ana-campagnolo").get("situacao").asText());
+        org.junit.jupiter.api.Assertions.assertFalse(porId2.get("carolline-sarda").get("em_exercicio").asBoolean());
+    }
+
     private static void gravarMetadado(Path dir, String arquivo, String url) throws IOException {
         Path meta = dir.resolve(arquivo + ".meta.json");
         Coleta.Arquivo arq = new Coleta.Arquivo(url, "raw/alesc/" + arquivo, "abc", 100L, Instant.parse("2026-11-05T12:00:00Z"));
