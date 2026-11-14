@@ -5,11 +5,13 @@
 #
 # Uma trava impede duas coletas ao mesmo tempo. Trava com mais de seis horas é de execução que morreu, e é desfeita.
 # SEMENTE_SIMULAR=1 passa para o envio: atualiza e compila, mas não coleta, não envia e não troca o segredo.
+# SEMENTE_RAMO troca o ramo seguido, para ensaio (padrão: main).
 set -euo pipefail
 
 raiz=$(cd "$(dirname "$0")/.." && pwd)
 cd "$raiz"
 trava="${TMPDIR:-/tmp}/atuacao-publica-semente.trava"
+ramo="${SEMENTE_RAMO:-main}"
 soltar() { rmdir "$trava" 2> /dev/null || true; }
 
 if [[ "${SEMENTE_AGENDADA_FASE:-1}" == 1 ]]; then
@@ -28,8 +30,8 @@ if [[ "${SEMENTE_AGENDADA_FASE:-1}" == 1 ]]; then
     printf '%s\n' "$recorte" > "$SEMENTE_LOG"
   fi
   echo "semente agendada: início em $(date -u +%Y-%m-%dT%H:%M:%SZ)"
-  git fetch --quiet origin main
-  git checkout --quiet --detach origin/main
+  git fetch --quiet origin "$ramo"
+  git checkout --quiet --detach "origin/$ramo"
   echo "semente agendada: código em $(git rev-parse --short HEAD)"
   # O arquivo deste script pode ter mudado com a atualização: a segunda fase roda a versão nova.
   trap - EXIT
