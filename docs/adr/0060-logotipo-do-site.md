@@ -1,6 +1,6 @@
 # ADR-0060: Logotipo do site
 
-- **Status**: Proposta
+- **Status**: Aceita
 - **Data**: 2026-11-14
 
 ## Contexto
