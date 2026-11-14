@@ -40,7 +40,7 @@ Não é presença. É a contagem de votos registrados em votações nominais.
 
 1. Universo: votações de `/votacao` em que o senador aparece em `votos[]`, nas sessões do Senado (`casaSessao = SF`) e do Congresso (`CN`). O Senado lista todos os senadores, inclusive ausentes. A coluna "órgão" dos votos mostra `SF` ou `CN`.
 2. `votos_registrados`: votos `Sim`, `Não`, `Abstenção`, `Obstrução` ou `Votou` (votação secreta).
-3. `por_tipo`: contagem de cada sigla da fonte (`descricaoVoto` do endpoint `/votacao` da API do Senado Federal):
+3. `por_tipo`: contagem de cada sigla da fonte (`siglaVotoParlamentar` do endpoint `/votacao` da API do Senado Federal). O nome por extenso é o do campo `descricaoVotoParlamentar`. A frase depois dos dois-pontos é leitura do projeto, sem definição oficial conferida:
    - **AP** (*Atividade parlamentar*): ausência de voto em razão do exercício de outra atividade parlamentar oficial declarada na sessão.
    - **LS** (*Licença saúde*): parlamentar em afastamento médico oficial no momento da votação.
    - **NCom** (*Não Compareceu*): parlamentar que não registrou presença na sessão deliberativa.
