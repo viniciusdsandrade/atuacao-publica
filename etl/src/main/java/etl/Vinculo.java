@@ -95,6 +95,10 @@ final class Vinculo {
         }
         emendas(ctx, perfis);
         financiamento(ctx, perfis);
+        // Depois de todos os papéis: a sigla do partido de cada perfil passa à grafia do TSE (ADR-0058).
+        Partidos.Resultado siglas = Partidos.unificarPerfis(perfis, Partidos.grafiasDoTse(candidaturas));
+        System.out.println("vinculo: sigla de partido unificada em " + siglas.unificados() + " perfil(is); grafias sem correspondência: "
+                + siglas.semCorrespondencia());
         return perfis;
     }
 
