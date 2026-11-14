@@ -44,7 +44,7 @@ Estado real de cada fase. Atualizado ao fechar cada fase.
 - O Senado não publica presença em evento equivalente à da Câmara.
 - O TSE registra a eleição, não o exercício do cargo. Renúncia ou sucessão de governador entra por contribuição com fonte T0.
 - Oito governadores eleitos em 2022 têm candidatura a outro cargo em 2026 no próprio TSE: senador no AC, AM, ES, MT, PA e PB e presidente em GO e MG. Para concorrer a outro cargo, o governador renuncia até seis meses antes do pleito (CF, art. 14, § 6º). Corrigido em 2026-11-07 pelo ADR-0033: quem tem candidatura a outro cargo na eleição seguinte sai de em exercício, com o mandato encerrado no prazo legal de renúncia. A regra também corrige cinco governadores eleitos em 2018 que concorreram ao Senado em 2022. Quem assumiu esses governos segue sem perfil, e a data exata da renúncia só vem por contribuição com fonte T0.
-- Planos de governo: só das eleições de 2022 e 2026.
+- Planos de governo: eleições gerais de 2018, 2022 e 2026 e municipais a partir de 2022. A de 2020 fica fora. A de 2018 entrou no código em 2026-11-14. Não validado: a coleta dos ZIPs de 2018 e o resultado no site.
 - O site não embute fotos oficiais, para não gerar requisição do navegador do visitante a terceiros.
 - SAPL do piloto: `ordemdia` e `expedientemateria` paginam de forma instável. A coleta vai por sessão. Os votos sem registro de votação ou sem item votado ficam fora e aparecem na saída do `normalize`.
 - SAPL do piloto: a fonte não publica orientação de partido nem texto de discurso. Matérias com sequência de 11 dígitos na ementa (número de protocolo) são removidas pela regra de bloqueio de CPF e contam como rejeição em `_meta/execucao.json`.
@@ -62,7 +62,10 @@ Estado real de cada fase. Atualizado ao fechar cada fase.
 - Em 2026-11-02 o `publish` do CI parou com "dois perfis com o identificador sapl-3509502-306": um ex-deputado novo no arquivo era o mesmo vereador já publicado, e o vínculo entre casas não os fundiu, porque o TSE mascara o CPF de 2024. Corrigido em dois pontos. O vínculo passa a usar também nome civil e data de nascimento. E o id publicado só passa a um perfil se não for o id derivado de outro, o que vale mesmo quando a fusão falha.
 - A lista da página inicial exibe 48 cartões por vez. A busca do navegador (Ctrl+F) só acha o que está na tela. Use a busca do site.
 - Não validado: leitor de tela real (VoiceOver, NVDA, TalkBack) e aparelhos móveis físicos. A auditoria de acessibilidade foi automatizada e por teclado.
-- A auditoria de acessibilidade (axe, WCAG 2.1 AA) roda no CI sobre dados sintéticos, só no Chromium e no estado inicial das páginas (ADR-0028). Dado real longo, outros navegadores e estados interativos seguem sem varredura automática.
+- A auditoria de acessibilidade (axe) roda no CI sobre dados sintéticos e só no Chromium (ADR-0028). Desde 2026-11-14 usa as regras da WCAG 2.2 AA, nos temas claro e escuro, no desktop e no celular emulado, e varre também o perfil com os blocos expandidos (ADR-0064). Dado real longo, outros navegadores e os demais estados interativos seguem sem varredura automática.
+- Órgãos e frentes (ADR-0062): perfil com mais de 40 registros mostra de início todos os órgãos e comissões, as frentes com cargo de liderança e as 20 frentes mais recentes. As demais frentes vêm sob demanda, no arquivo completo. Frente sem data de início na fonte entra na ordem pelo nome.
+- Assembleias em SAPL (ADR-0063): `votoparlamentar` lista só quem tem voto individual registrado. O projeto não infere ausência, e `sem_registro` sai nulo. A fonte não publica orientação de bancada. ALEAL, ALERR e ALETO seguem sem votações e sem presença: na ALEAL os registros de sessão terminam em 2019, na ALERR o SAPL não tem votação, e na ALETO a sondagem de 2026-11-14 parou na verificação do certificado do servidor.
+- Assembleias em SAPL (ADR-0063): só a ALEAC teve ensaio local completo. Não validado: a coleta completa de ALPB, ALEAM, ALERO e ALEPI, e se o orçamento de 25 minutos basta para a primeira carga da ALEAM no CI.
 - ALESE: o sistema legislativo (`aleselegis.al.se.leg.br`) não aceitou conexão do runner do GitHub Actions nas execuções de 2026-11-12 (15 tentativas, todas com tempo esgotado). O portal (`al.se.leg.br`) respondeu. Sem as fichas no cache, a normalização parava com erro, e a publicação de 2026-11-13 das 00:19 UTC não tinha nenhum perfil de Sergipe. Corrigido em 2026-11-13: a normalização aceita a ficha ausente, e a casa vem da coleta local cifrada (ADR-0034). Os dados atualizam só quando a coleta local roda. Na publicação das 07:18 UTC, ainda sem a semente, entraram os 24 perfis só com mandato e candidaturas. Na das 13:04 UTC, com a semente coletada às 12:54 UTC, entraram comissões e proposições.
 - ALESE: 21.576 das 27.800 proposições do ensaio local de 2026-11-13 são do tipo "Requerimento de Voto". O tipo vem da fonte e entra como os demais.
 - ALESE: no ensaio local de 2026-11-13, 22 dos 24 deputados ficaram ligados a candidaturas do TSE, e não os 24 registrados em 2026-11-11. Em dois, o nome parlamentar difere do nome de urna: "Carminha Paiva" (urna "CARMINHA") e "Luizão Donatrampi" (urna "LUIZAO DONA TRAMPI"). O vínculo não casa por palavras soltas. No site em 2026-11-13, os mesmos 22 de 24. O ADR-0053 passa a aceitar o nome igual a menos dos espaços: no ensaio local de 2026-11-13, "Luizão Donatrampi" ficou ligado, e a casa foi a 23 de 24. No site desde a publicação de 2026-11-13 das 15:27 UTC. "Carminha Paiva" segue sem vínculo. Decidido pelo mantenedor em 2026-11-13: os três deputados em exercício sem vínculo por nome ("Carminha Paiva", "Cristiano D’Angelo" e "Andreia M. Rezende") ficam assim, sem tabela manual.
@@ -609,14 +612,17 @@ Limitações:
     | ALEPA | painel interno de BI, sem fornecedor | callback de componente, paginação não validada | implementado em 2026-11-10, por HTML por GET: lista mensal (`/Legislativo/VotacoesNominais?ano={ano}&mes={mês}`, sem paginação) e detalhe por votação com as seções SIM, NÃO, ABSTENÇÃO e NÃO VOTARAM, nome e partido; 198 votações de 2022 a 2026, no site desde 2026-11-10 |
     | ALMT | não implementado | não implementado | não implementado (Mesa Diretora integrada em orgaos_e_frentes) |
     | ALEMS | não implementado | não implementado | não implementado (Mesa Diretora integrada em orgaos_e_frentes) |
-    | ALPB | não implementado | implementado via SAPL (ADR-0045) | não encontrado (Mesa Diretora integrada em orgaos_e_frentes) |
-    | ALEAM | não implementado | implementado via SAPL (ADR-0045) | não encontrado (Mesa Diretora integrada em orgaos_e_frentes) |
-    | ALEAL | não implementado | implementado via SAPL (ADR-0045) | não encontrado (Mesa Diretora integrada em orgaos_e_frentes) |
-    | ALERO | não implementado | implementado via SAPL (ADR-0045) | não encontrado (Mesa Diretora integrada em orgaos_e_frentes) |
-    | ALEPI | não implementado | implementado via SAPL (ADR-0045) | não encontrado (Mesa Diretora integrada em orgaos_e_frentes) |
+    | ALPB | não implementado | implementado via SAPL (ADR-0045) | implementado em 2026-11-14 via SAPL (ADR-0063), com presença em sessão plenária; só quem tem voto registrado; ainda não publicado |
+    | ALEAM | não implementado | implementado via SAPL (ADR-0045) | implementado em 2026-11-14 via SAPL (ADR-0063), com presença em sessão plenária; só quem tem voto registrado; ainda não publicado |
+    | ALEAL | não implementado | implementado via SAPL (ADR-0045) | não coletado: os registros de sessão do SAPL terminam em 2019 (ADR-0063) |
+    | ALERO | não implementado | implementado via SAPL (ADR-0045) | implementado em 2026-11-14 via SAPL (ADR-0063), com presença em sessão plenária; só quem tem voto registrado; ainda não publicado |
+    | ALEPI | não implementado | implementado via SAPL (ADR-0045) | implementado em 2026-11-14 via SAPL (ADR-0063), com presença em sessão plenária; só quem tem voto registrado; ainda não publicado |
     | ALRN | não implementado | não implementado | não encontrado (Mesa Diretora integrada em orgaos_e_frentes) |
-    | ALETO | não implementado | implementado via SAPL (ADR-0046) | não encontrado (Mesa Diretora integrada em orgaos_e_frentes) |
-    | ALESE | não implementado | não implementado | não encontrado (Mesa Diretora integrada em orgaos_e_frentes) |
+    | ALETO | não implementado | implementado via SAPL (ADR-0046) | não coletado: a sondagem de 2026-11-14 parou na verificação do certificado do servidor (ADR-0063) |
+    | ALESE | não implementado | implementado em 2026-11-13 (`alese-proposicoes` e comissões no portal legislativo); 27.800 proposições e 329 cargos em comissões, pela coleta local cifrada e túnel | não encontrado (Mesa Diretora e comissões integradas em `orgaos_e_frentes`) |
+    | ALEMA | não implementado | não implementado | não implementado (cargos em órgãos em `orgaos_e_frentes`) |
+    | ALEAC | não implementado | implementado via SAPL (ADR-0049) | implementado em 2026-11-14 via SAPL (ADR-0063), com presença em sessão plenária; no ensaio local, 709 votos e 3.027 presenças em 25 perfis; ainda não publicado |
+    | ALERR | não implementado | implementado via SAPL (ADR-0050) | não coletado: o SAPL não tem votação registrada (ADR-0063) |
     | ALAP | implementado em 2026-11-12, pela coleta local cifrada; CEAP por gabinete e subelemento desde 2023-02 | não implementado | não encontrado |
 
 24. Terceiro município: Caraguatatuba, Câmara Municipal e Prefeitura (ADR-0057): concluído e publicado em 2026-11-13.
@@ -663,6 +669,35 @@ Limitações:
     - A execução real coletou as onze casas, enviou o pacote (22 itens, 177 MB) com a impressão da chave no nome e trocou o segredo às 00:33 UTC. O release guarda o pacote novo e o anterior.
     - O `dados` das 00:34 UTC restaurou esse pacote e publicou. No site, as onze casas saíram com status "ok" e coleta entre 00:11 e 00:32 UTC do mesmo dia.
     - Não validado: a execução disparada pelo calendário do launchd, que ainda não ocorreu, e a coleta com a máquina dormindo no horário.
+28. Tarefas pequenas de `docs/TAREFAS.md`: feitas em 2026-11-14, ainda não publicadas.
+    - Glossário das siglas de voto do Senado em `docs/METODOLOGIA.md`. O nome por extenso de cada sigla foi conferido com o campo `descricaoVotoParlamentar` do cache bruto de 2022 a 2026 (48.188 votos). A frase que explica cada sigla é leitura do projeto, sem definição oficial conferida.
+    - Apelidos de bancada na orientação de voto (`Orientacao.java`): de 1 para 5 rótulos (`PROGRES`, `PODEMOS`, `REPUBLICA` e `UNIAOBRASIL`, além de `PROGRESSISTAS`).
+    - Palavras de juízo no lint de `normalize contrib` (`Contrib.java`): a lista foi ampliada e segue gerando só aviso.
+    - Planos de governo de 2018 (`Tse.java`): a listagem dos ZIPs de propostas passa a cobrir as eleições gerais desde 2018. A eleição municipal de 2020 fica fora. Não validado: a coleta de 2018 e o resultado no site.
+29. Paginação de órgãos, comissões e frentes (ADR-0062): implementado em 2026-11-14, ainda não publicado.
+    - Medido antes, nos dados publicados localmente: 71 perfis acima de 200 KB. O maior, `cam-98057.json`, tinha 280.138 bytes, 189.455 deles em 648 registros de órgãos e frentes.
+    - Perfil com até 40 registros segue com a lista inteira. Acima disso, o perfil traz `por_tipo`, `recentes` e o endereço de `politicos/{id}/orgaos_e_frentes.json.gz`, com a lista completa.
+    - `recentes` mantém todos os órgãos e comissões, as frentes com cargo de liderança e até 20 das demais frentes.
+    - Schemas `detalhe` e `politico` com as duas formas do bloco, com exemplos válidos e inválidos.
+    - No site, a tabela mostra `recentes` e um botão que baixa a lista completa na própria seção.
+    - Ensaio local com 2.368 perfis: nenhum perfil acima de 200 KB. O maior ficou com 170.979 bytes, e `cam-98057.json`, com 129.771.
+30. Votações nominais e presença nas assembleias em SAPL (ADR-0063): implementado em 2026-11-14 para ALPB, ALEAM, ALERO, ALEPI e ALEAC, ainda não publicado.
+    - Auxiliar `SaplSessao.java` (`SaplSessaoTest.java`), usado pelos cinco adaptadores. Duas fontes novas por casa em `contrib/fontes.yaml` e em `docs/FONTES.md`: `{casa}-votacoes` e `{casa}-presenca`.
+    - Os campos `ip` e `user` de `votoparlamentar` saem antes de a página ir para o cache bruto.
+    - Perfil com os blocos `votos`, `participacao_votacoes` e `eventos`. A presença sai como "registrada".
+    - Ensaio local da ALEAC, com coleta, normalização e publicação: 238 arquivos em 1 minuto, sem falha. Os 25 perfis saíram com votos e com presença: 709 votos, 39 linhas de participação por ano e 3.027 presenças. Nenhuma chave `ip` ou `user` no cache bruto.
+    - Workflow `dados`: o passo da ALEAM passa a 25 minutos de orçamento e 30 de limite, para a primeira carga de mais de 63 mil votos.
+    - Não validado: a coleta completa das outras quatro casas, a primeira carga no CI e as páginas no site. Ver "Limitações conhecidas".
+31. Metadados de candidatos, partidos, navegação de fontes e WCAG 2.2 AA (ADR-0064): implementado em 2026-11-14, ainda não publicado.
+    - `Texto.capitalizarNome`: nome do TSE todo em maiúsculas ou todo em minúsculas vira nome próprio no perfil. O `nome_urna` das candidaturas segue como na fonte.
+    - Nome completo do partido por tabela de código (`Partidos.nomeCompleto` e `rotulos.ts`), sem mudar o schema do índice. Aparece no filtro, no selo do perfil e no Lado a lado, e a busca indexa o nome por extenso.
+    - Legenda dos tipos de proposição nos resumos, e nota de eventos com as cinco assembleias do ADR-0063.
+    - "Estado das coletas" liga cada fonte à seção dela em `#/fontes`. Um teste confere todas as âncoras contra os títulos de `docs/FONTES.md`.
+    - WCAG 2.2 AA: alvo mínimo nos links isolados, foco não encoberto pelo cabeçalho fixo da tabela e `Escape` no sumário móvel.
+    - Não validado: leitor de tela real, aparelho real e teste com pessoas.
+32. Verificação dos itens 28 a 31, em 2026-11-14, na cópia de trabalho: 413 testes do ETL, 27 unitários do site e 103 de ponta a ponta (1 pulado), com axe nas regras da WCAG 2.2 AA, nos dois temas, no desktop e no celular emulado. Sem falha.
+    - Ainda não publicado: os commits aguardam envio à `main` e uma execução do `dados`.
+    - Depois da publicação, conferir no site: o tamanho dos perfis, os blocos de votos e de presença das cinco assembleias, os nomes dos perfis vindos só do TSE e os planos de governo de 2018.
 
 ### Redes sociais
 
