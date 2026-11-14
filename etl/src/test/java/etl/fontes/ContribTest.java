@@ -1,7 +1,9 @@
 package etl.fontes;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -67,6 +69,13 @@ class ContribTest {
     void recusaFonteDeNivelNaoAceitoParaOTipo() throws IOException {
         gravar("agenda_oficial", entrada("t1-site-mandato", "https://exemplo.invalid/agenda", "Reunião"));
         assertThrows(IllegalStateException.class, () -> new Contrib().normalize(ctx));
+    }
+
+    @Test
+    void detectaPalavrasDeJuizoSemSensibilidadeAAcentoOuCaixa() {
+        assertEquals(java.util.List.of("deploravel", "hipocrita"),
+                Contrib.avisosDeJuizo("Declaração hipócrita e DEPLORÁVEL sobre a pauta"));
+        assertTrue(Contrib.avisosDeJuizo("Reunião ordinária da comissão").isEmpty());
     }
 
     private void gravar(String tipo, String conteudo) throws IOException {

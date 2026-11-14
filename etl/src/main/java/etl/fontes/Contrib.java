@@ -38,12 +38,21 @@ public final class Contrib implements Fonte {
             "link_oficial", Set.of("T0", "T1"),
             "mandato", Set.of("T0"));
 
-    /** Lista curta de palavras de juízo. Gera só aviso: a revisão humana decide. */
+    /** Lista de palavras de juízo (normalizadas, sem acento). Gera só aviso: a revisão humana decide. */
     private static final List<String> JUIZO = List.of(
-            "absurdo", "absurda", "brilhante", "corrupto", "corrupta", "criminoso", "criminosa", "desastroso",
-            "desastrosa", "escandalo", "escandaloso", "excelente", "genial", "golpista", "heroico", "heroica",
-            "incrivel", "lamentavel", "mentiroso", "mentirosa", "otimo", "otima", "pessimo", "pessima", "polemico",
-            "polemica", "ridiculo", "ridicula", "traidor", "traidora", "vergonhoso", "vergonhosa");
+            "aberrante", "absurdo", "absurda", "abusivo", "abusiva", "admiravel", "arbitrario", "arbitraria",
+            "brilhante", "calunioso", "caluniosa", "corrupto", "corrupta", "criminoso", "criminosa",
+            "deploravel", "desastroso", "desastrosa", "desonesto", "desonesta", "desprezivel", "ditador", "ditadora",
+            "escandalo", "escandaloso", "escandalosa", "esdruxulo", "esdruxula", "excelente", "exemplar",
+            "falcatrua", "farsante", "fraudulento", "fraudulenta", "genial", "golpista",
+            "heroico", "heroica", "hipocrita", "honesto", "honesta", "imoral", "impecavel",
+            "inaceitavel", "inadmissivel", "incompetente", "incrivel", "indigno", "indigna", "injusto", "injusta",
+            "irresponsavel", "ladrao", "lamentavel", "louvavel", "magnifico", "magnifica",
+            "maravilhoso", "maravilhosa", "mediocre", "mentiroso", "mentirosa", "nefasto", "nefasta",
+            "otimo", "otima", "patetico", "patetica", "perverso", "perversa", "pessimo", "pessima",
+            "polemico", "polemica", "prepotente", "reprovavel", "ridiculo", "ridicula",
+            "sabotador", "sabotadora", "terrivel", "traidor", "traidora", "vergonha", "vergonhoso", "vergonhosa",
+            "vigarista");
 
     @Override
     public String nome() {
@@ -151,17 +160,25 @@ public final class Contrib implements Fonte {
 
     private static void avisarJuizo(String arquivo, JsonNode entrada) {
         for (String campo : List.of("texto_oficial", "resumo_factual")) {
-            String texto = Texto.normalizarNome(Json.texto(entrada, campo));
-            if (texto == null) {
-                continue;
-            }
-            for (String palavra : JUIZO) {
-                if (Pattern.compile("\\b" + palavra.toUpperCase() + "\\b").matcher(texto).find()) {
-                    System.out.println("contrib: AVISO " + arquivo + ": palavra de juízo \"" + palavra + "\" em " + campo
-                            + " (confira se é texto literal da fonte)");
-                }
+            for (String palavra : avisosDeJuizo(Json.texto(entrada, campo))) {
+                System.out.println("contrib: AVISO " + arquivo + ": palavra de juízo \"" + palavra + "\" em " + campo
+                        + " (confira se é texto literal da fonte)");
             }
         }
+    }
+
+    static List<String> avisosDeJuizo(String bruto) {
+        String texto = Texto.normalizarNome(bruto);
+        if (texto == null) {
+            return List.of();
+        }
+        List<String> encontradas = new ArrayList<>();
+        for (String palavra : JUIZO) {
+            if (Pattern.compile("\\b" + palavra.toUpperCase() + "\\b").matcher(texto).find()) {
+                encontradas.add(palavra);
+            }
+        }
+        return encontradas;
     }
 
     private static List<String> prefixar(String arquivo, List<String> erros) {
