@@ -68,6 +68,28 @@ public final class Texto {
         return limpo.isEmpty() ? null : limpo;
     }
 
+    /**
+     * Endereço como a fonte publica, pronto para um link: entidade HTML trocada pelo caractere ("&amp;" e "&#233;" vêm
+     * de endereço copiado de dentro de uma página) e o que não é ASCII visível em percent-encoding UTF-8.
+     */
+    public static String url(String bruta) {
+        String limpa = semEntidades(bruta);
+        if (limpa == null) {
+            return null;
+        }
+        StringBuilder saida = new StringBuilder(limpa.length());
+        for (byte b : limpa.getBytes(java.nio.charset.StandardCharsets.UTF_8)) {
+            int c = b & 0xff;
+            if (c <= 0x20 || c >= 0x7f) {
+                saida.append('%').append(Character.toUpperCase(Character.forDigit(c >> 4, 16)))
+                        .append(Character.toUpperCase(Character.forDigit(c & 0xf, 16)));
+            } else {
+                saida.append((char) c);
+            }
+        }
+        return saida.toString();
+    }
+
     public static String digitos(String texto) {
         return texto == null ? "" : texto.replaceAll("[^0-9]", "");
     }

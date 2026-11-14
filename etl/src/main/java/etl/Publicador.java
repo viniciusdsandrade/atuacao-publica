@@ -250,7 +250,7 @@ public final class Publicador {
         ObjectNode doc = Json.SAIDA.createObjectNode();
         doc.put("id", perfil.id).put("nome", perfil.nome).put("cargo_atual", perfil.cargo).put("esfera", perfil.esfera)
                 .put("ente", perfil.ente).put("uf", perfil.uf).put("partido_atual", perfil.partido)
-                .put("situacao", perfil.situacao).put("em_exercicio", perfil.emExercicio).put("foto_url", perfil.foto);
+                .put("situacao", perfil.situacao).put("em_exercicio", perfil.emExercicio).put("foto_url", Texto.url(perfil.foto));
         ObjectNode ids = doc.putObject("ids_externos");
         perfil.ids.forEach(ids::put);
         if (!perfil.tse.isEmpty()) {

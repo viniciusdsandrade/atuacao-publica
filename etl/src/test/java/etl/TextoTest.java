@@ -41,4 +41,17 @@ class TextoTest {
         assertEquals("2026-01-20", Texto.dataBr("20/01/2026"));
         assertNull(Texto.dataBr(""));
     }
+
+    @Test
+    void enderecoComEntidadeHtmlOuLetraAcentuadaViraLinkValido() {
+        assertEquals("https://exemplo.invalid/fotos/Jos%C3%A9%20Exemplo.png?t=1",
+                Texto.url("https://exemplo.invalid/fotos/Jos&#233;%20Exemplo.png?t=1"), "entidade numérica dentro do caminho");
+        assertEquals("https://exemplo.invalid/foto?a=1&b=2", Texto.url("https://exemplo.invalid/foto?a=1&amp;b=2"));
+        assertEquals("https://exemplo.invalid/a%20b.jpg", Texto.url("https://exemplo.invalid/a b.jpg"));
+        String pronto = "https://exemplo.invalid/media/parlamentar/5/fulano.png";
+        assertEquals(pronto, Texto.url(pronto), "endereço que já é válido não muda");
+        assertEquals("https://exemplo.invalid/a%20b.jpg", Texto.url("https://exemplo.invalid/a%20b.jpg"), "percent-encoding que já existe fica como está");
+        assertNull(Texto.url(null));
+        assertNull(Texto.url("  "));
+    }
 }
