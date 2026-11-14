@@ -114,15 +114,27 @@ public final class Almt implements Fonte {
         return "almt";
     }
 
+    private static HistoricoDeputados.Snapshot paraSnapshot(DeputadoBruto d) {
+        return HistoricoDeputados.Snapshot.de(d.id(), d.nome(), d.partido(), d.fotoUrl(), d.href(), null);
+    }
+
+    private Prov provDeputados(Contexto ctx) {
+        Coleta.Arquivo arq = Coleta.metadados(ctx, nome(), "deputados.html");
+        return arq != null ? Prov.de(FONTE_DEPUTADOS, URL_DEPUTADOS, arq) : null;
+    }
+
     @Override
     public void fetch(Contexto ctx, Coleta coleta) throws Exception {
         System.out.println("almt: coleta iniciada");
+        HistoricoDeputados.registrar(ctx, nome(), extrairDeputados(ctx), provDeputados(ctx), Almt::paraSnapshot);
         coleta.obter(URL_DEPUTADOS, "deputados.html", "text/html", Politica.SEMANAL);
 
-        List<DeputadoBruto> deputados = extrairDeputados(ctx);
-        for (DeputadoBruto d : deputados) {
-            String urlPerfil = SITE + "/parlamento/deputados/" + d.id() + "/perfil";
-            coleta.obterOuVazio(urlPerfil, "perfis/" + d.id() + ".html", "text/html", Politica.SEMANAL);
+        List<HistoricoDeputados.Entrada> entradas = HistoricoDeputados.mesclar(
+                ctx, nome(), extrairDeputados(ctx), provDeputados(ctx), Almt::paraSnapshot);
+        for (HistoricoDeputados.Entrada e : entradas) {
+            String urlPerfil = SITE + "/parlamento/deputados/" + e.id() + "/perfil";
+            coleta.obterOuVazio(urlPerfil, "perfis/" + e.id() + ".html", "text/html",
+                    e.emExercicio() ? Politica.SEMANAL : Politica.SE_AUSENTE);
         }
 
         coleta.obterOuVazio(URL_MESA_DIRETORA, "mesa-diretora.html", "text/html", Politica.SEMANAL);
@@ -130,14 +142,13 @@ public final class Almt implements Fonte {
 
     @Override
     public void normalize(Contexto ctx) {
-        List<DeputadoBruto> deputados = extrairDeputados(ctx);
-        if (deputados.isEmpty()) {
+        Prov provDeputados = provDeputados(ctx);
+        List<HistoricoDeputados.Entrada> entradas = HistoricoDeputados.mesclar(
+                ctx, nome(), extrairDeputados(ctx), provDeputados, Almt::paraSnapshot);
+        if (entradas.isEmpty()) {
             System.out.println("almt: nenhum deputado para normalizar");
             return;
         }
-
-        Coleta.Arquivo arqDeputados = Coleta.metadados(ctx, nome(), "deputados.html");
-        Prov provDeputados = Prov.de(FONTE_DEPUTADOS, URL_DEPUTADOS, arqDeputados);
 
         Coleta.Arquivo arqMesa = Coleta.metadados(ctx, nome(), "mesa-diretora.html");
         Prov provMesa = Prov.de(FONTE_MESA_DIRETORA, URL_MESA_DIRETORA, arqMesa);
@@ -154,18 +165,22 @@ public final class Almt implements Fonte {
         List<Pessoa> pessoas = new ArrayList<>();
         Map<String, String> nomesCivisPorId = new HashMap<>();
 
-        for (DeputadoBruto d : deputados) {
-            String id = d.id();
-            String nomeParlamentar = d.nome();
-            String partido = d.partido();
-            String fotoUrl = d.fotoUrl();
+        for (HistoricoDeputados.Entrada ent : entradas) {
+            String id = ent.id();
+            String nomeParlamentar = ent.nome();
+            String partido = ent.partido();
+            String fotoUrl = ent.fotoUrl();
+            String href = ent.extra() != null ? ent.extra() : "/parlamento/deputados/" + id + "/perfil";
 
-            String urlPerfil = d.href().startsWith("http") ? d.href() : SITE + d.href();
+            String urlPerfil = href.startsWith("http") ? href : SITE + href;
             Coleta.Arquivo arqPerfil = Coleta.metadados(ctx, nome(), "perfis/" + id + ".html");
-            Prov provPerfil = Prov.de(FONTE_DETALHES, urlPerfil, arqPerfil);
+            Prov provMandato = ent.provOu(provDeputados);
+            Prov provPerfil = arqPerfil != null ? Prov.de(FONTE_DETALHES, urlPerfil, arqPerfil) : provMandato;
 
             List<LinkOficial> links = new ArrayList<>();
-            links.add(new LinkOficial("Página na ALMT", urlPerfil, provPerfil));
+            if (provPerfil != null) {
+                links.add(new LinkOficial("Página na ALMT", urlPerfil, provPerfil));
+            }
 
             if (arqPerfil != null && Files.exists(Coleta.caminho(ctx, arqPerfil))) {
                 try {
@@ -192,13 +207,14 @@ public final class Almt implements Fonte {
                 }
             }
 
+            String situacao = ent.situacao("Em exercício");
             Pessoa pessoa = new Pessoa("almt", id, nomeParlamentar, "deputado_estadual", "estadual", UF, UF,
-                    partido, fotoUrl, "Em exercício", true, links);
+                    partido, fotoUrl, situacao, ent.emExercicio(), links);
             pessoas.add(pessoa);
 
             List<Mandato> mandatos = List.of(new Mandato("deputado_estadual", "estadual", UF, UF,
-                    INICIO_LEG_20, FIM_LEG_20, "Em exercício", "Titular", LEGISLATURA_20, 2022,
-                    "Deputado Estadual na 20ª Legislatura (2023–2027)", provDeputados));
+                    INICIO_LEG_20, FIM_LEG_20, situacao, ent.emExercicio() ? "Titular" : null, LEGISLATURA_20, 2022,
+                    "Deputado Estadual na 20ª Legislatura (2023–2027)", provMandato));
 
             String chaveNome = normalizarChaveNome(nomeParlamentar);
             List<OrgaoOuFrente> orgaos = mesaPorNome.getOrDefault(chaveNome, List.of());

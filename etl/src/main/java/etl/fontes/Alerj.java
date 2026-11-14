@@ -104,15 +104,27 @@ public final class Alerj implements Fonte {
     public record DeputadoBruto(String id, String nome, String partido, String fotoUrl) {
     }
 
+    private static HistoricoDeputados.Snapshot paraSnapshot(DeputadoBruto d) {
+        return HistoricoDeputados.Snapshot.de(d.id(), d.nome(), d.partido(), d.fotoUrl(), null, null);
+    }
+
+    private Prov provDeputados(Contexto ctx) {
+        Coleta.Arquivo arq = Coleta.metadados(ctx, nome(), "deputados.html");
+        return arq != null ? Prov.de(FONTE_DEPUTADOS, SITE + "/Deputados/QuemSao", arq) : null;
+    }
+
     @Override
     public void fetch(Contexto ctx, Coleta coleta) throws Exception {
         System.out.println("alerj: coleta iniciada");
+        HistoricoDeputados.registrar(ctx, nome(), extrairDeputados(ctx), provDeputados(ctx), Alerj::paraSnapshot);
         coleta.obter(SITE + "/Deputados/QuemSao", "deputados.html", "text/html", Politica.SEMANAL);
 
-        List<DeputadoBruto> deputados = extrairDeputados(ctx);
-        for (DeputadoBruto d : deputados) {
-            String urlPerfil = SITE + "/Deputados/PerfilDeputado/" + d.id() + "?Legislatura=20";
-            coleta.obterOuVazio(urlPerfil, "perfis/" + d.id() + ".html", "text/html", Politica.SEMANAL);
+        List<HistoricoDeputados.Entrada> entradas = HistoricoDeputados.mesclar(
+                ctx, nome(), extrairDeputados(ctx), provDeputados(ctx), Alerj::paraSnapshot);
+        for (HistoricoDeputados.Entrada e : entradas) {
+            String urlPerfil = SITE + "/Deputados/PerfilDeputado/" + e.id() + "?Legislatura=20";
+            coleta.obterOuVazio(urlPerfil, "perfis/" + e.id() + ".html", "text/html",
+                    e.emExercicio() ? Politica.SEMANAL : Politica.SE_AUSENTE);
         }
 
         // Verba de gabinete pelo DOCIGP. O remote_id do parlamentar é o id do perfil na ALERJ.
@@ -126,16 +138,21 @@ public final class Alerj implements Fonte {
         }
         Map<String, String> docigpPorAlerj = parlamentaresDoDocigp(ctx, paginasDeParlamentares);
         List<String> ids = new ArrayList<>();
-        for (DeputadoBruto d : deputados) {
-            if (docigpPorAlerj.containsKey(d.id())) {
-                ids.add(d.id());
+        Set<String> idsEmExercicio = new HashSet<>();
+        for (HistoricoDeputados.Entrada e : entradas) {
+            if (docigpPorAlerj.containsKey(e.id())) {
+                ids.add(e.id());
+                if (e.emExercicio()) {
+                    idsEmExercicio.add(e.id());
+                }
             }
         }
         // A lista de orçamentos vem do mês mais novo para o mais velho, 20 por página: um mês novo desloca todas as
         // páginas. Quando a primeira página renova, as outras renovam junto, e o retrato do deputado fica consistente.
         List<String> falhas = Camara.paraCadaDeputado(ids, id -> {
+            Politica politicaP1 = idsEmExercicio.contains(id) ? Politica.SEMANAL : Politica.SE_AUSENTE;
             String base = API_DOCIGP + "/congressmen/" + docigpPorAlerj.get(id) + "/legislatures/" + LEGISLATURA_DOCIGP + "/budgets?page=";
-            Coleta.Arquivo p1 = coleta.obterOpcional(base + 1, arquivoDeOrcamentos(id, 1), "application/json", Politica.SEMANAL);
+            Coleta.Arquivo p1 = coleta.obterOpcional(base + 1, arquivoDeOrcamentos(id, 1), "application/json", politicaP1);
             if (p1 == null) {
                 return;
             }
@@ -288,14 +305,18 @@ public final class Alerj implements Fonte {
 
     @Override
     public void normalize(Contexto ctx) {
-        List<DeputadoBruto> deputados = extrairDeputados(ctx);
-        if (deputados.isEmpty()) {
+        Prov provDeputados = provDeputados(ctx);
+        List<HistoricoDeputados.Entrada> entradas = HistoricoDeputados.mesclar(
+                ctx, nome(), extrairDeputados(ctx), provDeputados, Alerj::paraSnapshot);
+        if (entradas.isEmpty()) {
             System.out.println("alerj: nenhum deputado para normalizar");
             return;
         }
 
-        Coleta.Arquivo arqDeputados = Coleta.metadados(ctx, nome(), "deputados.html");
-        Prov provDeputados = Prov.de(FONTE_DEPUTADOS, SITE + "/Deputados/QuemSao", arqDeputados);
+        List<DeputadoBruto> deputados = new ArrayList<>(entradas.size());
+        for (HistoricoDeputados.Entrada e : entradas) {
+            deputados.add(new DeputadoBruto(e.id(), e.nome(), e.partido(), e.fotoUrl()));
+        }
 
         Path pastaBlocos = ctx.normalizado().resolve("alerj/blocos");
         try {
@@ -307,14 +328,17 @@ public final class Alerj implements Fonte {
         List<Pessoa> pessoas = new ArrayList<>();
         Map<String, List<Despesa>> despesasPorDeputado = despesasPorDeputado(ctx, deputados);
 
-        for (DeputadoBruto d : deputados) {
-            String id = d.id();
-            String nomeFormatado = formatarNome(d.nome());
-            String partido = d.partido();
-            String fotoUrl = d.fotoUrl();
+        for (HistoricoDeputados.Entrada ent : entradas) {
+            String id = ent.id();
+            String nomeFormatado = formatarNome(ent.nome());
+            String partido = ent.partido();
+            String fotoUrl = ent.fotoUrl();
 
             Coleta.Arquivo arqPerfil = Coleta.metadados(ctx, nome(), "perfis/" + id + ".html");
-            Prov provPerfil = arqPerfil != null ? Prov.de(FONTE_DETALHES, SITE + "/Deputados/PerfilDeputado/" + id + "?Legislatura=20", arqPerfil) : provDeputados;
+            Prov provMandato = ent.provOu(provDeputados);
+            Prov provPerfil = arqPerfil != null
+                    ? Prov.de(FONTE_DETALHES, SITE + "/Deputados/PerfilDeputado/" + id + "?Legislatura=20", arqPerfil)
+                    : provMandato;
 
             String htmlPerfil = null;
             if (arqPerfil != null && Files.exists(Coleta.caminho(ctx, arqPerfil))) {
@@ -331,24 +355,26 @@ public final class Alerj implements Fonte {
 
             List<Mandato> mandatos = new ArrayList<>();
 
-            if (temLegislaturaAnterior(htmlPerfil)) {
+            if (temLegislaturaAnterior(htmlPerfil) && provPerfil != null) {
                 mandatos.add(new Mandato("deputado_estadual", "estadual", UF, UF,
                         INICIO_LEG_12, FIM_LEG_12, "Encerrado", "Titular", LEGISLATURA_12, 2018,
                         "Deputado Estadual na 12ª Legislatura (2019–2023)", provPerfil));
             }
 
+            String situacao = ent.situacao("Em exercício");
             mandatos.add(new Mandato("deputado_estadual", "estadual", UF, UF,
-                    dataPosse, FIM_LEG_13, "Em exercício", "Titular", LEGISLATURA_13, 2022,
+                    dataPosse, FIM_LEG_13, situacao, ent.emExercicio() ? "Titular" : null, LEGISLATURA_13, 2022,
                     "Deputado Estadual na 13ª Legislatura (2023–2027)", provPerfil));
 
             mandatos.sort(Comparator.comparing(Mandato::inicio));
 
-            List<LinkOficial> links = List.of(
-                    new LinkOficial("Página na ALERJ", SITE + "/Deputados/PerfilDeputado/" + id + "?Legislatura=20", provPerfil));
+            List<LinkOficial> links = provPerfil != null
+                    ? List.of(new LinkOficial("Página na ALERJ", SITE + "/Deputados/PerfilDeputado/" + id + "?Legislatura=20", provPerfil))
+                    : List.of();
 
             Pessoa pessoa = new Pessoa(
                     "alerj", id, nomeFormatado, "deputado_estadual", "estadual", UF, UF,
-                    partido, fotoUrl, "Em exercício", true, links);
+                    partido, fotoUrl, situacao, ent.emExercicio(), links);
             pessoas.add(pessoa);
 
             var blocosNode = Json.SAIDA.createObjectNode();

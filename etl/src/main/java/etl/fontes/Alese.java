@@ -101,26 +101,50 @@ public final class Alese implements Fonte {
         return "alese";
     }
 
+    private static HistoricoDeputados.Snapshot paraSnapshot(DeputadoCard d) {
+        return HistoricoDeputados.Snapshot.de(String.valueOf(d.id()), d.nome(), d.partido(), d.fotoUrl(), d.link(), null);
+    }
+
+    private Prov provDeputados(Contexto ctx) {
+        Coleta.Arquivo arq = Coleta.metadados(ctx, nome(), "deputados.html");
+        return arq != null ? Prov.de(FONTE_DEPUTADOS, URL_DEPUTADOS, arq) : null;
+    }
+
+    private List<DeputadoCard> extrairDeputadosAtuais(Contexto ctx) {
+        Coleta.Arquivo arq = Coleta.metadados(ctx, nome(), "deputados.html");
+        if (arq == null || !Files.exists(Coleta.caminho(ctx, arq))) {
+            return List.of();
+        }
+        try {
+            return parseDeputados(Texto.lerArquivo(Coleta.caminho(ctx, arq)));
+        } catch (Exception e) {
+            System.err.println("alese: erro ao ler deputados.html: " + e.getMessage());
+            return List.of();
+        }
+    }
+
     @Override
     public void fetch(Contexto ctx, Coleta coleta) throws Exception {
         System.out.println("alese: coleta iniciada");
+        HistoricoDeputados.registrar(ctx, nome(), extrairDeputadosAtuais(ctx), provDeputados(ctx), Alese::paraSnapshot);
 
         // 1. Lista de deputados e Mesa Diretora
         Coleta.Arquivo arqDeputados = coleta.obter(URL_DEPUTADOS, "deputados.html", HTML, Politica.SEMANAL);
         coleta.obterFormularioOpcional(URL_MESA, Map.of("cmbNumeroLegislatura", "20"), "mesa_diretora.html", HTML, Politica.SEMANAL);
 
-        if (arqDeputados == null || !Files.exists(Coleta.caminho(ctx, arqDeputados))) {
-            return;
-        }
-
-        String htmlDeputados = Texto.lerArquivo(Coleta.caminho(ctx, arqDeputados));
-        List<DeputadoCard> deputados = parseDeputados(htmlDeputados);
+        Prov provDep = provDeputados(ctx);
+        List<DeputadoCard> ativos = arqDeputados != null && Files.exists(Coleta.caminho(ctx, arqDeputados))
+                ? parseDeputados(Texto.lerArquivo(Coleta.caminho(ctx, arqDeputados)))
+                : List.of();
+        List<HistoricoDeputados.Entrada> entradas = HistoricoDeputados.mesclar(
+                ctx, nome(), ativos, provDep, Alese::paraSnapshot);
 
         Map<String, LinkProducao> linksProducao = new LinkedHashMap<>();
-        for (DeputadoCard dep : deputados) {
-            String urlParl = URL_PARLAMENTAR + dep.id();
-            Coleta.Arquivo arqParl = coleta.obterOuVazio(urlParl, "parlamentares/" + dep.id() + ".html", HTML, Politica.SEMANAL);
-            if (arqParl != null && arqParl.bytes() > 0 && Files.exists(Coleta.caminho(ctx, arqParl))) {
+        for (HistoricoDeputados.Entrada ent : entradas) {
+            String urlParl = URL_PARLAMENTAR + ent.id();
+            Coleta.Arquivo arqParl = coleta.obterOuVazio(urlParl, "parlamentares/" + ent.id() + ".html", HTML,
+                    ent.emExercicio() ? Politica.SEMANAL : Politica.SE_AUSENTE);
+            if (ent.emExercicio() && arqParl != null && arqParl.bytes() > 0 && Files.exists(Coleta.caminho(ctx, arqParl))) {
                 String htmlParl = Texto.lerArquivo(Coleta.caminho(ctx, arqParl));
                 for (LinkProducao link : parseLinksProducao(htmlParl)) {
                     linksProducao.putIfAbsent(link.autorId() + ":" + link.tipoId(), link);
@@ -506,13 +530,13 @@ public final class Alese implements Fonte {
 
     @Override
     public void normalize(Contexto ctx) {
-        Coleta.Arquivo arqDeputados = Coleta.metadados(ctx, nome(), "deputados.html");
-        if (arqDeputados == null || !Files.exists(Coleta.caminho(ctx, arqDeputados))) {
+        Prov provDeputados = provDeputados(ctx);
+        List<HistoricoDeputados.Entrada> entradas = HistoricoDeputados.mesclar(
+                ctx, nome(), extrairDeputadosAtuais(ctx), provDeputados, Alese::paraSnapshot);
+        if (entradas.isEmpty()) {
             System.out.println("alese: deputados.html não encontrado");
             return;
         }
-
-        Prov provDeputados = Prov.de(FONTE_DEPUTADOS, URL_DEPUTADOS, arqDeputados);
 
         Path pastaBlocos = ctx.normalizado().resolve("alese/blocos");
         try {
@@ -521,14 +545,6 @@ public final class Alese implements Fonte {
             throw new RuntimeException("alese: erro ao criar pasta de blocos", e);
         }
 
-        String htmlDeputados;
-        try {
-            htmlDeputados = Texto.lerArquivo(Coleta.caminho(ctx, arqDeputados));
-        } catch (Exception e) {
-            throw new RuntimeException("alese: erro ao ler deputados.html", e);
-        }
-
-        List<DeputadoCard> deputados = parseDeputados(htmlDeputados);
         List<MesaMembro> mesaMembros = carregarMesa(ctx);
         Map<String, String> cargoMesaPorNome = new HashMap<>();
         for (MesaMembro mm : mesaMembros) {
@@ -541,16 +557,19 @@ public final class Alese implements Fonte {
         List<Pessoa> pessoas = new ArrayList<>();
         Map<String, String> nomesCivisPorId = new HashMap<>();
 
-        for (DeputadoCard d : deputados) {
-            int id = d.id();
-            String idStr = String.valueOf(id);
+        for (HistoricoDeputados.Entrada ent : entradas) {
+            int id = Integer.parseInt(ent.id());
+            String idStr = ent.id();
+            String urlDetalhe = URL_PARLAMENTAR + id;
+            DeputadoCard d = new DeputadoCard(id, ent.nome(), ent.partido(), ent.fotoUrl(),
+                    ent.extra() != null ? ent.extra() : urlDetalhe);
 
             Coleta.Arquivo arqDetalhe = Coleta.metadados(ctx, nome(), "parlamentares/" + id + ".html");
-            String urlDetalhe = URL_PARLAMENTAR + id;
+            Prov provMandato = ent.provOu(provDeputados);
             // Sem a ficha no cache (coleta que não alcançou o sistema legislativo), o link cita a lista de deputados.
-            Prov provParl = arqDetalhe != null ? Prov.de(FONTE_PARLAMENTARES, urlDetalhe, arqDetalhe) : provDeputados;
+            Prov provParl = arqDetalhe != null ? Prov.de(FONTE_PARLAMENTARES, urlDetalhe, arqDetalhe) : provMandato;
 
-            String nomeCivil = d.nome();
+            String nomeCivil = ent.nome();
 
             if (arqDetalhe != null && Files.exists(Coleta.caminho(ctx, arqDetalhe))) {
                 try {
@@ -568,16 +587,18 @@ public final class Alese implements Fonte {
                 nomesCivisPorId.put(idStr, nomeCivil);
             }
 
-            List<LinkOficial> links = List.of(new LinkOficial("Ficha na ALESE", urlDetalhe, provParl));
-            String situacao = "Em exercício";
+            List<LinkOficial> links = provParl != null
+                    ? List.of(new LinkOficial("Ficha na ALESE", urlDetalhe, provParl))
+                    : List.of();
+            String situacao = ent.situacao("Em exercício");
 
-            Pessoa pessoa = new Pessoa("alese", idStr, d.nome(), "deputado_estadual", "estadual", UF, UF,
-                    d.partido(), d.fotoUrl(), situacao, true, links);
+            Pessoa pessoa = new Pessoa("alese", idStr, ent.nome(), "deputado_estadual", "estadual", UF, UF,
+                    ent.partido(), ent.fotoUrl(), situacao, ent.emExercicio(), links);
             pessoas.add(pessoa);
 
             List<Mandato> mandatos = List.of(new Mandato("deputado_estadual", "estadual", UF, UF,
-                    INICIO_LEG_20, FIM_LEG_20, situacao, "Titular", NUMERO_LEGISLATURA, 2022,
-                    "Deputado Estadual na 20ª Legislatura (2023–2027)", provDeputados));
+                    INICIO_LEG_20, FIM_LEG_20, situacao, ent.emExercicio() ? "Titular" : null, NUMERO_LEGISLATURA, 2022,
+                    "Deputado Estadual na 20ª Legislatura (2023–2027)", provMandato));
 
             List<OrgaoOuFrente> orgaos = new ArrayList<>();
             String papelMesa = cargoMesaPorNome.get(Texto.normalizarNome(d.nome()));

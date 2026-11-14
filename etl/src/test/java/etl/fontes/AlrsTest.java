@@ -1,6 +1,7 @@
 package etl.fontes;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -8,7 +9,9 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -299,6 +302,37 @@ class AlrsTest {
         assertEquals("Membro", c2.papel());
         assertEquals(Alrs.INICIO_LEG_56, c2.inicio());
         assertEquals(Alrs.FIM_LEG_56, c2.fim());
+    }
+
+    @Test
+    void normalizePreservaDeputadoQueSaiuDaListaAtiva(@TempDir Path tempDir) throws Exception {
+        Contexto ctx = new Contexto(tempDir, tempDir.resolve("data"), null, null, Instant.parse("2026-11-07T00:00:00Z"), null);
+        Path rawAlrs = ctx.raw().resolve("alrs");
+        Files.createDirectories(rawAlrs);
+
+        String json1 = """
+                {"lista": [{"idDeputado": 2144, "deputado": "ADÃO PRETTO FILHO", "partido": "PT", "foto": "/foto1.jpg"}]}
+                """;
+        Files.writeString(rawAlrs.resolve("deputados.json"), json1);
+        gravarMetadado(rawAlrs, "deputados.json", "https://ww4.al.rs.gov.br:5000/listarDestaqueDeputados");
+
+        Alrs alrs = new Alrs();
+        alrs.normalize(ctx);
+
+        String json2 = """
+                {"lista": [{"idDeputado": 3001, "deputado": "SUPLENTE NOVO", "partido": "MDB", "foto": "/foto2.jpg"}]}
+                """;
+        Files.writeString(rawAlrs.resolve("deputados.json"), json2);
+        alrs.normalize(ctx);
+
+        JsonNode pessoas = Json.ler(ctx.normalizado().resolve("alrs/pessoas.json"));
+        assertEquals(2, pessoas.size());
+        Map<String, JsonNode> porId = new HashMap<>();
+        pessoas.forEach(p -> porId.put(p.get("id_fonte").stringValue(), p));
+
+        assertFalse(porId.get("2144").get("em_exercicio").booleanValue());
+        assertEquals("Fora de exercício", porId.get("2144").get("situacao").stringValue());
+        assertTrue(porId.get("3001").get("em_exercicio").booleanValue());
     }
 
     private static void gravarMetadado(Path pastaFonte, String relativo, String url) throws IOException {

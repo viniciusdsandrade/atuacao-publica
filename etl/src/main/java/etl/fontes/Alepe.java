@@ -145,15 +145,29 @@ public final class Alepe implements Fonte {
     public record DeputadoBruto(String slug, String nome, String partido, String fotoUrl) {
     }
 
+    private static HistoricoDeputados.Snapshot paraSnapshot(DeputadoBruto d) {
+        return HistoricoDeputados.Snapshot.de(d.slug(), d.nome(), d.partido(), d.fotoUrl(), null, null);
+    }
+
+    private Prov provDeputados(Contexto ctx) {
+        Coleta.Arquivo arq = Coleta.metadados(ctx, nome(), "deputados.html");
+        return arq != null ? Prov.de(FONTE_DEPUTADOS, URL_DEPUTADOS, arq) : null;
+    }
+
     @Override
     public void fetch(Contexto ctx, Coleta coleta) throws Exception {
         System.out.println("alepe: coleta iniciada");
+        HistoricoDeputados.registrar(ctx, nome(), extrairDeputados(ctx), provDeputados(ctx), Alepe::paraSnapshot);
         coleta.obter(URL_DEPUTADOS, "deputados.html", "text/html", Politica.SEMANAL);
 
-        List<DeputadoBruto> deputados = extrairDeputados(ctx);
-        for (DeputadoBruto d : deputados) {
-            String urlPerfil = SITE + "/parlamentar/" + d.slug() + "/";
-            coleta.obterOuVazio(urlPerfil, "perfis/" + d.slug() + ".html", "text/html", Politica.SEMANAL);
+        List<HistoricoDeputados.Entrada> entradas = HistoricoDeputados.mesclar(
+                ctx, nome(), extrairDeputados(ctx), provDeputados(ctx), Alepe::paraSnapshot);
+        List<DeputadoBruto> todos = new ArrayList<>(entradas.size());
+        for (HistoricoDeputados.Entrada ent : entradas) {
+            todos.add(new DeputadoBruto(ent.id(), ent.nome(), ent.partido(), ent.fotoUrl()));
+            String urlPerfil = SITE + "/parlamentar/" + ent.id() + "/";
+            coleta.obterOuVazio(urlPerfil, "perfis/" + ent.id() + ".html", "text/html",
+                    ent.emExercicio() ? Politica.SEMANAL : Politica.SE_AUSENTE);
         }
 
         List<String> caminhosComissoes = extrairCaminhosComissoes(ctx);
@@ -171,7 +185,8 @@ public final class Alepe implements Fonte {
             }
         }
 
-        coletarVerbas(ctx, coleta, deputados);
+        List<DeputadoBruto> ativos = extrairDeputados(ctx);
+        coletarVerbas(ctx, coleta, ativos);
     }
 
     private static String caminhoDaLista(ListaDeProposicoes lista, int ano) {
@@ -295,14 +310,18 @@ public final class Alepe implements Fonte {
 
     @Override
     public void normalize(Contexto ctx) {
-        List<DeputadoBruto> deputados = extrairDeputados(ctx);
-        if (deputados.isEmpty()) {
+        Prov provDeputados = provDeputados(ctx);
+        List<HistoricoDeputados.Entrada> entradas = HistoricoDeputados.mesclar(
+                ctx, nome(), extrairDeputados(ctx), provDeputados, Alepe::paraSnapshot);
+        if (entradas.isEmpty()) {
             System.out.println("alepe: nenhum deputado para normalizar");
             return;
         }
 
-        Coleta.Arquivo arqDeputados = Coleta.metadados(ctx, nome(), "deputados.html");
-        Prov provDeputados = Prov.de(FONTE_DEPUTADOS, URL_DEPUTADOS, arqDeputados);
+        List<DeputadoBruto> deputados = new ArrayList<>(entradas.size());
+        for (HistoricoDeputados.Entrada e : entradas) {
+            deputados.add(new DeputadoBruto(e.id(), e.nome(), e.partido(), e.fotoUrl()));
+        }
 
         Path pastaBlocos = ctx.normalizado().resolve("alepe/blocos");
         try {
@@ -317,19 +336,24 @@ public final class Alepe implements Fonte {
 
         List<Pessoa> pessoas = new ArrayList<>();
 
-        for (DeputadoBruto d : deputados) {
-            String slug = d.slug();
+        for (HistoricoDeputados.Entrada ent : entradas) {
+            String slug = ent.id();
             String id = slug;
-            String nome = formatarNome(d.nome());
-            String partido = normalizarPartido(d.partido());
-            String fotoUrl = normalizarUrlFoto(d.fotoUrl());
+            String nome = formatarNome(ent.nome());
+            String partido = normalizarPartido(ent.partido());
+            String fotoUrl = normalizarUrlFoto(ent.fotoUrl());
             String nomeCivil = null;
 
             Coleta.Arquivo arqPerfil = Coleta.metadados(ctx, nome(), "perfis/" + slug + ".html");
-            Prov provPerfil = Prov.de(FONTE_DETALHES, SITE + "/parlamentar/" + slug + "/", arqPerfil);
+            Prov provMandato = ent.provOu(provDeputados);
+            Prov provPerfil = arqPerfil != null
+                    ? Prov.de(FONTE_DETALHES, SITE + "/parlamentar/" + slug + "/", arqPerfil)
+                    : provMandato;
 
             List<LinkOficial> links = new ArrayList<>();
-            links.add(new LinkOficial("Página na ALEPE", SITE + "/parlamentar/" + slug + "/", provPerfil));
+            if (provPerfil != null) {
+                links.add(new LinkOficial("Página na ALEPE", SITE + "/parlamentar/" + slug + "/", provPerfil));
+            }
 
             if (arqPerfil != null && Files.exists(Coleta.caminho(ctx, arqPerfil))) {
                 try {
@@ -351,12 +375,11 @@ public final class Alepe implements Fonte {
                         }
                     }
 
-
                     Matcher mRedes = REDES_SOCIAIS_PATTERN.matcher(htmlPerfil);
                     Set<String> redesVistas = new HashSet<>();
                     while (mRedes.find()) {
                         String urlRede = mRedes.group(1).trim();
-                        if (redeValida(urlRede) && redesVistas.add(urlRede)) {
+                        if (redeValida(urlRede) && redesVistas.add(urlRede) && provPerfil != null) {
                             links.add(new LinkOficial("Rede social", urlRede, provPerfil));
                         }
                     }
@@ -365,13 +388,14 @@ public final class Alepe implements Fonte {
                 }
             }
 
+            String situacao = ent.situacao("Em exercício");
             Pessoa pessoa = new Pessoa("alepe", id, nome, "deputado_estadual", "estadual", UF, UF,
-                    partido, fotoUrl, "Em exercício", true, links);
+                    partido, fotoUrl, situacao, ent.emExercicio(), links);
             pessoas.add(pessoa);
 
             List<Mandato> mandatos = List.of(new Mandato("deputado_estadual", "estadual", UF, UF,
-                    INICIO_LEG_20, FIM_LEG_20, "Em exercício", "Titular", LEGISLATURA_20, 2022,
-                    "Deputado Estadual na 20ª Legislatura (2023–2027)", provDeputados));
+                    INICIO_LEG_20, FIM_LEG_20, situacao, ent.emExercicio() ? "Titular" : null, LEGISLATURA_20, 2022,
+                    "Deputado Estadual na 20ª Legislatura (2023–2027)", provMandato));
 
             List<OrgaoOuFrente> orgaos = comissoesPorDeputado.getOrDefault(slug, List.of());
 

@@ -114,23 +114,47 @@ public final class Alap implements Fonte {
         return "alap";
     }
 
+    private static HistoricoDeputados.Snapshot paraSnapshot(DeputadoCard d) {
+        return HistoricoDeputados.Snapshot.de(d.id(), d.nomeParlamentar(), d.partido(), d.fotoUrl(), d.nomeCompleto(), null);
+    }
+
+    private Prov provLegislatura(Contexto ctx) {
+        Coleta.Arquivo arq = Coleta.metadados(ctx, nome(), "legislatura.html");
+        return arq != null ? Prov.de(FONTE_DEPUTADOS, URL_LEGISLATURA, arq) : null;
+    }
+
+    private List<DeputadoCard> extrairDeputadosAtuais(Contexto ctx) {
+        Coleta.Arquivo arq = Coleta.metadados(ctx, nome(), "legislatura.html");
+        if (arq == null || !Files.exists(Coleta.caminho(ctx, arq))) {
+            return List.of();
+        }
+        try {
+            return parseDeputados(Texto.lerArquivo(Coleta.caminho(ctx, arq)));
+        } catch (Exception e) {
+            System.err.println("alap: erro ao ler legislatura.html: " + e.getMessage());
+            return List.of();
+        }
+    }
+
     @Override
     public void fetch(Contexto ctx, Coleta coleta) throws Exception {
         System.out.println("alap: coleta iniciada");
+        HistoricoDeputados.registrar(ctx, nome(), extrairDeputadosAtuais(ctx), provLegislatura(ctx), Alap::paraSnapshot);
 
         Coleta.Arquivo arqLeg = coleta.obter(URL_LEGISLATURA, "legislatura.html", HTML, Politica.SEMANAL);
         coleta.obterOuVazio(URL_MESA_DIRETORA, "mesa_diretora.html", HTML, Politica.SEMANAL);
 
-        if (arqLeg == null || !Files.exists(Coleta.caminho(ctx, arqLeg))) {
-            return;
-        }
+        Prov provLeg = provLegislatura(ctx);
+        List<DeputadoCard> ativos = arqLeg != null && Files.exists(Coleta.caminho(ctx, arqLeg))
+                ? parseDeputados(Texto.lerArquivo(Coleta.caminho(ctx, arqLeg)))
+                : List.of();
+        List<HistoricoDeputados.Entrada> entradas = HistoricoDeputados.mesclar(
+                ctx, nome(), ativos, provLeg, Alap::paraSnapshot);
 
-        String htmlLeg = Texto.lerArquivo(Coleta.caminho(ctx, arqLeg));
-        List<DeputadoCard> deputados = parseDeputados(htmlLeg);
-
-        for (DeputadoCard dep : deputados) {
-            String urlParl = URL_PARLAMENTAR + dep.id();
-            coleta.obterOuVazio(urlParl, "parlamentares/" + dep.id() + ".html", HTML, Politica.SEMANAL);
+        for (HistoricoDeputados.Entrada ent : entradas) {
+            String urlParl = URL_PARLAMENTAR + ent.id();
+            coleta.obterOuVazio(urlParl, "parlamentares/" + ent.id() + ".html", HTML,
+                    ent.emExercicio() ? Politica.SEMANAL : Politica.SE_AUSENTE);
         }
 
         coletarCeap(ctx, coleta);
@@ -227,12 +251,18 @@ public final class Alap implements Fonte {
     @Override
     public void normalize(Contexto ctx) {
         Coleta.Arquivo arqLeg = Coleta.metadados(ctx, nome(), "legislatura.html");
-        if (arqLeg == null || !Files.exists(Coleta.caminho(ctx, arqLeg))) {
+        Prov provLeg = arqLeg != null ? Prov.de(FONTE_DEPUTADOS, URL_LEGISLATURA, arqLeg) : null;
+        List<HistoricoDeputados.Entrada> entradas = HistoricoDeputados.mesclar(
+                ctx, nome(), extrairDeputadosAtuais(ctx), provLeg, Alap::paraSnapshot);
+        if (entradas.isEmpty()) {
             System.out.println("alap: legislatura.html não encontrado");
             return;
         }
 
-        Prov provLeg = Prov.de(FONTE_DEPUTADOS, URL_LEGISLATURA, arqLeg);
+        List<DeputadoCard> deputados = new ArrayList<>(entradas.size());
+        for (HistoricoDeputados.Entrada e : entradas) {
+            deputados.add(new DeputadoCard(e.id(), e.nome(), e.extra(), e.partido(), e.fotoUrl(), URL_PARLAMENTAR + e.id()));
+        }
 
         Path pastaBlocos = ctx.normalizado().resolve("alap/blocos");
         try {
@@ -241,19 +271,12 @@ public final class Alap implements Fonte {
             throw new RuntimeException("alap: erro ao criar pasta de blocos", e);
         }
 
-        String htmlLeg;
-        try {
-            htmlLeg = Texto.lerArquivo(Coleta.caminho(ctx, arqLeg));
-        } catch (Exception e) {
-            throw new RuntimeException("alap: erro ao ler legislatura.html", e);
-        }
-
-        List<DeputadoCard> deputados = parseDeputados(htmlLeg);
-
         // Mesa Diretora
         Map<String, String> cargoMesaPorId = new HashMap<>();
         Coleta.Arquivo arqMesa = Coleta.metadados(ctx, nome(), "mesa_diretora.html");
-        Prov provMesa = Prov.de(FONTE_MESA_DIRETORA, URL_MESA_DIRETORA, arqMesa != null ? arqMesa : arqLeg);
+        Prov provMesa = arqMesa != null || arqLeg != null
+                ? Prov.de(FONTE_MESA_DIRETORA, URL_MESA_DIRETORA, arqMesa != null ? arqMesa : arqLeg)
+                : null;
         if (arqMesa != null && Files.exists(Coleta.caminho(ctx, arqMesa))) {
             try {
                 String htmlMesa = Texto.lerArquivo(Coleta.caminho(ctx, arqMesa));
@@ -269,30 +292,33 @@ public final class Alap implements Fonte {
         Map<String, String> nomesCivisPorId = new HashMap<>();
         ResultadoCeap ceap = normalizarCeap(ctx, deputados);
 
-        for (DeputadoCard d : deputados) {
-            String idStr = d.id();
+        for (HistoricoDeputados.Entrada ent : entradas) {
+            String idStr = ent.id();
             String urlFicha = URL_PARLAMENTAR + idStr;
 
             Coleta.Arquivo arqParl = Coleta.metadados(ctx, nome(), "parlamentares/" + idStr + ".html");
-            Prov provParl = Prov.de(FONTE_PARLAMENTARES, urlFicha, arqParl != null ? arqParl : arqLeg);
+            Prov provMandato = ent.provOu(provLeg);
+            Prov provParl = arqParl != null ? Prov.de(FONTE_PARLAMENTARES, urlFicha, arqParl) : provMandato;
 
-            String nomeCivil = d.nomeCompleto() != null && !d.nomeCompleto().isBlank() ? d.nomeCompleto() : d.nomeParlamentar();
+            String nomeCivil = ent.extra() != null && !ent.extra().isBlank() ? ent.extra() : ent.nome();
             nomesCivisPorId.put(idStr, nomeCivil);
 
-            List<LinkOficial> links = List.of(new LinkOficial("Ficha na ALAP", urlFicha, provParl));
-            String situacao = "Em exercício";
+            List<LinkOficial> links = provParl != null
+                    ? List.of(new LinkOficial("Ficha na ALAP", urlFicha, provParl))
+                    : List.of();
+            String situacao = ent.situacao("Em exercício");
 
-            Pessoa pessoa = new Pessoa("alap", idStr, d.nomeParlamentar(), "deputado_estadual", "estadual", UF, UF,
-                    d.partido(), d.fotoUrl(), situacao, true, links);
+            Pessoa pessoa = new Pessoa("alap", idStr, ent.nome(), "deputado_estadual", "estadual", UF, UF,
+                    ent.partido(), ent.fotoUrl(), situacao, ent.emExercicio(), links);
             pessoas.add(pessoa);
 
             List<Mandato> mandatos = List.of(new Mandato("deputado_estadual", "estadual", UF, UF,
-                    INICIO_LEG_9, FIM_LEG_9, situacao, "Titular", NUMERO_LEGISLATURA, 2022,
-                    "Deputado Estadual na 9ª Legislatura (2023–2027)", provLeg));
+                    INICIO_LEG_9, FIM_LEG_9, situacao, ent.emExercicio() ? "Titular" : null, NUMERO_LEGISLATURA, 2022,
+                    "Deputado Estadual na 9ª Legislatura (2023–2027)", provMandato));
 
             List<OrgaoOuFrente> orgaos = new ArrayList<>();
             String papelMesa = cargoMesaPorId.get(idStr);
-            if (papelMesa != null) {
+            if (papelMesa != null && provMesa != null) {
                 orgaos.add(new OrgaoOuFrente("orgao", "Mesa Diretora", null, papelMesa,
                         INICIO_LEG_9, FIM_LEG_9, provMesa));
             }

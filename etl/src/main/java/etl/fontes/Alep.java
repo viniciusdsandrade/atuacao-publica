@@ -91,16 +91,28 @@ public final class Alep implements Fonte {
     public record DeputadoBruto(String slug, String nome, String partido, String fotoUrl) {
     }
 
+    private static HistoricoDeputados.Snapshot paraSnapshot(DeputadoBruto d) {
+        return HistoricoDeputados.Snapshot.de(d.slug(), d.nome(), d.partido(), d.fotoUrl(), null, null);
+    }
+
+    private Prov provConheca(Contexto ctx) {
+        Coleta.Arquivo arq = Coleta.metadados(ctx, "alep", "deputados/conheca.html");
+        return arq != null ? Prov.de(FONTE_DEPUTADOS, SITE + "/deputados/conheca", arq) : null;
+    }
+
     @Override
     public void fetch(Contexto ctx, Coleta coleta) throws Exception {
+        HistoricoDeputados.registrar(ctx, nome(), extrairDeputados(ctx), provConheca(ctx), Alep::paraSnapshot);
         // Baixa a página principal com a listagem de todos os deputados
         coleta.obter(SITE + "/deputados/conheca", "deputados/conheca.html", "text/html", Politica.SEMANAL);
 
-        // Extrai a lista de deputados e baixa os perfis individuais
-        List<DeputadoBruto> deputados = extrairDeputados(ctx);
-        for (DeputadoBruto dep : deputados) {
-            coleta.obterOuVazio(SITE + "/deputados/perfil/" + dep.slug(),
-                    "perfil/" + dep.slug() + ".html", "text/html", Politica.SEMANAL);
+        // Consolida o histórico e baixa os perfis individuais (apenas se ausentes para ex-deputados)
+        List<HistoricoDeputados.Entrada> entradas = HistoricoDeputados.mesclar(
+                ctx, nome(), extrairDeputados(ctx), provConheca(ctx), Alep::paraSnapshot);
+        for (HistoricoDeputados.Entrada ent : entradas) {
+            coleta.obterOuVazio(SITE + "/deputados/perfil/" + ent.id(),
+                    "perfil/" + ent.id() + ".html", "text/html",
+                    ent.emExercicio() ? Politica.SEMANAL : Politica.SE_AUSENTE);
         }
 
         // Baixa a página de comissões permanentes e temporárias
@@ -383,14 +395,19 @@ public final class Alep implements Fonte {
 
     @Override
     public void normalize(Contexto ctx) throws Exception {
-        List<DeputadoBruto> deputados = extrairDeputados(ctx);
-        if (deputados.isEmpty()) {
+        Coleta.Arquivo arqConheca = Coleta.metadados(ctx, "alep", "deputados/conheca.html");
+        Prov provConheca = arqConheca != null ? Prov.de(FONTE_DEPUTADOS, SITE + "/deputados/conheca", arqConheca) : null;
+        List<HistoricoDeputados.Entrada> entradas = HistoricoDeputados.mesclar(
+                ctx, nome(), extrairDeputados(ctx), provConheca, Alep::paraSnapshot);
+        if (entradas.isEmpty()) {
             System.out.println("alep: nenhum deputado identificado para normalização");
             return;
         }
 
-        Coleta.Arquivo arqConheca = Coleta.metadados(ctx, "alep", "deputados/conheca.html");
-        Prov provConheca = Prov.de(FONTE_DEPUTADOS, SITE + "/deputados/conheca", arqConheca);
+        List<DeputadoBruto> deputados = new ArrayList<>(entradas.size());
+        for (HistoricoDeputados.Entrada e : entradas) {
+            deputados.add(new DeputadoBruto(e.id(), e.nome(), e.partido(), e.fotoUrl()));
+        }
 
         Coleta.Arquivo arqComissoes = Coleta.metadados(ctx, "alep", "comissoes.html");
         Map<String, List<OrgaoOuFrente>> comissoesPorSlug = extrairComissoes(ctx, arqComissoes);
@@ -399,30 +416,37 @@ public final class Alep implements Fonte {
         Map<String, Acumulado> acumulados = new LinkedHashMap<>();
         Map<String, List<Proposicao>> proposicoesPorSlug = proposicoesPorSlug(ctx, deputados);
 
-        for (DeputadoBruto dep : deputados) {
-            String slug = dep.slug();
+        for (HistoricoDeputados.Entrada ent : entradas) {
+            String slug = ent.id();
             Acumulado ac = new Acumulado();
             acumulados.put(slug, ac);
 
             Coleta.Arquivo arqPerfil = Coleta.metadados(ctx, "alep", "perfil/" + slug + ".html");
-            Prov provPerfil = Prov.de(FONTE_DETALHES, SITE + "/deputados/perfil/" + slug,
-                    arqPerfil != null && arqPerfil.bytes() > 0 ? arqPerfil : arqConheca);
+            Prov provMandato = ent.provOu(provConheca);
+            Prov provPerfil = arqPerfil != null && arqPerfil.bytes() > 0
+                    ? Prov.de(FONTE_DETALHES, SITE + "/deputados/perfil/" + slug, arqPerfil)
+                    : provMandato;
 
-            String nomeFormatado = formatarNome(dep.nome());
-            String fotoUrl = dep.fotoUrl();
+            String nomeFormatado = formatarNome(ent.nome());
+            String fotoUrl = ent.fotoUrl();
 
-            List<LinkOficial> links = List.of(
-                    new LinkOficial("Página na ALEP", SITE + "/deputados/perfil/" + slug, provPerfil)
-            );
+            List<LinkOficial> links = provPerfil != null
+                    ? List.of(new LinkOficial("Página na ALEP", SITE + "/deputados/perfil/" + slug, provPerfil))
+                    : List.of();
+            String situacao = ent.situacao("em exercício");
 
             pessoas.add(new Pessoa("alep", slug, nomeFormatado, "deputado_estadual", "estadual", UF, UF,
-                    dep.partido(), fotoUrl, "em exercício", true, links));
+                    ent.partido(), fotoUrl, situacao, ent.emExercicio(), links));
 
             // Mandato da 20ª legislatura
             ac.mandatos.add(new Mandato("deputado_estadual", "estadual", UF, UF, INICIO_LEG_20, FIM_LEG_20,
-                    "em exercício", "Efetivo", LEGISLATURA_20, 2022, null, provPerfil));
-            ac.fontes.computeIfAbsent("mandatos", k -> new ArrayList<>())
-                    .add(FonteUsada.de(FONTE_DEPUTADOS, arqConheca));
+                    situacao, ent.emExercicio() ? "Efetivo" : null, LEGISLATURA_20, 2022, null, provPerfil));
+            FonteUsada fonteMandato = provMandato != null
+                    ? ent.fonteUsada(provMandato)
+                    : FonteUsada.de(FONTE_DEPUTADOS, arqConheca);
+            if (fonteMandato != null) {
+                ac.fontes.computeIfAbsent("mandatos", k -> new ArrayList<>()).add(fonteMandato);
+            }
 
             // Comissões
             List<OrgaoOuFrente> comissoes = comissoesPorSlug.getOrDefault(slug, List.of());

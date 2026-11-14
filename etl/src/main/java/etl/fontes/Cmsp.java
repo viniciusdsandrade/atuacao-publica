@@ -68,9 +68,20 @@ public final class Cmsp implements Fonte {
         return "cmsp";
     }
 
+    private static HistoricoDeputados.Snapshot paraSnapshot(Vereador v) {
+        return HistoricoDeputados.Snapshot.de(v.chave(), v.nome(), v.partido(), null,
+                v.inicio() + "|" + (v.fim() == null ? "" : v.fim()) + "|" + v.legislatura(), null);
+    }
+
+    private Prov provVereadores(Contexto ctx) {
+        Coleta.Arquivo arq = Coleta.metadados(ctx, nome(), "vereadores.json");
+        return arq != null ? Prov.de(FONTE_API, URL_VEREADORES, arq) : null;
+    }
+
     @Override
     public void fetch(Contexto ctx, Coleta coleta) throws Exception {
         System.out.println("cmsp: coleta iniciada");
+        HistoricoDeputados.registrar(ctx, nome(), emExercicio(ctx), provVereadores(ctx), Cmsp::paraSnapshot);
         coleta.obter(URL_VEREADORES, "vereadores.json", "application/json", Politica.SEMANAL);
         coleta.obter(URL_GABINETES, "gabinetes.json", "application/json", Politica.SEMANAL);
         coleta.obterOuVazio(URL_COMISSOES, "comissoes.json", "application/json", Politica.SEMANAL);
@@ -80,13 +91,16 @@ public final class Cmsp implements Fonte {
             coleta.obterOpcional(URL_PROJETOS_POR_ANO + "?Ano=" + ano, "projetos/" + ano + ".json", "application/json",
                     Politica.porAnoSemanal(ano, ctx.hoje()));
         }
-        for (Vereador v : emExercicio(ctx)) {
-            coleta.obterOpcional(URL_LEIS + "?Codigo=" + v.chave(), arquivoDeAutoria(v.chave(), "leis"), "application/json",
-                    Politica.SEMANAL);
-            coleta.obterOpcional(URL_VETADOS + "?Codigo=" + v.chave(), arquivoDeAutoria(v.chave(), "vetados"),
-                    "application/json", Politica.SEMANAL);
-            coleta.obterOpcional(URL_TRAMITACAO + "?Codigo=" + v.chave(), arquivoDeAutoria(v.chave(), "tramitacao"),
-                    "application/json", Politica.SEMANAL);
+        List<HistoricoDeputados.Entrada> entradas = HistoricoDeputados.mesclar(
+                ctx, nome(), emExercicio(ctx), provVereadores(ctx), Cmsp::paraSnapshot);
+        for (HistoricoDeputados.Entrada ent : entradas) {
+            Politica pol = ent.emExercicio() ? Politica.SEMANAL : Politica.SE_AUSENTE;
+            coleta.obterOpcional(URL_LEIS + "?Codigo=" + ent.id(), arquivoDeAutoria(ent.id(), "leis"), "application/json",
+                    pol);
+            coleta.obterOpcional(URL_VETADOS + "?Codigo=" + ent.id(), arquivoDeAutoria(ent.id(), "vetados"),
+                    "application/json", pol);
+            coleta.obterOpcional(URL_TRAMITACAO + "?Codigo=" + ent.id(), arquivoDeAutoria(ent.id(), "tramitacao"),
+                    "application/json", pol);
         }
     }
 
@@ -100,8 +114,11 @@ public final class Cmsp implements Fonte {
         }
         JsonNode vereadores = Json.ler(Coleta.caminho(ctx, arqVereadores));
         JsonNode gabinetes = Json.ler(Coleta.caminho(ctx, arqGabinetes));
-        List<Vereador> emExercicio = emExercicio(vereadores, gabinetes, ctx.hoje());
-        if (emExercicio.isEmpty()) {
+        List<Vereador> ativos = emExercicio(vereadores, gabinetes, ctx.hoje());
+        Prov provVereadores = Prov.de(FONTE_API, URL_VEREADORES, arqVereadores);
+        List<HistoricoDeputados.Entrada> entradas = HistoricoDeputados.mesclar(
+                ctx, nome(), ativos, provVereadores, Cmsp::paraSnapshot);
+        if (entradas.isEmpty()) {
             System.out.println("cmsp: nenhum vereador em exercício para normalizar");
             return;
         }
@@ -110,7 +127,6 @@ public final class Cmsp implements Fonte {
         Map<Integer, String> siglas = existe(ctx, arqComissoes) ? siglasDasComissoes(Json.ler(Coleta.caminho(ctx, arqComissoes))) : Map.of();
         Coleta.Arquivo arqMembros = Coleta.metadados(ctx, nome(), "membros.html");
 
-        Prov provVereadores = Prov.de(FONTE_API, URL_VEREADORES, arqVereadores);
         List<LinkOficial> links = existe(ctx, arqMembros)
                 ? List.of(new LinkOficial("Vereadores no portal da Câmara Municipal de São Paulo", URL_MEMBROS,
                         Prov.de(FONTE_PORTAL, URL_MEMBROS, arqMembros)))
@@ -123,12 +139,22 @@ public final class Cmsp implements Fonte {
             throw new RuntimeException("cmsp: erro ao criar pasta de blocos", e);
         }
 
+        Map<String, Vereador> ativosPorChave = new HashMap<>();
+        for (Vereador v : ativos) {
+            ativosPorChave.put(v.chave(), v);
+        }
+        int legMaisRecente = 0;
+        for (JsonNode g : gabinetes) {
+            legMaisRecente = Math.max(legMaisRecente, g.path("legislatura").asInt());
+        }
+        Map<String, Vereador> todosVereadores = vereadoresDaLegislaturaPorChave(vereadores, legMaisRecente, ativos, entradas);
+
         Map<String, List<Autoria>> autorias = new HashMap<>();
         Set<String> procurados = new HashSet<>();
-        for (Vereador v : emExercicio) {
-            List<Autoria> listas = List.of(autoria(ctx, v.chave(), "leis"), autoria(ctx, v.chave(), "vetados"),
-                    autoria(ctx, v.chave(), "tramitacao"));
-            autorias.put(v.chave(), listas);
+        for (HistoricoDeputados.Entrada ent : entradas) {
+            List<Autoria> listas = List.of(autoria(ctx, ent.id(), "leis"), autoria(ctx, ent.id(), "vetados"),
+                    autoria(ctx, ent.id(), "tramitacao"));
+            autorias.put(ent.id(), listas);
             for (Autoria a : listas) {
                 for (JsonNode item : itens(a)) {
                     String id = identificacao(item.has("projeto") ? item.path("projeto") : item);
@@ -141,23 +167,35 @@ public final class Cmsp implements Fonte {
         Map<Integer, Coleta.Arquivo> listasAnuais = new HashMap<>();
         Map<String, ProjetoDoAno> projetos = projetosDoAno(ctx, procurados, listasAnuais);
 
-        Map<String, LocalDate> maisRecentes = inicioMaisRecenteDosExclusivos(emExercicio, ctx.hoje());
+        Map<String, LocalDate> maisRecentes = inicioMaisRecenteDosExclusivos(ativos, ctx.hoje());
         List<Pessoa> pessoas = new ArrayList<>();
         int totalProposicoes = 0;
-        for (Vereador v : emExercicio) {
+        for (HistoricoDeputados.Entrada ent : entradas) {
+            Vereador v = todosVereadores.get(ent.id());
+            if (v == null) {
+                continue;
+            }
+            boolean emEx = ent.emExercicio();
+            String situacao = ent.situacao("Em exercício");
+            Prov provMandato = ent.provOu(provVereadores);
             String textoMandato = "Vereador na " + v.legislatura() + "ª Legislatura (" + v.inicio().getYear()
                     + (v.fim() == null ? ")" : "–" + v.fim().getYear() + ")");
             List<Mandato> mandatos = List.of(new Mandato("vereador", "municipal", IBGE, UF, v.inicio(), v.fim(),
-                    "Em exercício", "Titular", v.legislatura(), v.inicio().getYear() - 1, textoMandato, provVereadores));
-            List<OrgaoOuFrente> orgaos = orgaos(v.cargos(), siglas, maisRecentes, ctx.hoje(), provVereadores);
+                    situacao, emEx ? "Titular" : null, v.legislatura(), v.inicio().getYear() - 1, textoMandato, provMandato));
+            List<OrgaoOuFrente> orgaos = v.cargos() != null
+                    ? orgaos(v.cargos(), siglas, maisRecentes, ctx.hoje(), provMandato)
+                    : List.of();
 
             pessoas.add(new Pessoa("cmsp", v.chave(), titulo(v.nome()), "vereador", "municipal", IBGE, UF,
-                    v.partido(), null, "Em exercício", true, links));
+                    v.partido(), null, situacao, emEx, links));
 
             Map<String, List<FonteUsada>> fontes = new LinkedHashMap<>();
-            fontes.put("mandatos", List.of(
-                    FonteUsada.de(FONTE_API, arqVereadores),
-                    new FonteUsada(FONTE_API, URL_GABINETES, arqGabinetes.capturadoEm())));
+            List<FonteUsada> fontesMandatos = new ArrayList<>();
+            fontesMandatos.add(ent.fonteUsada(provVereadores));
+            if (emEx) {
+                fontesMandatos.add(new FonteUsada(FONTE_API, URL_GABINETES, arqGabinetes.capturadoEm()));
+            }
+            fontes.put("mandatos", fontesMandatos);
             if (!orgaos.isEmpty()) {
                 List<FonteUsada> deOrgaos = new ArrayList<>();
                 deOrgaos.add(FonteUsada.de(FONTE_API, arqVereadores));
@@ -363,6 +401,65 @@ public final class Cmsp implements Fonte {
             }
         }
         return lista;
+    }
+
+    private static Map<String, Vereador> vereadoresDaLegislaturaPorChave(
+            JsonNode vereadores, int legislatura, List<Vereador> ativos, List<HistoricoDeputados.Entrada> entradas) {
+        Map<String, Vereador> porChave = new HashMap<>();
+        for (Vereador v : ativos) {
+            porChave.put(v.chave(), v);
+        }
+        Map<String, JsonNode> jsonPorChave = new HashMap<>();
+        for (JsonNode v : vereadores) {
+            jsonPorChave.put(String.valueOf(v.path("chave").asInt()), v);
+        }
+        for (HistoricoDeputados.Entrada ent : entradas) {
+            if (porChave.containsKey(ent.id())) {
+                continue;
+            }
+            LocalDate inicio = null;
+            LocalDate fim = null;
+            int leg = legislatura;
+            String partido = ent.partido();
+            String nome = ent.nome();
+            JsonNode cargos = null;
+            JsonNode json = jsonPorChave.get(ent.id());
+            if (json != null) {
+                String n = Json.texto(json, "nome");
+                if (n != null && !n.isBlank()) {
+                    nome = n;
+                }
+                cargos = json.path("cargos");
+                for (JsonNode m : json.path("mandatos")) {
+                    LocalDate mi = data(m, "inicio");
+                    LocalDate mf = data(m, "fim");
+                    if (mi != null && (inicio == null || mi.isAfter(inicio))) {
+                        inicio = mi;
+                        fim = mf;
+                        String p = Json.texto(m.path("partido"), "sigla");
+                        if (p != null && !p.isBlank()) {
+                            partido = p;
+                        }
+                    }
+                }
+            }
+            if (inicio == null && ent.extra() != null && ent.extra().contains("|")) {
+                String[] partes = ent.extra().split("\\|", -1);
+                if (partes.length >= 3) {
+                    try {
+                        inicio = LocalDate.parse(partes[0]);
+                        fim = partes[1].isEmpty() ? null : LocalDate.parse(partes[1]);
+                        leg = Integer.parseInt(partes[2]);
+                    } catch (Exception ignored) {
+                    }
+                }
+            }
+            if (inicio == null) {
+                inicio = LocalDate.of(2025, 1, 1);
+            }
+            porChave.put(ent.id(), new Vereador(ent.id(), nome, partido, inicio, fim, leg, cargos));
+        }
+        return porChave;
     }
 
     /**

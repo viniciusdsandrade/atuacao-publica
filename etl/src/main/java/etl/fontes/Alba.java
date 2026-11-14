@@ -133,16 +133,28 @@ public final class Alba implements Fonte {
     public record DetalhePerfil(String nomeCivil, String nascimento) {
     }
 
+    private static HistoricoDeputados.Snapshot paraSnapshot(DeputadoBruto d) {
+        return HistoricoDeputados.Snapshot.de(d.id(), d.nome(), d.partido(), d.fotoUrl(), null, null);
+    }
+
+    private Prov provDeputados(Contexto ctx) {
+        Coleta.Arquivo arq = Coleta.metadados(ctx, "alba", "deputados/deputados-estaduais.html");
+        return arq != null ? Prov.de(FONTE_DEPUTADOS, SITE + "/deputados/deputados-estaduais", arq) : null;
+    }
+
     @Override
     public void fetch(Contexto ctx, Coleta coleta) throws Exception {
+        HistoricoDeputados.registrar(ctx, nome(), extrairDeputados(ctx), provDeputados(ctx), Alba::paraSnapshot);
         // Baixa a página principal com a listagem de deputados em exercício
         coleta.obter(SITE + "/deputados/deputados-estaduais", "deputados/deputados-estaduais.html", "text/html", Politica.SEMANAL);
 
-        // Extrai a lista de deputados e baixa os perfis biográficos individuais
-        List<DeputadoBruto> deputados = extrairDeputados(ctx);
-        for (DeputadoBruto dep : deputados) {
-            coleta.obterOuVazio(SITE + "/deputados/deputado-estadual/" + dep.id(),
-                    "perfil/" + dep.id() + ".html", "text/html", Politica.SEMANAL);
+        // Consolida o histórico e baixa os perfis biográficos individuais (apenas se ausentes para ex-deputados)
+        List<HistoricoDeputados.Entrada> entradas = HistoricoDeputados.mesclar(
+                ctx, nome(), extrairDeputados(ctx), provDeputados(ctx), Alba::paraSnapshot);
+        for (HistoricoDeputados.Entrada ent : entradas) {
+            coleta.obterOuVazio(SITE + "/deputados/deputado-estadual/" + ent.id(),
+                    "perfil/" + ent.id() + ".html", "text/html",
+                    ent.emExercicio() ? Politica.SEMANAL : Politica.SE_AUSENTE);
         }
 
         // Baixa a página principal de comissões
@@ -617,22 +629,22 @@ public final class Alba implements Fonte {
 
     @Override
     public void normalize(Contexto ctx) throws Exception {
-        List<DeputadoBruto> deputados = extrairDeputados(ctx);
-        if (deputados.isEmpty()) {
+        Coleta.Arquivo arqDeputados = Coleta.metadados(ctx, "alba", "deputados/deputados-estaduais.html");
+        Prov provDeputados = arqDeputados != null ? Prov.de(FONTE_DEPUTADOS, SITE + "/deputados/deputados-estaduais", arqDeputados) : null;
+        List<HistoricoDeputados.Entrada> entradas = HistoricoDeputados.mesclar(
+                ctx, nome(), extrairDeputados(ctx), provDeputados, Alba::paraSnapshot);
+        if (entradas.isEmpty()) {
             System.out.println("alba: nenhum deputado identificado para normalização");
             return;
         }
-
-        Coleta.Arquivo arqDeputados = Coleta.metadados(ctx, "alba", "deputados/deputados-estaduais.html");
-        Prov provDeputados = Prov.de(FONTE_DEPUTADOS, SITE + "/deputados/deputados-estaduais", arqDeputados);
 
         // Mapeamento para resolução de nomes parlamentares e civis para o ID do deputado
         Map<String, String> idPorNomeNorm = new HashMap<>();
         Map<String, DetalhePerfil> detalhesPorId = new HashMap<>();
 
-        for (DeputadoBruto dep : deputados) {
-            String id = dep.id();
-            idPorNomeNorm.put(Texto.normalizarNome(dep.nome()), id);
+        for (HistoricoDeputados.Entrada ent : entradas) {
+            String id = ent.id();
+            idPorNomeNorm.put(Texto.normalizarNome(ent.nome()), id);
 
             Coleta.Arquivo arqPerfil = Coleta.metadados(ctx, "alba", "perfil/" + id + ".html");
             if (arqPerfil != null && Files.exists(Coleta.caminho(ctx, arqPerfil))) {
@@ -657,11 +669,11 @@ public final class Alba implements Fonte {
         // A verba lista o deputado pelo nome parlamentar; a API de proposições, pelo nome civil.
         Map<String, String> idPorNomeParlamentar = new HashMap<>();
         Map<String, String> idPorNomeCivil = new HashMap<>();
-        for (DeputadoBruto dep : deputados) {
-            idPorNomeParlamentar.put(chaveDoNome(dep.nome()), dep.id());
-            DetalhePerfil det = detalhesPorId.get(dep.id());
+        for (HistoricoDeputados.Entrada ent : entradas) {
+            idPorNomeParlamentar.put(chaveDoNome(ent.nome()), ent.id());
+            DetalhePerfil det = detalhesPorId.get(ent.id());
             if (det != null && det.nomeCivil() != null) {
-                idPorNomeCivil.put(chaveDoNome(det.nomeCivil()), dep.id());
+                idPorNomeCivil.put(chaveDoNome(det.nomeCivil()), ent.id());
             }
         }
         Map<String, List<Despesa>> despesasPorDeputado = despesasPorDeputado(ctx, idPorNomeParlamentar);
@@ -671,30 +683,37 @@ public final class Alba implements Fonte {
         List<Pessoa> pessoas = new ArrayList<>();
         Map<String, Acumulado> acumulados = new LinkedHashMap<>();
 
-        for (DeputadoBruto dep : deputados) {
-            String id = dep.id();
+        for (HistoricoDeputados.Entrada ent : entradas) {
+            String id = ent.id();
             Acumulado ac = new Acumulado();
             acumulados.put(id, ac);
 
             Coleta.Arquivo arqPerfil = Coleta.metadados(ctx, "alba", "perfil/" + id + ".html");
-            Prov provPerfil = Prov.de(FONTE_DETALHES, SITE + "/deputados/deputado-estadual/" + id,
-                    arqPerfil != null && arqPerfil.bytes() > 0 ? arqPerfil : arqDeputados);
+            Prov provMandato = ent.provOu(provDeputados);
+            Prov provPerfil = arqPerfil != null && arqPerfil.bytes() > 0
+                    ? Prov.de(FONTE_DETALHES, SITE + "/deputados/deputado-estadual/" + id, arqPerfil)
+                    : provMandato;
 
-            String nomeFormatado = formatarNome(dep.nome());
-            String fotoUrl = dep.fotoUrl();
+            String nomeFormatado = formatarNome(ent.nome());
+            String fotoUrl = ent.fotoUrl();
 
-            List<LinkOficial> links = List.of(
-                    new LinkOficial("Página na ALBA", SITE + "/deputados/deputado-estadual/" + id, provPerfil)
-            );
+            List<LinkOficial> links = provPerfil != null
+                    ? List.of(new LinkOficial("Página na ALBA", SITE + "/deputados/deputado-estadual/" + id, provPerfil))
+                    : List.of();
+            String situacao = ent.situacao("em exercício");
 
             pessoas.add(new Pessoa("alba", id, nomeFormatado, "deputado_estadual", "estadual", UF, UF,
-                    dep.partido(), fotoUrl, "em exercício", true, links));
+                    ent.partido(), fotoUrl, situacao, ent.emExercicio(), links));
 
             // Mandato da 20ª legislatura
             ac.mandatos.add(new Mandato("deputado_estadual", "estadual", UF, UF, INICIO_LEG_20, FIM_LEG_20,
-                    "em exercício", "Efetivo", LEGISLATURA_20, 2022, null, provPerfil));
-            ac.fontes.computeIfAbsent("mandatos", k -> new ArrayList<>())
-                    .add(FonteUsada.de(FONTE_DEPUTADOS, arqDeputados));
+                    situacao, ent.emExercicio() ? "Efetivo" : null, LEGISLATURA_20, 2022, null, provPerfil));
+            FonteUsada fonteMandato = provMandato != null
+                    ? ent.fonteUsada(provMandato)
+                    : FonteUsada.de(FONTE_DEPUTADOS, arqDeputados);
+            if (fonteMandato != null) {
+                ac.fontes.computeIfAbsent("mandatos", k -> new ArrayList<>()).add(fonteMandato);
+            }
 
             // Comissões
             List<OrgaoOuFrente> comissoes = comissoesPorDeputado.getOrDefault(id, List.of());

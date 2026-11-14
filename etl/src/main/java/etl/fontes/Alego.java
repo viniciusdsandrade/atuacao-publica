@@ -123,12 +123,23 @@ public final class Alego implements Fonte {
     public record DeputadoBruto(String id, String nome, String partido) {
     }
 
+    private static HistoricoDeputados.Snapshot paraSnapshot(DeputadoBruto d) {
+        return HistoricoDeputados.Snapshot.de(d.id(), d.nome(), d.partido(), null, null, null);
+    }
+
+    private Prov provDeputados(Contexto ctx) {
+        Coleta.Arquivo arq = Coleta.metadados(ctx, nome(), "deputados.html");
+        return arq != null ? Prov.de(FONTE_DEPUTADOS, URL_DEPUTADOS, arq) : null;
+    }
+
     @Override
     public void fetch(Contexto ctx, Coleta coleta) throws Exception {
         System.out.println("alego: coleta iniciada");
+        HistoricoDeputados.registrar(ctx, nome(), extrairDeputados(ctx), provDeputados(ctx), Alego::paraSnapshot);
         coleta.obter(URL_DEPUTADOS, "deputados.html", "text/html", Politica.SEMANAL);
 
-        List<DeputadoBruto> deputados = extrairDeputados(ctx);
+        List<HistoricoDeputados.Entrada> entradas = HistoricoDeputados.mesclar(
+                ctx, nome(), extrairDeputados(ctx), provDeputados(ctx), Alego::paraSnapshot);
 
         // Quatro JSON anuais, antes das dezenas de páginas do portal e da verba. No CI o orçamento
         // de 15 min esgota nas biografias e nas despesas, e as votações ficavam só no cache vazio.
@@ -137,12 +148,13 @@ public final class Alego implements Fonte {
                     arquivoDeVotacoes(ano), "application/json", Politica.porAnoSemanal(ano, ctx.hoje()));
         }
 
-        for (DeputadoBruto d : deputados) {
-            String urlPerfil = SITE + "/deputados/perfil/" + d.id();
-            coleta.obterOuVazio(urlPerfil, "perfis/" + d.id() + ".html", "text/html", Politica.SEMANAL);
+        for (HistoricoDeputados.Entrada e : entradas) {
+            Politica politicaPerfil = e.emExercicio() ? Politica.SEMANAL : Politica.SE_AUSENTE;
+            String urlPerfil = SITE + "/deputados/perfil/" + e.id();
+            coleta.obterOuVazio(urlPerfil, "perfis/" + e.id() + ".html", "text/html", politicaPerfil);
 
-            String urlBio = SITE + "/deputados/perfil-biografico/" + d.id();
-            coleta.obterOuVazio(urlBio, "biografias/" + d.id() + ".html", "text/html", Politica.SEMANAL);
+            String urlBio = SITE + "/deputados/perfil-biografico/" + e.id();
+            coleta.obterOuVazio(urlBio, "biografias/" + e.id() + ".html", "text/html", politicaPerfil);
         }
 
         for (String comId : COMISSOES_IDS) {
@@ -153,7 +165,7 @@ public final class Alego implements Fonte {
         // Verba indenizatória: o resumo do mês diz quem tem lançamento, e o detalhe traz cada lançamento.
         // O id do deputado no portal da transparência é o mesmo do portal institucional.
         Set<String> ids = new HashSet<>();
-        deputados.forEach(d -> ids.add(d.id()));
+        entradas.forEach(e -> ids.add(e.id()));
         for (int ano = PRIMEIRO_ANO_DESPESAS; ano <= ctx.hoje().getYear(); ano++) {
             Politica politica = Politica.porAnoSemanal(ano, ctx.hoje());
             int ultimoMes = ano == ctx.hoje().getYear() ? ctx.hoje().getMonthValue() : 12;
@@ -393,14 +405,18 @@ public final class Alego implements Fonte {
 
     @Override
     public void normalize(Contexto ctx) {
-        List<DeputadoBruto> deputados = extrairDeputados(ctx);
-        if (deputados.isEmpty()) {
+        Prov provDeputados = provDeputados(ctx);
+        List<HistoricoDeputados.Entrada> entradas = HistoricoDeputados.mesclar(
+                ctx, nome(), extrairDeputados(ctx), provDeputados, Alego::paraSnapshot);
+        if (entradas.isEmpty()) {
             System.out.println("alego: nenhum deputado para normalizar");
             return;
         }
 
-        Coleta.Arquivo arqDeputados = Coleta.metadados(ctx, nome(), "deputados.html");
-        Prov provDeputados = Prov.de(FONTE_DEPUTADOS, URL_DEPUTADOS, arqDeputados);
+        List<DeputadoBruto> deputados = new ArrayList<>(entradas.size());
+        for (HistoricoDeputados.Entrada e : entradas) {
+            deputados.add(new DeputadoBruto(e.id(), e.nome(), e.partido()));
+        }
 
         Path pastaBlocos = ctx.normalizado().resolve("alego/blocos");
         try {
@@ -415,14 +431,15 @@ public final class Alego implements Fonte {
 
         List<Pessoa> pessoas = new ArrayList<>();
 
-        for (DeputadoBruto d : deputados) {
-            String id = d.id();
-            String nomeFormatado = formatarNome(d.nome());
-            String partido = extrairSiglaPartido(d.partido());
+        for (HistoricoDeputados.Entrada ent : entradas) {
+            String id = ent.id();
+            String nomeFormatado = formatarNome(ent.nome());
+            String partido = extrairSiglaPartido(ent.partido());
 
             String urlPerfil = SITE + "/deputados/perfil/" + id;
             Coleta.Arquivo arqPerfil = Coleta.metadados(ctx, nome(), "perfis/" + id + ".html");
-            Prov provPerfil = arqPerfil != null ? Prov.de(FONTE_DETALHES, urlPerfil, arqPerfil) : provDeputados;
+            Prov provMandato = ent.provOu(provDeputados);
+            Prov provPerfil = arqPerfil != null ? Prov.de(FONTE_DETALHES, urlPerfil, arqPerfil) : provMandato;
 
             String fotoUrl = null;
             String nomeCivil = null;
@@ -457,17 +474,19 @@ public final class Alego implements Fonte {
                 }
             }
 
+            String situacao = ent.situacao("Em exercício");
             List<Mandato> mandatos = new ArrayList<>();
             mandatos.add(new Mandato("deputado_estadual", "estadual", UF, UF,
-                    INICIO_LEG_20, FIM_LEG_20, "Em exercício", "Titular", LEGISLATURA_20, 2022,
-                    "Deputado Estadual na 20ª Legislatura (2023–2027)", provDeputados));
+                    INICIO_LEG_20, FIM_LEG_20, situacao, ent.emExercicio() ? "Titular" : null, LEGISLATURA_20, 2022,
+                    "Deputado Estadual na 20ª Legislatura (2023–2027)", provMandato));
 
-            List<LinkOficial> links = List.of(
-                    new LinkOficial("Página na ALEGO", urlPerfil, provPerfil));
+            List<LinkOficial> links = provPerfil != null
+                    ? List.of(new LinkOficial("Página na ALEGO", urlPerfil, provPerfil))
+                    : List.of();
 
             Pessoa pessoa = new Pessoa(
                     "alego", id, nomeFormatado, "deputado_estadual", "estadual", UF, UF,
-                    partido, fotoUrl, "Em exercício", true, links);
+                    partido, fotoUrl, situacao, ent.emExercicio(), links);
             pessoas.add(pessoa);
 
             List<OrgaoOuFrente> orgaos = comissoesPorDeputado.getOrDefault(id, List.of());

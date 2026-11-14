@@ -114,15 +114,27 @@ public final class Alepa implements Fonte {
     public record DeputadoBruto(String id, String nome, String partido, String fotoUrl) {
     }
 
+    private static HistoricoDeputados.Snapshot paraSnapshot(DeputadoBruto d) {
+        return HistoricoDeputados.Snapshot.de(d.id(), d.nome(), d.partido(), d.fotoUrl(), null, null);
+    }
+
+    private Prov provDeputados(Contexto ctx) {
+        Coleta.Arquivo arq = Coleta.metadados(ctx, nome(), "deputados.html");
+        return arq != null ? Prov.de(FONTE_DEPUTADOS, URL_DEPUTADOS, arq) : null;
+    }
+
     @Override
     public void fetch(Contexto ctx, Coleta coleta) throws Exception {
         System.out.println("alepa: coleta iniciada");
+        HistoricoDeputados.registrar(ctx, nome(), extrairDeputados(ctx), provDeputados(ctx), Alepa::paraSnapshot);
         coleta.obter(URL_DEPUTADOS, "deputados.html", "text/html", Politica.SEMANAL);
 
-        List<DeputadoBruto> deputados = extrairDeputados(ctx);
-        for (DeputadoBruto d : deputados) {
-            String urlPerfil = SITE + "/Institucional/Deputado/" + d.id();
-            coleta.obterOuVazio(urlPerfil, "perfis/" + d.id() + ".html", "text/html", Politica.SEMANAL);
+        List<HistoricoDeputados.Entrada> entradas = HistoricoDeputados.mesclar(
+                ctx, nome(), extrairDeputados(ctx), provDeputados(ctx), Alepa::paraSnapshot);
+        for (HistoricoDeputados.Entrada e : entradas) {
+            String urlPerfil = SITE + "/Institucional/Deputado/" + e.id();
+            coleta.obterOuVazio(urlPerfil, "perfis/" + e.id() + ".html", "text/html",
+                    e.emExercicio() ? Politica.SEMANAL : Politica.SE_AUSENTE);
         }
 
         coleta.obterOuVazio(URL_COMISSOES, "comissoes.html", "text/html", Politica.SEMANAL);
@@ -371,14 +383,18 @@ public final class Alepa implements Fonte {
 
     @Override
     public void normalize(Contexto ctx) {
-        List<DeputadoBruto> deputados = extrairDeputados(ctx);
-        if (deputados.isEmpty()) {
+        Prov provDeputados = provDeputados(ctx);
+        List<HistoricoDeputados.Entrada> entradas = HistoricoDeputados.mesclar(
+                ctx, nome(), extrairDeputados(ctx), provDeputados, Alepa::paraSnapshot);
+        if (entradas.isEmpty()) {
             System.out.println("alepa: nenhum deputado para normalizar");
             return;
         }
 
-        Coleta.Arquivo arqDeputados = Coleta.metadados(ctx, nome(), "deputados.html");
-        Prov provDeputados = Prov.de(FONTE_DEPUTADOS, URL_DEPUTADOS, arqDeputados);
+        List<DeputadoBruto> deputados = new ArrayList<>(entradas.size());
+        for (HistoricoDeputados.Entrada e : entradas) {
+            deputados.add(new DeputadoBruto(e.id(), e.nome(), e.partido(), e.fotoUrl()));
+        }
 
         Path pastaBlocos = ctx.normalizado().resolve("alepa/blocos");
         try {
@@ -394,16 +410,19 @@ public final class Alepa implements Fonte {
         Map<String, List<Voto>> votosPorDeputado = votosPorDeputado(ctx, deputados, provDaParticipacao);
         DateTimeFormatter fmtNasc = DateTimeFormatter.ofPattern("dd.MM.yyyy");
 
-        for (DeputadoBruto d : deputados) {
-            String id = d.id();
-            String nome = formatarNome(d.nome());
-            String partido = d.partido();
-            String fotoUrl = d.fotoUrl();
+        for (HistoricoDeputados.Entrada ent : entradas) {
+            String id = ent.id();
+            String nome = formatarNome(ent.nome());
+            String partido = ent.partido();
+            String fotoUrl = ent.fotoUrl();
             String nomeCivil = null;
             LocalDate nascimento = null;
 
             Coleta.Arquivo arqPerfil = Coleta.metadados(ctx, nome(), "perfis/" + id + ".html");
-            Prov provPerfil = Prov.de(FONTE_DETALHES, SITE + "/Institucional/Deputado/" + id, arqPerfil);
+            Prov provMandato = ent.provOu(provDeputados);
+            Prov provPerfil = arqPerfil != null
+                    ? Prov.de(FONTE_DETALHES, SITE + "/Institucional/Deputado/" + id, arqPerfil)
+                    : provMandato;
 
             if (arqPerfil != null && Files.exists(Coleta.caminho(ctx, arqPerfil))) {
                 try {
@@ -443,17 +462,18 @@ public final class Alepa implements Fonte {
                 }
             }
 
-            List<LinkOficial> links = List.of(
-                    new LinkOficial("Página na ALEPA", SITE + "/Institucional/Deputado/" + id, provPerfil)
-            );
+            List<LinkOficial> links = provPerfil != null
+                    ? List.of(new LinkOficial("Página na ALEPA", SITE + "/Institucional/Deputado/" + id, provPerfil))
+                    : List.of();
+            String situacao = ent.situacao("Em exercício");
 
             Pessoa pessoa = new Pessoa("alepa", id, nome, "deputado_estadual", "estadual", UF, UF,
-                    partido, fotoUrl, "Em exercício", true, links);
+                    partido, fotoUrl, situacao, ent.emExercicio(), links);
             pessoas.add(pessoa);
 
             List<Mandato> mandatos = List.of(new Mandato("deputado_estadual", "estadual", UF, UF,
-                    INICIO_LEG_60, FIM_LEG_60, "Em exercício", "Titular", LEGISLATURA_60, 2022,
-                    "Deputado Estadual na 60ª Legislatura (2023–2027)", provDeputados));
+                    INICIO_LEG_60, FIM_LEG_60, situacao, ent.emExercicio() ? "Titular" : null, LEGISLATURA_60, 2022,
+                    "Deputado Estadual na 60ª Legislatura (2023–2027)", provMandato));
 
             List<OrgaoOuFrente> orgaos = comissoesPorDeputado.getOrDefault(id, List.of());
 

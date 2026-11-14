@@ -77,15 +77,28 @@ public final class Cldf implements Fonte {
     public record DeputadoBruto(String slug, String nome, String partido, String fotoUrl, String href) {
     }
 
+    private static HistoricoDeputados.Snapshot paraSnapshot(DeputadoBruto d) {
+        return HistoricoDeputados.Snapshot.de(d.slug(), d.nome(), d.partido(), d.fotoUrl(), d.href(), null);
+    }
+
+    private Prov provDeputados(Contexto ctx) {
+        Coleta.Arquivo arq = Coleta.metadados(ctx, nome(), "deputados.html");
+        return arq != null ? Prov.de(FONTE_DEPUTADOS, URL_DEPUTADOS, arq) : null;
+    }
+
     @Override
     public void fetch(Contexto ctx, Coleta coleta) throws Exception {
         System.out.println("cldf: coleta iniciada");
+        HistoricoDeputados.registrar(ctx, nome(), extrairDeputados(ctx), provDeputados(ctx), Cldf::paraSnapshot);
         coleta.obter(URL_DEPUTADOS, "deputados.html", "text/html", Politica.SEMANAL);
 
-        List<DeputadoBruto> deputados = extrairDeputados(ctx);
-        for (DeputadoBruto d : deputados) {
-            String urlPerfil = d.href().startsWith("http") ? d.href() : SITE + d.href();
-            coleta.obterOuVazio(urlPerfil, "perfis/" + d.slug() + ".html", "text/html", Politica.SEMANAL);
+        List<HistoricoDeputados.Entrada> entradas = HistoricoDeputados.mesclar(
+                ctx, nome(), extrairDeputados(ctx), provDeputados(ctx), Cldf::paraSnapshot);
+        for (HistoricoDeputados.Entrada e : entradas) {
+            String href = e.extra() != null ? e.extra() : "/web/guest/" + e.id();
+            String urlPerfil = href.startsWith("http") ? href : SITE + href;
+            coleta.obterOuVazio(urlPerfil, "perfis/" + e.id() + ".html", "text/html",
+                    e.emExercicio() ? Politica.SEMANAL : Politica.SE_AUSENTE);
         }
 
         coleta.obterOuVazio(URL_COMISSOES, "comissoes.html", "text/html", Politica.SEMANAL);
@@ -125,14 +138,13 @@ public final class Cldf implements Fonte {
 
     @Override
     public void normalize(Contexto ctx) {
-        List<DeputadoBruto> deputados = extrairDeputados(ctx);
-        if (deputados.isEmpty()) {
+        Prov provDeputados = provDeputados(ctx);
+        List<HistoricoDeputados.Entrada> entradas = HistoricoDeputados.mesclar(
+                ctx, nome(), extrairDeputados(ctx), provDeputados, Cldf::paraSnapshot);
+        if (entradas.isEmpty()) {
             System.out.println("cldf: nenhum deputado para normalizar");
             return;
         }
-
-        Coleta.Arquivo arqDeputados = Coleta.metadados(ctx, nome(), "deputados.html");
-        Prov provDeputados = Prov.de(FONTE_DEPUTADOS, URL_DEPUTADOS, arqDeputados);
 
         Path pastaBlocos = ctx.normalizado().resolve("cldf/blocos");
         try {
@@ -143,37 +155,40 @@ public final class Cldf implements Fonte {
 
         Map<String, List<OrgaoOuFrente>> comissoesPorNome = extrairComissoes(ctx);
         Set<String> chavesDosDeputados = new HashSet<>();
-        for (DeputadoBruto d : deputados) {
-            chavesDosDeputados.add(normalizarChaveNome(d.nome()));
+        for (HistoricoDeputados.Entrada e : entradas) {
+            chavesDosDeputados.add(normalizarChaveNome(e.nome()));
         }
         Map<String, List<Proposicao>> proposicoesPorNome = proposicoesPorChave(ctx, chavesDosDeputados);
 
         List<Pessoa> pessoas = new ArrayList<>();
 
-        for (DeputadoBruto d : deputados) {
-            String slug = d.slug();
+        for (HistoricoDeputados.Entrada ent : entradas) {
+            String slug = ent.id();
             String id = slug;
-            String nome = d.nome();
-            String partido = d.partido();
-            String fotoUrl = d.fotoUrl();
+            String nome = ent.nome();
+            String partido = ent.partido();
+            String fotoUrl = ent.fotoUrl();
+            String href = ent.extra() != null ? ent.extra() : "/web/guest/" + slug;
 
-            String urlPerfil = d.href().startsWith("http") ? d.href() : SITE + d.href();
+            String urlPerfil = href.startsWith("http") ? href : SITE + href;
             Coleta.Arquivo arqPerfil = Coleta.metadados(ctx, nome(), "perfis/" + slug + ".html");
-            Prov provPerfil = Prov.de(FONTE_DETALHES, urlPerfil, arqPerfil);
+            Prov provMandato = ent.provOu(provDeputados);
+            Prov provPerfil = arqPerfil != null ? Prov.de(FONTE_DETALHES, urlPerfil, arqPerfil) : provMandato;
 
             List<LinkOficial> links = new ArrayList<>();
-            links.add(new LinkOficial("Página na CLDF", urlPerfil, provPerfil));
+            if (provPerfil != null) {
+                links.add(new LinkOficial("Página na CLDF", urlPerfil, provPerfil));
+            }
 
             if (arqPerfil != null && Files.exists(Coleta.caminho(ctx, arqPerfil))) {
                 try {
                     String htmlPerfil = Texto.lerArquivo(Coleta.caminho(ctx, arqPerfil));
 
-
                     Matcher mRedes = REDES_PATTERN.matcher(htmlPerfil);
                     Set<String> redesVistas = new HashSet<>();
                     while (mRedes.find()) {
                         String urlRede = mRedes.group(1).trim();
-                        if (redeValida(urlRede) && redesVistas.add(urlRede)) {
+                        if (redeValida(urlRede) && redesVistas.add(urlRede) && provPerfil != null) {
                             links.add(new LinkOficial("Rede social", urlRede, provPerfil));
                         }
                     }
@@ -182,13 +197,14 @@ public final class Cldf implements Fonte {
                 }
             }
 
+            String situacao = ent.situacao("Em exercício");
             Pessoa pessoa = new Pessoa("cldf", id, nome, "deputado_distrital", "estadual", UF, UF,
-                    partido, fotoUrl, "Em exercício", true, links);
+                    partido, fotoUrl, situacao, ent.emExercicio(), links);
             pessoas.add(pessoa);
 
             List<Mandato> mandatos = List.of(new Mandato("deputado_distrital", "estadual", UF, UF,
-                    INICIO_LEG_9, FIM_LEG_9, "Em exercício", "Titular", LEGISLATURA_9, 2022,
-                    "Deputado Distrital na 9ª Legislatura (2023–2027)", provDeputados));
+                    INICIO_LEG_9, FIM_LEG_9, situacao, ent.emExercicio() ? "Titular" : null, LEGISLATURA_9, 2022,
+                    "Deputado Distrital na 9ª Legislatura (2023–2027)", provMandato));
 
             String chaveNome = normalizarChaveNome(nome);
             List<OrgaoOuFrente> orgaos = comissoesPorNome.getOrDefault(chaveNome, List.of());

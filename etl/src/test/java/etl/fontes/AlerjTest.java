@@ -249,6 +249,47 @@ class AlerjTest {
         assertEquals("136", mapa.get("515")); // Sarah Poncio
     }
 
+    @Test
+    void normalizePreservaDeputadoQueSaiuDaListaAtiva(@TempDir Path tempDir) throws Exception {
+        Contexto ctx = new Contexto(tempDir, tempDir.resolve("data"), null, null, Instant.parse("2026-11-07T00:00:00Z"), null);
+        Path rawAlerj = ctx.raw().resolve("alerj");
+        Files.createDirectories(rawAlerj.resolve("perfis"));
+
+        String html1 = """
+                <div class="lista_deputados">
+                    <div class="controle_deputado">
+                        <div class="imagem"><a href="/Deputados/PerfilDeputado/505?Legislatura=20"><img src="/foto/505.jpg" alt="ALAN"></a></div>
+                        <div class="descricao"><div class="partido">PL</div><div class="nome"><a href="/Deputados/PerfilDeputado/505?Legislatura=20">ALAN LOPES</a></div></div>
+                    </div>
+                </div>
+                """;
+        Files.writeString(rawAlerj.resolve("deputados.html"), html1);
+        gravarMetadado(rawAlerj, "deputados.html", "https://www.alerj.rj.gov.br/Deputados/QuemSao");
+
+        Alerj alerj = new Alerj();
+        alerj.normalize(ctx);
+
+        String html2 = """
+                <div class="lista_deputados">
+                    <div class="controle_deputado">
+                        <div class="imagem"><a href="/Deputados/PerfilDeputado/506?Legislatura=20"><img src="/foto/506.jpg" alt="NOVO"></a></div>
+                        <div class="descricao"><div class="partido">PSD</div><div class="nome"><a href="/Deputados/PerfilDeputado/506?Legislatura=20">NOVO DEPUTADO</a></div></div>
+                    </div>
+                </div>
+                """;
+        Files.writeString(rawAlerj.resolve("deputados.html"), html2);
+        alerj.normalize(ctx);
+
+        JsonNode pessoas = Json.ler(ctx.normalizado().resolve("alerj/pessoas.json"));
+        assertEquals(2, pessoas.size());
+        Map<String, JsonNode> porId = new java.util.HashMap<>();
+        pessoas.forEach(p -> porId.put(p.get("id_fonte").asText(), p));
+
+        org.junit.jupiter.api.Assertions.assertFalse(porId.get("505").get("em_exercicio").booleanValue());
+        assertEquals("Fora de exercício", porId.get("505").get("situacao").stringValue());
+        assertTrue(porId.get("506").get("em_exercicio").booleanValue());
+    }
+
     private static void gravarMetadado(Path pastaFonte, String relativo, String url) throws IOException {
         Path arquivo = pastaFonte.resolve(relativo);
         Path meta = arquivo.resolveSibling(arquivo.getFileName() + ".meta.json");

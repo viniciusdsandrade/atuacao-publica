@@ -290,6 +290,39 @@ class CmspTest {
         assertNull(lista.get(2).temas());
     }
 
+    @Test
+    void normalizaPreservaVereadorQuePerdeuGabineteEmExecucaoAnterior(@TempDir Path tempDir) throws Exception {
+        Path rawCmsp = tempDir.resolve("data/raw/cmsp");
+        Files.createDirectories(rawCmsp);
+        Files.writeString(rawCmsp.resolve("vereadores.json"), VEREADORES);
+        gravarMetadado(rawCmsp, "vereadores.json", Cmsp.URL_VEREADORES);
+        Files.writeString(rawCmsp.resolve("gabinetes.json"), GABINETES);
+        gravarMetadado(rawCmsp, "gabinetes.json", Cmsp.URL_GABINETES);
+
+        Contexto ctx = new Contexto(tempDir, tempDir.resolve("data"), null, null,
+                Instant.parse("2026-11-05T12:00:00Z"), null);
+        Cmsp cmsp = new Cmsp();
+        cmsp.normalize(ctx);
+
+        // Segunda rodada: Cicrano (2270) perde o gabinete vigente; Fulano (2266) permanece.
+        String gabinetes2 = """
+                [
+                  {"legislatura": 19, "gabinete": 1, "inicio": "2025-01-01T00:00:00", "codigo": 2266, "vereador": "FULANO DE TAL"}
+                ]
+                """;
+        Files.writeString(rawCmsp.resolve("gabinetes.json"), gabinetes2);
+        cmsp.normalize(ctx);
+
+        JsonNode pessoas = Json.ler(ctx.normalizado().resolve("cmsp/pessoas.json"));
+        assertEquals(2, pessoas.size());
+        Map<String, JsonNode> porId = new java.util.HashMap<>();
+        pessoas.forEach(p -> porId.put(p.get("id_fonte").asText(), p));
+
+        assertTrue(porId.get("2266").get("em_exercicio").asBoolean());
+        org.junit.jupiter.api.Assertions.assertFalse(porId.get("2270").get("em_exercicio").asBoolean());
+        assertEquals("Fora de exercício", porId.get("2270").get("situacao").asText());
+    }
+
     private static void gravarMetadado(Path dir, String arquivo, String url) throws IOException {
         Path meta = dir.resolve(arquivo + ".meta.json");
         Coleta.Arquivo arq = new Coleta.Arquivo(url, "raw/cmsp/" + arquivo, "abc", 100L, Instant.parse("2026-11-05T12:00:00Z"));

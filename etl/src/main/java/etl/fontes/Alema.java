@@ -85,33 +85,58 @@ public final class Alema implements Fonte {
         return "alema";
     }
 
+    private static HistoricoDeputados.Snapshot paraSnapshot(DeputadoCard d) {
+        return HistoricoDeputados.Snapshot.de(d.slug(), d.nome(), d.partido(), d.fotoUrl(), d.link(), null);
+    }
+
+    private Prov provDeputados(Contexto ctx) {
+        Coleta.Arquivo arq = Coleta.metadados(ctx, nome(), "deputados.html");
+        return arq != null ? Prov.de(FONTE_DEPUTADOS, URL_DEPUTADOS, arq) : null;
+    }
+
+    private List<DeputadoCard> extrairDeputadosAtuais(Contexto ctx) {
+        Coleta.Arquivo arq = Coleta.metadados(ctx, nome(), "deputados.html");
+        if (arq == null || !Files.exists(Coleta.caminho(ctx, arq))) {
+            return List.of();
+        }
+        try {
+            return parseDeputados(Texto.lerArquivo(Coleta.caminho(ctx, arq)));
+        } catch (Exception e) {
+            System.err.println("alema: erro ao ler deputados.html: " + e.getMessage());
+            return List.of();
+        }
+    }
+
     @Override
     public void fetch(Contexto ctx, Coleta coleta) throws Exception {
         System.out.println("alema: coleta iniciada");
+        HistoricoDeputados.registrar(ctx, nome(), extrairDeputadosAtuais(ctx), provDeputados(ctx), Alema::paraSnapshot);
 
         Coleta.Arquivo arqDeputados = coleta.obter(URL_DEPUTADOS, "deputados.html", HTML, Politica.SEMANAL);
-        if (arqDeputados == null || !Files.exists(Coleta.caminho(ctx, arqDeputados))) {
-            return;
-        }
+        Prov provDep = provDeputados(ctx);
+        List<DeputadoCard> ativos = arqDeputados != null && Files.exists(Coleta.caminho(ctx, arqDeputados))
+                ? parseDeputados(Texto.lerArquivo(Coleta.caminho(ctx, arqDeputados)))
+                : List.of();
+        List<HistoricoDeputados.Entrada> entradas = HistoricoDeputados.mesclar(
+                ctx, nome(), ativos, provDep, Alema::paraSnapshot);
 
-        String htmlDeputados = Texto.lerArquivo(Coleta.caminho(ctx, arqDeputados));
-        List<DeputadoCard> deputados = parseDeputados(htmlDeputados);
-
-        for (DeputadoCard dep : deputados) {
-            String urlParl = URL_PARLAMENTAR + dep.slug() + "/";
-            coleta.obterOuVazio(urlParl, "deputados/" + dep.slug() + ".html", HTML, Politica.SEMANAL);
+        for (HistoricoDeputados.Entrada ent : entradas) {
+            String urlParl = URL_PARLAMENTAR + ent.id() + "/";
+            coleta.obterOuVazio(urlParl, "deputados/" + ent.id() + ".html", HTML,
+                    ent.emExercicio() ? Politica.SEMANAL : Politica.SE_AUSENTE);
         }
     }
 
     @Override
     public void normalize(Contexto ctx) {
         Coleta.Arquivo arqDeputados = Coleta.metadados(ctx, nome(), "deputados.html");
-        if (arqDeputados == null || !Files.exists(Coleta.caminho(ctx, arqDeputados))) {
+        Prov provDeputados = arqDeputados != null ? Prov.de(FONTE_DEPUTADOS, URL_DEPUTADOS, arqDeputados) : null;
+        List<HistoricoDeputados.Entrada> entradas = HistoricoDeputados.mesclar(
+                ctx, nome(), extrairDeputadosAtuais(ctx), provDeputados, Alema::paraSnapshot);
+        if (entradas.isEmpty()) {
             System.out.println("alema: deputados.html não encontrado");
             return;
         }
-
-        Prov provDeputados = Prov.de(FONTE_DEPUTADOS, URL_DEPUTADOS, arqDeputados);
 
         Path pastaBlocos = ctx.normalizado().resolve("alema/blocos");
         try {
@@ -120,50 +145,45 @@ public final class Alema implements Fonte {
             throw new RuntimeException("alema: erro ao criar pasta de blocos", e);
         }
 
-        String htmlDeputados;
-        try {
-            htmlDeputados = Texto.lerArquivo(Coleta.caminho(ctx, arqDeputados));
-        } catch (Exception e) {
-            throw new RuntimeException("alema: erro ao ler deputados.html", e);
-        }
-
-        List<DeputadoCard> deputados = parseDeputados(htmlDeputados);
         Map<String, String> cargoMesaPorNome = new HashMap<>();
         for (MesaMembro mm : MESA_DIRETORA_PADRAO) {
             cargoMesaPorNome.put(Texto.normalizarNome(mm.nome()), mm.cargo());
         }
 
-        Prov provMesa = Prov.de(FONTE_MESA_DIRETORA, URL_DEPUTADOS, arqDeputados);
+        Prov provMesa = arqDeputados != null ? Prov.de(FONTE_MESA_DIRETORA, URL_DEPUTADOS, arqDeputados) : null;
 
         List<Pessoa> pessoas = new ArrayList<>();
         Map<String, String> nomesCivisPorSlug = new HashMap<>();
 
-        for (DeputadoCard d : deputados) {
-            String slug = d.slug();
+        for (HistoricoDeputados.Entrada ent : entradas) {
+            String slug = ent.id();
 
             Coleta.Arquivo arqDetalhe = Coleta.metadados(ctx, nome(), "deputados/" + slug + ".html");
             String urlDetalhe = URL_PARLAMENTAR + slug + "/";
-            Prov provParl = Prov.de(FONTE_PARLAMENTARES, urlDetalhe, arqDetalhe);
+            Prov provMandato = ent.provOu(provDeputados);
+            Prov provParl = arqDetalhe != null ? Prov.de(FONTE_PARLAMENTARES, urlDetalhe, arqDetalhe) : provMandato;
 
-            String nomeCivil = d.nome();
-
+            String nomeCivil = ent.nome();
 
             nomesCivisPorSlug.put(slug, nomeCivil);
 
-            List<LinkOficial> links = List.of(new LinkOficial("Ficha na ALEMA", urlDetalhe, provParl));
-            String situacao = "Em exercício";
+            List<LinkOficial> links = provParl != null
+                    ? List.of(new LinkOficial("Ficha na ALEMA", urlDetalhe, provParl))
+                    : List.of();
+            String situacao = ent.situacao("Em exercício");
 
-            Pessoa pessoa = new Pessoa("alema", slug, d.nome(), "deputado_estadual", "estadual", UF, UF,
-                    d.partido(), d.fotoUrl(), situacao, true, links);
+            Pessoa pessoa = new Pessoa("alema", slug, ent.nome(), "deputado_estadual", "estadual", UF, UF,
+                    ent.partido(), ent.fotoUrl(), situacao, ent.emExercicio(), links);
             pessoas.add(pessoa);
 
             List<Mandato> mandatos = List.of(new Mandato("deputado_estadual", "estadual", UF, UF,
-                    INICIO_LEG_20, FIM_LEG_20, situacao, "Titular", NUMERO_LEGISLATURA, 2022,
-                    "Deputado Estadual na 20ª Legislatura (2023–2027)", provDeputados));
+                    INICIO_LEG_20, FIM_LEG_20, situacao, ent.emExercicio() ? "Titular" : null,
+                    NUMERO_LEGISLATURA, 2022,
+                    "Deputado Estadual na 20ª Legislatura (2023–2027)", provMandato));
 
             List<OrgaoOuFrente> orgaos = new ArrayList<>();
-            String papelMesa = cargoMesaPorNome.get(Texto.normalizarNome(d.nome()));
-            if (papelMesa != null) {
+            String papelMesa = cargoMesaPorNome.get(Texto.normalizarNome(ent.nome()));
+            if (papelMesa != null && provMesa != null) {
                 orgaos.add(new OrgaoOuFrente("orgao", "Mesa Diretora", null, papelMesa,
                         INICIO_LEG_20, FIM_LEG_20, provMesa));
             }

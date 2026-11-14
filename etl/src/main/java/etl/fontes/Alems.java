@@ -88,15 +88,27 @@ public final class Alems implements Fonte {
         return "alems";
     }
 
+    private static HistoricoDeputados.Snapshot paraSnapshot(DeputadoBruto d) {
+        return HistoricoDeputados.Snapshot.de(d.id(), d.nome(), d.partido(), d.fotoUrl(), d.href(), null);
+    }
+
+    private Prov provDeputados(Contexto ctx) {
+        Coleta.Arquivo arq = Coleta.metadados(ctx, nome(), "deputados.html");
+        return arq != null ? Prov.de(FONTE_DEPUTADOS, URL_DEPUTADOS, arq) : null;
+    }
+
     @Override
     public void fetch(Contexto ctx, Coleta coleta) throws Exception {
         System.out.println("alems: coleta iniciada");
+        HistoricoDeputados.registrar(ctx, nome(), extrairDeputados(ctx), provDeputados(ctx), Alems::paraSnapshot);
         coleta.obter(URL_DEPUTADOS, "deputados.html", "text/html", Politica.SEMANAL);
 
-        List<DeputadoBruto> deputados = extrairDeputados(ctx);
-        for (DeputadoBruto d : deputados) {
-            String urlPerfil = SITE + "/Deputados/Visualizar/" + d.id();
-            coleta.obterOuVazio(urlPerfil, "perfis/" + d.id() + ".html", "text/html", Politica.SEMANAL);
+        List<HistoricoDeputados.Entrada> entradas = HistoricoDeputados.mesclar(
+                ctx, nome(), extrairDeputados(ctx), provDeputados(ctx), Alems::paraSnapshot);
+        for (HistoricoDeputados.Entrada e : entradas) {
+            String urlPerfil = SITE + "/Deputados/Visualizar/" + e.id();
+            coleta.obterOuVazio(urlPerfil, "perfis/" + e.id() + ".html", "text/html",
+                    e.emExercicio() ? Politica.SEMANAL : Politica.SE_AUSENTE);
         }
 
         coleta.obterOuVazio(URL_MESA_DIRETORA, "mesa-diretora.html", "text/html", Politica.SEMANAL);
@@ -104,14 +116,13 @@ public final class Alems implements Fonte {
 
     @Override
     public void normalize(Contexto ctx) {
-        List<DeputadoBruto> deputados = extrairDeputados(ctx);
-        if (deputados.isEmpty()) {
+        Prov provDeputados = provDeputados(ctx);
+        List<HistoricoDeputados.Entrada> entradas = HistoricoDeputados.mesclar(
+                ctx, nome(), extrairDeputados(ctx), provDeputados, Alems::paraSnapshot);
+        if (entradas.isEmpty()) {
             System.out.println("alems: nenhum deputado para normalizar");
             return;
         }
-
-        Coleta.Arquivo arqDeputados = Coleta.metadados(ctx, nome(), "deputados.html");
-        Prov provDeputados = Prov.de(FONTE_DEPUTADOS, URL_DEPUTADOS, arqDeputados);
 
         Coleta.Arquivo arqMesa = Coleta.metadados(ctx, nome(), "mesa-diretora.html");
         Prov provMesa = Prov.de(FONTE_MESA_DIRETORA, URL_MESA_DIRETORA, arqMesa);
@@ -127,18 +138,22 @@ public final class Alems implements Fonte {
 
         List<Pessoa> pessoas = new ArrayList<>();
 
-        for (DeputadoBruto d : deputados) {
-            String id = d.id();
-            String nomeParlamentar = d.nome();
-            String partido = d.partido();
-            String fotoUrl = d.fotoUrl();
+        for (HistoricoDeputados.Entrada ent : entradas) {
+            String id = ent.id();
+            String nomeParlamentar = ent.nome();
+            String partido = ent.partido();
+            String fotoUrl = ent.fotoUrl();
+            String href = ent.extra() != null ? ent.extra() : "/Deputados/Visualizar/" + id;
 
-            String urlPerfil = d.href().startsWith("http") ? d.href() : SITE + d.href();
+            String urlPerfil = href.startsWith("http") ? href : SITE + href;
             Coleta.Arquivo arqPerfil = Coleta.metadados(ctx, nome(), "perfis/" + id + ".html");
-            Prov provPerfil = Prov.de(FONTE_DETALHES, urlPerfil, arqPerfil);
+            Prov provMandato = ent.provOu(provDeputados);
+            Prov provPerfil = arqPerfil != null ? Prov.de(FONTE_DETALHES, urlPerfil, arqPerfil) : provMandato;
 
             List<LinkOficial> links = new ArrayList<>();
-            links.add(new LinkOficial("Página na ALEMS", urlPerfil, provPerfil));
+            if (provPerfil != null) {
+                links.add(new LinkOficial("Página na ALEMS", urlPerfil, provPerfil));
+            }
 
             if (arqPerfil != null && Files.exists(Coleta.caminho(ctx, arqPerfil))) {
                 try {
@@ -162,13 +177,14 @@ public final class Alems implements Fonte {
                 }
             }
 
+            String situacao = ent.situacao("Em exercício");
             Pessoa pessoa = new Pessoa("alems", id, nomeParlamentar, "deputado_estadual", "estadual", UF, UF,
-                    partido, fotoUrl, "Em exercício", true, links);
+                    partido, fotoUrl, situacao, ent.emExercicio(), links);
             pessoas.add(pessoa);
 
             List<Mandato> mandatos = List.of(new Mandato("deputado_estadual", "estadual", UF, UF,
-                    INICIO_LEG_12, FIM_LEG_12, "Em exercício", "Titular", LEGISLATURA_12, 2022,
-                    "Deputado Estadual na 12ª Legislatura (2023–2027)", provDeputados));
+                    INICIO_LEG_12, FIM_LEG_12, situacao, ent.emExercicio() ? "Titular" : null, LEGISLATURA_12, 2022,
+                    "Deputado Estadual na 12ª Legislatura (2023–2027)", provMandato));
 
             String chaveNome = normalizarChaveNome(nomeParlamentar);
             List<OrgaoOuFrente> orgaos = mesaPorNome.getOrDefault(chaveNome, List.of());

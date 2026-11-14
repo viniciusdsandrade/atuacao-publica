@@ -405,6 +405,49 @@ class AlbaTest {
         assertEquals("Comissão de Constituição e Justiça", orgaos.get(0).path("nome").asText());
     }
 
+    @Test
+    void normalizePreservaDeputadoQueSaiuDaLista(@TempDir Path tempDir) throws Exception {
+        Contexto ctx = new Contexto(tempDir, tempDir.resolve("data"), null, null, Instant.parse("2026-11-08T12:00:00Z"), null);
+        Path rawAlba = ctx.raw().resolve("alba");
+        Files.createDirectories(rawAlba.resolve("deputados"));
+
+        String html1 = """
+                <div class="box-deputado">
+                    <li><a href="/deputados/deputado-estadual/910629"><img src="/foto/1.jpg" class="deputado-img"/></a></li>
+                    <div class="campo-dados">
+                        <div class="deputado-nome"><a href="/deputados/deputado-estadual/910629"><span>Adolfo Menezes</span></a></div>
+                        <div class="partido-nome">PSD</div>
+                    </div>
+                </div>
+                """;
+        Files.writeString(rawAlba.resolve("deputados/deputados-estaduais.html"), html1);
+        gravarMetadado(rawAlba, "deputados/deputados-estaduais.html", "https://www.al.ba.gov.br/deputados/deputados-estaduais");
+
+        Alba alba = new Alba();
+        alba.normalize(ctx);
+
+        String html2 = """
+                <div class="box-deputado">
+                    <li><a href="/deputados/deputado-estadual/999000"><img src="/foto/2.jpg" class="deputado-img"/></a></li>
+                    <div class="campo-dados">
+                        <div class="deputado-nome"><a href="/deputados/deputado-estadual/999000"><span>Novo Deputado</span></a></div>
+                        <div class="partido-nome">PT</div>
+                    </div>
+                </div>
+                """;
+        Files.writeString(rawAlba.resolve("deputados/deputados-estaduais.html"), html2);
+        alba.normalize(ctx);
+
+        JsonNode pessoas = Json.ler(ctx.normalizado().resolve("alba/pessoas.json"));
+        assertEquals(2, pessoas.size());
+        java.util.Map<String, JsonNode> porId = new java.util.HashMap<>();
+        pessoas.forEach(p -> porId.put(p.path("id_fonte").asText(), p));
+
+        org.junit.jupiter.api.Assertions.assertFalse(porId.get("910629").path("em_exercicio").asBoolean());
+        assertEquals("Fora de exercício", porId.get("910629").path("situacao").asText());
+        assertTrue(porId.get("999000").path("em_exercicio").asBoolean());
+    }
+
     private static void gravarMetadado(Path pastaFonte, String relativo, String url) throws IOException {
         Path arquivo = pastaFonte.resolve(relativo);
         Path meta = arquivo.resolveSibling(arquivo.getFileName() + ".meta.json");

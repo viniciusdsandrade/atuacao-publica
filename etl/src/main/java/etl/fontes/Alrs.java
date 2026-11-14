@@ -87,43 +87,62 @@ public final class Alrs implements Fonte {
     public record DeputadoBruto(String id, String nome, String partido, String fotoUrl) {
     }
 
+    private static HistoricoDeputados.Snapshot paraSnapshot(DeputadoBruto d) {
+        return HistoricoDeputados.Snapshot.de(d.id(), d.nome(), d.partido(), d.fotoUrl(), null, null);
+    }
+
+    private Prov provDeputados(Contexto ctx) {
+        Coleta.Arquivo arq = Coleta.metadados(ctx, nome(), "deputados.json");
+        return arq != null ? Prov.de(FONTE_DEPUTADOS, API_DEPUTADOS, arq) : null;
+    }
+
     @Override
     public void fetch(Contexto ctx, Coleta coleta) throws Exception {
         System.out.println("alrs: coleta iniciada");
+        HistoricoDeputados.registrar(ctx, nome(), extrairDeputados(ctx), provDeputados(ctx), Alrs::paraSnapshot);
         coleta.obter(API_DEPUTADOS, "deputados.json", "application/json", Politica.SEMANAL);
 
-        List<DeputadoBruto> deputados = extrairDeputados(ctx);
-        for (DeputadoBruto d : deputados) {
-            String urlPerfil = SITE + "/deputados/" + d.id();
-            coleta.obterOuVazio(urlPerfil, "perfis/" + d.id() + ".html", "text/html", Politica.SEMANAL);
-            String urlComissoes = SITE + "/deputados/" + d.id() + "/comissoes";
-            coleta.obterOuVazio(urlComissoes, "comissoes/" + d.id() + ".html", "text/html", Politica.SEMANAL);
+        List<HistoricoDeputados.Entrada> entradas = HistoricoDeputados.mesclar(
+                ctx, nome(), extrairDeputados(ctx), provDeputados(ctx), Alrs::paraSnapshot);
+        for (HistoricoDeputados.Entrada ent : entradas) {
+            Politica pol = ent.emExercicio() ? Politica.SEMANAL : Politica.SE_AUSENTE;
+            String urlPerfil = SITE + "/deputados/" + ent.id();
+            coleta.obterOuVazio(urlPerfil, "perfis/" + ent.id() + ".html", "text/html", pol);
+            String urlComissoes = SITE + "/deputados/" + ent.id() + "/comissoes";
+            coleta.obterOuVazio(urlComissoes, "comissoes/" + ent.id() + ".html", "text/html", pol);
         }
 
         // Votos em plenário: uma página por deputado e ano no portal da transparência, pelo mesmo id do perfil.
-        for (DeputadoBruto d : deputados) {
+        for (HistoricoDeputados.Entrada ent : entradas) {
             for (int ano = PRIMEIRO_ANO_VOTOS; ano <= ctx.hoje().getYear(); ano++) {
-                coleta.obterOpcional(urlVotos(d.id(), ano), arquivoDeVotos(d.id(), ano), "text/html",
-                        Politica.porAnoSemanal(ano, ctx.hoje()));
+                Politica pol = ent.emExercicio() ? Politica.porAnoSemanal(ano, ctx.hoje()) : Politica.SE_AUSENTE;
+                coleta.obterOpcional(urlVotos(ent.id(), ano), arquivoDeVotos(ent.id(), ano), "text/html", pol);
             }
         }
 
         // Proposições (uma página por deputado, com todas as da legislatura) e gastos da cota (uma página por deputado
         // e mês, no portal da transparência). Os deputados em paralelo, no limite de concorrência do cliente HTTP.
         List<String> ids = new ArrayList<>();
-        deputados.forEach(d -> ids.add(d.id()));
-        for (String falha : Camara.paraCadaDeputado(ids, id -> coletarAtuacao(ctx, coleta, id))) {
+        Set<String> idsEmExercicio = new HashSet<>();
+        for (HistoricoDeputados.Entrada ent : entradas) {
+            ids.add(ent.id());
+            if (ent.emExercicio()) {
+                idsEmExercicio.add(ent.id());
+            }
+        }
+        for (String falha : Camara.paraCadaDeputado(ids, id -> coletarAtuacao(ctx, coleta, id, idsEmExercicio.contains(id)))) {
             coleta.falhaParcial("atuacao", falha);
         }
     }
 
-    private static void coletarAtuacao(Contexto ctx, Coleta coleta, String id) throws Exception {
-        coleta.obterOpcional(urlProposicoes(id), arquivoDeProposicoes(id), "text/html", Politica.SEMANAL);
+    private static void coletarAtuacao(Contexto ctx, Coleta coleta, String id, boolean emExercicio) throws Exception {
+        coleta.obterOpcional(urlProposicoes(id), arquivoDeProposicoes(id), "text/html",
+                emExercicio ? Politica.SEMANAL : Politica.SE_AUSENTE);
         for (int ano = PRIMEIRO_ANO_GASTOS; ano <= ctx.hoje().getYear(); ano++) {
             int ultimoMes = ano == ctx.hoje().getYear() ? ctx.hoje().getMonthValue() : 12;
+            Politica pol = emExercicio ? Politica.porAnoSemanal(ano, ctx.hoje()) : Politica.SE_AUSENTE;
             for (int mes = 1; mes <= ultimoMes; mes++) {
-                coleta.obterOpcional(urlGastos(id, ano, mes), arquivoDeGastos(id, ano, mes), "text/html",
-                        Politica.porAnoSemanal(ano, ctx.hoje()));
+                coleta.obterOpcional(urlGastos(id, ano, mes), arquivoDeGastos(id, ano, mes), "text/html", pol);
             }
         }
     }
@@ -323,14 +342,13 @@ public final class Alrs implements Fonte {
 
     @Override
     public void normalize(Contexto ctx) {
-        List<DeputadoBruto> deputados = extrairDeputados(ctx);
-        if (deputados.isEmpty()) {
+        Prov provDeputados = provDeputados(ctx);
+        List<HistoricoDeputados.Entrada> entradas = HistoricoDeputados.mesclar(
+                ctx, nome(), extrairDeputados(ctx), provDeputados, Alrs::paraSnapshot);
+        if (entradas.isEmpty()) {
             System.out.println("alrs: nenhum deputado para normalizar");
             return;
         }
-
-        Coleta.Arquivo arqDeputados = Coleta.metadados(ctx, nome(), "deputados.json");
-        Prov provDeputados = Prov.de(FONTE_DEPUTADOS, API_DEPUTADOS, arqDeputados);
 
         Path pastaBlocos = ctx.normalizado().resolve("alrs/blocos");
         try {
@@ -346,27 +364,30 @@ public final class Alrs implements Fonte {
         int[] totaisDiferentes = {0};
         List<String> semProposicao = new ArrayList<>();
 
-        for (DeputadoBruto d : deputados) {
-            String id = d.id();
-            String nomeFormatado = formatarNome(d.nome());
-            String partido = d.partido();
-            String fotoUrl = d.fotoUrl();
+        for (HistoricoDeputados.Entrada ent : entradas) {
+            String id = ent.id();
+            String nomeFormatado = formatarNome(ent.nome());
+            String partido = ent.partido();
+            String fotoUrl = ent.fotoUrl();
 
             String urlPerfil = SITE + "/deputados/" + id;
             Coleta.Arquivo arqPerfil = Coleta.metadados(ctx, nome(), "perfis/" + id + ".html");
-            Prov provPerfil = arqPerfil != null ? Prov.de(FONTE_DETALHES, urlPerfil, arqPerfil) : provDeputados;
+            Prov provMandato = ent.provOu(provDeputados);
+            Prov provPerfil = arqPerfil != null ? Prov.de(FONTE_DETALHES, urlPerfil, arqPerfil) : provMandato;
 
+            String situacao = ent.situacao("Em exercício");
             List<Mandato> mandatos = new ArrayList<>();
             mandatos.add(new Mandato("deputado_estadual", "estadual", UF, UF,
-                    INICIO_LEG_56, FIM_LEG_56, "Em exercício", "Titular", LEGISLATURA_56, 2022,
-                    "Deputado Estadual na 56ª Legislatura (2023–2027)", provDeputados));
+                    INICIO_LEG_56, FIM_LEG_56, situacao, ent.emExercicio() ? "Titular" : null, LEGISLATURA_56, 2022,
+                    "Deputado Estadual na 56ª Legislatura (2023–2027)", provMandato));
 
-            List<LinkOficial> links = List.of(
-                    new LinkOficial("Página na ALRS", urlPerfil, provPerfil));
+            List<LinkOficial> links = provPerfil != null
+                    ? List.of(new LinkOficial("Página na ALRS", urlPerfil, provPerfil))
+                    : List.of();
 
             Pessoa pessoa = new Pessoa(
                     "alrs", id, nomeFormatado, "deputado_estadual", "estadual", UF, UF,
-                    partido, fotoUrl, "Em exercício", true, links);
+                    partido, fotoUrl, situacao, ent.emExercicio(), links);
             pessoas.add(pessoa);
 
             String urlComissoes = SITE + "/deputados/" + id + "/comissoes";

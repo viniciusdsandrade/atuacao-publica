@@ -186,6 +186,48 @@ class AlrnTest {
         assertEquals("Presidente", orgaos.get(0).get("papel").stringValue());
     }
 
+    @Test
+    void normalizacaoPreservaDeputadoQueSaiuDaLista(@TempDir Path tempDir) throws IOException {
+        Contexto ctx = new Contexto(tempDir, tempDir.resolve("data"), null, null, Instant.parse("2026-11-11T12:00:00Z"), null);
+        Path rawAlrn = ctx.raw().resolve("alrn");
+        Files.createDirectories(rawAlrn.resolve("deputados"));
+
+        String html1 = """
+                <div class="row">
+                    <a href="https://www.al.rn.leg.br/deputado/72/ezequiel-ferreira" class="card-deputies card-deputies-inner">
+                        <div class="image-deputies" style="background-image: url('https://www.al.rn.leg.br/foto/72.png')"></div>
+                        <strong class="name-deputies">Ezequiel Ferreira</strong>
+                        <p class="party-deputies">PSDB</p>
+                    </a>
+                </div>
+                """;
+        gravarCompactado(rawAlrn, "deputados.html", Alrn.URL_DEPUTADOS, html1);
+
+        Alrn alrn = new Alrn();
+        alrn.normalize(ctx);
+
+        String html2 = """
+                <div class="row">
+                    <a href="https://www.al.rn.leg.br/deputado/88/suplente-rn" class="card-deputies card-deputies-inner">
+                        <div class="image-deputies" style="background-image: url('https://www.al.rn.leg.br/foto/88.png')"></div>
+                        <strong class="name-deputies">Suplente RN</strong>
+                        <p class="party-deputies">MDB</p>
+                    </a>
+                </div>
+                """;
+        gravarCompactado(rawAlrn, "deputados.html", Alrn.URL_DEPUTADOS, html2);
+        alrn.normalize(ctx);
+
+        JsonNode pessoas = Json.ler(ctx.normalizado().resolve("alrn/pessoas.json"));
+        assertEquals(2, pessoas.size());
+        Map<String, JsonNode> porId = new java.util.HashMap<>();
+        pessoas.forEach(p -> porId.put(p.get("id_fonte").asText(), p));
+
+        org.junit.jupiter.api.Assertions.assertFalse(porId.get("72").get("em_exercicio").asBoolean());
+        assertEquals("Fora de exercício", porId.get("72").get("situacao").stringValue());
+        assertTrue(porId.get("88").get("em_exercicio").asBoolean());
+    }
+
     private static void gravarCompactado(Path dir, String arquivo, String url, String conteudo) throws IOException {
         Path gz = dir.resolve(arquivo + ".gz");
         try (OutputStream out = Files.newOutputStream(gz); GZIPOutputStream gzip = new GZIPOutputStream(out)) {
