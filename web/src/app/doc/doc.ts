@@ -7,7 +7,6 @@ import {
   effect,
   inject,
   signal,
-  untracked,
   viewChild,
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
@@ -82,25 +81,36 @@ export class Doc {
   protected readonly sumario = signal<ItemSumario[]>([]);
   protected readonly ativo = signal<string | null>(null);
   protected readonly sumarioAberto = signal(false);
+  protected readonly pronto = signal(false);
   protected readonly esqueletos = [1, 2, 3, 4, 5, 6, 7];
 
   constructor() {
     effect(() => {
       const c = this.carga();
       if (c.estado !== 'pronto') {
+        this.pronto.set(false);
         return;
       }
-      const fragmento = untracked(() => this.fragmento());
+      this.pronto.set(false);
       afterNextRender(
         () => {
           this.preparar();
-          // O sumário entra na tela na exibição seguinte; só então a página tem a altura final.
-          if (fragmento) {
-            afterNextRender(() => document.getElementById(fragmento)?.scrollIntoView(), { injector: this.injector });
-          }
+          this.pronto.set(true);
         },
         { injector: this.injector },
       );
+    });
+
+    effect(() => {
+      if (!this.pronto()) {
+        return;
+      }
+      const fragmento = this.fragmento();
+      if (!fragmento) {
+        return;
+      }
+      // Espera o sumário terminar a exibição no ciclo seguinte para rolar e mover o foco com altura final.
+      afterNextRender(() => this.ir(fragmento), { injector: this.injector });
     });
 
     effect(() => {
@@ -220,13 +230,20 @@ export class Doc {
     titulos.forEach((t) => this.observador?.observe(t));
   }
 
-  /** O roteador atualiza o endereço e rola. Aqui só garante a rolagem (mesmo link duas vezes) e leva o foco ao título. */
+  /** O roteador atualiza o endereço e rola. Aqui garante rolagem e leva o foco ao título mesmo em nova navegação por fragmento. */
   protected ir(id: string): void {
     const alvo = document.getElementById(id);
     alvo?.scrollIntoView();
     alvo?.focus({ preventScroll: true });
     this.ativo.set(id);
     this.sumarioAberto.set(false);
+  }
+
+  protected fecharSumario(botao: HTMLElement): void {
+    if (this.sumarioAberto()) {
+      this.sumarioAberto.set(false);
+      botao.focus();
+    }
   }
 
   protected tentarDeNovo(): void {

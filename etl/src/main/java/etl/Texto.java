@@ -125,6 +125,73 @@ public final class Texto {
         return m.find() ? m.group(3) + "-" + m.group(2) + "-" + m.group(1) : null;
     }
 
+    private static final java.util.Locale PT_BR = java.util.Locale.forLanguageTag("pt-BR");
+    private static final java.util.Set<String> PARTICULAS_NOME = java.util.Set.of("da", "das", "de", "do", "dos", "e");
+
+    /**
+     * Converte nome em caixa uniforme (como o {@code nome_urna} do TSE em maiúsculas) para capitalização de
+     * nome próprio brasileiro, preservando preposições em minúscula depois da primeira palavra e mantendo grafias
+     * mistas já vindas das fontes.
+     */
+    public static String capitalizarNome(String nome) {
+        String limpo = vazioParaNulo(nome);
+        if (limpo == null) {
+            return null;
+        }
+        String colapsado = limpo.replaceAll("\\s+", " ");
+        boolean temMaiuscula = false;
+        boolean temMinuscula = false;
+        for (int i = 0; i < colapsado.length(); i++) {
+            char c = colapsado.charAt(i);
+            if (Character.isUpperCase(c)) {
+                temMaiuscula = true;
+            } else if (Character.isLowerCase(c)) {
+                temMinuscula = true;
+            }
+        }
+        if (temMaiuscula && temMinuscula) {
+            return colapsado;
+        }
+        String[] palavras = colapsado.split(" ");
+        StringBuilder saida = new StringBuilder(colapsado.length());
+        for (int i = 0; i < palavras.length; i++) {
+            if (i > 0) {
+                saida.append(' ');
+            }
+            String palavra = palavras[i];
+            String minuscula = palavra.toLowerCase(PT_BR);
+            if (i > 0 && PARTICULAS_NOME.contains(minuscula)) {
+                saida.append(minuscula);
+            } else if ("II".equals(palavra.toUpperCase(PT_BR)) || "III".equals(palavra.toUpperCase(PT_BR))) {
+                saida.append(palavra.toUpperCase(PT_BR));
+            } else {
+                saida.append(capitalizarTrechoNome(minuscula));
+            }
+        }
+        return saida.toString();
+    }
+
+    private static String capitalizarTrechoNome(String palavra) {
+        StringBuilder sb = new StringBuilder(palavra.length());
+        boolean inicioDeParte = true;
+        for (int i = 0; i < palavra.length(); i++) {
+            char c = palavra.charAt(i);
+            if (c == '-' || c == '\'') {
+                sb.append(c);
+                inicioDeParte = true;
+            } else if (inicioDeParte && Character.isLetter(c)) {
+                sb.append(String.valueOf(c).toUpperCase(PT_BR));
+                inicioDeParte = false;
+            } else {
+                sb.append(c);
+                if (Character.isLetterOrDigit(c)) {
+                    inicioDeParte = false;
+                }
+            }
+        }
+        return sb.toString();
+    }
+
     public static String vazioParaNulo(String texto) {
         return texto == null || texto.isBlank() ? null : texto.strip();
     }

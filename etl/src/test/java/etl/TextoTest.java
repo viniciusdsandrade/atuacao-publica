@@ -20,7 +20,8 @@ class TextoTest {
     void trocaEntidadesHtmlSemMudarConteudo() {
         assertEquals("orientou a bancada na votação", Texto.semEntidades("orientou a&nbsp;bancada na vota&#231;&atilde;o"));
         assertNull(Texto.semEntidades("&nbsp;"));
-        assertEquals("Lei nº 1, art. 5º, § 2º: \u201Cprazo\u201D de 30° em 5 m³", Texto.semEntidades("Lei n&ordm; 1, art. 5&ordm;, &sect; 2&ordm;: &ldquo;prazo&rdquo; de 30&deg; em 5 m&sup3;&lrm;"));
+        assertEquals("Lei nº 1, art. 5º, § 2º: \u201Cprazo\u201D de 30° em 5 m³",
+                Texto.semEntidades("Lei n&ordm; 1, art. 5&ordm;, &sect; 2&ordm;: &ldquo;prazo&rdquo; de 30&deg; em 5 m&sup3;&lrm;"));
     }
 
     @Test
@@ -50,8 +51,24 @@ class TextoTest {
         assertEquals("https://exemplo.invalid/a%20b.jpg", Texto.url("https://exemplo.invalid/a b.jpg"));
         String pronto = "https://exemplo.invalid/media/parlamentar/5/fulano.png";
         assertEquals(pronto, Texto.url(pronto), "endereço que já é válido não muda");
-        assertEquals("https://exemplo.invalid/a%20b.jpg", Texto.url("https://exemplo.invalid/a%20b.jpg"), "percent-encoding que já existe fica como está");
+        assertEquals("https://exemplo.invalid/a%20b.jpg", Texto.url("https://exemplo.invalid/a%20b.jpg"),
+                "percent-encoding que já existe fica como está");
         assertNull(Texto.url(null));
         assertNull(Texto.url("  "));
+    }
+
+    @Test
+    void capitalizarNomeConverteCaixaUniformePreservandoParticulasEMistas() {
+        assertNull(Texto.capitalizarNome(null));
+        assertNull(Texto.capitalizarNome("   "));
+        assertEquals("André do Prado", Texto.capitalizarNome("ANDRÉ DO PRADO"));
+        assertEquals("Da Penha", Texto.capitalizarNome("DA PENHA"));
+        assertEquals("Luiz Philippe de Orleans e Bragança", Texto.capitalizarNome("LUIZ PHILIPPE DE ORLEANS E BRAGANÇA"));
+        assertEquals("Maria das Dores dos Santos", Texto.capitalizarNome("maria das dores dos santos"));
+        assertEquals("José D'Ávila", Texto.capitalizarNome("JOSÉ D'ÁVILA"));
+        assertEquals("Sargento Mello-Casal", Texto.capitalizarNome("SARGENTO MELLO-CASAL"));
+        assertEquals("Dr. Acilon", Texto.capitalizarNome("DR. ACILON"));
+        assertEquals("Carlos Bezerra Jr.", Texto.capitalizarNome("Carlos Bezerra Jr."));
+        assertEquals("João Paulo II", Texto.capitalizarNome("JOÃO PAULO II"));
     }
 }

@@ -404,6 +404,7 @@
   background: var(--superficie);
   border-color: var(--borda-controle);
   color: var(--texto);
+  white-space: normal;
 }
 
 /* Colegiado sem sigla entra pelo nome inteiro: o selo quebra a linha em vez de alargar a página.
@@ -511,6 +512,12 @@ a.selo {
 }
 
 .migalhas li {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2rem;
+}
+
+.migalhas a {
   display: inline-flex;
   align-items: center;
   min-height: 2rem;

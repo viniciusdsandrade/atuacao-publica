@@ -195,7 +195,7 @@
             <select id="partido" class="controle" (change)="alterar({ partido: valor($event) })">
               <option value="" [selected]="!filtros().partido">Todos</option>
               @for (p of partidos(); track p) {
-                <option [value]="p" [selected]="p === filtros().partido">{{ p }}</option>
+                <option [value]="p" [selected]="p === filtros().partido">{{ partidoComNome(p) }}</option>
               }
             </select>
           </div>
@@ -259,7 +259,7 @@
                 @if (c.p.partido || c.situacao !== 'exercicio') {
                   <span class="cartao-rodape">
                     @if (c.p.partido) {
-                      <span class="selo selo--partido">{{ c.p.partido }}</span>
+                      <span class="selo selo--partido" [attr.aria-label]="rotuloAcessivelPartido(c.p.partido)">{{ c.p.partido }}</span>
                     }
                     @if (c.situacao === 'posse') {
                       <span class="selo selo--posse">Aguardando posse</span>

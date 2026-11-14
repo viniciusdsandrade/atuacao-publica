@@ -38,6 +38,54 @@ public final class Partidos {
             Map.entry("UB", "UNIÃO"),
             Map.entry("UNIAOBRASIL", "UNIÃO"));
 
+    /** Nome oficial por extenso no TSE, indexado pela chave da sigla canônica (ADR-0064). */
+    private static final Map<String, String> NOMES_COMPLETOS = Map.ofEntries(
+            Map.entry("AGIR", "Agir"),
+            Map.entry("AVANTE", "Avante"),
+            Map.entry("CIDADANIA", "Cidadania"),
+            Map.entry("DC", "Democracia Cristã"),
+            Map.entry("DEM", "Democratas"),
+            Map.entry("DEMOCRATA", "Democrata"),
+            Map.entry("MDB", "Movimento Democrático Brasileiro"),
+            Map.entry("MISSAO", "Partido Missão"),
+            Map.entry("MOBILIZA", "Mobilização Nacional"),
+            Map.entry("NOVO", "Partido Novo"),
+            Map.entry("PATRIOTA", "Patriota"),
+            Map.entry("PCB", "Partido Comunista Brasileiro"),
+            Map.entry("PCDOB", "Partido Comunista do Brasil"),
+            Map.entry("PCO", "Partido da Causa Operária"),
+            Map.entry("PDT", "Partido Democrático Trabalhista"),
+            Map.entry("PHS", "Partido Humanista da Solidariedade"),
+            Map.entry("PL", "Partido Liberal"),
+            Map.entry("PMB", "Partido da Mulher Brasileira"),
+            Map.entry("PMN", "Partido da Mobilização Nacional"),
+            Map.entry("PODE", "Podemos"),
+            Map.entry("PP", "Progressistas"),
+            Map.entry("PPL", "Partido Pátria Livre"),
+            Map.entry("PPS", "Partido Popular Socialista"),
+            Map.entry("PR", "Partido da República"),
+            Map.entry("PRB", "Partido Republicano Brasileiro"),
+            Map.entry("PRD", "Partido Renovação Democrática"),
+            Map.entry("PROS", "Partido Republicano da Ordem Social"),
+            Map.entry("PRP", "Partido Republicano Progressista"),
+            Map.entry("PRTB", "Partido Renovador Trabalhista Brasileiro"),
+            Map.entry("PSB", "Partido Socialista Brasileiro"),
+            Map.entry("PSC", "Partido Social Cristão"),
+            Map.entry("PSD", "Partido Social Democrático"),
+            Map.entry("PSDB", "Partido da Social Democracia Brasileira"),
+            Map.entry("PSL", "Partido Social Liberal"),
+            Map.entry("PSOL", "Partido Socialismo e Liberdade"),
+            Map.entry("PSTU", "Partido Socialista dos Trabalhadores Unificado"),
+            Map.entry("PT", "Partido dos Trabalhadores"),
+            Map.entry("PTB", "Partido Trabalhista Brasileiro"),
+            Map.entry("PTC", "Partido Trabalhista Cristão"),
+            Map.entry("PV", "Partido Verde"),
+            Map.entry("REDE", "Rede Sustentabilidade"),
+            Map.entry("REPUBLICANOS", "Republicanos"),
+            Map.entry("SOLIDARIEDADE", "Solidariedade"),
+            Map.entry("UNIAO", "União Brasil"),
+            Map.entry("UP", "Unidade Popular"));
+
     private Partidos() {
     }
 
@@ -107,6 +155,19 @@ public final class Partidos {
             }
         }
         return new Resultado(unificados, semCorrespondencia);
+    }
+
+    /** Nome oficial completo do partido a partir da sigla ou apelido conhecido, ou nulo quando desconhecido. */
+    public static String nomeCompleto(String original) {
+        String unificada = unificar(original, Map.of());
+        if (unificada == null) {
+            return null;
+        }
+        if (SEM_PARTIDO.equals(unificada)) {
+            return SEM_PARTIDO;
+        }
+        String chave = chave(unificada);
+        return chave == null ? null : NOMES_COMPLETOS.get(chave);
     }
 
     /** Sem acento, em maiúsculas, só letras e dígitos. Vazio vira nulo. */

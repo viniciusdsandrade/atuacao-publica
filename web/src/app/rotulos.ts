@@ -115,7 +115,7 @@ export const NOTAS: Record<string, string> = {
   participacao_votacoes:
     'Conta votos registrados em votações nominais. Não é presença. A Câmara e o Senado registram ausências de forma diferente.',
   eventos:
-    'Na Câmara dos Deputados e no piloto municipal, a fonte lista só quem esteve presente. Na ALESC, lista também a ausência justificada em cada sessão ordinária; na ALBA e na Câmara Municipal de Caraguatatuba, a falta justificada e a falta sem justificativa em cada sessão plenária. O site não calcula taxa de presença.',
+    'Na Câmara dos Deputados, no piloto municipal e nas assembleias em SAPL (ALPB, ALEAM, ALERO, ALEPI e ALEAC), a fonte lista só quem esteve presente. Na ALESC, lista também a ausência justificada em cada sessão ordinária; na ALBA e na Câmara Municipal de Caraguatatuba, a falta justificada e a falta sem justificativa em cada sessão plenária. O site não calcula taxa de presença.',
   despesas: 'Valores líquidos informados pela casa legislativa. Compensações negativas entram na soma.',
   atos_normativos: 'A fonte não informa quem assinou cada ato.',
   despesas_executivo:
@@ -390,4 +390,254 @@ export function realcar(texto: string, termos: string[]): Trecho[] {
     }
   }
   return trechos;
+}
+
+/** Nomes oficiais por extenso dos partidos do TSE (ativos e históricos), indexados pela sigla sem acento nem pontuação. */
+export const NOMES_DOS_PARTIDOS: Record<string, string> = {
+  AGIR: 'Agir',
+  AVANTE: 'Avante',
+  CIDAD: 'Cidadania',
+  CIDADANIA: 'Cidadania',
+  DC: 'Democracia Cristã',
+  DEM: 'Democratas',
+  DEMOCRATA: 'Democrata',
+  MDB: 'Movimento Democrático Brasileiro',
+  MISSAO: 'Partido Missão',
+  MOBILIZA: 'Mobilização Nacional',
+  NOVO: 'Partido Novo',
+  PATRIOTA: 'Patriota',
+  PCB: 'Partido Comunista Brasileiro',
+  PCDOB: 'Partido Comunista do Brasil',
+  PCO: 'Partido da Causa Operária',
+  PDT: 'Partido Democrático Trabalhista',
+  PHS: 'Partido Humanista da Solidariedade',
+  PL: 'Partido Liberal',
+  PMB: 'Partido da Mulher Brasileira',
+  PMN: 'Partido da Mobilização Nacional',
+  PODE: 'Podemos',
+  PODEMOS: 'Podemos',
+  PP: 'Progressistas',
+  PROGRESSISTAS: 'Progressistas',
+  PPL: 'Partido Pátria Livre',
+  PPS: 'Partido Popular Socialista',
+  PR: 'Partido da República',
+  PRB: 'Partido Republicano Brasileiro',
+  PRD: 'Partido Renovação Democrática',
+  PROS: 'Partido Republicano da Ordem Social',
+  PRP: 'Partido Republicano Progressista',
+  PRTB: 'Partido Renovador Trabalhista Brasileiro',
+  PSB: 'Partido Socialista Brasileiro',
+  PSC: 'Partido Social Cristão',
+  PSD: 'Partido Social Democrático',
+  PSDB: 'Partido da Social Democracia Brasileira',
+  PSL: 'Partido Social Liberal',
+  PSOL: 'Partido Socialismo e Liberdade',
+  PSTU: 'Partido Socialista dos Trabalhadores Unificado',
+  PT: 'Partido dos Trabalhadores',
+  PTB: 'Partido Trabalhista Brasileiro',
+  PTC: 'Partido Trabalhista Cristão',
+  PV: 'Partido Verde',
+  REDE: 'Rede Sustentabilidade',
+  REP: 'Republicanos',
+  REPUB: 'Republicanos',
+  REPUBLICANOS: 'Republicanos',
+  SD: 'Solidariedade',
+  SDD: 'Solidariedade',
+  SOLIDARIEDADE: 'Solidariedade',
+  UB: 'União Brasil',
+  UNIAO: 'União Brasil',
+  UNIAOBRASIL: 'União Brasil',
+  UP: 'Unidade Popular',
+};
+
+function chaveDeSigla(valor: string): string {
+  return chaveDeBusca(valor).replace(/[^a-z0-9]/g, '').toUpperCase();
+}
+
+/** Nome completo do partido pela sigla do TSE, ou nulo quando não há tradução cadastrada. */
+export function nomeDoPartido(sigla: string | null | undefined): string | null {
+  if (!sigla) {
+    return null;
+  }
+  const limpo = sigla.trim();
+  if (!limpo || chaveDeBusca(limpo) === 'sem partido') {
+    return null;
+  }
+  const chave = chaveDeSigla(limpo);
+  return NOMES_DOS_PARTIDOS[chave] ?? null;
+}
+
+/** Sigla com nome completo ao lado quando o nome traz informação além da própria sigla. */
+export function partidoComNome(sigla: string | null | undefined): string | null {
+  if (!sigla) {
+    return null;
+  }
+  const nome = nomeDoPartido(sigla);
+  if (!nome || chaveDeBusca(nome) === chaveDeBusca(sigla)) {
+    return sigla;
+  }
+  return `${sigla} · ${nome}`;
+}
+
+/** Rótulo para leitor de tela em cartões compactos onde a pílula mostra só a sigla. */
+export function rotuloAcessivelPartido(sigla: string | null | undefined): string | null {
+  if (!sigla) {
+    return null;
+  }
+  const nome = nomeDoPartido(sigla);
+  if (!nome || chaveDeBusca(nome) === chaveDeBusca(sigla)) {
+    return null;
+  }
+  return `${sigla}, ${nome}`;
+}
+
+/** Siglas de tipos de proposição usadas pela Câmara, Senado e sistemas SAPL. */
+export const TIPOS_PROPOSICAO: Record<string, string> = {
+  CON: 'Consulta',
+  CVO: 'Complementação de Voto',
+  DEN: 'Denúncia',
+  DOC: 'Indicação de Liderança',
+  DTQ: 'Destaque',
+  EMA: 'Emenda Aglutinativa',
+  EMC: 'Emenda na Comissão',
+  'EMC-A': 'Emenda Adotada pela Comissão',
+  EMD: 'Emenda',
+  EMEND: 'Emenda',
+  EMIMP: 'Emenda Impositiva',
+  EMP: 'Emenda de Plenário',
+  EMR: 'Emenda de Relator',
+  EMS: 'Emenda ou Substitutivo do Senado',
+  ESB: 'Emenda ao Substitutivo',
+  INC: 'Indicação',
+  IND: 'Indicação',
+  INS: 'Indicação',
+  MOC: 'Moção',
+  MP: 'Medida Provisória',
+  MPV: 'Medida Provisória',
+  MSC: 'Mensagem de Acordo Internacional',
+  OF: 'Ofício',
+  OFI: 'Ofício',
+  PAR: 'Parecer',
+  PDL: 'Projeto de Decreto Legislativo',
+  PDS: 'Projeto de Decreto Legislativo',
+  PEC: 'Proposta de Emenda à Constituição',
+  PELOM: 'Proposta de Emenda à Lei Orgânica',
+  PEP: 'Parecer às Emendas de Plenário',
+  PFC: 'Proposta de Fiscalização e Controle',
+  PFS: 'Proposta de Fiscalização e Controle',
+  PL: 'Projeto de Lei',
+  PLC: 'Projeto de Lei Complementar',
+  PLG: 'Projeto de Lei do Executivo',
+  PLN: 'Projeto de Lei do Congresso Nacional',
+  PLO: 'Projeto de Lei Ordinária',
+  PLP: 'Projeto de Lei Complementar',
+  PLS: 'Projeto de Lei do Senado',
+  PLV: 'Projeto de Lei de Conversão',
+  PPP: 'Parecer Proferido em Plenário',
+  PPREF: 'Protocolado',
+  PR: 'Projeto de Resolução',
+  PRC: 'Projeto de Resolução',
+  PRE: 'Projeto de Resolução',
+  PRL: 'Parecer do Relator',
+  PRLE: 'Parecer Preliminar às Emendas de Plenário',
+  PRLP: 'Parecer Preliminar de Plenário',
+  PRN: 'Projeto de Resolução do Congresso Nacional',
+  PROC: 'Processo Interno',
+  PRS: 'Projeto de Resolução',
+  'R.C': 'Recurso no Congresso Nacional',
+  'R.S': 'Recurso no Senado',
+  RCP: 'Requerimento de Instituição de CPI',
+  RDF: 'Redação Final',
+  REC: 'Recurso',
+  REL: 'Relatório',
+  REM: 'Reclamação',
+  REP: 'Representação',
+  REQ: 'Requerimento',
+  RIC: 'Requerimento de Informação',
+  RPD: 'Requerimento de Apreciação Imediata',
+  RPDR: 'Requerimento de Alteração da Ordem dos Trabalhos',
+  RQN: 'Requerimento do Congresso Nacional',
+  RQS: 'Requerimento do Senado',
+  SBE: 'Subemenda',
+  SBR: 'Subemenda de Relator',
+  SBT: 'Substitutivo',
+  SIT: 'Solicitação de Informação ao TCU',
+  SLD: 'Sugestão de Emenda à LDO',
+  SOR: 'Sugestão de Emenda ao Orçamento',
+  SPP: 'Sugestão de Emenda ao PPA',
+  SUG: 'Sugestão',
+  TVR: 'Outorga de Rádio ou TV',
+  VET: 'Veto',
+  VETO: 'Veto',
+  VTS: 'Voto em Separado',
+};
+
+const PROPOSICOES_POR_EXTENSO = new Map<string, string>(
+  [
+    ...Object.values(TIPOS_PROPOSICAO),
+    'Projeto de Indicação',
+    'Requerimento de Comissão',
+    'Requerimento Numerado',
+  ].map((nome) => [chaveDeBusca(nome), nome]),
+);
+
+/** Traduz siglas conhecidas de tipo de proposição em "SIGLA · Nome", evitando duplicar termos já por extenso. */
+export function rotuloTipoProposicao(tipo: string): string {
+  const limpo = tipo.trim();
+  const chave = limpo.toUpperCase();
+  const nome = TIPOS_PROPOSICAO[chave];
+  if (!nome) {
+    return PROPOSICOES_POR_EXTENSO.get(chaveDeBusca(limpo)) ?? limpo;
+  }
+  if (chaveDeBusca(nome) === chaveDeBusca(limpo)) {
+    return nome;
+  }
+  return `${limpo} · ${nome}`;
+}
+
+/** Âncora correspondente em docs/FONTES.md (#/fontes#<id>) para cada identificador de coleta em Estado. */
+export const ANCORAS_FONTES: Record<string, string> = {
+  camara: 'doc-camara-api-camara-dos-deputados-api-v2',
+  senado: 'doc-senado-api-senado-federal-dados-abertos',
+  tse: 'doc-tse-dados-abertos-tse-dados-abertos',
+  executivo: 'doc-planalto-legislacao-legislacao-no-planalto',
+  sapl: 'doc-campinas-camara-sapl-sapl-da-camara-municipal',
+  tcesp: 'doc-tce-sp-transparencia-api-e-tce-sp-conjunto-dados-tribunal-de-contas-do-estado-de-sao-paulo',
+  cgu: 'doc-cgu-portal-api-e-cgu-portal-arquivos-portal-da-transparencia',
+  agenda: 'doc-planalto-agenda-agenda-do-presidente-da-republica',
+  contrib: 'doc-fontes-t1-genericas',
+  alesp: 'doc-assembleia-legislativa-do-estado-de-sao-paulo-alesp',
+  executivosp: 'doc-governo-do-estado-de-sao-paulo-executivo-estadual',
+  almg: 'doc-assembleia-legislativa-do-estado-de-minas-gerais-almg',
+  alep: 'doc-assembleia-legislativa-do-estado-do-parana-alep',
+  alba: 'doc-fontes-da-bahia-alba-governo-do-estado',
+  alerj: 'doc-fontes-do-rio-de-janeiro-alerj-governo-do-estado',
+  alrs: 'doc-fontes-do-rio-grande-do-sul-alrs-governo-do-estado',
+  alece: 'doc-fontes-do-ceara-alece-governo-do-estado',
+  alesc: 'doc-fontes-de-santa-catarina-alesc-governo-do-estado',
+  alego: 'doc-fontes-de-goias-alego-governo-do-estado',
+  ales: 'doc-fontes-do-espirito-santo-ales-governo-do-estado',
+  alepa: 'doc-fontes-do-para-alepa-governo-do-estado',
+  alepe: 'doc-fontes-de-pernambuco-alepe-governo-do-estado',
+  cldf: 'doc-fontes-do-distrito-federal-cldf-governo-do-distrito-federal',
+  almt: 'doc-fontes-de-mato-grosso-almt-governo-do-estado',
+  alems: 'doc-fontes-de-mato-grosso-do-sul-alems-governo-do-estado',
+  alpb: 'doc-fontes-da-paraiba-alpb-governo-do-estado',
+  aleam: 'doc-fontes-do-amazonas-aleam-governo-do-estado',
+  aleal: 'doc-fontes-de-alagoas-aleal-governo-do-estado',
+  alero: 'doc-fontes-de-rondonia-alero-governo-do-estado',
+  alepi: 'doc-fontes-do-piaui-alepi-governo-do-estado',
+  alrn: 'doc-fontes-do-rio-grande-do-norte-alrn-governo-do-estado',
+  aleto: 'doc-fontes-do-tocantins-aleto-governo-do-estado',
+  alese: 'doc-fontes-de-sergipe-alese-governo-do-estado',
+  alema: 'doc-fontes-do-maranhao-alema-governo-do-estado',
+  aleac: 'doc-fontes-do-acre-aleac-governo-do-estado',
+  alerr: 'doc-fontes-de-roraima-alerr-governo-do-estado',
+  alap: 'doc-fontes-do-amapa-alap-governo-do-estado',
+  cmsp: 'doc-segundo-municipio-piloto-sao-paulo-cmsp-prefeitura',
+  caraguatatuba: 'doc-terceiro-municipio-caraguatatuba-camara-e-prefeitura',
+};
+
+export function ancoraFonte(fonte: string): string | undefined {
+  return ANCORAS_FONTES[fonte];
 }

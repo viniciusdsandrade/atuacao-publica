@@ -22,8 +22,9 @@
   @default {
     <div class="doc-pagina">
       @if (sumario().length) {
-        <aside class="doc-sumario" aria-label="Sumário do documento">
+        <aside class="doc-sumario" aria-label="Sumário do documento" (keydown.escape)="fecharSumario(botaoSumario)">
           <button
+            #botaoSumario
             type="button"
             class="botao botao--pequeno doc-sumario-botao"
             aria-controls="doc-sumario-lista"

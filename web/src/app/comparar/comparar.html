@@ -116,7 +116,7 @@
             <dl class="lado-dados">
               <div><dt>Cargo</dt><dd>{{ rotuloCargo(r.perfil.cargo_atual) }}</dd></div>
               <div><dt>Local</dt><dd>{{ r.local || semRegistro }}</dd></div>
-              <div><dt>Partido</dt><dd>{{ r.perfil.partido_atual ?? semRegistro }}</dd></div>
+              <div><dt>Partido</dt><dd>{{ partidoComNome(r.perfil.partido_atual) ?? semRegistro }}</dd></div>
               <div>
                 <dt>Situação</dt>
                 <dd>
@@ -186,7 +186,7 @@
                 @if (pr.porTipo.length) {
                   <ul class="lado-tipos" aria-label="Proposições por tipo">
                     @for (t of pr.porTipo; track t[0]) {
-                      <li class="selo">{{ t[0] }}: <strong class="numero">{{ inteiro(t[1]) }}</strong></li>
+                      <li class="selo">{{ rotuloTipoProposicao(t[0]) }}: <strong class="numero">{{ inteiro(t[1]) }}</strong></li>
                     }
                   </ul>
                 }

@@ -32,7 +32,7 @@
                 <span class="selo selo--fora">{{ SITUACOES.fora }}</span>
               }
             }
-            <span class="selo selo--partido">Partido: {{ i.partido ?? 'sem registro na fonte' }}</span>
+            <span class="selo selo--partido">Partido: {{ partidoComNome(i.partido) ?? 'sem registro na fonte' }}</span>
           </p>
           @if (liderancasAtivas(); as liderancas) {
             @if (liderancas.length > 0) {

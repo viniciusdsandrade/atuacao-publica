@@ -209,3 +209,28 @@ test.describe('teclado', () => {
     await expect(page.locator('main#conteudo')).toBeFocused();
   });
 });
+
+test.describe('partidos e navegação para fontes (ADR-0064)', () => {
+  test('busca na lista acha pelo nome completo do partido e o perfil exibe sigla e nome', async ({ page }) => {
+    await page.goto('/');
+    await page.getByLabel('Buscar por nome, estado, município, cargo ou partido').fill('Movimento Democrático Brasileiro');
+    await expect(page.getByRole('link', { name: /Diego Exemplo/ })).toBeVisible();
+
+    await page.goto('/#/politico/cam-900001');
+    await expect(page.getByRole('heading', { level: 1, name: /Ana Exemplo/ })).toBeVisible();
+    await expect(page.locator('.selo--partido')).toContainText('PL · Partido Liberal');
+  });
+
+  test('estado das coletas liga direto para a seção da fonte e leva o foco ao título', async ({ page }) => {
+    await page.goto('/#/estado');
+    await page.getByRole('link', { name: 'Câmara dos Deputados' }).click();
+    await expect(page).toHaveURL(/\/#\/fontes#doc-camara-api-camara-dos-deputados-api-v2$/);
+    const camara = page.locator('#doc-camara-api-camara-dos-deputados-api-v2');
+    await expect(camara).toBeVisible();
+    await expect(camara).toBeFocused();
+
+    await page.goto('/#/fontes#doc-senado-api-senado-federal-dados-abertos');
+    const senado = page.locator('#doc-senado-api-senado-federal-dados-abertos');
+    await expect(senado).toBeFocused();
+  });
+});

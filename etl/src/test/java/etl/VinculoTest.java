@@ -198,6 +198,29 @@ class VinculoTest {
         assertTrue(codigosEmenda(porId(perfis, "camara", "302")).isEmpty());
     }
 
+    @Test
+    void perfilSoDoTseCapitalizaNomeDeUrnaMantendoPreposicoes(@TempDir Path tmp) throws IOException {
+        Fixture f = new Fixture(tmp);
+        Files.writeString(f.raiz.resolve("contrib").resolve("mandatos.yaml"),
+                "- cargo: governador\n  eleicao: 2022\n  inicio: '2023-01-01'\n  fim: '2026-12-31'\n");
+        f.candidatura(2022, "770001", "GOVERNADOR", "SP", "MARIA DO CARMO E SILVA", "PL", true,
+                "MARIA DO CARMO E SILVA", "11100011100", "01/01/1970");
+        f.candidatura(2022, "770002", "GOVERNADOR", "RJ", "JOSÉ D'ÁVILA II", "PT", true,
+                "JOSE DAVILA", "22200022200", "02/02/1971");
+        f.candidatura(2022, "770003", "GOVERNADOR", "MG", "SARGENTO MELLO-CASAL", "MDB", true,
+                "MELLO CASAL", "33300033300", "03/03/1972");
+
+        List<Perfil> perfis = f.vincular();
+        Perfil sp = perfis.stream().filter(p -> "tse-770001".equals(p.id)).findFirst().orElseThrow();
+        Perfil rj = perfis.stream().filter(p -> "tse-770002".equals(p.id)).findFirst().orElseThrow();
+        Perfil mg = perfis.stream().filter(p -> "tse-770003".equals(p.id)).findFirst().orElseThrow();
+
+        assertEquals("Maria do Carmo e Silva", sp.nome);
+        assertEquals("José D'Ávila II", rj.nome);
+        assertEquals("Sargento Mello-Casal", mg.nome);
+        assertEquals("MARIA DO CARMO E SILVA", sp.bloco("candidaturas").getFirst().get("nome_urna").stringValue());
+    }
+
     private static Perfil porId(List<Perfil> perfis, String casa, String id) {
         for (Perfil p : perfis) {
             if (id.equals(p.ids.get(casa))) {

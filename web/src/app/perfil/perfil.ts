@@ -26,10 +26,12 @@ import {
   moeda,
   valorLongo,
   notaDoBloco,
+  partidoComNome,
   rotuloCargo,
   rotuloCurtoBloco,
   rotuloLocal,
   rotuloTipoOrgao,
+  rotuloTipoProposicao,
   SEM_REGISTRO,
   Situacao,
   SITUACOES,
@@ -180,6 +182,7 @@ export class Perfil {
   protected readonly rotuloCargo = rotuloCargo;
   protected readonly rotuloCurtoBloco = rotuloCurtoBloco;
   protected readonly rotuloLocal = rotuloLocal;
+  protected readonly partidoComNome = partidoComNome;
   protected readonly data = data;
   protected readonly moeda = moeda;
   protected readonly valorLongo = valorLongo;
@@ -341,7 +344,13 @@ export class Perfil {
   }
 
   protected rotuloPorTipo(bloco: string, chave: string): string {
-    return bloco === 'orgaos_e_frentes' ? rotuloTipoOrgao(chave) : chave;
+    if (bloco === 'orgaos_e_frentes') {
+      return rotuloTipoOrgao(chave);
+    }
+    if (bloco === 'proposicoes') {
+      return rotuloTipoProposicao(chave);
+    }
+    return chave;
   }
 
   protected registrosCompletos(id: string, bloco: string): Registro[] | null {

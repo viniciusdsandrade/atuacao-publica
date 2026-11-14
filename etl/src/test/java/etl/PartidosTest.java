@@ -108,4 +108,19 @@ class PartidosTest {
         assertEquals("REPUBLICANOS", Partidos.unificar("REP", vazio));
         assertEquals("União", Partidos.unificar("União", vazio), "sem o TSE, a grafia da casa fica como veio");
     }
+
+    @Test
+    void nomeCompletoResolveSiglasAtivasHistoricasEVariacoes() {
+        assertEquals("Partido dos Trabalhadores", Partidos.nomeCompleto("PT"));
+        assertEquals("União Brasil", Partidos.nomeCompleto("UNIÃO"));
+        assertEquals("União Brasil", Partidos.nomeCompleto("União Brasil"));
+        assertEquals("Partido Comunista do Brasil", Partidos.nomeCompleto("PCdoB"));
+        assertEquals("Partido Comunista do Brasil", Partidos.nomeCompleto("PC do B"));
+        assertEquals("Partido Missão", Partidos.nomeCompleto("MISSÃO"));
+        assertEquals("Movimento Democrático Brasileiro", Partidos.nomeCompleto("MDB"));
+        assertEquals("Sem partido", Partidos.nomeCompleto("S.PART."));
+        assertEquals("Sem partido", Partidos.nomeCompleto("SEM PARTIDO"));
+        assertNull(Partidos.nomeCompleto(null));
+        assertNull(Partidos.nomeCompleto("SIGLA_INEXISTENTE"));
+    }
 }

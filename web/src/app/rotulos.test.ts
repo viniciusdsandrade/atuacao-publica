@@ -1,17 +1,25 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import path from 'node:path';
 
 import {
+  ANCORAS_FONTES,
   CARGOS,
   ESFERAS,
+  ancoraFonte,
   casaLegislativa,
   periodoDosAnos,
   ENTES_MUNICIPAIS,
   rotuloCargo,
   rotuloEsfera,
   rotuloTipoOrgao,
+  rotuloTipoProposicao,
   ePapelLideranca,
   nomeDoEnte,
+  nomeDoPartido,
+  partidoComNome,
+  rotuloAcessivelPartido,
   rotuloLocal,
   chaveDeBusca,
   moeda,
@@ -200,4 +208,67 @@ test('realcar sem termo ou sem texto devolve um trecho só, sem marca', () => {
   assert.deepEqual(realcar('Ana Exemplo', []), [{ t: 'Ana Exemplo', m: false }]);
   assert.deepEqual(realcar('', ['ana']), [{ t: '', m: false }]);
   assert.deepEqual(realcar('Ana Exemplo', ['bruno']), [{ t: 'Ana Exemplo', m: false }]);
+});
+
+test('partidos resolvem nome completo sem repetir sigla idêntica (ADR-0064)', () => {
+  assert.equal(nomeDoPartido('PT'), 'Partido dos Trabalhadores');
+  assert.equal(nomeDoPartido('UNIÃO'), 'União Brasil');
+  assert.equal(nomeDoPartido('PC do B'), 'Partido Comunista do Brasil');
+  assert.equal(nomeDoPartido('PCdoB'), 'Partido Comunista do Brasil');
+  assert.equal(nomeDoPartido('MISSÃO'), 'Partido Missão');
+  assert.equal(nomeDoPartido('Sem partido'), null);
+  assert.equal(partidoComNome('PT'), 'PT · Partido dos Trabalhadores');
+  assert.equal(partidoComNome('NOVO'), 'NOVO · Partido Novo');
+  assert.equal(partidoComNome('AVANTE'), 'AVANTE');
+  assert.equal(partidoComNome('REPUBLICANOS'), 'REPUBLICANOS');
+  assert.equal(partidoComNome('Sem partido'), 'Sem partido');
+  assert.equal(rotuloAcessivelPartido('MDB'), 'MDB, Movimento Democrático Brasileiro');
+  assert.equal(rotuloAcessivelPartido('SOLIDARIEDADE'), null);
+});
+
+test('rotuloTipoProposicao traduz siglas oficiais sem duplicar textos por extenso (ADR-0064)', () => {
+  assert.equal(rotuloTipoProposicao('PL'), 'PL · Projeto de Lei');
+  assert.equal(rotuloTipoProposicao('PLP'), 'PLP · Projeto de Lei Complementar');
+  assert.equal(rotuloTipoProposicao('RIC'), 'RIC · Requerimento de Informação');
+  assert.equal(rotuloTipoProposicao('RQS'), 'RQS · Requerimento do Senado');
+  assert.equal(rotuloTipoProposicao('Projeto de Lei'), 'Projeto de Lei');
+  assert.equal(rotuloTipoProposicao('INDICAÇÃO'), 'Indicação');
+  assert.equal(rotuloTipoProposicao('DESCONHECIDA'), 'DESCONHECIDA');
+});
+
+test('nota de eventos cita as assembleias SAPL adicionadas (ADR-0063 e ADR-0064)', () => {
+  const nota = notaDoBloco('eventos', 'estadual') ?? '';
+  for (const uf of ['ALPB', 'ALEAM', 'ALERO', 'ALEPI', 'ALEAC']) {
+    assert.match(nota, new RegExp(uf));
+  }
+});
+
+test('todas as âncoras de fonte mapeadas em Estado existem nos títulos de docs/FONTES.md', () => {
+  const md = fs.readFileSync(path.resolve(import.meta.dirname, '../../../docs/FONTES.md'), 'utf8');
+  const estadoTs = fs.readFileSync(path.resolve(import.meta.dirname, './estado/estado.ts'), 'utf8');
+  const ids = new Set<string>();
+  for (const linha of md.split(/\r?\n/)) {
+    const m = /^#{2,3}\s+(.+)$/.exec(linha);
+    if (!m) continue;
+    const texto = m[1].replace(/`/g, '');
+    const slug = texto
+      .normalize('NFD')
+      .replace(/\p{M}/gu, '')
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '');
+    ids.add('doc-' + (slug || 'secao'));
+  }
+
+  for (const [fonte, id] of Object.entries(ANCORAS_FONTES)) {
+    assert.ok(ids.has(id), `Âncora ausente em docs/FONTES.md para ${fonte}: ${id}`);
+    assert.equal(ancoraFonte(fonte), id);
+  }
+
+  // Garante também que toda chave do mapa NOMES em estado.ts possui uma âncora mapeada.
+  const blocoNomes = /const NOMES:[^=]+=\s*\{([\s\S]*?)\};/.exec(estadoTs);
+  assert.ok(blocoNomes, 'bloco NOMES não encontrado em estado.ts');
+  for (const m of blocoNomes[1].matchAll(/^\s*([a-z0-9]+):/gm)) {
+    assert.ok(m[1] in ANCORAS_FONTES, `Fonte ${m[1]} de estado.ts sem âncora em ANCORAS_FONTES`);
+  }
 });

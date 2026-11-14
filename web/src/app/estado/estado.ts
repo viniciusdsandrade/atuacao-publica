@@ -6,7 +6,7 @@ import { catchError, map, of } from 'rxjs';
 import { Dados } from '../dados';
 import { Icone } from '../icone/icone';
 import { Execucao } from '../modelo';
-import { data, inteiro } from '../rotulos';
+import { ancoraFonte, data, inteiro } from '../rotulos';
 
 /** O que cada passo de coleta traz. Os identificadores são os da CLI do ETL (`fetch {fonte}`); os nomes seguem docs/FONTES.md. */
 const NOMES: Record<string, string> = {
@@ -102,7 +102,9 @@ function resumoDasColetas(fontes: Execucao['fontes']): string {
           @for (f of e.fontes; track f.fonte) {
             <li class="painel estado-item">
               <div>
-                <h2>{{ nome(f.fonte) }}</h2>
+                <h2>
+                  <a class="estado-link" [routerLink]="['/fontes']" [fragment]="ancora(f.fonte)">{{ nome(f.fonte) }}</a>
+                </h2>
                 <p class="estado-id"><code>{{ f.fonte }}</code></p>
               </div>
               @switch (f.status) {
@@ -188,5 +190,9 @@ export class Estado {
 
   protected nome(fonte: string): string {
     return NOMES[fonte] ?? fonte;
+  }
+
+  protected ancora(fonte: string): string | undefined {
+    return ancoraFonte(fonte);
   }
 }

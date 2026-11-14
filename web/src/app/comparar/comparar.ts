@@ -18,10 +18,13 @@ import {
   iniciais,
   inteiro,
   moeda,
+  nomeDoPartido,
   notaDoBloco,
+  partidoComNome,
   periodoDosAnos,
   rotuloCargo,
   rotuloLocal,
+  rotuloTipoProposicao,
   situacaoDe,
   tituloDoBloco,
 } from '../rotulos';
@@ -159,7 +162,9 @@ export class Comparar {
   private readonly parametros = toSignal(this.rota.queryParamMap);
 
   /** Nome e partido de cada político do índice, sem acento nem caixa, calculados uma vez por índice. */
-  private readonly chaves = computed(() => (this.indice()?.politicos ?? []).map((p) => chaveDeBusca(`${p.nome} ${p.partido ?? ''}`)));
+  private readonly chaves = computed(() =>
+    (this.indice()?.politicos ?? []).map((p) => chaveDeBusca(`${p.nome} ${p.partido ?? ''} ${nomeDoPartido(p.partido) ?? ''}`)),
+  );
   private readonly opcoesPorLado = { 1: computed(() => this.calcularOpcoes(1)), 2: computed(() => this.calcularOpcoes(2)) };
 
   /** Para onde o foco vai quando o elemento aparecer: o campo de um lado ou o lado a lado montado. */
@@ -210,6 +215,8 @@ export class Comparar {
   protected readonly moeda = moeda;
   protected readonly rotuloCargo = rotuloCargo;
   protected readonly rotuloLocal = rotuloLocal;
+  protected readonly partidoComNome = partidoComNome;
+  protected readonly rotuloTipoProposicao = rotuloTipoProposicao;
   protected readonly notaDoBloco = notaDoBloco;
   protected readonly tituloDoBloco = tituloDoBloco;
 

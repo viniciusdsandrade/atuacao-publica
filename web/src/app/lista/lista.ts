@@ -16,7 +16,10 @@ import {
   iniciais,
   inteiro,
   nomeDoEnte,
+  nomeDoPartido,
+  partidoComNome,
   realcar,
+  rotuloAcessivelPartido,
   rotuloCargo,
   rotuloEsfera,
   rotuloLocal,
@@ -152,6 +155,8 @@ export class Lista {
   protected readonly data = data;
   protected readonly rotuloCargo = rotuloCargo;
   protected readonly rotuloEsfera = rotuloEsfera;
+  protected readonly partidoComNome = partidoComNome;
+  protected readonly rotuloAcessivelPartido = rotuloAcessivelPartido;
 
   private readonly politicos = computed(() => this.indice()?.politicos ?? []);
 
@@ -162,7 +167,15 @@ export class Lista {
   private readonly chaves = computed(() =>
     this.politicos().map((p) =>
       chaveDeBusca(
-        [p.nome, nomeDoEnte(p.ente), p.uf ?? '', NOMES_DAS_UFS[p.uf ?? ''] ?? '', p.partido ?? '', rotuloCargo(p.cargo)].join(' '),
+        [
+          p.nome,
+          nomeDoEnte(p.ente),
+          p.uf ?? '',
+          NOMES_DAS_UFS[p.uf ?? ''] ?? '',
+          p.partido ?? '',
+          nomeDoPartido(p.partido) ?? '',
+          rotuloCargo(p.cargo),
+        ].join(' '),
       ),
     ),
   );

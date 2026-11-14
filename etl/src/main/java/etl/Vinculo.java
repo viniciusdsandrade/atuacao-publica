@@ -2193,7 +2193,7 @@ final class Vinculo {
         p.id = "tse-" + sq;
         p.chaveExterna = "tse:" + sq;
         p.fonteCli = "tse";
-        p.nome = Json.texto(c, "nome_urna");
+        p.nome = Texto.capitalizarNome(Json.texto(c, "nome_urna"));
         anexarCandidaturas(p, ligacoes.daPessoa(chave, c));
         if (cpf != null) {
             perfilPorCpf.put(cpf, p);

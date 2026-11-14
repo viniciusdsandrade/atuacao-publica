@@ -6,6 +6,7 @@
   max-width: 100%;
   max-height: min(72vh, 48rem);
   overflow: auto;
+  scroll-padding-top: 3.25rem;
   container-type: inline-size;
   border: 1px solid var(--borda);
   border-radius: var(--r-2);
@@ -67,7 +68,13 @@
   text-align: right;
 }
 
-/* Link curto de fonte não quebra no meio ("ver na fonte" em uma linha). */
+/* Link curto de fonte não quebra no meio ("ver na fonte" em uma linha) e mantém alvo mínimo confortável (WCAG 2.2). */
+.tabela-rolagem td a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 1.75rem;
+}
+
 .tabela-rolagem td[data-label='Fonte'] a {
   white-space: nowrap;
 }
