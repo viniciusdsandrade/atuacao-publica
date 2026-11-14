@@ -416,17 +416,41 @@
                     <p class="rotulo-secao">Por tipo</p>
                     <ul>
                       @for (t of porTipo(bloco); track t[0]) {
-                        <li class="selo">{{ t[0] }}: <strong class="numero">{{ inteiro(t[1]) }}</strong></li>
+                        <li class="selo">{{ rotuloPorTipo(b, t[0]) }}: <strong class="numero">{{ inteiro(t[1]) }}</strong></li>
                       }
                     </ul>
                   </div>
                 }
-                @if (bloco.recentes) {
+                @if (registrosCompletos(p.id, b); as todos) {
+                  <app-tabela
+                    [bloco]="b"
+                    [registros]="todos"
+                    [limite]="30"
+                    [legenda]="'Todos os ' + inteiro(bloco.total) + ' registros'"
+                  />
+                } @else if (bloco.recentes) {
                   <app-tabela
                     [bloco]="b"
                     [registros]="bloco.recentes"
-                    [legenda]="'Mais recentes (' + bloco.recentes.length + ' de ' + bloco.total + ')'"
+                    [limite]="bloco.arquivo_completo ? 30 : 0"
+                    [legenda]="bloco.arquivo_completo ? 'Colegiados e frentes em destaque (' + inteiro(bloco.recentes.length) + ' de ' + inteiro(bloco.total) + ')' : 'Mais recentes (' + bloco.recentes.length + ' de ' + bloco.total + ')'"
                   />
+                  @if (bloco.arquivo_completo; as caminho) {
+                    <div class="mais">
+                      @if (carregandoCompleto(p.id, b)) {
+                        <p role="status">Carregando todos os {{ inteiro(bloco.total) }} registros.</p>
+                      } @else {
+                        @if (erroCompleto(p.id, b)) {
+                          <p role="alert">Não foi possível carregar a lista completa. Confira a conexão e tente de novo.</p>
+                        }
+                        <div class="mais-acoes">
+                          <button type="button" class="botao botao--pequeno" (click)="carregarCompleto(p.id, b, caminho)">
+                            {{ erroCompleto(p.id, b) ? 'Tentar carregar todos os ' + inteiro(bloco.total) + ' registros' : 'Ver todos os ' + inteiro(bloco.total) + ' registros' }}
+                          </button>
+                        </div>
+                      }
+                    </div>
+                  }
                 } @else if (bloco.registros) {
                   <app-tabela [bloco]="b" [registros]="bloco.registros" [limite]="30" />
                 }

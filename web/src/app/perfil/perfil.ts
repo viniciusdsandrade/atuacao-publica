@@ -4,12 +4,12 @@ import { Component, DestroyRef, Injector, afterNextRender, computed, effect, inj
 import { toSignal } from '@angular/core/rxjs-interop';
 import { Title } from '@angular/platform-browser';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { BehaviorSubject, Observable, catchError, combineLatest, map, of, startWith, switchMap } from 'rxjs';
+import { BehaviorSubject, Observable, Subscription, catchError, combineLatest, map, of, startWith, switchMap } from 'rxjs';
 
 import { Dados } from '../dados';
 import { Icone } from '../icone/icone';
 import { MemoriaLista } from '../lista/memoria-lista';
-import { Bloco, ContasDeCampanha, DespesaAgregada, EmendaPorAno, Perfil as PerfilPublicado, RedeDeclarada, SomaDeCampanha } from '../modelo';
+import { Bloco, ContasDeCampanha, DespesaAgregada, EmendaPorAno, Perfil as PerfilPublicado, RedeDeclarada, Registro, SomaDeCampanha } from '../modelo';
 
 interface CampanhaDoAno {
   eleicao: number;
@@ -29,6 +29,7 @@ import {
   rotuloCargo,
   rotuloCurtoBloco,
   rotuloLocal,
+  rotuloTipoOrgao,
   SEM_REGISTRO,
   Situacao,
   SITUACOES,
@@ -169,6 +170,8 @@ export class Perfil {
   /** Retorno do botão "Compartilhar" quando o endereço vai para a área de transferência. */
   protected readonly copia = signal<'feita' | 'falhou' | null>(null);
   private avisoDaCopia?: ReturnType<typeof setTimeout>;
+  private readonly completo = signal<Record<string, { estado: 'carregando' | 'erro' | 'pronto'; registros?: Registro[] }>>({});
+  private readonly pedidosCompletos = new Map<string, Subscription>();
 
   protected readonly SITUACOES = SITUACOES;
   protected readonly esqueletos = [1, 2, 3];
@@ -233,6 +236,7 @@ export class Perfil {
     inject(DestroyRef).onDestroy(() => {
       this.observador?.disconnect();
       clearTimeout(this.avisoDaCopia);
+      this.pedidosCompletos.forEach((s) => s.unsubscribe());
     });
   }
 
@@ -334,6 +338,43 @@ export class Perfil {
 
   protected porTipo(bloco: Bloco): [string, number][] {
     return Object.entries(bloco.por_tipo ?? {}).sort((a, b) => b[1] - a[1]);
+  }
+
+  protected rotuloPorTipo(bloco: string, chave: string): string {
+    return bloco === 'orgaos_e_frentes' ? rotuloTipoOrgao(chave) : chave;
+  }
+
+  protected registrosCompletos(id: string, bloco: string): Registro[] | null {
+    return this.completo()[`${id}:${bloco}`]?.registros ?? null;
+  }
+
+  protected carregandoCompleto(id: string, bloco: string): boolean {
+    return this.completo()[`${id}:${bloco}`]?.estado === 'carregando';
+  }
+
+  protected erroCompleto(id: string, bloco: string): boolean {
+    return this.completo()[`${id}:${bloco}`]?.estado === 'erro';
+  }
+
+  protected carregarCompleto(id: string, bloco: string, caminho: string): void {
+    const chave = `${id}:${bloco}`;
+    const atual = this.completo()[chave];
+    if (atual?.estado === 'carregando' || atual?.estado === 'pronto') {
+      return;
+    }
+    this.pedidosCompletos.get(chave)?.unsubscribe();
+    this.completo.update((mapa) => ({ ...mapa, [chave]: { estado: 'carregando' } }));
+    const pedido = this.dados.detalhe(caminho).subscribe({
+      next: (detalhe) => {
+        this.pedidosCompletos.delete(chave);
+        this.completo.update((mapa) => ({ ...mapa, [chave]: { estado: 'pronto', registros: detalhe.registros } }));
+      },
+      error: () => {
+        this.pedidosCompletos.delete(chave);
+        this.completo.update((mapa) => ({ ...mapa, [chave]: { estado: 'erro' } }));
+      },
+    });
+    this.pedidosCompletos.set(chave, pedido);
   }
 
   protected unidade(bloco: string): string {

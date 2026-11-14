@@ -170,8 +170,15 @@
     },
     "bloco_orgaos": {
       "allOf": [{ "$ref": "#/$defs/bloco_base" }],
-      "required": ["registros"],
-      "properties": { "registros": { "type": "array", "items": { "$ref": "registros.schema.json#/$defs/orgao_ou_frente" } } },
+      "properties": {
+        "registros": { "type": "array", "items": { "$ref": "registros.schema.json#/$defs/orgao_ou_frente" } },
+        "recentes": { "type": "array", "items": { "$ref": "registros.schema.json#/$defs/orgao_ou_frente" } },
+        "arquivo_completo": { "type": "string", "pattern": "^politicos/[a-z]{2,10}(-[0-9A-Za-z]{1,32}){1,6}/orgaos_e_frentes\\.json\\.gz$" }
+      },
+      "oneOf": [
+        { "required": ["registros"], "not": { "anyOf": [{ "required": ["recentes"] }, { "required": ["arquivo_completo"] }] } },
+        { "required": ["recentes", "arquivo_completo"], "not": { "required": ["registros"] } }
+      ],
       "unevaluatedProperties": false
     },
     "bloco_candidaturas": {

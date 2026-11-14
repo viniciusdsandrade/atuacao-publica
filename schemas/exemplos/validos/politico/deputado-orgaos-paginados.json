@@ -1,0 +1,30 @@
+{
+  "id": "cam-900001",
+  "nome": "Pessoa Exemplo Um",
+  "cargo_atual": "deputado_federal",
+  "esfera": "federal",
+  "ente": "BR",
+  "uf": "SP",
+  "partido_atual": "PARTIDO",
+  "situacao": "Exercício",
+  "em_exercicio": true,
+  "foto_url": "https://www.camara.leg.br/internet/deputado/bandep/900001.jpg",
+  "ids_externos": { "camara": "900001" },
+  "links_oficiais": [
+    { "rotulo": "Página na Câmara dos Deputados", "url": "https://www.camara.leg.br/deputados/900001", "fonte_id": "camara-api", "url_origem": "https://dadosabertos.camara.leg.br/api/v2/deputados/900001", "capturado_em": "2026-10-30T03:00:00Z" }
+  ],
+  "atualizado_em": "2026-11-14T12:00:00Z",
+  "blocos": {
+    "orgaos_e_frentes": {
+      "fontes": [{ "fonte_id": "camara-api", "url_origem": "https://dadosabertos.camara.leg.br/api/v2/deputados/900001/orgaos", "capturado_em": "2026-11-14T11:00:00Z" }],
+      "atualizado_em": "2026-11-14T11:00:00Z",
+      "desatualizado": false,
+      "total": 45,
+      "por_tipo": { "orgao": 1, "frente": 44 },
+      "arquivo_completo": "politicos/cam-900001/orgaos_e_frentes.json.gz",
+      "recentes": [
+        { "tipo": "orgao", "nome": "Comissão de Constituição e Justiça e de Cidadania", "sigla": "CCJC", "papel": "Titular", "inicio": "2025-03-19", "fim": null, "fonte_id": "camara-api", "url_origem": "https://dadosabertos.camara.leg.br/api/v2/deputados/900001/orgaos", "capturado_em": "2026-11-14T11:00:00Z" }
+      ]
+    }
+  }
+}

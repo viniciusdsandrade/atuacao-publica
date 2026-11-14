@@ -44,6 +44,7 @@ export interface Bloco<T = Registro> {
   total: number;
   por_tipo?: Record<string, number>;
   arquivos?: ArquivoAnual[];
+  arquivo_completo?: string;
   registros?: T[];
   recentes?: T[];
   valor_total?: number;
@@ -132,7 +133,7 @@ export interface Perfil {
 export interface Detalhe {
   politico_id: string;
   tipo: string;
-  ano: number;
+  ano: number | null;
   gerado_em: string;
   registros: Registro[];
 }

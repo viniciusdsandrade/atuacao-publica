@@ -1,0 +1,23 @@
+{
+  "politico_id": "cam-900001",
+  "tipo": "votos",
+  "ano": null,
+  "gerado_em": "2026-11-14T12:00:00Z",
+  "registros": [
+    {
+      "votacao_id": "9000001-10",
+      "data": "2026-06-10T14:46:15",
+      "orgao": "PLEN",
+      "proposicao": "PL 1/2026",
+      "descricao": "Aprovado o projeto.",
+      "voto": "Sim",
+      "partido_na_data": "PARTIDO",
+      "orientacao_partido": "Sim",
+      "orientacao_partido_bancada": "PARTIDO",
+      "orientacao_governo": null,
+      "fonte_id": "camara-arquivos",
+      "url_origem": "https://dadosabertos.camara.leg.br/arquivos/votacoesVotos/json/votacoesVotos-2026.json",
+      "capturado_em": "2026-10-30T03:00:00Z"
+    }
+  ]
+}

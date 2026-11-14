@@ -1,9 +1,12 @@
 package etl;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -210,5 +213,79 @@ class PublicadorTest {
                 });
             }
         }
+    }
+
+    @Test
+    void orgaosEFrentesPaginamAcimaDeQuarentaPreservandoColegiadosELiderancas(
+            @org.junit.jupiter.api.io.TempDir Path tmp) throws Exception {
+        Path schemas = Path.of("..").resolve("schemas").normalize();
+        Contexto ctx = new Contexto(tmp, tmp.resolve("data"), null, new Validador(schemas),
+                Instant.parse("2026-11-14T12:00:00Z"), null);
+
+        Publicador.Perfil pequeno = deputadoExemplo("cam-1");
+        for (int i = 0; i < 40; i++) {
+            pequeno.registros.computeIfAbsent("orgaos_e_frentes", k -> new java.util.ArrayList<>())
+                    .add(orgaoFrente(i == 0 ? "orgao" : "frente", "Colegiado " + i, null, null));
+        }
+        Path pasta = tmp.resolve("publicado/politicos");
+        tools.jackson.databind.node.ObjectNode docPequeno = new Publicador(ctx).documento(pequeno, pasta);
+        assertEquals(List.of(), ctx.validador().validar("politico", docPequeno));
+        JsonNode blocoPequeno = docPequeno.get("blocos").get("orgaos_e_frentes");
+        assertTrue(blocoPequeno.has("registros"));
+        assertFalse(blocoPequeno.has("arquivo_completo"));
+        assertFalse(Files.exists(pasta.resolve("cam-1/orgaos_e_frentes.json.gz")));
+
+        Publicador.Perfil grande = deputadoExemplo("cam-2");
+        List<JsonNode> itens = grande.registros.computeIfAbsent("orgaos_e_frentes", k -> new java.util.ArrayList<>());
+        itens.add(orgaoFrente("orgao", "Órgão X", "Titular", "2025-03-01"));
+        itens.add(orgaoFrente("orgao", "Órgão Y", "Suplente", null));
+        itens.add(orgaoFrente("comissao", "Comissão Z", "Titular", "2024-02-01"));
+        itens.add(orgaoFrente("frente", "Frente Liderada", "Presidente", null));
+        for (int i = 0; i < 42; i++) {
+            itens.add(orgaoFrente("frente", "Frente Comum " + String.format("%02d", i), null, null));
+        }
+
+        tools.jackson.databind.node.ObjectNode docGrande = new Publicador(ctx).documento(grande, pasta);
+        assertEquals(List.of(), ctx.validador().validar("politico", docGrande));
+        JsonNode blocoGrande = docGrande.get("blocos").get("orgaos_e_frentes");
+        assertEquals(46, blocoGrande.get("total").asInt());
+        assertFalse(blocoGrande.has("registros"));
+        assertEquals("politicos/cam-2/orgaos_e_frentes.json.gz", blocoGrande.get("arquivo_completo").stringValue());
+        assertEquals(2, blocoGrande.get("por_tipo").get("orgao").asInt());
+        assertEquals(1, blocoGrande.get("por_tipo").get("comissao").asInt());
+        assertEquals(43, blocoGrande.get("por_tipo").get("frente").asInt());
+        assertEquals(24, blocoGrande.get("recentes").size());
+
+        Path arquivo = pasta.resolve("cam-2/orgaos_e_frentes.json.gz");
+        assertTrue(Files.exists(arquivo));
+        JsonNode detalhe = Json.ler(arquivo);
+        assertEquals(List.of(), ctx.validador().validar("detalhe", detalhe));
+        assertTrue(detalhe.get("ano").isNull());
+        assertEquals("orgaos_e_frentes", detalhe.get("tipo").stringValue());
+        assertEquals(46, detalhe.get("registros").size());
+    }
+
+    private static Publicador.Perfil deputadoExemplo(String id) {
+        Publicador.Perfil p = perfil(id, "camara:" + id.replace("cam-", ""), Map.of());
+        p.nome = "Pessoa Exemplo";
+        p.cargo = "deputado_federal";
+        p.esfera = "federal";
+        p.ente = "BR";
+        p.uf = "SP";
+        p.partido = "PARTIDO";
+        p.situacao = "Exercício";
+        p.emExercicio = true;
+        p.ids.put("camara", id.replace("cam-", ""));
+        return p;
+    }
+
+    private static JsonNode orgaoFrente(String tipo, String nome, String papel, String inicio) {
+        tools.jackson.databind.node.ObjectNode n = Json.SAIDA.createObjectNode();
+        n.put("tipo", tipo).put("nome", nome).put("sigla", (String) null).put("papel", papel)
+                .put("inicio", inicio).put("fim", (String) null)
+                .put("fonte_id", "camara-api")
+                .put("url_origem", "https://dadosabertos.camara.leg.br/api/v2/deputados/1/orgaos")
+                .put("capturado_em", "2026-11-14T11:00:00Z");
+        return n;
     }
 }

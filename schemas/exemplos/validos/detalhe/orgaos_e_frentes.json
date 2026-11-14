@@ -1,0 +1,30 @@
+{
+  "politico_id": "cam-900001",
+  "tipo": "orgaos_e_frentes",
+  "ano": null,
+  "gerado_em": "2026-11-14T12:00:00Z",
+  "registros": [
+    {
+      "tipo": "orgao",
+      "nome": "Comissão de Constituição e Justiça e de Cidadania",
+      "sigla": "CCJC",
+      "papel": "Titular",
+      "inicio": "2025-03-19",
+      "fim": null,
+      "fonte_id": "camara-api",
+      "url_origem": "https://dadosabertos.camara.leg.br/api/v2/deputados/900001/orgaos",
+      "capturado_em": "2026-11-14T11:00:00Z"
+    },
+    {
+      "tipo": "frente",
+      "nome": "Frente Parlamentar Exemplo",
+      "sigla": null,
+      "papel": null,
+      "inicio": null,
+      "fim": null,
+      "fonte_id": "camara-api",
+      "url_origem": "https://dadosabertos.camara.leg.br/api/v2/frentes/90001",
+      "capturado_em": "2026-11-14T11:00:00Z"
+    }
+  ]
+}

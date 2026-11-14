@@ -17,6 +17,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
+import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 import tools.jackson.databind.JsonNode;
@@ -80,6 +81,10 @@ public final class Publicador {
     static final List<String> VALORES_DE_EMENDA = List.of("valor_empenhado", "valor_liquidado", "valor_pago", "restos_inscritos",
             "restos_cancelados", "restos_pagos");
     static final int RECENTES = 20;
+    static final int LIMITE_ORGAOS_INLINE = 40;
+    private static final Pattern PAPEL_LIDERANCA = Pattern.compile(
+            "^(presidente|presidenta|1[ºª]?\\s*vice|2[ºª]?\\s*vice|3[ºª]?\\s*vice|vice-presid|coordenador|relator|ouvidor|procurador|corregedor|secret[aá]ri)",
+            Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE);
     static final List<String> FONTES_CLI = List.of("camara", "senado", "tse", "executivo", "sapl", "tcesp", "cgu", "agenda", "contrib", "alesp", "executivosp", "almg", "alep", "alba", "alerj", "alrs", "alece", "alesc", "alego", "ales", "alepa", "alepe", "cldf", "almt", "alems", "alpb", "aleam", "aleal", "alero", "alepi", "alrn", "aleto", "alese", "alema", "aleac", "alerr", "alap", "cmsp", "caraguatatuba");
 
     /** Perfil em construção, antes da validação. */
@@ -246,7 +251,7 @@ public final class Publicador {
         return publicados.isEmpty() ? 1 : 0;
     }
 
-    private ObjectNode documento(Perfil perfil, Path pasta) {
+    ObjectNode documento(Perfil perfil, Path pasta) {
         ObjectNode doc = Json.SAIDA.createObjectNode();
         doc.put("id", perfil.id).put("nome", perfil.nome).put("cargo_atual", perfil.cargo).put("esfera", perfil.esfera)
                 .put("ente", perfil.ente).put("uf", perfil.uf).put("partido_atual", perfil.partido)
@@ -342,6 +347,8 @@ public final class Publicador {
             emendas(perfil, registros, no, pasta);
         } else if (bloco.equals("despesas_executivo")) {
             despesasAgregadas(registros, no);
+        } else if (bloco.equals("orgaos_e_frentes") && registros.size() > LIMITE_ORGAOS_INLINE) {
+            orgaosEFrentes(perfil, registros, no, pasta);
         } else if (AMOSTRA.containsKey(bloco)) {
             amostra(perfil, bloco, registros, no, pasta);
         } else {
@@ -349,6 +356,61 @@ public final class Publicador {
             registros.forEach(lista::add);
         }
         return no;
+    }
+
+    /**
+     * Órgãos, comissões e frentes (ADR-0062): acima do limite inline, publica a lista completa em JSON.gz e
+     * preserva no perfil todos os colegiados que não são frentes, frentes em que há liderança e as 20 frentes seguintes.
+     */
+    private void orgaosEFrentes(Perfil perfil, List<JsonNode> registros, ObjectNode no, Path pasta) {
+        Map<String, Integer> porTipo = new TreeMap<>();
+        for (JsonNode r : registros) {
+            porTipo.merge(textoOuPadrao(r, "tipo", "(vazio na fonte)"), 1, Integer::sum);
+        }
+        ObjectNode tipos = no.putObject("por_tipo");
+        porTipo.forEach(tipos::put);
+
+        List<JsonNode> ordenados = new ArrayList<>(registros);
+        ordenados.sort(Comparator.comparingInt(Publicador::categoriaOrgao)
+                .thenComparing(Comparator.comparing((JsonNode r) -> textoOuVazio(r, "inicio")).reversed())
+                .thenComparing(r -> textoOuVazio(r, "nome")));
+
+        String caminho = "politicos/" + perfil.id + "/orgaos_e_frentes.json.gz";
+        ObjectNode detalhe = Json.SAIDA.createObjectNode()
+                .put("politico_id", perfil.id)
+                .put("tipo", "orgaos_e_frentes")
+                .putNull("ano")
+                .put("gerado_em", ctx.agora().toString());
+        ArrayNode lista = detalhe.putArray("registros");
+        ordenados.forEach(lista::add);
+        List<String> erros = ctx.validador().validar("detalhe", detalhe);
+        if (!erros.isEmpty()) {
+            System.err.println("publish: rejeitado: " + caminho + ": " + String.join("; ", erros));
+            rejeitados.add(new Meta.Rejeitado(caminho, "schema: " + String.join("; ", erros.subList(0, Math.min(3, erros.size())))));
+            return;
+        }
+        Json.gravarGz(pasta.resolve(perfil.id).resolve("orgaos_e_frentes.json.gz"), detalhe);
+        no.put("arquivo_completo", caminho);
+
+        ArrayNode recentes = no.putArray("recentes");
+        int frentesComuns = 0;
+        for (JsonNode r : ordenados) {
+            if (categoriaOrgao(r) < 2) {
+                recentes.add(r);
+            } else if (frentesComuns < RECENTES) {
+                recentes.add(r);
+                frentesComuns++;
+            }
+        }
+    }
+
+    private static int categoriaOrgao(JsonNode registro) {
+        String tipo = textoOuVazio(registro, "tipo");
+        if (!tipo.equals("frente")) {
+            return 0;
+        }
+        String papel = textoOuVazio(registro, "papel");
+        return !papel.isBlank() && PAPEL_LIDERANCA.matcher(papel.strip()).find() ? 1 : 2;
     }
 
     private void amostra(Perfil perfil, String bloco, List<JsonNode> registros, ObjectNode no, Path pasta) {
