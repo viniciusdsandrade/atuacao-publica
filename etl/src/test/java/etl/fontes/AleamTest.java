@@ -222,6 +222,22 @@ class AleamTest {
         Files.writeString(rawAleam.resolve("materias/5-2023-p1.json"), materiasJson);
         gravarMetadado(rawAleam, "materias/5-2023-p1.json", Aleam.API + "/materia/materialegislativa/?autores=5&ano=2023&page_size=100&page=1");
 
+        Files.createDirectories(rawAleam.resolve("sessoes"));
+        Files.createDirectories(rawAleam.resolve("presencas"));
+        Files.createDirectories(rawAleam.resolve("votos"));
+        Files.writeString(rawAleam.resolve("sessoes/2023-p1.json"), """
+                {"pagination": {"links": {"next": null}}, "results": [{"id": 700, "numero": 2, "data_inicio": "2023-03-14", "hora_inicio": "09:30:00", "__str__": "2ª Sessão Ordinária da 1ª Sessão Legislativa"}]}
+                """);
+        gravarMetadado(rawAleam, "sessoes/2023-p1.json", Aleam.API + "/sessao/sessaoplenaria/?data_inicio__year=2023");
+        Files.writeString(rawAleam.resolve("presencas/p1.json"), """
+                {"pagination": {"links": {"next": null}}, "results": [{"id": 1, "sessao_plenaria": 700, "parlamentar": 5}]}
+                """);
+        gravarMetadado(rawAleam, "presencas/p1.json", Aleam.API + "/sessao/sessaoplenariapresenca/?sessao_plenaria__gte=700");
+        Files.writeString(rawAleam.resolve("votos/2023-p1.json"), """
+                {"pagination": {"links": {"next": null}}, "results": [{"id": 11, "parlamentar": 5, "votacao": 900, "voto": "Sim", "data_hora": "2023-03-14T11:00:00-04:00", "__str__": "Ordem do Dia: 1 - PL 77/2023 em 2ª Sessão Ordinária - Votação: Aprovado"}]}
+                """);
+        gravarMetadado(rawAleam, "votos/2023-p1.json", Aleam.API + "/sessao/votoparlamentar/?data_hora__year=2023");
+
         new Aleam().normalize(ctx);
 
         Path arqPessoas = ctx.normalizado().resolve("aleam/pessoas.json");
@@ -266,6 +282,12 @@ class AleamTest {
         assertEquals(77, prop.get("numero").asInt());
         assertEquals("Aprovado", prop.get("situacao").stringValue());
         assertEquals("aleam-proposicoes", prop.get("fonte_id").stringValue());
+
+        assertEquals(1, bloco.get("votos").size());
+        assertEquals("aleam-votacoes", bloco.get("votos").get(0).get("fonte_id").stringValue());
+        assertEquals(1, bloco.get("participacao_votacoes").size());
+        assertEquals(1, bloco.get("eventos").size());
+        assertEquals("aleam-presenca", bloco.get("eventos").get(0).get("fonte_id").stringValue());
     }
 
     private static void gravarMetadado(Path dir, String arquivo, String url) throws IOException {

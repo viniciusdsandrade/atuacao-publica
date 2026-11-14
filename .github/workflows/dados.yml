@@ -287,7 +287,7 @@ jobs:
           ETL_ORCAMENTO_MINUTOS: '15'
         run: java -Xmx2g -jar etl/target/etl.jar fetch alems
       - name: fetch alpb
-        # Assembleia Legislativa da Paraíba (SAPL 3): 36 deputados estaduais, perfis e Mesa Diretora.
+        # Assembleia Legislativa da Paraíba (SAPL 3): deputados, perfis, Mesa Diretora, proposições, votações e presença.
         if: env.FONTE == 'todas' || env.FONTE == 'alpb'
         continue-on-error: true
         timeout-minutes: 20
@@ -295,12 +295,12 @@ jobs:
           ETL_ORCAMENTO_MINUTOS: '15'
         run: java -Xmx2g -jar etl/target/etl.jar fetch alpb
       - name: fetch aleam
-        # Assembleia Legislativa do Estado do Amazonas (SAPL): 24 deputados estaduais, perfis e Mesa Diretora.
+        # Assembleia Legislativa do Estado do Amazonas (SAPL): deputados, perfis, Mesa Diretora, proposições, votações (>63 mil) e presença.
         if: env.FONTE == 'todas' || env.FONTE == 'aleam'
         continue-on-error: true
-        timeout-minutes: 20
+        timeout-minutes: 30
         env:
-          ETL_ORCAMENTO_MINUTOS: '15'
+          ETL_ORCAMENTO_MINUTOS: '25'
         run: java -Xmx2g -jar etl/target/etl.jar fetch aleam
       - name: fetch aleal
         # Assembleia Legislativa do Estado de Alagoas (SAPL): 27 deputados estaduais, perfis e Mesa Diretora.
@@ -311,7 +311,7 @@ jobs:
           ETL_ORCAMENTO_MINUTOS: '15'
         run: java -Xmx2g -jar etl/target/etl.jar fetch aleal
       - name: fetch alero
-        # Assembleia Legislativa do Estado de Rondônia (SAPL): 24 deputados estaduais, perfis e Mesa Diretora.
+        # Assembleia Legislativa do Estado de Rondônia (SAPL): deputados, perfis, Mesa Diretora, proposições, votações e presença.
         if: env.FONTE == 'todas' || env.FONTE == 'alero'
         continue-on-error: true
         timeout-minutes: 20
@@ -319,7 +319,7 @@ jobs:
           ETL_ORCAMENTO_MINUTOS: '15'
         run: java -Xmx2g -jar etl/target/etl.jar fetch alero
       - name: fetch alepi
-        # Assembleia Legislativa do Estado do Piauí (SAPL): 30 deputados estaduais, perfis e Mesa Diretora.
+        # Assembleia Legislativa do Estado do Piauí (SAPL): deputados, perfis, Mesa Diretora, proposições, votações e presença.
         if: env.FONTE == 'todas' || env.FONTE == 'alepi'
         continue-on-error: true
         timeout-minutes: 20
@@ -360,7 +360,7 @@ jobs:
           ETL_ORCAMENTO_MINUTOS: '15'
         run: java -Xmx2g -jar etl/target/etl.jar fetch alema
       - name: fetch aleac
-        # Assembleia Legislativa do Estado do Acre: 24 deputados estaduais, perfis e Mesa Diretora.
+        # Assembleia Legislativa do Estado do Acre (SAPL): deputados, perfis, Mesa Diretora, proposições, votações e presença.
         if: env.FONTE == 'todas' || env.FONTE == 'aleac'
         continue-on-error: true
         timeout-minutes: 20

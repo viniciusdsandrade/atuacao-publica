@@ -230,6 +230,22 @@ class AleroTest {
         Files.writeString(rawAlero.resolve("materias/256-2023-p1.json"), materiasJson);
         gravarMetadado(rawAlero, "materias/256-2023-p1.json", Alero.API + "/materia/materialegislativa/?autores=256&ano=2023&page_size=100&page=1");
 
+        Files.createDirectories(rawAlero.resolve("sessoes"));
+        Files.createDirectories(rawAlero.resolve("presencas"));
+        Files.createDirectories(rawAlero.resolve("votos"));
+        Files.writeString(rawAlero.resolve("sessoes/2023-p1.json"), """
+                {"pagination": {"links": {"next": null}}, "results": [{"id": 700, "numero": 3, "data_inicio": "2023-03-14", "hora_inicio": "09:30:00", "__str__": "3ª Sessão Ordinária da 1ª Sessão Legislativa"}]}
+                """);
+        gravarMetadado(rawAlero, "sessoes/2023-p1.json", Alero.API + "/sessao/sessaoplenaria/?data_inicio__year=2023");
+        Files.writeString(rawAlero.resolve("presencas/p1.json"), """
+                {"pagination": {"links": {"next": null}}, "results": [{"id": 1, "sessao_plenaria": 700, "parlamentar": 256}]}
+                """);
+        gravarMetadado(rawAlero, "presencas/p1.json", Alero.API + "/sessao/sessaoplenariapresenca/?sessao_plenaria__gte=700");
+        Files.writeString(rawAlero.resolve("votos/2023-p1.json"), """
+                {"pagination": {"links": {"next": null}}, "results": [{"id": 11, "parlamentar": 256, "votacao": 900, "voto": "Sim", "data_hora": "2023-03-14T11:00:00-04:00", "__str__": "Ordem do Dia: 1 - PL 88/2023 em 3ª Sessão Ordinária - Votação: Aprovado"}]}
+                """);
+        gravarMetadado(rawAlero, "votos/2023-p1.json", Alero.API + "/sessao/votoparlamentar/?data_hora__year=2023");
+
         // Executa normalização
         Alero alero = new Alero();
         alero.normalize(ctx);
@@ -277,6 +293,12 @@ class AleroTest {
         assertEquals(88, prop.get("numero").asInt());
         assertEquals("Aprovado", prop.get("situacao").stringValue());
         assertEquals("alero-proposicoes", prop.get("fonte_id").stringValue());
+
+        assertEquals(1, bloco.get("votos").size());
+        assertEquals("alero-votacoes", bloco.get("votos").get(0).get("fonte_id").stringValue());
+        assertEquals(1, bloco.get("participacao_votacoes").size());
+        assertEquals(1, bloco.get("eventos").size());
+        assertEquals("alero-presenca", bloco.get("eventos").get(0).get("fonte_id").stringValue());
     }
 
     private static void gravarMetadado(Path dir, String arquivo, String url) throws IOException {

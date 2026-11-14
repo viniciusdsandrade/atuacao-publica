@@ -1233,6 +1233,16 @@ Validação em 2026-11-03 com o User-Agent do projeto.
 - URL base: `https://sapl3.al.pb.leg.br/media/sapl/public/parlamentar/`
 - Repositório de imagens oficiais dos parlamentares hospedadas no SAPL da Assembleia Legislativa da Paraíba.
 
+### `alpb-votacoes`: votações nominais em plenário
+
+- URL base: `https://sapl3.al.pb.leg.br/api/sessao/votoparlamentar/`
+- Registros individuais de voto nominal na 20ª Legislatura, com campos `ip` e `user` removidos antes de gravar no cache bruto.
+
+### `alpb-presenca`: presença em sessões plenárias
+
+- URL base: `https://sapl3.al.pb.leg.br/api/sessao/sessaoplenariapresenca/`
+- Lista presenças registradas em sessões plenárias da 20ª Legislatura via `sessao/sessaoplenaria/` e `sessao/sessaoplenariapresenca/`.
+
 ### `pb-transparencia` e `pb-diario-oficial`: Executivo estadual
 
 - Transparência orçamentária: `https://transparencia.pb.gov.br/`
@@ -1272,6 +1282,16 @@ Validação em 2026-11-03 com o User-Agent do projeto.
 
 - URL base: `https://sapl.al.am.leg.br/media/sapl/public/parlamentar/`
 - Repositório de imagens oficiais dos parlamentares hospedadas no SAPL da Assembleia Legislativa do Amazonas.
+
+### `aleam-votacoes`: votações nominais em plenário
+
+- URL base: `https://sapl.al.am.leg.br/api/sessao/votoparlamentar/`
+- Registros individuais de voto nominal na 20ª Legislatura, com campos `ip` e `user` removidos antes de gravar no cache bruto.
+
+### `aleam-presenca`: presença em sessões plenárias
+
+- URL base: `https://sapl.al.am.leg.br/api/sessao/sessaoplenariapresenca/`
+- Lista presenças registradas em sessões plenárias da 20ª Legislatura via `sessao/sessaoplenaria/` e `sessao/sessaoplenariapresenca/`.
 
 ### `am-transparencia` e `am-diario-oficial`: Executivo estadual
 
@@ -1353,6 +1373,16 @@ Validação em 2026-11-03 com o User-Agent do projeto.
 - URL base: `https://sapl.al.ro.leg.br/media/sapl/public/parlamentar/`
 - Repositório de imagens oficiais dos parlamentares hospedadas no SAPL da Assembleia Legislativa de Rondônia.
 
+### `alero-votacoes`: votações nominais em plenário
+
+- URL base: `https://sapl.al.ro.leg.br/api/sessao/votoparlamentar/`
+- Registros individuais de voto nominal na 11ª Legislatura, com campos `ip` e `user` removidos antes de gravar no cache bruto.
+
+### `alero-presenca`: presença em sessões plenárias
+
+- URL base: `https://sapl.al.ro.leg.br/api/sessao/sessaoplenariapresenca/`
+- Lista presenças registradas em sessões plenárias da 11ª Legislatura via `sessao/sessaoplenaria/` e `sessao/sessaoplenariapresenca/`.
+
 ### `ro-transparencia` e `ro-diario-oficial`: Executivo estadual
 
 - Transparência orçamentária: `https://transparencia.ro.gov.br/`
@@ -1392,6 +1422,16 @@ Validação em 2026-11-03 com o User-Agent do projeto.
 
 - URL base: `https://sapl.al.pi.leg.br/media/sapl/public/parlamentar/`
 - Repositório de imagens oficiais dos parlamentares hospedadas no SAPL da Assembleia Legislativa do Piauí.
+
+### `alepi-votacoes`: votações nominais em plenário
+
+- URL base: `https://sapl.al.pi.leg.br/api/sessao/votoparlamentar/`
+- Registros individuais de voto nominal na 20ª Legislatura, com campos `ip` e `user` removidos antes de gravar no cache bruto.
+
+### `alepi-presenca`: presença em sessões plenárias
+
+- URL base: `https://sapl.al.pi.leg.br/api/sessao/sessaoplenariapresenca/`
+- Lista presenças registradas em sessões plenárias da 20ª Legislatura via `sessao/sessaoplenaria/` e `sessao/sessaoplenariapresenca/`.
 
 ### `pi-transparencia` e `pi-diario-oficial`: Executivo estadual
 
@@ -1564,6 +1604,16 @@ Validação em 2026-11-03 com o User-Agent do projeto.
 
 - URL base: `https://sapl.al.ac.leg.br/media/sapl/public/parlamentar/`
 - Imagens oficiais dos parlamentares hospedadas no SAPL da ALEAC.
+
+### `aleac-votacoes`: votações nominais em plenário
+
+- URL base: `https://sapl.al.ac.leg.br/api/sessao/votoparlamentar/`
+- Registros individuais de voto nominal na 16ª Legislatura, com campos `ip` e `user` removidos antes de gravar no cache bruto.
+
+### `aleac-presenca`: presença em sessões plenárias
+
+- URL base: `https://sapl.al.ac.leg.br/api/sessao/sessaoplenariapresenca/`
+- Lista presenças registradas em sessões plenárias da 16ª Legislatura via `sessao/sessaoplenaria/` e `sessao/sessaoplenariapresenca/`.
 
 ### `ac-transparencia` e `ac-diario-oficial`: Executivo estadual
 

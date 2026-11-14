@@ -41,6 +41,8 @@ public final class Aleac implements Fonte {
     public static final String FONTE_MESA_DIRETORA = "aleac-mesa-diretora";
     public static final String FONTE_FILIACAO = "aleac-filiacao";
     public static final String FONTE_PROPOSICOES = "aleac-proposicoes";
+    public static final String FONTE_VOTACOES = "aleac-votacoes";
+    public static final String FONTE_PRESENCA = "aleac-presenca";
     public static final String FONTE_PORTAL = "aleac-portal";
 
     public static final String API = "https://sapl.al.ac.leg.br/api";
@@ -119,6 +121,9 @@ public final class Aleac implements Fonte {
                 }
             }
         }
+
+        // 4. Sessões plenárias, presenças e votações nominais (ADR-0063)
+        SaplSessao.fetch(ctx, coleta, API, INICIO_LEG_16, anos);
     }
 
     @Override
@@ -153,6 +158,10 @@ public final class Aleac implements Fonte {
         for (MandatoInfo m : mandatos) {
             mandatosPorParlamentar.computeIfAbsent(m.parlamentarId(), k -> new ArrayList<>()).add(m);
         }
+
+        SaplSessao.DadosNormalizados sessoes = SaplSessao.normalize(
+                ctx, nome(), API, FONTE_VOTACOES, FONTE_PRESENCA, INICIO_LEG_16, anosLeg,
+                mandatosPorParlamentar.keySet(), pid -> extrairPartido(ctx, pid));
 
         List<Pessoa> pessoas = new ArrayList<>();
         Map<String, String> nomesCivisPorId = new HashMap<>();
@@ -195,7 +204,7 @@ public final class Aleac implements Fonte {
             }
 
             // Filiação partidária
-            String partido = extrairPartido(ctx, pid);
+            String partido = sessoes.partido(pid);
 
             String urlFicha = SITE + "/parlamentar/" + pid;
             List<LinkOficial> links = List.of(new LinkOficial("Ficha no SAPL", urlFicha, provParl));
@@ -228,6 +237,9 @@ public final class Aleac implements Fonte {
             blocosNode.set("orgaos_e_frentes", Json.SAIDA.valueToTree(orgaos));
             blocosNode.set("despesas", Json.SAIDA.createArrayNode());
             blocosNode.set("proposicoes", Json.SAIDA.valueToTree(proposicoes));
+            blocosNode.set("votos", Json.SAIDA.valueToTree(sessoes.votos(pid)));
+            blocosNode.set("participacao_votacoes", Json.SAIDA.valueToTree(sessoes.participacoes(pid)));
+            blocosNode.set("eventos", Json.SAIDA.valueToTree(sessoes.eventos(pid)));
             blocosNode.set("fontes", Json.SAIDA.valueToTree(Registros.fontesDosBlocos(blocosNode)));
 
             try {

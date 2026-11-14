@@ -219,6 +219,22 @@ class AlpbTest {
         Files.writeString(rawAlpb.resolve("materias/89-2023-p1.json"), materiasJson);
         gravarMetadado(rawAlpb, "materias/89-2023-p1.json", Alpb.API + "/materia/materialegislativa/?autores=89&ano=2023&page_size=100&page=1");
 
+        Files.createDirectories(rawAlpb.resolve("sessoes"));
+        Files.createDirectories(rawAlpb.resolve("presencas"));
+        Files.createDirectories(rawAlpb.resolve("votos"));
+        Files.writeString(rawAlpb.resolve("sessoes/2023-p1.json"), """
+                {"pagination": {"links": {"next": null}}, "results": [{"id": 700, "numero": 5, "data_inicio": "2023-03-14", "hora_inicio": "09:30:00", "__str__": "5ª Sessão Ordinária da 1ª Sessão Legislativa"}]}
+                """);
+        gravarMetadado(rawAlpb, "sessoes/2023-p1.json", Alpb.API + "/sessao/sessaoplenaria/?data_inicio__year=2023");
+        Files.writeString(rawAlpb.resolve("presencas/p1.json"), """
+                {"pagination": {"links": {"next": null}}, "results": [{"id": 1, "sessao_plenaria": 700, "parlamentar": 89}]}
+                """);
+        gravarMetadado(rawAlpb, "presencas/p1.json", Alpb.API + "/sessao/sessaoplenariapresenca/?sessao_plenaria__gte=700");
+        Files.writeString(rawAlpb.resolve("votos/2023-p1.json"), """
+                {"pagination": {"links": {"next": null}}, "results": [{"id": 11, "parlamentar": 89, "votacao": 900, "voto": "Sim", "data_hora": "2023-03-14T11:00:00-03:00", "__str__": "Ordem: 1 - PL 10/2023 em 5ª Sessão Ordinária - Votação: Aprovado - Matéria: PL 10/2023"}]}
+                """);
+        gravarMetadado(rawAlpb, "votos/2023-p1.json", Alpb.API + "/sessao/votoparlamentar/?data_hora__year=2023");
+
         Alpb alpb = new Alpb();
         alpb.normalize(ctx);
 
@@ -254,6 +270,12 @@ class AlpbTest {
         assertEquals(10, prop.get("numero").asInt());
         assertEquals("Aprovado", prop.get("situacao").stringValue());
         assertEquals("alpb-proposicoes", prop.get("fonte_id").stringValue());
+
+        assertEquals(1, bloco.get("votos").size());
+        assertEquals("alpb-votacoes", bloco.get("votos").get(0).get("fonte_id").stringValue());
+        assertEquals(1, bloco.get("participacao_votacoes").size());
+        assertEquals(1, bloco.get("eventos").size());
+        assertEquals("alpb-presenca", bloco.get("eventos").get(0).get("fonte_id").stringValue());
     }
 
     private static void gravarMetadado(Path dir, String arquivo, String url) throws IOException {
