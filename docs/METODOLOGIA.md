@@ -20,6 +20,7 @@ As fontes estão descritas em `docs/FONTES.md`.
 - **Coleta parcial.** Se um arquivo não puder ser atualizado e existir cópia de coleta anterior, o ETL usa a cópia, com a data de captura original. A fonte fica com status `parcial`, e o bloco mostra o aviso. Depois de 3 falhas no mesmo tipo de arquivo, o ETL não tenta de novo naquela execução. Cada coleta tem um orçamento de tempo (`ETL_ORCAMENTO_MINUTOS`): esgotado, o restante vem do cache. O prazo vale também para a requisição que já esperava vaga ou nova tentativa no cliente HTTP. Na Câmara, discursos e frentes são complementares, e um deputado sem detalhe ou histórico coletado, sem cópia anterior, fica fora da publicação até a próxima execução; a fonte fica parcial, não em falha.
 - **Lista paginada.** Quando a fonte pagina uma lista que desloca a cada item novo, todas as páginas do período aberto renovam no mesmo dia. Com um dia por página, um item que muda de página entre duas renovações ficaria fora.
 - **URL de origem.** Cada registro aponta para o recurso na fonte oficial (por exemplo, a votação na API da Câmara). Quando o dado saiu de um arquivo anual em massa, o arquivo aparece na lista de fontes do bloco, com hash e data de captura em `_meta/{fonte}.json`.
+- **Partido (ADR-0058).** O perfil mostra a sigla como o TSE a grafa no arquivo de candidaturas da eleição mais recente em que o partido aparece. A comparação com a grafia da casa ignora caixa, acento, espaço e pontuação. Nome por extenso e abreviação que não são a sigla entram por uma tabela curta, em `Partidos.java`. "Sem partido" é o que a casa informa quando não há filiação, e não ausência de registro. Sigla antiga de partido que mudou de nome ou se fundiu fica como está. O partido na data de cada voto e o de cada candidatura continuam com a grafia do registro.
 - **Fotos.** O site não embute a foto oficial: carregar a imagem faria o navegador do visitante chamar o servidor da fonte. O perfil traz o link para a foto.
 
 ## Participação em votações nominais
@@ -118,7 +119,7 @@ Não é presença. É a contagem de votos registrados em votações nominais.
 
 - Fonte: `execucao/diarias/diarias` da API do Portal da Transparência do município, entidade Câmara, por ano.
 - Categoria única: `Diária`. Valor e data de concessão como a fonte registra. Sem a data de concessão, vale a do empenho e, sem ela, a da saída.
-- `documento_numero` traz o número do empenho. Destino e motivo ficam na fonte.
+- `documento_numero` traz o número do empenho. `descricao` traz destino e motivo, como a fonte registra, sem telefone, e-mail nem CPF. Campo vazio ou só com traço fica fora.
 - A fonte identifica o beneficiário só pelo nome. Entra a diária cujo beneficiário tem o nome civil do vereador e cuja data cai num mandato dele. Com o cargo "vereador" ou "presidente" na fonte, vale também o nome civil seguido de mais sobrenomes.
 - Diária de servidor não é lida nem guardada.
 - A fonte não publica fornecedor, CNPJ nem documento fiscal. Não há outra despesa por vereador com fonte validada.
