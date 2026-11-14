@@ -1,6 +1,6 @@
 # ADR-0058: Sigla de partido unificada pela grafia do TSE
 
-- **Status**: Proposta
+- **Status**: Aceita
 - **Data**: 2026-11-13
 
 ## Contexto
