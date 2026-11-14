@@ -30,6 +30,22 @@ if [[ "${SEMENTE_AGENDADA_FASE:-1}" == 1 ]]; then
     printf '%s\n' "$recorte" > "$SEMENTE_LOG"
   fi
   echo "semente agendada: início em $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+  # Ao acordar do repouso, a interface de rede pode levar alguns segundos para responder ao DNS.
+  espera="${SEMENTE_ESPERA_REDE_S:-60}"
+  tentativas=$(( (espera + 2) / 3 ))
+  if [[ "$espera" -gt 0 ]]; then
+    for ((i = 1; i <= tentativas; i++)); do
+      if git ls-remote --quiet origin "$ramo" > /dev/null 2>&1; then
+        break
+      fi
+      if [[ "$i" -eq 1 ]]; then
+        echo "semente agendada: aguardando rede após despertar (até ${espera}s)"
+      fi
+      if [[ "$i" -lt "$tentativas" ]]; then
+        sleep 3
+      fi
+    done
+  fi
   git fetch --quiet origin "$ramo"
   git checkout --quiet --detach "origin/$ramo"
   echo "semente agendada: código em $(git rev-parse --short HEAD)"
