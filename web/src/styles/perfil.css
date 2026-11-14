@@ -459,6 +459,12 @@ html:has(.perfil-nav) {
   overflow-wrap: anywhere;
 }
 
+/* De R$ 100 milhões para cima o número não cabe no cartão com a letra padrão e quebrava no meio. */
+.estatistica dd.numero--longo {
+  font-size: 1.125rem;
+  line-height: 1.6;
+}
+
 .anos-despesa {
   display: grid;
   grid-template-columns: minmax(0, 1fr);

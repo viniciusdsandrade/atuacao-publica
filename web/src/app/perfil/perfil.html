@@ -247,7 +247,7 @@
                 <dl class="estatisticas">
                   <div class="estatistica">
                     <dt>Total no período</dt>
-                    <dd class="numero">{{ moeda(bloco.valor_total) }}</dd>
+                    <dd class="numero" [class.numero--longo]="valorLongo(bloco.valor_total)">{{ moeda(bloco.valor_total) }}</dd>
                   </div>
                   <div class="estatistica">
                     <dt>{{ unidade(b) === 'pagamentos' ? 'Pagamentos' : 'Lançamentos' }}</dt>

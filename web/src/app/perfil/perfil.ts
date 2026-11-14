@@ -24,6 +24,7 @@ import {
   iniciais,
   inteiro,
   moeda,
+  valorLongo,
   notaDoBloco,
   rotuloCargo,
   rotuloCurtoBloco,
@@ -178,6 +179,7 @@ export class Perfil {
   protected readonly rotuloLocal = rotuloLocal;
   protected readonly data = data;
   protected readonly moeda = moeda;
+  protected readonly valorLongo = valorLongo;
   protected readonly semRegistro = SEM_REGISTRO;
 
   constructor() {

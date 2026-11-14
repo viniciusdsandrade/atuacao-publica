@@ -320,6 +320,14 @@ export function moeda(valor: number | null | undefined): string {
   return valor === null || valor === undefined ? SEM_REGISTRO : reais.format(valor);
 }
 
+/**
+ * Valor em reais que não cabe no cartão de total com a letra padrão: de R$ 100 milhões para cima.
+ * O cartão usa uma letra menor, e o número não quebra no meio.
+ */
+export function valorLongo(valor: number | null | undefined): boolean {
+  return valor !== null && valor !== undefined && Math.abs(valor) >= 100_000_000;
+}
+
 /** Data ISO (com ou sem hora) para dd/mm/aaaa, sem converter fuso. */
 export function data(valor: unknown): string {
   if (typeof valor !== 'string' || valor.length < 10) {

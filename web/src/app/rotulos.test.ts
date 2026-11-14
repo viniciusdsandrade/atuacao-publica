@@ -18,6 +18,7 @@ import {
   data,
   notaDoBloco,
   rotuloCurtoBloco,
+  valorLongo,
   situacaoDe,
   tituloDoBloco,
   realcar,
@@ -151,6 +152,16 @@ test('na esfera municipal, despesas, atos e proposições dizem o que cada câma
   assert.equal(notaDoBloco('proposicoes', 'municipal', '3509502'), null);
   assert.equal(notaDoBloco('proposicoes', 'federal'), null);
   assert.match(notaDoBloco('eventos', 'municipal', '3510500') ?? '', /Câmara Municipal de Caraguatatuba/);
+});
+
+test('valor de cem milhões para cima usa letra menor no cartão de total', () => {
+  assert.equal(valorLongo(99_999_999.99), false);
+  assert.equal(valorLongo(100_000_000), true);
+  assert.equal(valorLongo(1_920_647_454.69), true);
+  assert.equal(valorLongo(-250_000_000), true);
+  assert.equal(valorLongo(0), false);
+  assert.equal(valorLongo(null), false);
+  assert.equal(valorLongo(undefined), false);
 });
 
 test('data formata ISO para dd/mm/aaaa', () => {
