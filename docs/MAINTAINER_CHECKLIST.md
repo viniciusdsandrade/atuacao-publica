@@ -71,7 +71,15 @@ O envio à mão acima vira uma coleta diária, feita pelo launchd num clone sepa
 4. Para ensaiar sem coletar e sem enviar: `launchctl setenv SEMENTE_SIMULAR 1`, rode como no passo 3 e depois `launchctl unsetenv SEMENTE_SIMULAR`.
 5. Para tirar o agendamento: `scripts/semente-agendar.sh --remover`. O clone e o cache ficam na pasta.
 6. O token do `gh` não vai para o agendamento. A coleta usa a autenticação que o `gh` já guarda na máquina.
-7. A máquina precisa estar ligada. Dormindo no horário, a coleta roda quando ela acordar. Desligada, a coleta daquele dia não roda.
+7. A máquina precisa estar ligada. Dormindo no horário, a coleta roda quando ela acordar: `scripts/semente-agendada.sh` aguarda até 60 s pela rede (`SEMENTE_ESPERA_REDE_S`) antes do `git fetch` para evitar erro imediato enquanto o DNS restabelece. Desligada, a coleta daquele dia não roda. Falhas transitórias de rede nos portais estaduais tentam novamente na execução seguinte.
+
+## Cache cifrado no GitHub Actions (ADR-0061)
+
+Por padrão, o cache de `data/raw`, `data/publicado/_meta` e `data/publicado/index.json` funciona sem configuração extra. Para cifrar esse cache no repositório de trabalho do Actions:
+
+1. Gere uma chave forte (`openssl rand -base64 48`) e cadastre como segredo `CACHE_CHAVE` em **Settings > Secrets and variables > Actions > Secrets**.
+2. Na primeira execução com `CACHE_CHAVE`, o workflow ainda reaproveita o cache legado sem cifra, se existir, e passa a gravar apenas `.cache-cifrado/dados.tar.gz.enc` (`dados-cifrado-*`) ao final.
+3. Para rotacionar a chave, basta atualizar `CACHE_CHAVE`: a execução seguinte ignora o pacote da chave antiga e cria um novo.
 
 ## Ativar o túnel pelo Brasil (ADR-0029)
 
@@ -112,6 +120,6 @@ ALMG, ALRS, ALES, CLDF, ALEMA, ALEAC, ALERR, ALAP e ALESE recusam conexão ou re
 5. Revise `LICENSE` e `LICENSE-DADOS.md`. Troque "os contribuidores do projeto" pelo titular definitivo, se houver.
 6. Revise nomes e metadados: `etl/pom.xml`, `web/package.json`, descrição do repositório, tópicos.
 7. Confirme que `main` não contém dados publicados (`data/` está no `.gitignore`).
-8. Ative a proteção de branch em `main` (revisão obrigatória, CI obrigatório).
-9. Ative **Private vulnerability reporting** em **Settings > Code security**.
+8. Ative manualmente na interface do GitHub a proteção de branch em `main` (revisão obrigatória e checks de status obrigatórios). Use exatamente os nomes dos jobs em `.github/workflows/ci.yml`: `segredos e privacidade`, `etl (build e testes)` e `web (build, testes, E2E e acessibilidade)`. Não use o nome antigo `web (build)`, pois impede o merge por check inexistente.
+9. Ative manualmente **Private vulnerability reporting** em **Settings > Code security** na interface web do GitHub (vem desabilitado por padrão e exige confirmação manual com privilégio de administração).
 10. Torne o repositório público.
