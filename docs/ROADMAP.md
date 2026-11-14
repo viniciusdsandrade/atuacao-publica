@@ -339,7 +339,7 @@ Limitações:
 
 ## Logotipo do site (ADR-0060)
 
-Proposto em 2026-11-14, na cópia de trabalho, sem mudar dado, rota nem texto.
+Concluído e publicado em 2026-11-14, sem mudar dado, rota nem texto.
 O frontão com colunas dá lugar ao plenário entre colchetes.
 
 | Peça | Entrega | Estado |
@@ -355,9 +355,15 @@ Verificação de 2026-11-14, na cópia de trabalho:
 - Com cores forçadas, no Chromium: o desenho usa a cor de texto do sistema.
 - Favicon servido como `image/svg+xml` e desenhado igual nos três motores, nos esquemas de cor claro e escuro.
 
+Publicação de 2026-11-14:
+
+- CI do commit `89de0bd`: build, 396 testes do ETL, 23 testes unitários do site e E2E com axe passaram (95 testes, 1 pulado).
+- Publicado pelo workflow `dados`, com a fonte `alesc` e as demais do cache. A publicação estava bloqueada desde a coleta agendada do dia, e o ADR-0059 depende da coleta da ALESC para destravar.
+- No site publicado, no Chromium, no Firefox e no WebKit, em 1366 px nos dois temas, em 320 px no tema claro e em 390 px no tema escuro: logotipo novo no cabeçalho e no rodapé, favicon novo, sem transbordo lateral e nenhuma requisição a terceiros.
+- A primeira carga depois do deploy teve uma resposta 503. Não se repetiu nas 17 cargas seguintes.
+
 Limitações:
 
-- Não publicado: o ADR-0060 está como proposta.
 - Não validado: teste com pessoas, favicon no Safari e aparelho real.
 - O site segue sem ícone em PNG para a tela inicial do celular e sem imagem de prévia de link.
 
