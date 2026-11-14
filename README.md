@@ -3,11 +3,11 @@
 Portal público sobre a atividade de políticos brasileiros: o que cada um fez, faz e declara que vai fazer.
 Todo registro vem de fonte oficial e traz a proveniência: fonte, URL de origem e data de captura.
 
-Estado: prova de conceito na esfera federal concluída e piloto municipal em andamento. Detalhes em `docs/ROADMAP.md`.
+Estado: no ar com a esfera federal, as 27 unidades da federação e três municípios paulistas. Detalhes em `docs/ROADMAP.md`.
 
 ## O que é
 
-- Votos e participação em votações nominais (Câmara, Senado e câmara municipal do piloto).
+- Votos e participação em votações nominais, nas casas que publicam o voto de cada parlamentar.
 - Despesas da cota parlamentar, por mês e por categoria, com o detalhe de cada lançamento.
 - Proposições de autoria, discursos, eventos com presença registrada, órgãos, comissões e frentes.
 - Emendas individuais ao Orçamento da União de deputados federais e senadores, com os valores do Portal da Transparência.
@@ -16,8 +16,9 @@ Estado: prova de conceito na esfera federal concluída e piloto municipal em and
 - Atos do Poder Executivo federal e agenda oficial da Presidência.
 - Posicionamentos declarados, só por contribuição revisada e com snapshot arquivado.
 
-Escopo: deputados federais (513), senadores (81), Presidência da República e os 27 governadores.
-Piloto municipal: prefeito e vereadores de um município, com dados da câmara (SAPL e portal da transparência) e do TSE.
+Escopo: deputados federais, senadores, Presidência da República, governadores e deputados estaduais e distritais das 27 unidades da federação.
+Esfera municipal: prefeito, vice e vereadores de três municípios paulistas, com dados de cada câmara, do TSE e do Tribunal de Contas do Estado.
+O que cada casa publica varia. A cobertura de cada bloco está em `docs/METODOLOGIA.md`, e o estado de cada casa, em `docs/ROADMAP.md`.
 
 ## O que não é
 
