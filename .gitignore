@@ -9,6 +9,7 @@
 data/raw/
 data/normalizado/
 data/publicado/
+.cache-cifrado/
 
 # Build
 node_modules/

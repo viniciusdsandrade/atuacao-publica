@@ -46,7 +46,19 @@ jobs:
           node-version: '24'
           cache: npm
           cache-dependency-path: web/package-lock.json
-      - name: restaura dados brutos e cursores
+      - name: baixa pacote cifrado do cache (se houver)
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: .cache-cifrado
+          key: dados-cifrado-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: dados-cifrado-
+      - name: abre cache cifrado (ADR-0061)
+        id: cache-cifrado
+        env:
+          CACHE_CHAVE: ${{ secrets.CACHE_CHAVE }}
+        run: scripts/cache-restaurar.sh
+      - name: restaura dados brutos e cursores (fallback sem cifra)
+        if: steps.cache-cifrado.outputs.cifrado_restaurado != 'true'
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: |
@@ -434,9 +446,22 @@ jobs:
       - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
         with:
           path: web/dist/web/browser
-      - name: guarda dados brutos e cursores
-        # Roda mesmo se um passo falhar ou estourar o limite: a próxima execução reaproveita o que já foi baixado.
+      - name: prepara cache cifrado (ADR-0061)
         if: always()
+        id: prepara-cache
+        env:
+          CACHE_CHAVE: ${{ secrets.CACHE_CHAVE }}
+        run: scripts/cache-preparar.sh
+      - name: guarda cache cifrado
+        # Roda mesmo se um passo falhar ou estourar o limite: a próxima execução reaproveita o que já foi baixado.
+        if: always() && steps.prepara-cache.outputs.usar_cifrado == 'true'
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: .cache-cifrado
+          key: dados-cifrado-${{ github.run_id }}-${{ github.run_attempt }}
+      - name: guarda dados brutos e cursores (sem cifra)
+        # Fallback quando CACHE_CHAVE não está configurada.
+        if: always() && steps.prepara-cache.outputs.usar_cifrado != 'true'
         uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: |
