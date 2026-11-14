@@ -309,3 +309,12 @@
     border: 1px solid CanvasText;
   }
 }
+
+/* Texto do lançamento na fonte (destino e motivo de uma diária), abaixo da categoria. */
+.descricao-do-registro {
+  display: block;
+  margin-top: 0.125rem;
+  color: var(--texto-2);
+  font-size: 0.875rem;
+  font-weight: 400;
+}

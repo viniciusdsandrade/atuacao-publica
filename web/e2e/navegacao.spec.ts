@@ -142,6 +142,12 @@ test.describe('perfil', () => {
     await expect(page.getByText(/não mantém a situação de tramitação/)).toBeVisible();
   });
 
+  test('diária mostra destino e motivo abaixo da categoria', async ({ page }) => {
+    await page.goto('/#/politico/sagl-3510500-950016/despesas/2026');
+    await expect(page.getByRole('heading', { level: 1 })).toContainText('2026');
+    await expect(page.getByText('Destino: São Paulo/SP - Brasil. Motivo: Reunião de exemplo.')).toBeVisible();
+  });
+
   test('falha de rede no perfil oferece tentar de novo e recupera', async ({ page }) => {
     let falhar = true;
     await page.route('**/dados/politicos/cam-900001.json', (rota) => (falhar ? rota.abort('failed') : rota.continue()));

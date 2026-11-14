@@ -69,7 +69,8 @@
         "fornecedor_cnpj": { "anyOf": [{ "type": "string", "pattern": "^[0-9]{14}$" }, { "type": "null" }] },
         "valor": { "$ref": "comum.schema.json#/$defs/valor" },
         "documento_numero": { "$ref": "comum.schema.json#/$defs/texto_ou_nulo" },
-        "documento_url": { "$ref": "comum.schema.json#/$defs/url_ou_nulo" }
+        "documento_url": { "$ref": "comum.schema.json#/$defs/url_ou_nulo" },
+        "descricao": { "description": "Texto do lançamento na fonte, quando ela traz: destino e motivo de uma diária, por exemplo. Ausente nas fontes que não trazem.", "$ref": "comum.schema.json#/$defs/texto" }
       },
       "unevaluatedProperties": false
     },

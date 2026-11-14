@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonUnwrapped;
 import tools.jackson.databind.JsonNode;
 
@@ -74,9 +75,19 @@ public final class Registros {
                                Map<String, Integer> porTipo, @JsonUnwrapped Prov prov) {
     }
 
+    /**
+     * Despesa de parlamentar. A descrição é o texto do lançamento na fonte (destino e motivo de uma diária, por exemplo)
+     * e só sai no JSON quando a fonte a traz.
+     */
     public record Despesa(LocalDate data, int ano, int mes, String categoria, String fornecedorNome,
                           String fornecedorCnpj, BigDecimal valor, String documentoNumero, String documentoUrl,
-                          @JsonUnwrapped Prov prov) {
+                          @JsonInclude(JsonInclude.Include.NON_NULL) String descricao, @JsonUnwrapped Prov prov) {
+
+        /** Lançamento sem descrição: é o caso da maior parte das fontes. */
+        public Despesa(LocalDate data, int ano, int mes, String categoria, String fornecedorNome, String fornecedorCnpj,
+                       BigDecimal valor, String documentoNumero, String documentoUrl, Prov prov) {
+            this(data, ano, mes, categoria, fornecedorNome, fornecedorCnpj, valor, documentoNumero, documentoUrl, null, prov);
+        }
     }
 
     public record DespesaAgregada(int ano, Integer mes, String categoria, BigDecimal valor, int quantidade,

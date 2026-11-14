@@ -64,7 +64,7 @@
           @for (r of visiveis(); track $index) {
             <tr role="row">
               <td role="cell" data-label="Data"><span class="v">{{ r['data'] ? data(r['data']) : r['mes'] + '/' + r['ano'] }}</span></td>
-              <td role="cell" data-label="Categoria"><span class="v" [class.ausente]="ausente(r['categoria'])">{{ texto(r['categoria']) }}</span></td>
+              <td role="cell" data-label="Categoria"><span class="v" [class.ausente]="ausente(r['categoria'])">{{ texto(r['categoria']) }}@if (textoOuNulo(r['descricao']); as descricao) {<span class="descricao-do-registro">{{ descricao }}</span>}</span></td>
               <td role="cell" data-label="Fornecedor"><span class="v" [class.ausente]="ausente(r['fornecedor_nome'])">{{ texto(r['fornecedor_nome']) }}</span></td>
               <td role="cell" data-label="CNPJ"><span class="v" [class.ausente]="ausente(r['fornecedor_cnpj'])">{{ texto(r['fornecedor_cnpj']) }}</span></td>
               <td class="numero" role="cell" data-label="Valor"><span class="v" [class.ausente]="numero(r['valor']) === null">{{ moeda(numero(r['valor'])) }}</span></td>

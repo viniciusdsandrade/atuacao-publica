@@ -513,7 +513,8 @@ class CaraguatatubaTest {
         String texto = derivado.toString();
         assertFalse(texto.contains("FULANO") || texto.contains("SERVIDORA") || texto.contains("PESSOA SEM PERFIL"), "nenhum nome vai para o cache");
         assertFalse(texto.contains("chapa") || texto.contains("123"), "matrícula não vai para o cache");
-        assertFalse(texto.contains("Reunião") || texto.contains("destino"), "o que o projeto não publica não é gravado");
+        assertFalse(texto.contains("qtde") || texto.contains("dt_retorno"), "o que o projeto não publica não é gravado");
+        assertEquals(Caraguatatuba.FORMATO_DAS_DIARIAS, derivado.get("formato").asInt());
         assertEquals(1, derivado.get("diarias").size());
         assertEquals("901", derivado.get("diarias").get(0).get("parlamentar").stringValue());
         assertEquals(3, derivado.get("total_na_fonte").asInt());
@@ -527,6 +528,35 @@ class CaraguatatubaTest {
         assertEquals(0, new BigDecimal("550").compareTo(despesa.valor()));
         assertEquals("Empenho 626/2025", despesa.documentoNumero());
         assertNull(despesa.fornecedorNome());
+        assertEquals("Destino: São Paulo/SP - Brasil. Motivo: Reunião.", despesa.descricao());
+        JsonNode publicada = Json.arvore(despesa);
+        assertEquals("Destino: São Paulo/SP - Brasil. Motivo: Reunião.", publicada.get("descricao").stringValue());
+    }
+
+    @Test
+    void descricaoDaDiariaTrazDestinoEMotivoSemCampoVazioESemDadoPessoal() {
+        assertEquals("Destino: São Paulo/SP - Brasil. Motivo: Reunião de exemplo.",
+                Caraguatatuba.descricaoDaDiaria("São Paulo/SP - Brasil", "Reunião de exemplo."));
+        assertEquals("Destino: Lorena/SP - Brasil.", Caraguatatuba.descricaoDaDiaria("LORENA/SP - BRASIL".replace("LORENA", "Lorena").replace("BRASIL", "Brasil"), "-"));
+        assertEquals("Motivo: Curso de exemplo.", Caraguatatuba.descricaoDaDiaria(null, "Curso de exemplo"));
+        assertNull(Caraguatatuba.descricaoDaDiaria(" - ", ""));
+        assertNull(Caraguatatuba.descricaoDaDiaria(null, null));
+        assertEquals("Motivo: Contato com o gabinete pelo e pelo.",
+                Caraguatatuba.descricaoDaDiaria(null, "Contato com o gabinete pelo (12) 99999-8888 e pelo fulano@exemplo.invalid"), "telefone e e-mail saem do texto");
+    }
+
+    @Test
+    void despesaSemDescricaoNaoGanhaOCampoNoJson() {
+        Despesa semDescricao = new Despesa(LocalDate.of(2026, 3, 2), 2026, 3, "Combustível", null, null, new BigDecimal("10.00"), null, null, PROV);
+        assertNull(semDescricao.descricao());
+        assertFalse(Json.arvore(semDescricao).has("descricao"), "as demais casas publicam a despesa como antes");
+    }
+
+    @Test
+    void copiaDerivadaDeFormatoAnteriorERefeitaNaHora() {
+        assertEquals(Politica.SEMANAL, Caraguatatuba.politicaDasDiarias(Caraguatatuba.FORMATO_DAS_DIARIAS));
+        assertEquals(Politica.SEMPRE, Caraguatatuba.politicaDasDiarias(1), "cópia sem destino e motivo");
+        assertEquals(Politica.SEMPRE, Caraguatatuba.politicaDasDiarias(0), "sem cópia");
     }
 
     @Test
@@ -541,6 +571,7 @@ class CaraguatatubaTest {
         Despesa pelaSaida = Caraguatatuba.diaria(Json.FONTE.readTree("{\"parlamentar\":\"901\",\"valor\":10.0,\"dt_saida\":\"2026-03-02\"}"), PROV);
         assertEquals(LocalDate.of(2026, 3, 2), pelaSaida.data());
         assertNull(pelaSaida.documentoNumero());
+        assertNull(pelaSaida.descricao(), "cópia derivada antiga, sem destino e motivo: a despesa sai sem descrição");
     }
 
     @Test

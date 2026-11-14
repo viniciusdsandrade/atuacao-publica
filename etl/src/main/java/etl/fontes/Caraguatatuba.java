@@ -187,7 +187,7 @@ public final class Caraguatatuba implements Fonte {
         // Todos os anos renovam por semana: vereador que entra na cobertura passa a ter as diárias dos anos fechados.
         Nomes nomes = nomes(ctx);
         for (int ano = Camara.INICIO_DA_COBERTURA.getYear(); ano <= hoje.getYear(); ano++) {
-            coleta.obterDerivado(URL_DIARIAS + ano + "-01-01", arquivoDasDiarias(ano), JSON, Politica.SEMANAL,
+            coleta.obterDerivado(URL_DIARIAS + ano + "-01-01", arquivoDasDiarias(ano), JSON, politicaDasDiarias(formatoNoCache(ctx, ano)),
                     (baixado, destino) -> Json.gravar(destino, diariasDeVereadores(Json.ler(baixado), nomes)));
         }
         coleta.periodo(new Meta.Periodo(Camara.INICIO_DA_COBERTURA, hoje));
@@ -257,6 +257,20 @@ public final class Caraguatatuba implements Fonte {
 
     static String arquivoDasDiarias(int ano) {
         return "transparencia/diarias-" + ano + ".json";
+    }
+
+    /** Formato do arquivo derivado das diárias. Muda quando a derivação passa a guardar outro campo. */
+    static final int FORMATO_DAS_DIARIAS = 2;
+
+    /** Cópia derivada num formato anterior não tem os campos de hoje: é refeita já. As demais renovam por semana. */
+    static Politica politicaDasDiarias(int formatoNoCache) {
+        return formatoNoCache == FORMATO_DAS_DIARIAS ? Politica.SEMANAL : Politica.SEMPRE;
+    }
+
+    /** Formato da cópia derivada em cache, ou 0 sem cópia. A primeira versão não gravava o formato e vale 1. */
+    private int formatoNoCache(Contexto ctx, int ano) {
+        Coleta.Arquivo arq = Coleta.metadados(ctx, nome(), arquivoDasDiarias(ano));
+        return existe(ctx, arq) ? Json.ler(Coleta.caminho(ctx, arq)).path("formato").asInt(1) : 0;
     }
 
     /** Lista recente, ou ainda sem marcação, renova toda semana. A antiga já preenchida fica no cache. */
@@ -594,7 +608,7 @@ public final class Caraguatatuba implements Fonte {
         return porVereador;
     }
 
-    /** Diária como despesa: data de concessão (ou a do empenho, ou a da saída), valor e número do empenho. */
+    /** Diária como despesa: data de concessão (ou a do empenho, ou a da saída), valor, número do empenho, destino e motivo. */
     static Despesa diaria(JsonNode d, Prov prov) {
         BigDecimal valor = Texto.valor(Json.texto(d, "valor"));
         LocalDate data = primeira(data(Json.texto(d, "dt_concessao")), data(Json.texto(d, "dt_empenho")), data(Json.texto(d, "dt_saida")));
@@ -603,12 +617,41 @@ public final class Caraguatatuba implements Fonte {
         }
         String empenho = Json.texto(d, "nr_empenho");
         return new Despesa(data, data.getYear(), data.getMonthValue(), "Diária", null, null, valor,
-                empenho == null ? null : "Empenho " + empenho, null, prov);
+                empenho == null ? null : "Empenho " + empenho, null, descricaoDaDiaria(Json.texto(d, "destino"), Json.texto(d, "motivo")), prov);
     }
 
     /**
-     * Da resposta do portal da transparência, só as diárias de vereador, sem nome e sem matrícula. Conta as que têm cargo
-     * de vereador e nome que não é de vereador: ficam fora e aparecem na saída do normalize.
+     * "Destino: São Paulo/SP - Brasil. Motivo: Reunião." Campo vazio ou só com traço fica fora, e sem os dois a descrição
+     * é nula. Telefone, e-mail e CPF saem do texto.
+     */
+    static String descricaoDaDiaria(String destino, String motivo) {
+        List<String> partes = new ArrayList<>();
+        String d = campoDaDiaria(destino);
+        String m = campoDaDiaria(motivo);
+        if (d != null) {
+            partes.add("Destino: " + d);
+        }
+        if (m != null) {
+            partes.add("Motivo: " + m);
+        }
+        if (partes.isEmpty()) {
+            return null;
+        }
+        String texto = String.join(". ", partes);
+        return texto.endsWith(".") ? texto : texto + ".";
+    }
+
+    private static String campoDaDiaria(String texto) {
+        String limpo = Guarda.sanitizar(Texto.semEntidades(texto));
+        if (limpo == null || limpo.matches("^[-–.\\s]*$")) {
+            return null;
+        }
+        return limpo.replaceAll("[.\\s]+$", "");
+    }
+
+    /**
+     * Da resposta do portal da transparência, só as diárias de vereador, sem nome e sem matrícula, com destino e motivo.
+     * Conta as que têm cargo de vereador e nome que não é de vereador: ficam fora e aparecem na saída do normalize.
      */
     static ObjectNode diariasDeVereadores(JsonNode resposta, Nomes nomes) throws IOException {
         if (!resposta.path("diarias").isArray()) {
@@ -630,10 +673,11 @@ public final class Caraguatatuba implements Fonte {
             }
             ObjectNode registro = lista.addObject();
             registro.put("parlamentar", cod);
-            for (String campo : List.of("valor", "dt_concessao", "dt_empenho", "dt_saida", "nr_empenho")) {
+            for (String campo : List.of("valor", "dt_concessao", "dt_empenho", "dt_saida", "nr_empenho", "destino", "motivo")) {
                 registro.set(campo, d.get(campo));
             }
         }
+        saida.put("formato", FORMATO_DAS_DIARIAS);
         saida.put("total_na_fonte", total);
         saida.put("de_vereador_sem_perfil", semPerfil);
         return saida;

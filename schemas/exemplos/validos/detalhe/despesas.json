@@ -4,6 +4,7 @@
   "ano": 2026,
   "gerado_em": "2026-10-30T03:10:00Z",
   "registros": [
-    { "data": "2026-03-26", "ano": 2026, "mes": 3, "categoria": "COMBUSTÍVEIS E LUBRIFICANTES.", "fornecedor_nome": "POSTO EXEMPLO LTDA", "fornecedor_cnpj": "00000000000191", "valor": 250.75, "documento_numero": "288", "documento_url": "https://www.camara.leg.br/cota-parlamentar/nota-fiscal-eletronica?ideDocumentoFiscal=9000001", "fonte_id": "camara-cotas", "url_origem": "https://www.camara.leg.br/cotas/Ano-2026.json.zip", "capturado_em": "2026-10-30T03:00:00Z" }
+    { "data": "2026-03-26", "ano": 2026, "mes": 3, "categoria": "COMBUSTÍVEIS E LUBRIFICANTES.", "fornecedor_nome": "POSTO EXEMPLO LTDA", "fornecedor_cnpj": "00000000000191", "valor": 250.75, "documento_numero": "288", "documento_url": "https://www.camara.leg.br/cota-parlamentar/nota-fiscal-eletronica?ideDocumentoFiscal=9000001", "fonte_id": "camara-cotas", "url_origem": "https://www.camara.leg.br/cotas/Ano-2026.json.zip", "capturado_em": "2026-10-30T03:00:00Z" },
+    { "data": "2026-02-04", "ano": 2026, "mes": 2, "categoria": "Diária", "fornecedor_nome": null, "fornecedor_cnpj": null, "valor": 500.00, "documento_numero": "Empenho 94/2026", "documento_url": null, "descricao": "Destino: São Paulo/SP - Brasil. Motivo: Reunião de exemplo.", "fonte_id": "caraguatatuba-transparencia", "url_origem": "https://portaldatransparencia.caraguatatuba.sp.gov.br/api/execucao/diarias/diarias?id_entidade=1&cp_ano=2026-01-01", "capturado_em": "2026-11-13T21:05:54Z" }
   ]
 }

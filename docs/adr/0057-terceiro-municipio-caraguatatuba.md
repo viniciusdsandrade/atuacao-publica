@@ -92,6 +92,7 @@ Sem a marca, o recorte é refeito uma vez.
 - Uma diária de 2026 tem cargo "vereadora" e nome que não é de vereador. Fica fora.
 - Comissões de 2023 e 2024: sem registro em nenhuma das duas fontes.
 - O bloco de despesas traz só diárias. Não há fonte validada de outras despesas por vereador.
+- O motivo da diária é texto livre da Câmara e pode citar terceiros pelo nome.
 - O sistema legislativo não aceita conexão do runner do GitHub Actions. A casa vem da coleta local cifrada (ADR-0034), e os dados só atualizam quando a coleta local roda.
 - A leitura é de HTML sem contrato. Mudança de marcação no sistema legislativo ou no portal quebra a coleta, e o perfil fica com a última cópia válida.
 
@@ -101,6 +102,14 @@ Sem a marca, o recorte é refeito uma vez.
 - Prefeito e vice entraram no site nas duas execuções anteriores do mesmo dia, com candidaturas, financiamento e despesas da prefeitura: o TSE e o TCE-SP respondem ao runner.
 - Os vereadores passam a vir da coleta local cifrada (ADR-0034). O passo `fetch caraguatatuba` continua no workflow e só roda sem a semente.
 - O portal da Câmara tem um proxy público para o sistema legislativo (`proxy-server.caraguatatuba.sp.leg.br`), usado para embutir a pesquisa de matérias. Não foi usado: reescreve as páginas, corta em 30 segundos e não foi testado a partir do runner.
+
+## Atualização em 2026-11-14: destino e motivo das diárias
+
+- A decisão 10 deixava destino e motivo fora, porque o schema de despesa não tinha campo para eles. O schema ganhou `descricao`, opcional: o texto do lançamento na fonte.
+- A diária passa a sair com "Destino: ... Motivo: ...". Campo vazio ou só com traço fica fora. Telefone, e-mail e CPF saem do texto.
+- A cópia derivada das diárias passa a guardar destino e motivo dos registros de vereador. Nome e matrícula continuam fora.
+- A cópia derivada leva um número de formato. A de formato anterior é refeita na coleta seguinte, sem esperar o rodízio semanal.
+- Na tela, a descrição aparece abaixo da categoria. As despesas das outras casas saem como antes, sem o campo.
 
 ## Alternativas consideradas
 

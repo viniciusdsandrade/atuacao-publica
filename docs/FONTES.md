@@ -1739,11 +1739,11 @@ Ritmo da coleta: no mínimo 1 segundo entre chamadas a cada servidor.
 - O portal atende quatro entidades (`api/sis_entidade`): o Município, a Câmara (`id_entidade=1`), a fundação cultural e o instituto de previdência.
 - `api/execucao/diarias/diarias?id_entidade=1&cp_ano={ano}-01-01`: diárias da Câmara no ano. O parâmetro do ano é uma data. Só com o ano, a API responde 500.
 - Campos: beneficiário, matrícula, cargo, empenho, motivo, destino, quantidade, valor e datas de concessão, empenho, saída e retorno.
-- A maior parte das diárias é de servidor. O cache guarda só as de vereador, sem nome e sem matrícula: código do parlamentar, valor, datas e número do empenho.
+- A maior parte das diárias é de servidor. O cache guarda só as de vereador, sem nome e sem matrícula: código do parlamentar, valor, datas, número do empenho, destino e motivo.
 - O beneficiário vem só pelo nome. Em 2025 o cargo está em branco em 47 de 96 registros.
 - Medidas da primeira coleta: nenhuma diária em 2022; 215 em 2023 e 200 em 2024, nenhuma de vereador; 96 em 2025, 1 de vereador; 183 em 2026, 45 de vereador.
 - Uma diária de 2026 tem cargo "vereadora" e nome que não é de vereador. Fica fora e é contada na saída do `normalize`.
-- O bloco de despesas publica a categoria "Diária", o valor, a data de concessão e o número do empenho. Destino e motivo ficam na fonte.
+- O bloco de despesas publica a categoria "Diária", o valor, a data de concessão, o número do empenho e a descrição, com destino e motivo. Em 2025, o motivo vem em branco ou com traço em 70 de 96 registros.
 - O portal é o link oficial de transparência nos perfis do prefeito e do vice.
 
 ### Executivo municipal
