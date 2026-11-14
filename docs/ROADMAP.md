@@ -337,6 +337,30 @@ Limitações:
 - No celular, o índice de estados tem 14 linhas em duas colunas.
 - Não validado: teste com pessoas, leitor de tela real e aparelho real.
 
+## Logotipo do site (ADR-0060)
+
+Proposto em 2026-11-14, na cópia de trabalho, sem mudar dado, rota nem texto.
+O frontão com colunas dá lugar ao plenário entre colchetes.
+
+| Peça | Entrega | Estado |
+|---|---|---|
+| Assinatura | Hemiciclo de 27 pontos iguais, um por unidade da federação, em três fileiras, com o ponto da tribuna, entre colchetes de citação; no cabeçalho e no rodapé | concluída |
+| Redução | Colchetes e ponto sobre quadrado de cantos arredondados, no favicon, com versão para o tema escuro | concluída |
+
+Verificação de 2026-11-14, na cópia de trabalho:
+
+- Build de produção sem aviso. Testes unitários: 23 de 23.
+- E2E com axe: 95 testes passaram e 1 foi pulado (o de teclado no celular emulado).
+- No build com dados sintéticos, no Chromium, no Firefox e no WebKit, em 320, 390 e 1366 px, nos dois temas: marca e botão "Menu" na mesma linha em 320 px; cabeçalho com os mesmos 61 px de altura; sem transbordo lateral; nenhum erro de console.
+- Com cores forçadas, no Chromium: o desenho usa a cor de texto do sistema.
+- Favicon servido como `image/svg+xml` e desenhado igual nos três motores, nos esquemas de cor claro e escuro.
+
+Limitações:
+
+- Não publicado: o ADR-0060 está como proposta.
+- Não validado: teste com pessoas, favicon no Safari e aparelho real.
+- O site segue sem ícone em PNG para a tela inicial do celular e sem imagem de prévia de link.
+
 ## Fase 2 (depois da POC)
 
 ### Esfera federal
