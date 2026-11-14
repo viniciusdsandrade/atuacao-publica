@@ -287,4 +287,24 @@ class TseTest {
         assertEquals("3509502", Tse.UES_MUNICIPAIS.get("62910").ibge());
         assertEquals("3550308", Tse.UES_MUNICIPAIS.get("71072").ibge());
     }
+
+    @Test
+    void propostasIncluem2018ComVarianteDeSP() {
+        assertTrue(Tse.deveListarPropostas(2018));
+        assertFalse(Tse.deveListarPropostas(2020));
+        assertTrue(Tse.deveListarPropostas(2022));
+        assertTrue(Tse.deveListarPropostas(2024));
+
+        var mBr = Tse.padraoProposta(2018, "BR").matcher("BR/2018BR280000601016.pdf");
+        assertTrue(mBr.matches());
+        assertEquals("280000601016", mBr.group(1));
+
+        var mSp = Tse.padraoProposta(2018, "SP").matcher("SP/proposta_governo_2018_SP_250000601522.pdf");
+        assertTrue(mSp.matches());
+        assertEquals("250000601522", mSp.group(1));
+
+        var m26 = Tse.padraoProposta(2026, "MG").matcher("MG/2026MG130000001234_01.pdf");
+        assertTrue(m26.matches());
+        assertEquals("130000001234", m26.group(1));
+    }
 }

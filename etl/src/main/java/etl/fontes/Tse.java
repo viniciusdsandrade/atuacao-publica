@@ -100,6 +100,16 @@ public final class Tse implements Fonte {
     /** Piloto municipal (ADR-0007 e ADR-0009): a eleição de 2020 elegeu quem exerceu de 2021 a 2024. */
     static final int PRIMEIRA_ELEICAO_MUNICIPAL = 2020;
 
+    static boolean deveListarPropostas(int ano) {
+        return ano % 4 != 0 || ano >= PRIMEIRA_ELEICAO_EXECUTIVA;
+    }
+
+    static java.util.regex.Pattern padraoProposta(int ano, String uf) {
+        return java.util.regex.Pattern.compile(
+                "^" + uf + "/(?:" + ano + uf + "|proposta_governo_" + ano + "_" + uf + "_)([0-9]+)(_[0-9]+)?\\.pdf$",
+                java.util.regex.Pattern.CASE_INSENSITIVE);
+    }
+
     /** Eleições cobertas até o ano corrente: gerais (de 4 em 4 anos desde 2018) e municipais (desde 2020). */
     static List<Integer> eleicoes(int anoAtual) {
         Set<Integer> anos = new java.util.TreeSet<>();
@@ -124,9 +134,9 @@ public final class Tse implements Fonte {
             coleta.obterOpcional(CDN + "/consulta_cand/rede_social_candidato_" + ano + ".zip", "rede_social_candidato_" + ano + ".zip",
                     "application/zip", politica);
         }
-        // Propostas de governo: todas as eleições de mandatos executivos cobertos.
+        // Propostas de governo: eleições gerais desde 2018 e municipais a partir de 2022 (2020 fica fora).
         for (int ano : anos) {
-            if (ano < PRIMEIRA_ELEICAO_EXECUTIVA) {
+            if (!deveListarPropostas(ano)) {
                 continue;
             }
             List<String> ufs = (ano % 4 == 0) ? List.of("SP") : UFS;
@@ -414,24 +424,26 @@ public final class Tse implements Fonte {
                     bens.merge(sq, valor, BigDecimal::add);
                 }
             });
-            // Nome do PDF: {UF}/{ANO}{UF}{SQ}.pdf em 2022 e {UF}/{ANO}{UF}{SQ}_01.pdf em 2026. Vale o primeiro arquivo do SQ.
+            // Nome do PDF: {UF}/{ANO}{UF}{SQ}.pdf (2018/2022), {UF}/proposta_governo_{ANO}_{UF}_{SQ}.pdf (SP 2018) ou _01.pdf (2026).
             Map<String, String> planoPorSq = new HashMap<>();
             Map<String, String> urlPropostas = new HashMap<>();
-            List<String> ufs = (ano % 4 == 0) ? List.of("SP") : UFS;
-            for (String uf : ufs) {
-                Coleta.Arquivo lista = Coleta.metadados(ctx, "tse", "propostas/" + ano + "_" + uf + ".json");
-                if (lista == null) {
-                    continue;
-                }
-                urlPropostas.put(uf, lista.url());
-                var padrao = java.util.regex.Pattern.compile("^" + uf + "/" + ano + uf + "([0-9]+)(_[0-9]+)?\\.pdf$");
-                List<String> nomes = new ArrayList<>();
-                Json.ler(Coleta.caminho(ctx, lista)).forEach(n -> nomes.add(n.stringValue()));
-                nomes.sort(null);
-                for (String nome : nomes) {
-                    var m = padrao.matcher(nome);
-                    if (m.matches()) {
-                        planoPorSq.putIfAbsent(uf + ":" + m.group(1), nome);
+            if (deveListarPropostas(ano)) {
+                List<String> ufs = (ano % 4 == 0) ? List.of("SP") : UFS;
+                for (String uf : ufs) {
+                    Coleta.Arquivo lista = Coleta.metadados(ctx, "tse", "propostas/" + ano + "_" + uf + ".json");
+                    if (lista == null) {
+                        continue;
+                    }
+                    urlPropostas.put(uf, lista.url());
+                    var padrao = padraoProposta(ano, uf);
+                    List<String> nomes = new ArrayList<>();
+                    Json.ler(Coleta.caminho(ctx, lista)).forEach(n -> nomes.add(n.stringValue()));
+                    nomes.sort(null);
+                    for (String nome : nomes) {
+                        var m = padrao.matcher(nome);
+                        if (m.matches()) {
+                            planoPorSq.putIfAbsent(uf + ":" + m.group(1), nome);
+                        }
                     }
                 }
             }
