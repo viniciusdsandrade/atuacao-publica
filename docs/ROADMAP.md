@@ -395,7 +395,11 @@ Conferência por amostra de 2026-11-15, registro a registro, contra as fontes:
 
 - Piloto: 40 de 40 votos iguais, 23 de 23 presenças e datas de sessão, 20 de 20 proposições com número, ano, ementa e autoria. Duas consultas ficaram sem resposta. Combustível e material de escritório de um vereador em 2026: contagem e soma iguais.
 - Capital: 80 de 80 proposições presentes na lista do vereador no serviço da câmara.
-- Caraguatatuba: 6 de 6 listas de presença iguais, 9 de 9 ementas iguais e 45 diárias de 2026 na fonte e no site.
+- Caraguatatuba: 6 de 6 listas de presença iguais, 9 de 9 ementas iguais, 16 de 16 comissões atuais e 8 de 8 cargos com data de início. Diárias de 2026 reproduzidas linha a linha: 45 diárias e R$ 37.150,00 na fonte e no site.
+- Piloto, demais blocos: 41 de 41 comissões com início e fim iguais, 8 de 8 discursos, 6 de 6 atos normativos e a despesa da prefeitura de um mês com contagem e soma iguais.
+- Capital: 11 de 11 órgãos e comissões presentes no serviço da câmara.
+- Despesa da prefeitura de Caraguatatuba em dois meses: contagem e soma iguais às do TCE-SP.
+- Financiamento de campanha de 2024 nos 125 perfis municipais que têm o bloco: 250 de 250 totais iguais aos dos arquivos do TSE no cache.
 
 Verificação de 2026-11-15, na cópia de trabalho:
 
@@ -415,7 +419,7 @@ Limitações:
 - Não validado: a coleta de Paulínia a partir do runner do GitHub Actions e o financiamento de campanha dos perfis de Paulínia, que depende do `fetch tse`.
 - Paulínia sem proposições, votações e presença: a Câmara publica os três no SISCAM, cujo `robots.txt` recusa o projeto. Destrava com a liberação pela Câmara ou com um pedido pela Lei de Acesso à Informação, que é do mantenedor.
 - Paulínia sem a 14ª legislatura e sem o mandato dos eleitos para a prefeitura em 2020.
-- A conferência dos registros foi por amostra. Fora dela: comissões e Mesa, discursos, atos normativos, despesas da prefeitura e financiamento de campanha.
+- A conferência dos registros foi por amostra, fora o financiamento de campanha de 2024, conferido em todos os perfis.
 
 ## Fase 2 (depois da POC)
 

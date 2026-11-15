@@ -42,7 +42,15 @@ Feita em 2026-11-15, com os registros mais recentes de cada perfil da amostra, c
 | Capital | Proposições de 4 vereadores, na lista de cada um no serviço da câmara | 80 de 80 presentes |
 | Caraguatatuba | Marcas de presença de 6 listas de sessão | 6 de 6 iguais, com 15 presenças cada |
 | Caraguatatuba | Ementa na página da matéria, de 3 vereadores | 9 de 9 iguais |
-| Caraguatatuba | Diárias de 2026 | 45 com cargo de vereador ou presidente na fonte e 45 publicadas |
+| Caraguatatuba | Diárias de 2026, linha a linha pela regra de nomes do ADR-0057 | 45 diárias e R$ 37.150,00 na fonte e no site |
+| Piloto | Comissão, início e fim de 1 vereador, contra `comissoes/participacao` | 41 de 41 iguais |
+| Piloto | Data da sessão e ordem do orador nos discursos de 1 vereador | 8 de 8 iguais |
+| Piloto | Número, data e ementa de atos normativos | 6 de 6 iguais; 662 atos de 2026 no site e 667 na fonte no dia seguinte à captura |
+| Piloto e Caraguatatuba | Despesa da prefeitura em 3 meses, contra o TCE-SP | Contagem e soma iguais nos 3 |
+| Capital | Órgãos e comissões de 5 vereadores, no serviço da câmara | 11 de 11 presentes |
+| Caraguatatuba | Comissões atuais, na página do portal | 16 de 16 presentes |
+| Caraguatatuba | Cargo e data de início na ficha do sistema legislativo, de 3 vereadores | 8 de 8 iguais |
+| Os três | Receitas e despesas de campanha de 2024, dos 125 perfis com financiamento, contra os arquivos do TSE no cache | 250 de 250 totais iguais |
 
 Nenhum registro da amostra diferiu da fonte.
 Os defeitos achados estão na contagem de quem está em exercício, nos rótulos e na grafia, e não no conteúdo dos registros.
@@ -82,8 +90,9 @@ Os defeitos achados estão na contagem de quem está em exercício, nos rótulos
 - Na capital, o início do mandato do suplente é o da legislatura, como o serviço informa. A data real da posse não é publicada pelo serviço.
 - Em Caraguatatuba, a ficha da câmara grafa o fim do mandato de dois jeitos na mesma legislatura: 2028-12-31 e 2029-01-01. O site repete a fonte.
 - Caraguatatuba depende da coleta local cifrada (ADR-0034): os dados só atualizam quando ela roda.
-- A conferência dos registros foi por amostra, e não registro a registro em todos os perfis. O que não entrou na amostra não foi conferido: cargos em comissões e na Mesa, discursos, atos normativos, despesas da prefeitura e financiamento de campanha.
-- Em Caraguatatuba, a soma das diárias publicadas não foi reproduzida linha a linha: a ligação é por nome (ADR-0057), e a conferência só comparou a contagem.
+- A conferência dos registros foi por amostra, e não registro a registro em todos os perfis. Só o financiamento de campanha de 2024 foi conferido em todos.
+- O financiamento foi comparado com o recorte dos arquivos do TSE no cache do projeto, e não com um segundo download da fonte.
+- A capital não tem votos, presença nem despesas por vereador no site: não havia o que conferir nesses blocos.
 
 ## Alternativas consideradas
 
