@@ -1806,6 +1806,51 @@ Ritmo da coleta: no mínimo 1 segundo entre chamadas a cada servidor.
 - Legislação compilada: fica em serviço de terceiro (`leisonline.org` e `legislacaocompilada.com.br`). Não foi validada, e o bloco de atos do prefeito fica vazio.
 
 
+## Quarto município: Paulínia (Câmara e Prefeitura)
+
+Código IBGE `3536505` e unidade eleitoral `68314` no TSE (ADR-0066).
+Validação em 2026-11-15, com o cliente do projeto: 4 arquivos na primeira coleta, sem falha.
+
+| id | Fonte | Nível | Formato | Autenticação | Status | Validado em |
+|---|---|---|---|---|---|---|
+| `paulinia-camara-portal` | Câmara Municipal de Paulínia, portal institucional | T0 | HTML | nenhuma | validado com limitação | 2026-11-15 |
+| `paulinia-camara-siscam` | Câmara Municipal de Paulínia, sistema legislativo SISCAM | T0 | HTML | nenhuma | bloqueado | 2026-11-15 |
+
+Ritmo da coleta: no mínimo 1 segundo entre chamadas ao portal.
+
+### `paulinia-camara-portal`: vereadores, legislaturas, Mesa e comissões
+
+- URL base: `https://www.camarapaulinia.sp.gov.br/`. É um site em WordPress. O `robots.txt` só fecha a área administrativa.
+- `vereadores/`: "Vereadores em Exercício", com o cabeçalho da legislatura ("15ª Legislatura – 01/01/2025 a 31/12/2028") e, para cada vereador, partido, nome parlamentar e telefone.
+- `legislaturas/`: uma lista por legislatura, com o período. Cada linha traz nome civil, nome parlamentar e partido. A marca "– Suplente" aparece em legislaturas antigas.
+- `mesa-diretora/`: partido, nome e cargo de cada membro da Mesa, e depois o texto do regimento.
+- `comissoes/`: cada comissão, com partido, nome e cargo de cada membro.
+- As páginas são texto editado à mão. A de legislaturas separa nome civil e nome parlamentar ora com travessão, ora com vírgula, e junta dois vereadores num item.
+- O cache guarda só as linhas de texto de cada página. Telefone, e-mail e linha com mais de 200 caracteres saem antes.
+- A página de cada vereador é uma biografia. Não é coletada (ADR-0054).
+- Sem data de posse por vereador, sem data de início e de fim nos cargos, sem foto usada pelo projeto.
+- Página fora do formato: se os pares de partido e nome não fecham, nada é normalizado.
+- Identificador canônico no projeto: `portal-3536505-{nome parlamentar em minúsculas, sem acento e com hífen}`. Chave `paulinia` em `ids_externos`.
+- Medidas da primeira coleta: 17 vereadores em exercício, os 17 com linha na página de legislaturas, 4 cargos na Mesa e 15 em cinco comissões.
+- Não validado: a coleta a partir do runner do GitHub Actions.
+
+### `paulinia-camara-siscam`: não coletado
+
+- URL base: `https://paulinia.siscam.com.br/`. É o SISCAM, da Sino Informática.
+- Tem vereadores (`vereadores`), proposituras por vereador (`Vereadores/Proposituras/{id}`), sessões (`sessoes`), votações (`votacoes`) e lista de frequência (`frequencias`).
+- **O `robots.txt` libera só buscadores nomeados e proíbe os demais agentes** (`User-agent: *`, `Disallow: /`). O projeto não contorna. Em 2026-11-15 foram lidas quatro páginas para o levantamento. Nenhuma é coletada.
+- Sem esta fonte, o perfil do vereador fica sem proposições, votações e presença. A tela diz "não coletado pelo site".
+- O que destrava: a Câmara liberar o `robots.txt`, publicar os dados em formato aberto ou responder a um pedido pela Lei de Acesso à Informação.
+
+### Executivo municipal
+
+- Prefeito e vice entram pelas candidaturas do TSE de 2024.
+- O mandato dos eleitos em 2020 fica fora: o projeto não achou fonte oficial que registre o exercício dos quatro anos.
+- Despesa do Executivo: `despesas/paulinia/{ano}/{mes}` do TCE-SP. O órgão é "PREFEITURA MUNICIPAL DE PAULÍNIA". A fonte traz também a Câmara e o instituto de previdência, que ficam fora (ADR-0008).
+- Portal da transparência da Câmara (`transparencia-cmpaulinia.smarapd.com.br`): é uma aplicação que monta as páginas no navegador. Não foi avaliado.
+- Legislação do município: fica em serviço de terceiro (`legislacaodigital.com.br`). Não foi validada, e o bloco de atos do prefeito fica vazio.
+
+
 ## Fora da política de fontes
 
 Imprensa, blogs, agregadores sem metodologia, redes sociais de terceiros, mensagens, vídeos não oficiais, Wikipedia e rankings de terceiros.

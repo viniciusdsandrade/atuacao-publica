@@ -17,6 +17,7 @@ import etl.Publicador.Perfil;
 import etl.fontes.Alep;
 import etl.fontes.Caraguatatuba;
 import etl.fontes.Cmsp;
+import etl.fontes.Paulinia;
 import etl.fontes.Sapl;
 import etl.fontes.Tse;
 import tools.jackson.databind.JsonNode;
@@ -65,6 +66,7 @@ final class Vinculo {
         perfis.addAll(legisladores(ctx, "cmsp", "cmsp", "cmsp"));
         perfis.addAll(legisladores(ctx, "sapl", "sapl-" + Sapl.IBGE, "sapl"));
         perfis.addAll(legisladores(ctx, "caraguatatuba", "sagl-" + Caraguatatuba.IBGE, "caraguatatuba"));
+        perfis.addAll(legisladores(ctx, "paulinia", "portal-" + Paulinia.IBGE, "paulinia"));
         List<JsonNode> candidaturas = Tse.linhas(ctx);
         if (!candidaturas.isEmpty()) {
             Map<String, Tse.Chave> chaves = Tse.chaves(ctx);
@@ -530,6 +532,10 @@ final class Vinculo {
         Map<String, JsonNode> candPorCaraguatatubaNomeCivil = new HashMap<>();
         Map<String, JsonNode> candPorCaraguatatubaNomeUrna = new HashMap<>();
         Map<String, String> caraguatatubaNomesCivis = lerNomesCivis(ctx, "caraguatatuba");
+        Map<String, JsonNode> candPorPauliniaNomeCivil = new HashMap<>();
+        Map<String, JsonNode> candPorPauliniaNomeUrna = new HashMap<>();
+        List<JsonNode> eleitasPaulinia = new ArrayList<>();
+        Map<String, String> pauliniaNomesCivis = lerNomesCivis(ctx, "paulinia");
         Map<String, JsonNode> candPorAlespNomeCivil = new HashMap<>();
         Map<String, JsonNode> candPorAlespNomeUrna = new HashMap<>();
         Map<String, JsonNode> candPorAlmgNomeCivil = new HashMap<>();
@@ -662,6 +668,14 @@ final class Vinculo {
                         candPorCaraguatatubaNomeCivil.merge(chave.nomeCivil(), c, Vinculo::maisRecente);
                         if (c.hasNonNull("nome_urna")) {
                             candPorCaraguatatubaNomeUrna.merge(semPontuacao(Texto.normalizarNome(c.get("nome_urna").stringValue())), c, Vinculo::maisRecente);
+                        }
+                    } else if (Paulinia.IBGE.equals(enteDaCandidatura)) {
+                        if (c.path("eleito").asBoolean(false) && c.path("ano").asInt() == eleicaoMunicipal) {
+                            eleitasPaulinia.add(c);
+                        }
+                        candPorPauliniaNomeCivil.merge(chave.nomeCivil(), c, Vinculo::maisRecente);
+                        if (c.hasNonNull("nome_urna")) {
+                            candPorPauliniaNomeUrna.merge(semPontuacao(Texto.normalizarNome(c.get("nome_urna").stringValue())), c, Vinculo::maisRecente);
                         }
                     }
                 } else if ("DEPUTADO ESTADUAL".equals(chave.cargo()) && "SP".equals(chave.uf())) {
@@ -984,6 +998,21 @@ final class Vinculo {
                 JsonNode cand = candPorCaraguatatubaNomeCivil.get(Texto.normalizarNome(caraguatatubaNomesCivis.get(p.ids.get("caraguatatuba"))));
                 if (cand == null) {
                     cand = candPorCaraguatatubaNomeUrna.get(semPontuacao(Texto.normalizarNome(p.nome)));
+                }
+                if (cand != null) {
+                    candSapl = cand;
+                    chaveSapl = chaves.get(cand.get("sq").stringValue());
+                    cpf = chaveSapl == null ? null : chaveSapl.cpf();
+                }
+            } else if ("paulinia".equals(p.fonteCli)) {
+                // O portal da Câmara publica o nome civil na página de legislaturas. Sem candidatura com esse nome, vale o
+                // nome parlamentar contra o nome de urna e, por último, a única eleita do mesmo partido (ADR-0065).
+                JsonNode cand = candPorPauliniaNomeCivil.get(Texto.normalizarNome(pauliniaNomesCivis.get(p.ids.get("paulinia"))));
+                if (cand == null) {
+                    cand = candPorPauliniaNomeUrna.get(semPontuacao(Texto.normalizarNome(p.nome)));
+                }
+                if (cand == null) {
+                    cand = eleitaDoMesmoPartido(eleitasPaulinia, p.nome, p.partido, chaves);
                 }
                 if (cand != null) {
                     candSapl = cand;

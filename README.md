@@ -3,7 +3,7 @@
 Portal público sobre a atividade de políticos brasileiros: o que cada um fez, faz e declara que vai fazer.
 Todo registro vem de fonte oficial e traz a proveniência: fonte, URL de origem e data de captura.
 
-Estado: no ar com a esfera federal, as 27 unidades da federação e três municípios paulistas. Detalhes em `docs/ROADMAP.md`.
+Estado: no ar com a esfera federal, as 27 unidades da federação e quatro municípios paulistas. Detalhes em `docs/ROADMAP.md`.
 
 ## O que é
 
@@ -17,7 +17,7 @@ Estado: no ar com a esfera federal, as 27 unidades da federação e três munic�
 - Posicionamentos declarados, só por contribuição revisada e com snapshot arquivado.
 
 Escopo: deputados federais, senadores, Presidência da República, governadores e deputados estaduais e distritais das 27 unidades da federação.
-Esfera municipal: prefeito, vice e vereadores de três municípios paulistas, com dados de cada câmara, do TSE e do Tribunal de Contas do Estado.
+Esfera municipal: prefeito, vice e vereadores de quatro municípios paulistas, com dados de cada câmara, do TSE e do Tribunal de Contas do Estado.
 O que cada casa publica varia. A cobertura de cada bloco está em `docs/METODOLOGIA.md`, e o estado de cada casa, em `docs/ROADMAP.md`.
 
 ## O que não é

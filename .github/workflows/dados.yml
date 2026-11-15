@@ -11,7 +11,7 @@ on:
       fonte:
         description: Fonte a coletar. As demais seguem do cache de dados brutos.
         type: choice
-        options: [todas, camara, senado, tse, executivo, sapl, tcesp, cgu, agenda, contrib, alesp, executivosp, almg, alep, alba, alerj, alrs, alece, alesc, alego, ales, alepa, alepe, cldf, almt, alems, alpb, aleam, aleal, alero, alepi, alrn, aleto, alese, alema, aleac, alerr, alap, cmsp, caraguatatuba]
+        options: [todas, camara, senado, tse, executivo, sapl, tcesp, cgu, agenda, contrib, alesp, executivosp, almg, alep, alba, alerj, alrs, alece, alesc, alego, ales, alepa, alepe, cldf, almt, alems, alpb, aleam, aleal, alero, alepi, alrn, aleto, alese, alema, aleac, alerr, alap, cmsp, caraguatatuba, paulinia]
         default: todas
 
 permissions:
@@ -402,6 +402,15 @@ jobs:
         env:
           ETL_ORCAMENTO_MINUTOS: '20'
         run: java -Xmx2g -jar etl/target/etl.jar fetch caraguatatuba
+      - name: fetch paulinia
+        # Câmara Municipal de Paulínia (ADR-0066): quatro páginas do portal, com vereadores em exercício, legislaturas,
+        # Mesa e comissões. O sistema legislativo (SISCAM) não é coletado: o robots.txt dele recusa o projeto.
+        if: env.FONTE == 'todas' || env.FONTE == 'paulinia'
+        continue-on-error: true
+        timeout-minutes: 5
+        env:
+          ETL_ORCAMENTO_MINUTOS: '3'
+        run: java -jar etl/target/etl.jar fetch paulinia
       - name: fetch contrib
         # Confere se as URLs de origem e os snapshots dos registros manuais ainda respondem.
         if: env.FONTE == 'todas' || env.FONTE == 'contrib'

@@ -27,6 +27,7 @@ public final class Partidos {
     /** Chave da grafia da casa para a sigla do TSE, na grafia de reserva usada quando o TSE ainda não foi normalizado. */
     private static final Map<String, String> APELIDOS = Map.ofEntries(
             Map.entry("CIDAD", "CIDADANIA"),
+            Map.entry("DEMOCRACIACRISTA", "DC"),
             Map.entry("PODEMOS", "PODE"),
             Map.entry("PROGRESSISTAS", "PP"),
             Map.entry("REP", "REPUBLICANOS"),

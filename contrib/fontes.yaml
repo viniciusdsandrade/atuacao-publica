@@ -3716,3 +3716,33 @@
   limitacoes: "Edições só em PDF e ODT. Não é coletado: entra como link oficial."
   status: validado com limitação
   validado_em: 2026-11-13
+
+- id: paulinia-camara-portal
+  nome: Câmara Municipal de Paulínia, portal institucional (vereadores, legislaturas, Mesa e comissões)
+  orgao: Câmara Municipal de Paulínia
+  esfera: municipal
+  ente: "3536505"
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://www.camarapaulinia.sp.gov.br/
+  formato: HTML
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Páginas de texto editado à mão, sem contrato. Sem data de posse por vereador: só o período da legislatura. Mesa e comissões só com a composição atual, sem data. As páginas individuais trazem biografia, e a lista de vereadores traz telefone: nada disso é guardado."
+  status: validado com limitação
+  validado_em: 2026-11-15
+
+- id: paulinia-camara-siscam
+  nome: Câmara Municipal de Paulínia, sistema legislativo SISCAM (proposituras, votações e lista de frequência)
+  orgao: Câmara Municipal de Paulínia
+  esfera: municipal
+  ente: "3536505"
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://paulinia.siscam.com.br/
+  formato: HTML
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "O robots.txt libera só buscadores nomeados e proíbe os demais agentes (User-agent: *, Disallow: /). Não contornamos. Sem ele, o perfil do vereador fica sem proposituras, votações e presença."
+  status: bloqueado
+  validado_em: 2026-11-15

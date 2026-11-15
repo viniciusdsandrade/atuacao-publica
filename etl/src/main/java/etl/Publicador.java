@@ -85,7 +85,7 @@ public final class Publicador {
     private static final Pattern PAPEL_LIDERANCA = Pattern.compile(
             "^(presidente|presidenta|1[ºª]?\\s*vice|2[ºª]?\\s*vice|3[ºª]?\\s*vice|vice-presid|coordenador|relator|ouvidor|procurador|corregedor|secret[aá]ri)",
             Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE);
-    static final List<String> FONTES_CLI = List.of("camara", "senado", "tse", "executivo", "sapl", "tcesp", "cgu", "agenda", "contrib", "alesp", "executivosp", "almg", "alep", "alba", "alerj", "alrs", "alece", "alesc", "alego", "ales", "alepa", "alepe", "cldf", "almt", "alems", "alpb", "aleam", "aleal", "alero", "alepi", "alrn", "aleto", "alese", "alema", "aleac", "alerr", "alap", "cmsp", "caraguatatuba");
+    static final List<String> FONTES_CLI = List.of("camara", "senado", "tse", "executivo", "sapl", "tcesp", "cgu", "agenda", "contrib", "alesp", "executivosp", "almg", "alep", "alba", "alerj", "alrs", "alece", "alesc", "alego", "ales", "alepa", "alepe", "cldf", "almt", "alems", "alpb", "aleam", "aleal", "alero", "alepi", "alrn", "aleto", "alese", "alema", "aleac", "alerr", "alap", "cmsp", "caraguatatuba", "paulinia");
 
     /** Perfil em construção, antes da validação. */
     static final class Perfil {
@@ -765,6 +765,9 @@ public final class Publicador {
             }
             if (externos.hasNonNull("caraguatatuba")) {
                 porChave.put("caraguatatuba:" + externos.get("caraguatatuba").stringValue(), id);
+            }
+            if (externos.hasNonNull("paulinia")) {
+                porChave.put("paulinia:" + externos.get("paulinia").stringValue(), id);
             }
             for (var tse : externos.path("tse").properties()) {
                 porChave.put("tse:" + tse.getValue().stringValue(), id);
