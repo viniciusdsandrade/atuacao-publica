@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.junit.jupiter.api.Test;
 
@@ -83,6 +84,46 @@ class SaplTest {
         assertFalse(suplente.emExercicio());
         assertEquals("Fora de exercício (Licença para assumir secretaria)", suplente.situacao());
         assertFalse(suplente.titular());
+    }
+
+    @Test
+    void afastamentoSaiPelaDescricaoDoTipoENaoPeloIdentificador() {
+        JsonNode tipos = Json.FONTE.readTree("""
+                {"results": [{"id": 3, "descricao": "Cassação", "indicador": "F"}, {"id": 4, "descricao": "Renúncia", "indicador": "F"}]}
+                """);
+        JsonNode json = Json.FONTE.readTree("""
+                {
+                  "results": [
+                    {"parlamentar": 30, "data_inicio_mandato": "2025-01-01", "data_fim_mandato": "2026-09-09", "titular": true, "tipo_afastamento": 3},
+                    {"parlamentar": 31, "data_inicio_mandato": "2025-01-01", "data_fim_mandato": "2026-02-01", "titular": true, "tipo_afastamento": 99}
+                  ]
+                }
+                """);
+        Map<String, List<Sapl.MandatoSapl>> map = Sapl.mandatos(json, LEG19, HOJE, Sapl.tiposDeAfastamento(tipos));
+        assertEquals("Fora de exercício (Cassação)", map.get("30").getFirst().situacao());
+        // Tipo fora da lista: o identificador não vai para a tela.
+        assertEquals("Fora de exercício", map.get("31").getFirst().situacao());
+    }
+
+    @Test
+    void emExercicioEQuemACamaraListaComoAtivo() {
+        JsonNode json = Json.FONTE.readTree("""
+                {
+                  "results": [
+                    {"parlamentar": 40, "data_inicio_mandato": "2025-01-01", "data_fim_mandato": "2028-12-31", "titular": true, "tipo_afastamento": null},
+                    {"parlamentar": 41, "data_inicio_mandato": "2025-05-07", "data_fim_mandato": "2028-12-31", "titular": false, "tipo_afastamento": null}
+                  ]
+                }
+                """);
+        Map<String, List<Sapl.MandatoSapl>> map = Sapl.mandatos(json, LEG19, HOJE);
+        // Titular licenciado: mandato aberto, sem afastamento registrado, e fora da lista de ativos. O suplente ocupa a cadeira.
+        Set<String> ativos = Set.of("41");
+        assertFalse(Sapl.emExercicio("40", map.get("40"), ativos));
+        assertTrue(Sapl.emExercicio("41", map.get("41"), ativos));
+        assertEquals("Fora de exercício", Sapl.situacaoDoMandato(map.get("40").getFirst(), false));
+        assertEquals("Exercício", Sapl.situacaoDoMandato(map.get("41").getFirst(), true));
+        // Sem a lista de ativos, vale o mandato vigente sem afastamento.
+        assertTrue(Sapl.emExercicio("40", map.get("40"), Set.of()));
     }
 
     @Test

@@ -130,6 +130,9 @@ public final class Sapl implements Fonte {
                 }
             }
         }
+        // O mandato traz o afastamento pelo identificador do tipo. A descrição vem desta lista.
+        coleta.obterOpcional(API + "/parlamentares/tipoafastamento/?page_size=" + PAGINA, "tipos-afastamento.json", JSON,
+                Politica.SEMANAL);
         Coleta.Arquivo arqAtivos = coleta.obter(API + "/parlamentares/parlamentar/?ativo=True&page_size=" + PAGINA,
                 "parlamentares-ativos.json", JSON, Politica.SEMPRE);
         for (JsonNode a : resultados(Json.ler(Coleta.caminho(ctx, arqAtivos)))) {
@@ -279,6 +282,9 @@ public final class Sapl implements Fonte {
         List<Integer> anos = anos(cobertas, ctx.hoje());
 
         Map<Integer, Coleta.Arquivo> arqMandatos = new LinkedHashMap<>();
+        Coleta.Arquivo arqAfastamentos = Coleta.metadados(ctx, "sapl", "tipos-afastamento.json");
+        Map<String, String> tiposDeAfastamento = arqAfastamentos == null ? Map.of()
+                : tiposDeAfastamento(Json.ler(Coleta.caminho(ctx, arqAfastamentos)));
         Map<String, List<MandatoSapl>> porParlamentar = new LinkedHashMap<>();
         for (Legislatura leg : cobertas) {
             Coleta.Arquivo arq = Coleta.metadados(ctx, "sapl", "mandatos/" + leg.id() + ".json");
@@ -286,7 +292,7 @@ public final class Sapl implements Fonte {
                 continue;
             }
             arqMandatos.put(leg.id(), arq);
-            mandatos(Json.ler(Coleta.caminho(ctx, arq)), leg, ctx.hoje())
+            mandatos(Json.ler(Coleta.caminho(ctx, arq)), leg, ctx.hoje(), tiposDeAfastamento)
                     .forEach((id, lista) -> porParlamentar.computeIfAbsent(id, k -> new ArrayList<>()).addAll(lista));
         }
         porParlamentar.values().forEach(lista -> lista.sort(Comparator.comparing(MandatoSapl::inicio)));
@@ -340,9 +346,10 @@ public final class Sapl implements Fonte {
             List<Filiacao> filiacoes = arqFil == null ? List.of() : filiacoes(Json.ler(Coleta.caminho(ctx, arqFil)));
 
             List<MandatoSapl> listaMandatos = porParlamentar.getOrDefault(id, List.of());
-            boolean emExercicio = listaMandatos.stream().anyMatch(MandatoSapl::emExercicio) || ativosIds.contains(id);
+            boolean emExercicio = emExercicio(id, listaMandatos, ativosIds);
             MandatoSapl ultimo = listaMandatos.isEmpty() ? null : listaMandatos.getLast();
-            String situacao = emExercicio ? "Exercício" : (ultimo == null ? "Sem registro de exercício" : ultimo.situacao());
+            String situacao = emExercicio ? "Exercício"
+                    : (ultimo == null ? "Sem registro de exercício" : situacaoDoMandato(ultimo, false));
             // Quem saiu: partido na data em que o último mandato terminou, não a filiação de hoje.
             LocalDate referencia = emExercicio || ultimo == null || ultimo.fim().isAfter(ctx.hoje()) ? ctx.hoje() : ultimo.fim();
             String partido = partidoEm(filiacoes, referencia);
@@ -360,7 +367,8 @@ public final class Sapl implements Fonte {
             List<FonteUsada> fontesDeMandatos = new ArrayList<>();
             for (MandatoSapl ms : listaMandatos) {
                 Coleta.Arquivo arq = arqMandatos.get(ms.legislatura());
-                mandatosBloco.add(new Mandato("vereador", "municipal", IBGE, UF, ms.inicio(), ms.fim(), ms.situacao(),
+                mandatosBloco.add(new Mandato("vereador", "municipal", IBGE, UF, ms.inicio(), ms.fim(),
+                        situacaoDoMandato(ms, emExercicio),
                         ms.titular() ? "Titular" : "Suplente", ms.legislatura(), null, null,
                         Prov.de(FONTE_ID, API + "/parlamentares/mandato/?legislatura=" + ms.legislatura(), arq)));
                 FonteUsada usada = FonteUsada.de(FONTE_ID, arq);
@@ -950,7 +958,54 @@ public final class Sapl implements Fonte {
                 : legislaturas.getLast();
     }
 
+    /**
+     * Em exercício é quem a câmara lista como ativo. A lista tem uma pessoa por cadeira.
+     * O mandato sozinho não basta: o titular licenciado segue com o mandato aberto e sem afastamento registrado,
+     * e contaria junto com o suplente que ocupa a cadeira. Sem a lista, vale o mandato vigente sem afastamento.
+     */
+    static boolean emExercicio(String id, List<MandatoSapl> mandatos, Set<String> ativos) {
+        if (!ativos.isEmpty()) {
+            return ativos.contains(id);
+        }
+        return mandatos.stream().anyMatch(MandatoSapl::emExercicio);
+    }
+
+    /** Mandato vigente de quem não está na lista de ativos sai como "Fora de exercício", e não como "Exercício". */
+    static String situacaoDoMandato(MandatoSapl mandato, boolean pessoaEmExercicio) {
+        return mandato.emExercicio() && !pessoaEmExercicio ? "Fora de exercício" : mandato.situacao();
+    }
+
+    /** Tipos de afastamento da câmara: identificador e descrição ("Licença Saúde", "Renúncia"). */
+    static Map<String, String> tiposDeAfastamento(JsonNode raiz) {
+        Map<String, String> tipos = new HashMap<>();
+        if (raiz == null) {
+            return tipos;
+        }
+        for (JsonNode t : resultados(raiz)) {
+            String id = Json.texto(t, "id");
+            String descricao = Json.texto(t, "descricao");
+            if (id != null && descricao != null && !descricao.isBlank()) {
+                tipos.put(id, descricao.strip());
+            }
+        }
+        return tipos;
+    }
+
+    /** O afastamento como texto: a descrição do tipo, ou o próprio valor quando a fonte já manda texto. */
+    static String descricaoDoAfastamento(String tipoAfastamento, Map<String, String> tipos) {
+        String descricao = tipos.get(tipoAfastamento);
+        if (descricao != null) {
+            return descricao;
+        }
+        // Identificador sem descrição na lista não vai para a tela.
+        return tipoAfastamento.chars().allMatch(Character::isDigit) ? null : tipoAfastamento;
+    }
+
     static Map<String, List<MandatoSapl>> mandatos(JsonNode raiz, Legislatura leg, LocalDate hoje) {
+        return mandatos(raiz, leg, hoje, Map.of());
+    }
+
+    static Map<String, List<MandatoSapl>> mandatos(JsonNode raiz, Legislatura leg, LocalDate hoje, Map<String, String> tiposDeAfastamento) {
         Map<String, List<MandatoSapl>> map = new LinkedHashMap<>();
         if (raiz == null) {
             return map;
@@ -968,7 +1023,9 @@ public final class Sapl implements Fonte {
             String tipoAfastamento = Json.texto(m, "tipo_afastamento");
 
             boolean emExercicio = !hoje.isBefore(dataInicio) && !hoje.isAfter(dataFim) && tipoAfastamento == null;
-            String situacao = emExercicio ? "Exercício" : (tipoAfastamento != null ? "Fora de exercício (" + tipoAfastamento + ")"
+            String afastamento = tipoAfastamento == null ? null : descricaoDoAfastamento(tipoAfastamento, tiposDeAfastamento);
+            String situacao = emExercicio ? "Exercício"
+                    : (tipoAfastamento != null ? "Fora de exercício" + (afastamento == null ? "" : " (" + afastamento + ")")
                     : (hoje.isAfter(dataFim) ? "Mandato encerrado em " + dataFim : "Mandato previsto"));
 
             map.computeIfAbsent(pId, k -> new ArrayList<>())
