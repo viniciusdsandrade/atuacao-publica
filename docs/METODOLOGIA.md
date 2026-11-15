@@ -13,7 +13,10 @@ As fontes estão descritas em `docs/FONTES.md`.
   - chefe do Executivo com candidatura a outro cargo na eleição seguinte, no próprio TSE: "Deixou o cargo para concorrer a {cargo}". O mandato termina no prazo de renúncia, seis meses antes do pleito (Constituição, art. 14, § 6º), e o texto avisa que o TSE não informa a data exata (ADR-0033);
   - eleito que ainda não tomou posse: "Eleito em {ano}; posse prevista em {data}";
   - eleito que a casa ainda não registra em exercício depois da data de posse: "Eleito em {ano}; sem registro de exercício".
+  - vereador do piloto municipal: em exercício é quem a câmara lista como ativo, uma pessoa por cadeira. O titular licenciado segue com o mandato aberto na fonte e sai como "Fora de exercício" (ADR-0065). O afastamento sai pela descrição do tipo que a câmara registra;
+  - vereador de Paulínia: em exercício é quem está na página "Vereadores em Exercício" do portal da Câmara (ADR-0066).
 - **Ausência.** Campo sem valor na fonte é `null` no JSON e "sem registro na fonte" na tela.
+- **Não coletado.** Dado que existe numa fonte oficial que o projeto não coleta aparece como "não coletado pelo site", com uma nota no bloco. Hoje vale para proposições, votos e presença dos vereadores de Paulínia: a Câmara os publica num sistema que recusa coleta automática (ADR-0066).
 - **Datas.** ISO 8601. Instantes de captura em UTC.
 - **Atualização.** Cada bloco do perfil mostra a data de captura. Quando a última coleta de uma fonte falha, o bloco mostra o aviso "fonte desatualizada" e mantém o último dado válido.
 - **Renovação.** A cada execução, o ETL baixa de novo os arquivos do ano corrente. Os do ano anterior são baixados de novo até 31 de março. Os anos mais antigos vêm da cópia já coletada. O detalhe e as frentes de cada deputado são renovados uma vez por semana, em rodízio. Partido e UF vêm da lista diária da Câmara.
@@ -202,6 +205,7 @@ Não é presença. É a contagem de votos registrados em votações nominais.
 - **ALRN.** Composição oficial da Mesa Diretora da 63ª Legislatura (2023–2027) via portal institucional, com cargos institucionais (Presidente, Vice-Presidentes e Secretários).
 - **Câmara municipal (piloto).** `comissoes/participacao` do SAPL por vereador, com a comissão e o período vindos de `comissoes/composicao` (coletada por período), `comissoes/comissao` e `comissoes/periodo`. Papel: cargo da fonte (`Presidente`, `Membro`, `Relator`, `Suplente`); membro não titular recebe o sufixo "(suplente)". Entram as participações cujo fim é posterior ao início da cobertura ou está aberto.
 - **Câmara Municipal de Caraguatatuba (ADR-0057).** Cargos na Mesa Diretora e em comissões da ficha do vereador no sistema legislativo, com o período da fonte, quando o período toca a cobertura. A ficha para em 2022 nas comissões. A composição atual vem da página de comissões do portal, com o papel da fonte e sem data de início e de fim.
+- **Câmara Municipal de Paulínia (ADR-0066).** Composição atual da Mesa Diretora e das comissões, das páginas do portal da Câmara, com o cargo da fonte e sem data de início e de fim. Nome que não é de vereador em exercício fica fora.
 
 ## Candidaturas
 
@@ -218,6 +222,8 @@ Não é presença. É a contagem de votos registrados em votações nominais.
 - O topo do perfil mostra os endereços da candidatura mais recente que declarou algum, com o ano da eleição. O endereço é o declarado naquela eleição: a conta pode ter mudado depois.
 - **Piloto municipal.** Eleições de 2020 e 2024 (`consulta_cand` e `bem_candidato`), filtradas pelo município piloto. O SAPL não publica CPF: a candidatura mais recente com o mesmo nome civil ou nome de urna normalizado, dentro do município, serve de ponte; as demais eleições da pessoa vêm pelo CPF dessa candidatura, em memória, como nas outras casas. Planos de governo municipais: só a partir de 2022, como no federal; 2020 fica sem plano.
 - **Caraguatatuba (ADR-0057).** Eleições de 2020 e 2024, filtradas pela unidade eleitoral do município. O sistema legislativo da Câmara publica o nome civil: a candidatura mais recente com o mesmo nome civil, sem acento e sem caixa, dentro do município, serve de ponte. Sem ela, vale o nome parlamentar contra o nome de urna, só sem a pontuação. As demais eleições da pessoa vêm pelo CPF dessa candidatura, em memória.
+- **Capital (ADR-0027 e ADR-0065).** Eleições a partir de 2024. O serviço da câmara só tem o nome parlamentar: vale a candidatura com nome de urna ou nome civil igual a ele, só sem a pontuação. Sem ela, vale a única candidatura a vereador eleita na eleição municipal vigente, do mesmo partido, em que todas as palavras do nome de urna estão no nome parlamentar, ou todas as do nome parlamentar estão no nome de urna ou no nome civil. Título ("Dr.", "Professor") não conta como palavra. Com duas pessoas possíveis, não há vínculo.
+- **Paulínia (ADR-0066).** Eleições de 2020 e 2024, filtradas pela unidade eleitoral do município. A página de legislaturas do portal da Câmara publica o nome civil: a candidatura mais recente com o mesmo nome civil serve de ponte. Sem ela, vale o nome parlamentar contra o nome de urna e, por último, a regra da única eleita do mesmo partido (ADR-0065). O nome civil não é publicado.
 
 ## Financiamento de campanha (ADR-0032)
 
@@ -242,6 +248,7 @@ Não é presença. É a contagem de votos registrados em votações nominais.
 - **Atos normativos municipais (piloto, ADR-0009).** Leis, leis complementares e decretos de `norma/normajuridica` do SAPL, por ano e tipo, publicados no período de cada mandato de prefeito. Os tipos seguem o schema federal: `LEI`, `LCP` e `DEC`. A fonte não informa quem assinou cada ato: o bloco se chama "atos normativos do município no período do mandato".
 - **Prefeito e vice-prefeito (piloto).** Os perfis vêm das candidaturas eleitas no TSE de 2020 e de 2024. Os mandatos vêm de `contrib/mandatos.yaml` (posse em 1º de janeiro do ano seguinte à eleição e fim na posse do sucessor, art. 29 da Constituição). A prefeitura não publica dados abertos: agenda entra por contribuição com fonte T0.
 - **Prefeito e vice-prefeito de Caraguatatuba (ADR-0057).** Mesmas regras do piloto: candidaturas eleitas em 2020 e em 2024, mandatos de `contrib/mandatos.yaml` e despesas do TCE-SP (`despesas/caraguatatuba/{ano}/{mes}`). O portal da Câmara registra que os eleitos em 2020 ficaram no cargo de 2021 a 2024. Atos normativos e agenda: sem fonte validada.
+- **Prefeito e vice-prefeito de Paulínia (ADR-0066).** Candidaturas eleitas em 2024, mandatos de `contrib/mandatos.yaml` e despesas do TCE-SP (`despesas/paulinia/{ano}/{mes}`). O mandato dos eleitos em 2020 fica fora: não há fonte oficial validada que registre o exercício dos quatro anos. Atos normativos e agenda: sem fonte validada.
 
 ## Validação antes de publicar
 

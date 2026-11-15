@@ -370,6 +370,44 @@ Limitações:
 - Não validado: teste com pessoas, favicon no Safari e aparelho real.
 - O site segue sem ícone em PNG para a tela inicial do celular e sem imagem de prévia de link.
 
+## Revisão dos municípios e quarto município (ADR-0065 e ADR-0066)
+
+Feito em 2026-11-15, na cópia de trabalho. Os dois ADRs estão como proposta.
+
+| Frente | Entrega | Estado |
+|---|---|---|
+| Piloto | Em exercício passa a ser quem a câmara lista como ativo; mandato vigente de quem não está na lista sai como "Fora de exercício"; afastamento pela descrição do tipo | concluída |
+| Capital | Condição do mandato vazia, sem "Titular" que a fonte não diz; vínculo com o TSE pela única eleita do mesmo partido, quando o nome de urna não é o nome parlamentar | concluída |
+| Caraguatatuba | Conferida, sem mudança de código | concluída |
+| Paulínia | Adaptador `paulinia`: vereadores em exercício, Mesa e comissões pelo portal da Câmara; prefeito e vice de 2024 pelo TSE; despesas da prefeitura pelo TCE-SP | concluída |
+| Tela | Bloco vazio do vereador de Paulínia diz "Não coletado pelo site" onde o dado fica no sistema legislativo da câmara | concluída |
+| Catálogo | `fetch fontes` não consulta fonte com status "bloqueado" | concluída |
+
+Conferência de 2026-11-15, nos 137 perfis municipais publicados, contra as fontes:
+
+- Piloto: 36 vereadores em exercício no site, 33 na lista de ativos da câmara. Um perfil com "Fora de exercício (3)".
+- Capital: 55 em exercício, igual ao número de cadeiras. 4 sem candidatura ligada, todos eleitos em 2024. Dois com resultado "SUPLENTE" no TSE e condição "Titular" no site.
+- Caraguatatuba: 15 em exercício, os 15 eleitos em 2024.
+
+Verificação de 2026-11-15, na cópia de trabalho:
+
+- Testes do ETL: 427, sem falha. Novos: em exercício e afastamento no piloto, vínculo pela eleita do mesmo partido e leitura das páginas de Paulínia.
+- Site: build de produção sem aviso, 28 testes unitários e 109 de E2E com axe (1 pulado). Novos: perfil de vereador de Paulínia e a rota dele na varredura de acessibilidade.
+- Ensaio local com coleta do piloto, do TCE-SP e de Paulínia, normalização e publicação: 2.388 perfis publicados, com os 19 de Paulínia validados contra o schema.
+  - Piloto: 33 em exercício. Os três a mais saem como "Fora de exercício", e o perfil cassado como "Fora de exercício (Cassação)".
+  - Capital: os 4 vereadores ganharam a candidatura de 2024. Nenhum mandato com "Titular".
+  - Paulínia: 17 vereadores em exercício, os 17 ligados à candidatura eleita de 2024. 4 cargos na Mesa e 15 em comissões. Prefeito e vice de 2024, com as despesas da prefeitura.
+- A primeira coleta de Paulínia baixou 4 páginas, sem falha. O cache não tem telefone nem e-mail.
+
+Limitações:
+
+- Não publicado: os dois ADRs aguardam aceite, e os commits aguardam envio à `main` e uma execução do `dados`.
+- No ensaio local, a publicação anterior era de 2026-11-11 e três perfis dela, sem relação com esta mudança, foram liberados à mão para a trava do ADR-0006 passar.
+- Não validado: a coleta de Paulínia a partir do runner do GitHub Actions e o financiamento de campanha dos perfis de Paulínia, que depende do `fetch tse`.
+- Paulínia sem proposições, votações e presença: a Câmara publica os três no SISCAM, cujo `robots.txt` recusa o projeto. Destrava com a liberação pela Câmara ou com um pedido pela Lei de Acesso à Informação, que é do mantenedor.
+- Paulínia sem a 14ª legislatura e sem o mandato dos eleitos para a prefeitura em 2020.
+- A conferência não comparou voto a voto nem proposição a proposição com a fonte.
+
 ## Fase 2 (depois da POC)
 
 ### Esfera federal
