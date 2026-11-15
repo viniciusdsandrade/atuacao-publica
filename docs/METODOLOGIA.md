@@ -56,11 +56,12 @@ Não é presença. É a contagem de votos registrados em votações nominais.
 
 ### Câmara municipal (piloto, SAPL)
 
-1. Universo: votos individuais de `sessao/votoparlamentar` cujo registro de votação (`sessao/registrovotacao`) aponta para um item da ordem do dia ou do expediente da legislatura vigente.
+1. Universo: votos individuais de `sessao/votoparlamentar` cujo registro de votação (`sessao/registrovotacao`) aponta para um item da ordem do dia ou do expediente da legislatura vigente. Item com resultado "Não votado" fica fora: não houve votação, e a fonte guarda nele marcas sem sentido ("[", "]") no lugar do voto (ADR-0065).
 2. Data: o voto individual não traz data confiável (votos migrados trazem a data da migração). A data é a do item votado (`data_ordem` da ordem do dia ou do expediente).
 3. `votacoes_nominais`: votos individuais do item 1, por ano.
 4. `votos_registrados`: votos `Sim`, `Não` ou `Abstenção`.
 5. `por_tipo`: contagem de cada valor da fonte, inclusive `Não Votou` e `Ausente`.
+6. Grafia: a câmara grafa o mesmo voto de mais de um jeito ("Nao" e "Não"). `Sim`, `Não` e `Abstenção` saem numa grafia só. Valor sem nenhuma letra vira ausência de registro (ADR-0065).
 6. `sem_registro`: a fonte lista só quem teve voto lançado. O campo fica `null`.
 7. Voto sem registro de votação ou sem item votado na coleta fica fora. A quantidade aparece na saída do `normalize`.
 

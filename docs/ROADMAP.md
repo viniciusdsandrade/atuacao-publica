@@ -377,6 +377,7 @@ Feito em 2026-11-15, na cópia de trabalho. Os dois ADRs estão como proposta.
 | Frente | Entrega | Estado |
 |---|---|---|
 | Piloto | Em exercício passa a ser quem a câmara lista como ativo; mandato vigente de quem não está na lista sai como "Fora de exercício"; afastamento pela descrição do tipo | concluída |
+| Piloto, votos | "Sim", "Não" e "Abstenção" numa grafia só; valor sem letra vira ausência; item "Não votado" fora dos votos; tipo "Sessão de Julgamento" sem palavra repetida | concluída |
 | Capital | Condição do mandato vazia, sem "Titular" que a fonte não diz; vínculo com o TSE pela única eleita do mesmo partido, quando o nome de urna não é o nome parlamentar | concluída |
 | Caraguatatuba | Conferida, sem mudança de código | concluída |
 | Paulínia | Adaptador `paulinia`: vereadores em exercício, Mesa e comissões pelo portal da Câmara; prefeito e vice de 2024 pelo TSE; despesas da prefeitura pelo TCE-SP | concluída |
@@ -388,13 +389,21 @@ Conferência de 2026-11-15, nos 137 perfis municipais publicados, contra as font
 - Piloto: 36 vereadores em exercício no site, 33 na lista de ativos da câmara. Um perfil com "Fora de exercício (3)".
 - Capital: 55 em exercício, igual ao número de cadeiras. 4 sem candidatura ligada, todos eleitos em 2024. Dois com resultado "SUPLENTE" no TSE e condição "Titular" no site.
 - Caraguatatuba: 15 em exercício, os 15 eleitos em 2024.
+- Piloto, votos: 169 votos "Nao" ao lado de 1.860 "Não", 86 votos com marca sem letra ("[", "]" e "-1") e 33 presenças em "Sessão Sessão de Julgamento".
+
+Conferência por amostra de 2026-11-15, registro a registro, contra as fontes:
+
+- Piloto: 40 de 40 votos iguais, 23 de 23 presenças e datas de sessão, 20 de 20 proposições com número, ano, ementa e autoria. Duas consultas ficaram sem resposta. Combustível e material de escritório de um vereador em 2026: contagem e soma iguais.
+- Capital: 80 de 80 proposições presentes na lista do vereador no serviço da câmara.
+- Caraguatatuba: 6 de 6 listas de presença iguais, 9 de 9 ementas iguais e 45 diárias de 2026 na fonte e no site.
 
 Verificação de 2026-11-15, na cópia de trabalho:
 
-- Testes do ETL: 427, sem falha. Novos: em exercício e afastamento no piloto, vínculo pela eleita do mesmo partido e leitura das páginas de Paulínia.
+- Testes do ETL: 429, sem falha. Novos: em exercício e afastamento no piloto, vínculo pela eleita do mesmo partido e leitura das páginas de Paulínia.
 - Site: build de produção sem aviso, 28 testes unitários e 109 de E2E com axe (1 pulado). Novos: perfil de vereador de Paulínia e a rota dele na varredura de acessibilidade.
 - Ensaio local com coleta do piloto, do TCE-SP e de Paulínia, normalização e publicação: 2.388 perfis publicados, com os 19 de Paulínia validados contra o schema.
   - Piloto: 33 em exercício. Os três a mais saem como "Fora de exercício", e o perfil cassado como "Fora de exercício (Cassação)".
+  - Piloto, votos: 2.023 "Não", nenhum "Nao" e nenhuma marca sem letra. Os votos sem valor caem de 1.240 para 6, com a saída dos itens não votados.
   - Capital: os 4 vereadores ganharam a candidatura de 2024. Nenhum mandato com "Titular".
   - Paulínia: 17 vereadores em exercício, os 17 ligados à candidatura eleita de 2024. 4 cargos na Mesa e 15 em comissões. Prefeito e vice de 2024, com as despesas da prefeitura.
 - A primeira coleta de Paulínia baixou 4 páginas, sem falha. O cache não tem telefone nem e-mail.
@@ -406,7 +415,7 @@ Limitações:
 - Não validado: a coleta de Paulínia a partir do runner do GitHub Actions e o financiamento de campanha dos perfis de Paulínia, que depende do `fetch tse`.
 - Paulínia sem proposições, votações e presença: a Câmara publica os três no SISCAM, cujo `robots.txt` recusa o projeto. Destrava com a liberação pela Câmara ou com um pedido pela Lei de Acesso à Informação, que é do mantenedor.
 - Paulínia sem a 14ª legislatura e sem o mandato dos eleitos para a prefeitura em 2020.
-- A conferência não comparou voto a voto nem proposição a proposição com a fonte.
+- A conferência dos registros foi por amostra. Fora dela: comissões e Mesa, discursos, atos normativos, despesas da prefeitura e financiamento de campanha.
 
 ## Fase 2 (depois da POC)
 
