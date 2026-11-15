@@ -393,11 +393,12 @@ public final class Sapl implements Fonte {
                     Integer regId = Json.inteiro(v, "votacao");
                     RegistroVotacao reg = regId == null ? null : registros.get(regId);
                     Item item = reg == null ? null : (reg.ordem() != null ? ordens.get(reg.ordem()) : expedientes.get(reg.expediente()));
-                    if (item == null) {
+                    // Item que a câmara registra como "Não votado" não teve votação: os registros dele não são votos.
+                    if (item == null || naoVotado(reg.resultado())) {
                         votosSemData++;
                         continue;
                     }
-                    String votoTxt = Json.texto(v, "voto");
+                    String votoTxt = voto(Json.texto(v, "voto"));
                     String ano = String.valueOf(item.data().getYear());
                     votos.add(new Voto(String.valueOf(regId), item.data().toString(), "PLEN", primeiro(reg.materia(), item.materia()),
                             reg.resultado() == null ? null : "Resultado: " + reg.resultado(), votoTxt,
@@ -573,7 +574,7 @@ public final class Sapl implements Fonte {
             if (sessao == null || sessao.data().isAfter(hoje)) {
                 continue;
             }
-            eventos.add(new Evento("sessao-" + sessao.id(), instante(sessao), "Sessão " + sessao.tipo(), tituloDaSessao(sessao),
+            eventos.add(new Evento("sessao-" + sessao.id(), instante(sessao), tipoDeSessao(sessao.tipo()), tituloDaSessao(sessao),
                     "Plenário", null, "registrada", prov));
         }
         eventos.sort(Comparator.comparing(Evento::data).reversed());
@@ -773,8 +774,38 @@ public final class Sapl implements Fonte {
         return min;
     }
 
+    /** "Ordinária" vira "Sessão Ordinária". O tipo que já começa com "Sessão" ("Sessão de Julgamento") fica como está. */
+    static String tipoDeSessao(String tipo) {
+        if (tipo == null) {
+            return "Sessão";
+        }
+        return Texto.normalizarNome(tipo).startsWith("SESSAO") ? tipo : "Sessão " + tipo;
+    }
+
     static boolean registrado(String voto) {
         return voto != null && VOTOS_REGISTRADOS.contains(voto);
+    }
+
+    /**
+     * O voto como a fonte grafa, com duas correções: "Nao", "SIM" e "Abstencao" viram a grafia única do projeto,
+     * e valor sem nenhuma letra ("[", "]", "-1") vira ausência. A câmara grafa o mesmo voto de mais de um jeito,
+     * e sem a grafia única o voto "Nao" não contava como voto registrado.
+     */
+    static String voto(String bruto) {
+        if (bruto == null || bruto.isBlank() || bruto.chars().noneMatch(Character::isLetter)) {
+            return null;
+        }
+        String limpo = bruto.strip();
+        return switch (Texto.normalizarNome(limpo)) {
+            case "SIM" -> "Sim";
+            case "NAO" -> "Não";
+            case "ABSTENCAO" -> "Abstenção";
+            default -> limpo;
+        };
+    }
+
+    static boolean naoVotado(String resultado) {
+        return resultado != null && "NAO VOTADO".equals(Texto.normalizarNome(resultado));
     }
 
     /** Sessões plenárias das legislaturas cobertas, desde o início da cobertura. A listagem da fonte ignora paginação e devolve tudo. */
@@ -802,7 +833,7 @@ public final class Sapl implements Fonte {
     }
 
     static String tituloDaSessao(Sessao sessao) {
-        return (sessao.numero() == null ? "" : sessao.numero() + "ª ") + "Sessão " + sessao.tipo();
+        return (sessao.numero() == null ? "" : sessao.numero() + "ª ") + tipoDeSessao(sessao.tipo());
     }
 
     /** Sessões da legislatura já realizadas, da mais antiga para a mais recente. */

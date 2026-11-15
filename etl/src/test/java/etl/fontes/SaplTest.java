@@ -106,6 +106,32 @@ class SaplTest {
     }
 
     @Test
+    void votoGanhaGrafiaUnicaEValorSemLetraViraAusencia() {
+        assertEquals("Não", Sapl.voto("Nao"));
+        assertEquals("Não", Sapl.voto(" NÃO "));
+        assertEquals("Sim", Sapl.voto("SIM"));
+        assertEquals("Abstenção", Sapl.voto("Abstencao"));
+        // O que a fonte grafa de outro jeito fica como ela grafa.
+        assertEquals("Ausente", Sapl.voto("Ausente"));
+        assertEquals("Não Votou", Sapl.voto("Não Votou"));
+        // Marcas sem letra que a câmara deixou em item não votado.
+        assertEquals(null, Sapl.voto("["));
+        assertEquals(null, Sapl.voto("]"));
+        assertEquals(null, Sapl.voto("-1"));
+        assertEquals(null, Sapl.voto(""));
+        assertTrue(Sapl.registrado(Sapl.voto("Nao")));
+    }
+
+    @Test
+    void itemNaoVotadoNaoEVotacaoETipoDeSessaoNaoRepetePalavra() {
+        assertTrue(Sapl.naoVotado("Não votado"));
+        assertFalse(Sapl.naoVotado("Aprovado"));
+        assertFalse(Sapl.naoVotado(null));
+        assertEquals("Sessão Ordinária", Sapl.tipoDeSessao("Ordinária"));
+        assertEquals("Sessão de Julgamento", Sapl.tipoDeSessao("Sessão de Julgamento"));
+    }
+
+    @Test
     void emExercicioEQuemACamaraListaComoAtivo() {
         JsonNode json = Json.FONTE.readTree("""
                 {
