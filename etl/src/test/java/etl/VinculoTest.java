@@ -221,6 +221,76 @@ class VinculoTest {
         assertEquals("MARIA DO CARMO E SILVA", sp.bloco("candidaturas").getFirst().get("nome_urna").stringValue());
     }
 
+    private static ObjectNode eleita(String sq, String nomeUrna, String partido) {
+        ObjectNode c = Json.SAIDA.createObjectNode();
+        c.put("sq", sq);
+        c.put("ano", 2024);
+        c.put("eleito", true);
+        c.put("nome_urna", nomeUrna);
+        c.put("partido", partido);
+        return c;
+    }
+
+    private static Tse.Chave pessoa(String nomeCivil, String nascimento) {
+        return new Tse.Chave(null, nomeCivil, "SP", nascimento, "VEREADOR");
+    }
+
+    @Test
+    void vereadorComNomeParlamentarDiferenteDoNomeDeUrnaCasaComAUnicaEleitaDoPartido() {
+        List<JsonNode> eleitas = List.of(
+                eleita("1", "BELTRANO", "PV"),
+                eleita("2", "CICRANA", "PT"),
+                eleita("3", "TADEU PRAIA", "PODE"),
+                eleita("4", "ZECA", "UNIÃO"),
+                eleita("5", "FULANO BELTRANO", "UNIÃO"));
+        Map<String, Tse.Chave> chaves = Map.of(
+                "1", pessoa("JOSE ROBERTO BELTRANO", "1960-01-01"),
+                "2", pessoa("CICRANA RENATA SOUZA", "1985-02-02"),
+                "3", pessoa("MARCIO TADEU LAGO", "1975-03-03"),
+                "4", pessoa("JOSE CARLOS DOS SANTOS", "1970-04-04"),
+                "5", pessoa("FULANO BELTRANO DA SILVA", "1980-05-05"));
+        // Nome de urna contido no nome parlamentar, no mesmo partido.
+        assertEquals("1", Vinculo.eleitaDoMesmoPartido(eleitas, "Roberto Beltrano", "PV", chaves).get("sq").stringValue());
+        assertEquals("4", Vinculo.eleitaDoMesmoPartido(eleitas, "Zeca Leite", "União", chaves).get("sq").stringValue());
+        // Nome parlamentar contido no nome civil.
+        assertEquals("3", Vinculo.eleitaDoMesmoPartido(eleitas, "Tadeu Lago", "PODE", chaves).get("sq").stringValue());
+        assertEquals("2", Vinculo.eleitaDoMesmoPartido(eleitas, "Cicrana Souza", "PT", chaves).get("sq").stringValue());
+        // Partido diferente: o homônimo parcial de outro partido não casa.
+        assertNull(Vinculo.eleitaDoMesmoPartido(eleitas, "Roberto Beltrano", "PT", chaves));
+        // Sem partido ou sem nome não há vínculo.
+        assertNull(Vinculo.eleitaDoMesmoPartido(eleitas, "Roberto Beltrano", null, chaves));
+        assertNull(Vinculo.eleitaDoMesmoPartido(eleitas, " ", "PV", chaves));
+    }
+
+    @Test
+    void doisEleitosPossiveisNoMesmoPartidoFicamSemVinculo() {
+        List<JsonNode> eleitas = List.of(eleita("1", "BELTRANO", "PV"), eleita("2", "ROBERTO", "PV"));
+        Map<String, Tse.Chave> chaves = Map.of(
+                "1", pessoa("JOSE BELTRANO", "1960-01-01"),
+                "2", pessoa("ROBERTO ALVES", "1962-01-01"));
+        assertNull(Vinculo.eleitaDoMesmoPartido(eleitas, "Roberto Beltrano", "PV", chaves));
+    }
+
+    @Test
+    void tituloSozinhoNaoLigaVereadorACandidatura() {
+        List<JsonNode> eleitas = List.of(eleita("1", "PROFESSOR", "PV"), eleita("2", "DR. ANTONIO", "PV"));
+        Map<String, Tse.Chave> chaves = Map.of(
+                "1", pessoa("CARLOS LIMA", "1960-01-01"),
+                "2", pessoa("ANTONIO PRADO", "1962-01-01"));
+        // "Professor" é título: não liga "Professor Toninho" ao eleito de nome de urna "PROFESSOR".
+        assertNull(Vinculo.eleitaDoMesmoPartido(eleitas, "Professor Toninho", "PV", chaves));
+        // Sem o título, o nome de urna cabe no nome parlamentar.
+        assertEquals("2", Vinculo.eleitaDoMesmoPartido(eleitas, "Dr. Antonio Prado", "PV", chaves).get("sq").stringValue());
+    }
+
+    @Test
+    void eleicaoMunicipalVigenteValeDaPosseAteAPosseSeguinte() {
+        assertEquals(2024, Vinculo.eleicaoMunicipalVigente(java.time.LocalDate.of(2026, 11, 15)));
+        assertEquals(2020, Vinculo.eleicaoMunicipalVigente(java.time.LocalDate.of(2024, 12, 31)));
+        assertEquals(2024, Vinculo.eleicaoMunicipalVigente(java.time.LocalDate.of(2025, 1, 1)));
+        assertEquals(2028, Vinculo.eleicaoMunicipalVigente(java.time.LocalDate.of(2029, 1, 1)));
+    }
+
     private static Perfil porId(List<Perfil> perfis, String casa, String id) {
         for (Perfil p : perfis) {
             if (id.equals(p.ids.get(casa))) {

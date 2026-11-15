@@ -382,6 +382,69 @@ final class Vinculo {
         return null;
     }
 
+    /** Palavras que não identificam ninguém sozinhas: título e tratamento no nome de urna ou parlamentar. */
+    private static final Set<String> PALAVRAS_DE_TITULO = Set.of("DR", "DRA", "DOUTOR", "DOUTORA", "PROF", "PROFESSOR", "PROFESSORA",
+            "PASTOR", "PASTORA", "PADRE", "DELEGADO", "DELEGADA", "CORONEL", "CEL", "CAPITAO", "MAJOR", "SARGENTO", "SGT", "CABO",
+            "TENENTE", "ENG", "ENGENHEIRO", "ENGENHEIRA", "VEREADOR", "VEREADORA", "JR", "JUNIOR", "FILHO", "NETO");
+
+    /**
+     * Vereador em exercício cujo nome parlamentar não é o nome de urna nem o nome civil (ADR-0065).
+     * Vale a candidatura eleita na eleição municipal vigente, no mesmo município e do mesmo partido, quando:
+     * todas as palavras do nome de urna estão no nome parlamentar, ou todas as do nome parlamentar estão no nome de urna
+     * ou no nome civil. Título não conta como palavra. Só vale com uma única pessoa possível: com duas, não há vínculo.
+     */
+    static JsonNode eleitaDoMesmoPartido(List<JsonNode> eleitas, String nomeParlamentar, String partido, Map<String, Tse.Chave> chaves) {
+        Set<String> parlamentar = palavrasSemTitulo(Texto.normalizarNome(nomeParlamentar));
+        String sigla = siglaComparavel(partido);
+        if (parlamentar.isEmpty() || sigla == null) {
+            return null;
+        }
+        Map<String, JsonNode> possiveis = new TreeMap<>();
+        for (JsonNode candidatura : eleitas) {
+            if (!sigla.equals(siglaComparavel(Json.texto(candidatura, "partido")))) {
+                continue;
+            }
+            String sq = candidatura.get("sq").stringValue();
+            Tse.Chave chave = chaves.get(sq);
+            Set<String> urna = palavrasSemTitulo(Texto.normalizarNome(Json.texto(candidatura, "nome_urna")));
+            Set<String> civil = chave == null ? Set.of() : palavrasSemTitulo(chave.nomeCivil());
+            boolean casa = (!urna.isEmpty() && parlamentar.containsAll(urna)) || urna.containsAll(parlamentar)
+                    || civil.containsAll(parlamentar);
+            if (casa) {
+                String pessoa = pessoa(chave);
+                possiveis.putIfAbsent(pessoa != null ? pessoa : "sq:" + sq, candidatura);
+            }
+        }
+        if (possiveis.size() == 1) {
+            return possiveis.values().iterator().next();
+        }
+        if (possiveis.size() > 1) {
+            System.out.println("vinculo: \"" + nomeParlamentar + "\" casa com " + possiveis.size()
+                    + " eleitos do mesmo partido no município e fica sem vínculo por esse caminho");
+        }
+        return null;
+    }
+
+    /** Sigla para comparação: a grafia da casa passa pela tabela de apelidos ("PODEMOS" e "PODE" são o mesmo partido). */
+    private static String siglaComparavel(String partido) {
+        return Partidos.chave(Partidos.unificar(partido, Map.of()));
+    }
+
+    private static Set<String> palavrasSemTitulo(String texto) {
+        Set<String> palavras = new HashSet<>(palavras(texto));
+        palavras.removeAll(PALAVRAS_DE_TITULO);
+        return palavras;
+    }
+
+    /** Última eleição municipal com posse já ocorrida: a de 2024 vale de 2025-01-01 a 2028-12-31. */
+    static int eleicaoMunicipalVigente(LocalDate hoje) {
+        int eleicao = 2020;
+        while (!hoje.isBefore(LocalDate.of(eleicao + 5, 1, 1))) {
+            eleicao += 4;
+        }
+        return eleicao;
+    }
+
     private static Set<String> palavras(String texto) {
         String limpo = semPontuacao(texto);
         if (limpo == null || limpo.isBlank()) {
@@ -462,6 +525,8 @@ final class Vinculo {
         Map<String, JsonNode> candPorSaplNomeUrna = new HashMap<>();
         Map<String, JsonNode> candPorCmspNomeCivil = new HashMap<>();
         Map<String, JsonNode> candPorCmspNomeUrna = new HashMap<>();
+        int eleicaoMunicipal = eleicaoMunicipalVigente(ctx.hoje());
+        List<JsonNode> eleitasCmsp = new ArrayList<>();
         Map<String, JsonNode> candPorCaraguatatubaNomeCivil = new HashMap<>();
         Map<String, JsonNode> candPorCaraguatatubaNomeUrna = new HashMap<>();
         Map<String, String> caraguatatubaNomesCivis = lerNomesCivis(ctx, "caraguatatuba");
@@ -581,6 +646,9 @@ final class Vinculo {
                     // Cada município tem os seus mapas: dois municípios podem ter vereadores com o mesmo nome.
                     String enteDaCandidatura = Json.texto(c.path("registro"), "ente");
                     if (Cmsp.IBGE.equals(enteDaCandidatura)) {
+                        if (c.path("eleito").asBoolean(false) && c.path("ano").asInt() == eleicaoMunicipal) {
+                            eleitasCmsp.add(c);
+                        }
                         candPorCmspNomeCivil.merge(chave.nomeCivil(), c, Vinculo::maisRecente);
                         if (c.hasNonNull("nome_urna")) {
                             candPorCmspNomeUrna.merge(semPontuacao(Texto.normalizarNome(c.get("nome_urna").stringValue())), c, Vinculo::maisRecente);
@@ -901,6 +969,9 @@ final class Vinculo {
                 JsonNode cand = candPorCmspNomeUrna.get(nomeParl);
                 if (cand == null) {
                     cand = candPorCmspNomeCivil.get(nomeParl);
+                }
+                if (cand == null) {
+                    cand = eleitaDoMesmoPartido(eleitasCmsp, p.nome, p.partido, chaves);
                 }
                 if (cand != null) {
                     candSapl = cand;
