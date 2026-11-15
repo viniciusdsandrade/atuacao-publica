@@ -81,13 +81,21 @@ public final class Catalogo implements Fonte {
         return "fontes";
     }
 
-    /** Revalida a url_base de cada fonte. Só informa: site fora do ar não bloqueia o ETL. */
+    /**
+     * Revalida a url_base de cada fonte. Só informa: site fora do ar não bloqueia o ETL.
+     * Fonte com status "bloqueado" não é consultada: é a que recusa o projeto, por resposta ou por robots.txt.
+     */
     @Override
     public void fetch(Contexto ctx, Coleta coleta) throws Exception {
         Catalogo catalogo = carregar(ctx);
         List<Verificacao> resultado = new ArrayList<>();
         int falhas = 0;
+        int bloqueadas = 0;
         for (Item item : catalogo.itens()) {
+            if (bloqueada(item)) {
+                bloqueadas++;
+                continue;
+            }
             int status = ctx.http().status(item.urlBase());
             resultado.add(new Verificacao(item.id(), item.urlBase(), status));
             if (status < 200 || status >= 400) {
@@ -98,7 +106,13 @@ public final class Catalogo implements Fonte {
         Json.gravar(ctx.raw().resolve("fontes").resolve("validacao.json"), resultado, true);
         coleta.contar("fontes", resultado.size());
         coleta.contar("sem_resposta_valida", falhas);
-        System.out.println("fontes: " + (resultado.size() - falhas) + " de " + resultado.size() + " responderam");
+        coleta.contar("bloqueadas_nao_consultadas", bloqueadas);
+        System.out.println("fontes: " + (resultado.size() - falhas) + " de " + resultado.size() + " responderam; " + bloqueadas
+                + " bloqueada(s) não consultada(s)");
+    }
+
+    static boolean bloqueada(Item item) {
+        return "bloqueado".equals(item.status());
     }
 
     @Override
