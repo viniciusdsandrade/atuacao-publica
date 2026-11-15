@@ -1,6 +1,6 @@
 # ADR-0065: Revisão da confiabilidade dos dados municipais
 
-- **Status**: Proposta
+- **Status**: Aceita
 - **Data**: 2026-11-15
 
 ## Contexto

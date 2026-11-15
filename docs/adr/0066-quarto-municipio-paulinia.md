@@ -1,6 +1,6 @@
 # ADR-0066: Quarto município: Câmara Municipal e Prefeitura de Paulínia
 
-- **Status**: Proposta
+- **Status**: Aceita
 - **Data**: 2026-11-15
 
 ## Contexto

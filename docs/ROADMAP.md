@@ -372,7 +372,7 @@ Limitações:
 
 ## Revisão dos municípios e quarto município (ADR-0065 e ADR-0066)
 
-Feito em 2026-11-15, na cópia de trabalho. Os dois ADRs estão como proposta.
+Feito em 2026-11-15. Os dois ADRs foram aceitos no mesmo dia.
 
 | Frente | Entrega | Estado |
 |---|---|---|
@@ -414,7 +414,6 @@ Verificação de 2026-11-15, na cópia de trabalho:
 
 Limitações:
 
-- Não publicado: os dois ADRs aguardam aceite, e os commits aguardam envio à `main` e uma execução do `dados`.
 - No ensaio local, a publicação anterior era de 2026-11-11 e três perfis dela, sem relação com esta mudança, foram liberados à mão para a trava do ADR-0006 passar.
 - Não validado: a coleta de Paulínia a partir do runner do GitHub Actions e o financiamento de campanha dos perfis de Paulínia, que depende do `fetch tse`.
 - Paulínia sem proposições, votações e presença: a Câmara publica os três no SISCAM, cujo `robots.txt` recusa o projeto. Destrava com a liberação pela Câmara ou com um pedido pela Lei de Acesso à Informação, que é do mantenedor.
