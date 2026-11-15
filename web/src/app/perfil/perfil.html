@@ -181,7 +181,7 @@
                   <span class="perfil-nav-total numero">{{ inteiro(p.blocos[b].total) }}</span>
                 } @else {
                   <span class="perfil-nav-total perfil-nav-total--vazio" aria-hidden="true">–</span>
-                  <span class="sr-only">(sem registro na fonte)</span>
+                  <span class="sr-only">({{ vazio(b).toLowerCase().replace('.', '') }})</span>
                 }
               </a>
             </li>
@@ -217,7 +217,7 @@
               @if (bloco.total > 0) {
                 <span class="selo bloco-total">{{ inteiro(bloco.total) }} {{ bloco.total === 1 ? 'registro' : 'registros' }}</span>
               } @else {
-                <p class="vazio">{{ semRegistro }}</p>
+                <p class="vazio">{{ vazio(b) }}</p>
               }
             </header>
             @if (nota(b); as n) {

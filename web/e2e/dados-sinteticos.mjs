@@ -51,6 +51,20 @@ const BLOCOS_DE_CARAGUATATUBA = {
   },
 };
 
+/** Bloco sem registro, como o ETL publica. */
+const VAZIO_COM_AMOSTRA = { fontes: [], atualizado_em: null, desatualizado: false, total: 0, por_tipo: {}, arquivos: [], recentes: [] };
+
+/**
+ * Blocos do vereador de Paulínia (ADR-0066): a câmara publica proposituras, votações e frequência num sistema que o
+ * projeto não coleta. Os quatro blocos saem vazios, e a tela diz "não coletado".
+ */
+const BLOCOS_DE_PAULINIA = {
+  participacao_votacoes: { fontes: [], atualizado_em: null, desatualizado: false, total: 0, registros: [] },
+  votos: VAZIO_COM_AMOSTRA,
+  proposicoes: VAZIO_COM_AMOSTRA,
+  eventos: VAZIO_COM_AMOSTRA,
+};
+
 /** O molde é o exemplo de schema que serve de base ao perfil de cada pessoa. */
 const PESSOAS = [
   { id: 'cam-900001', nome: 'Ana Exemplo', cargo: 'deputado_federal', esfera: 'federal', ente: 'BR', uf: 'SP', partido: 'PL', externos: { camara: '900001' }, molde: 'deputado' },
@@ -69,6 +83,7 @@ const PESSOAS = [
   { id: 'sapl-3509502-930014', nome: 'Nelson Exemplo', cargo: 'vereador', esfera: 'municipal', ente: '3509502', uf: 'SP', partido: 'PSD', externos: { sapl: '930014' }, molde: 'vereador' },
   { id: 'sapl-3509502-930015', nome: 'Olga Exemplo', cargo: 'vereador', esfera: 'municipal', ente: '3509502', uf: 'SP', partido: 'PL', externos: { sapl: '930015' }, molde: 'vereador', foraDeExercicio: true },
   { id: 'sagl-3510500-950016', nome: 'Paula Exemplo', cargo: 'vereador', esfera: 'municipal', ente: '3510500', uf: 'SP', partido: 'PV', externos: { caraguatatuba: '950016' }, molde: 'vereador', blocos: BLOCOS_DE_CARAGUATATUBA },
+  { id: 'portal-3536505-quirino-exemplo', nome: 'Quirino Exemplo', cargo: 'vereador', esfera: 'municipal', ente: '3536505', uf: 'SP', partido: 'DC', externos: { paulinia: 'quirino-exemplo' }, molde: 'vereador', situacao: 'Em exercício', blocos: BLOCOS_DE_PAULINIA },
 ];
 
 const MOLDES = {

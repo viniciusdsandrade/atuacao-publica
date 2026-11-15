@@ -33,6 +33,7 @@ import {
   rotuloTipoOrgao,
   rotuloTipoProposicao,
   SEM_REGISTRO,
+  textoDoBlocoVazio,
   Situacao,
   SITUACOES,
   situacaoDe,
@@ -336,7 +337,12 @@ export class Perfil {
   }
 
   protected nota(bloco: string): string | null {
-    return notaDoBloco(bloco, this.perfil()?.esfera, this.perfil()?.ente);
+    return notaDoBloco(bloco, this.perfil()?.esfera, this.perfil()?.ente, this.perfil()?.cargo_atual);
+  }
+
+  /** "Sem registro na fonte", ou "não coletado" quando o dado existe numa fonte que o projeto não coleta. */
+  protected vazio(bloco: string): string {
+    return textoDoBlocoVazio(bloco, this.perfil()?.esfera, this.perfil()?.ente, this.perfil()?.cargo_atual);
   }
 
   protected porTipo(bloco: Bloco): [string, number][] {

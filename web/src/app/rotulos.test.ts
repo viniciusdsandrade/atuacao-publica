@@ -30,6 +30,9 @@ import {
   situacaoDe,
   tituloDoBloco,
   realcar,
+  NAO_COLETADO,
+  SEM_REGISTRO,
+  textoDoBlocoVazio,
 } from './rotulos.ts';
 
 test('rotuloCargo retorna nome legível dos cargos municipais e gerais', () => {
@@ -104,6 +107,7 @@ test('rotuloLocal formata localização por esfera e ente', () => {
   assert.equal(rotuloLocal('municipal', '3509502', null), 'Campinas');
   assert.equal(rotuloLocal('municipal', '3550308', 'SP'), 'São Paulo (SP)');
   assert.equal(rotuloLocal('municipal', '3510500', 'SP'), 'Caraguatatuba (SP)');
+  assert.equal(rotuloLocal('municipal', '3536505', 'SP'), 'Paulínia (SP)');
   assert.equal(rotuloLocal('estadual', 'SP', 'SP'), 'SP');
   assert.equal(rotuloLocal('estadual', 'ES', 'ES'), 'ES');
   assert.equal(rotuloLocal('estadual', 'GO', 'GO'), 'GO');
@@ -160,6 +164,20 @@ test('na esfera municipal, despesas, atos e proposições dizem o que cada câma
   assert.equal(notaDoBloco('proposicoes', 'municipal', '3509502'), null);
   assert.equal(notaDoBloco('proposicoes', 'federal'), null);
   assert.match(notaDoBloco('eventos', 'municipal', '3510500') ?? '', /Câmara Municipal de Caraguatatuba/);
+});
+
+test('vereador de Paulínia: o que fica no sistema legislativo sai como não coletado, e não como ausente na fonte', () => {
+  for (const bloco of ['proposicoes', 'votos', 'participacao_votacoes', 'eventos']) {
+    assert.equal(textoDoBlocoVazio(bloco, 'municipal', '3536505', 'vereador'), NAO_COLETADO);
+    assert.match(notaDoBloco(bloco, 'municipal', '3536505', 'vereador') ?? '', /não permite coleta automática/);
+  }
+  // Os demais blocos, o prefeito e os outros municípios seguem com "sem registro na fonte".
+  assert.equal(textoDoBlocoVazio('discursos', 'municipal', '3536505', 'vereador'), SEM_REGISTRO);
+  assert.equal(textoDoBlocoVazio('votos', 'municipal', '3536505', 'prefeito'), SEM_REGISTRO);
+  assert.equal(textoDoBlocoVazio('votos', 'municipal', '3510500', 'vereador'), SEM_REGISTRO);
+  assert.equal(textoDoBlocoVazio('votos', 'federal', 'BR', 'deputado_federal'), SEM_REGISTRO);
+  assert.match(notaDoBloco('despesas', 'municipal', '3536505', 'vereador') ?? '', /ainda não tem fonte validada/);
+  assert.match(notaDoBloco('atos_normativos', 'municipal', '3536505', 'prefeito') ?? '', /ainda não tem fonte validada/);
 });
 
 test('valor de cem milhões para cima usa letra menor no cartão de total', () => {

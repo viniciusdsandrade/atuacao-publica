@@ -53,6 +53,7 @@ export const NOMES_DAS_UFS: Record<string, string> = {
 export const ENTES_MUNICIPAIS: Record<string, string> = {
   '3509502': 'Campinas',
   '3510500': 'Caraguatatuba',
+  '3536505': 'Paulínia',
   '3550308': 'São Paulo',
 };
 
@@ -60,6 +61,10 @@ export const ENTES_MUNICIPAIS: Record<string, string> = {
 const ENTE_DO_PILOTO = '3509502';
 /** Caraguatatuba (ADR-0057): a câmara não mantém a situação de tramitação. */
 const ENTE_DE_CARAGUATATUBA = '3510500';
+/** Paulínia (ADR-0066): o sistema legislativo da câmara não permite coleta automática. */
+const ENTE_DE_PAULINIA = '3536505';
+/** O que a Câmara de Paulínia publica só no sistema legislativo, que o projeto não coleta. */
+const BLOCOS_NAO_COLETADOS_EM_PAULINIA = new Set(['proposicoes', 'votos', 'participacao_votacoes', 'eventos']);
 
 export const TIPOS_ORGAO: Record<string, string> = {
   comissao: 'Comissão',
@@ -151,6 +156,18 @@ export const BLOCOS_CURTOS: Record<string, string> = {
 };
 
 export const SEM_REGISTRO = 'Sem registro na fonte.';
+/** O dado existe numa fonte oficial que o projeto não coleta. Não é ausência na fonte. */
+export const NAO_COLETADO = 'Não coletado pelo site.';
+
+/** O bloco é do vereador de Paulínia e o dado fica no sistema legislativo da câmara (ADR-0066). */
+function naoColetadoEmPaulinia(bloco: string, esfera?: string | null, ente?: string | null, cargo?: string | null): boolean {
+  return esfera === 'municipal' && ente === ENTE_DE_PAULINIA && cargo === 'vereador' && BLOCOS_NAO_COLETADOS_EM_PAULINIA.has(bloco);
+}
+
+/** Texto do bloco sem registro: "não coletado" quando o dado existe numa fonte que o projeto não coleta. */
+export function textoDoBlocoVazio(bloco: string, esfera?: string | null, ente?: string | null, cargo?: string | null): string {
+  return naoColetadoEmPaulinia(bloco, esfera, ente, cargo) ? NAO_COLETADO : SEM_REGISTRO;
+}
 
 export type Situacao = 'exercicio' | 'posse' | 'fora';
 
@@ -241,7 +258,13 @@ export function tituloDoBloco(bloco: string, esfera?: string | null): string {
 }
 
 /** Nota de método do bloco, igual para todos os perfis da mesma esfera e, na municipal, do mesmo município. */
-export function notaDoBloco(bloco: string, esfera?: string | null, ente?: string | null): string | null {
+export function notaDoBloco(bloco: string, esfera?: string | null, ente?: string | null, cargo?: string | null): string | null {
+  if (naoColetadoEmPaulinia(bloco, esfera, ente, cargo)) {
+    return 'A Câmara Municipal de Paulínia publica proposituras, votações e lista de frequência no sistema legislativo dela. O sistema não permite coleta automática, e o site não o coleta. O bloco vazio não quer dizer que o vereador não tenha registro.';
+  }
+  if (bloco === 'despesas' && esfera === 'municipal' && ente === ENTE_DE_PAULINIA) {
+    return 'O projeto ainda não tem fonte validada para as despesas por vereador deste município.';
+  }
   if (bloco === 'atos_normativos' && esfera === 'municipal') {
     if (ente && ente !== ENTE_DO_PILOTO) {
       return 'O projeto ainda não tem fonte validada para os atos normativos deste município.';
@@ -636,6 +659,7 @@ export const ANCORAS_FONTES: Record<string, string> = {
   alap: 'doc-fontes-do-amapa-alap-governo-do-estado',
   cmsp: 'doc-segundo-municipio-piloto-sao-paulo-cmsp-prefeitura',
   caraguatatuba: 'doc-terceiro-municipio-caraguatatuba-camara-e-prefeitura',
+  paulinia: 'doc-quarto-municipio-paulinia-camara-e-prefeitura',
 };
 
 export function ancoraFonte(fonte: string): string | undefined {

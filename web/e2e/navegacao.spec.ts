@@ -142,6 +142,19 @@ test.describe('perfil', () => {
     await expect(page.getByText(/não mantém a situação de tramitação/)).toBeVisible();
   });
 
+  test('perfil de vereador de Paulínia diz o que o site não coleta', async ({ page }) => {
+    await page.goto('/#/politico/portal-3536505-quirino-exemplo');
+    await expect(page.getByRole('heading', { level: 1 })).toContainText('Quirino Exemplo');
+    await expect(page.getByText('Paulínia (SP)').first()).toBeVisible();
+    // Proposições, votos, participação e presença ficam no sistema legislativo da câmara, que o projeto não coleta (ADR-0066).
+    const votos = page.locator('#bloco-votos');
+    await expect(votos.getByText('Não coletado pelo site.')).toBeVisible();
+    await expect(votos.getByText(/não permite coleta automática/)).toBeVisible();
+    await expect(page.locator('#bloco-proposicoes').getByText('Não coletado pelo site.')).toBeVisible();
+    // O mandato vem do portal da câmara e segue com registro.
+    await expect(page.locator('#bloco-mandatos').getByText('Sem registro na fonte.')).toHaveCount(0);
+  });
+
   test('diária mostra destino e motivo abaixo da categoria', async ({ page }) => {
     await page.goto('/#/politico/sagl-3510500-950016/despesas/2026');
     await expect(page.getByRole('heading', { level: 1 })).toContainText('2026');
