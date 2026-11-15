@@ -180,8 +180,9 @@ public final class Cmsp implements Fonte {
             Prov provMandato = ent.provOu(provVereadores);
             String textoMandato = "Vereador na " + v.legislatura() + "ª Legislatura (" + v.inicio().getYear()
                     + (v.fim() == null ? ")" : "–" + v.fim().getYear() + ")");
+            // A condição fica vazia: o serviço não diz quem é titular e quem é suplente em exercício.
             List<Mandato> mandatos = List.of(new Mandato("vereador", "municipal", IBGE, UF, v.inicio(), v.fim(),
-                    situacao, emEx ? "Titular" : null, v.legislatura(), v.inicio().getYear() - 1, textoMandato, provMandato));
+                    situacao, null, v.legislatura(), v.inicio().getYear() - 1, textoMandato, provMandato));
             List<OrgaoOuFrente> orgaos = v.cargos() != null
                     ? orgaos(v.cargos(), siglas, maisRecentes, ctx.hoje(), provMandato)
                     : List.of();
