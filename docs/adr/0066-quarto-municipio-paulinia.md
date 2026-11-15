@@ -76,7 +76,6 @@ Medidas de 2026-11-15:
 - O mandato do prefeito e do vice eleitos em 2020 fica fora: não há fonte oficial validada que registre o exercício dos quatro anos.
 - Atos do prefeito: sem fonte validada. A legislação do município fica em serviço de terceiro.
 - A leitura é de texto editado à mão. Mudança de formato deixa o município com a última publicação válida.
-- Não validado: a coleta a partir do runner do GitHub Actions.
 
 ## Alternativas consideradas
 
@@ -86,3 +85,8 @@ Medidas de 2026-11-15:
 - **Guardar a página inteira no cache**: descartada. Traz telefone e e-mail, que o projeto não usa.
 - **Cobrir a 14ª legislatura com as datas da legislatura**: descartada. Atribuiria quatro anos de mandato a suplente.
 - **Mostrar "Sem registro na fonte" nos blocos vazios**: descartada. A fonte tem o registro. Quem não coleta é o projeto.
+
+## Atualização em 2026-11-15: primeira publicação
+
+- A coleta rodou no runner do GitHub Actions no mesmo dia: 4 páginas, sem falha.
+- O site publicou os 19 perfis, com candidaturas e financiamento de campanha.

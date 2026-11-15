@@ -372,7 +372,7 @@ Limitações:
 
 ## Revisão dos municípios e quarto município (ADR-0065 e ADR-0066)
 
-Feito em 2026-11-15. Os dois ADRs foram aceitos no mesmo dia.
+Feito, aceito e publicado em 2026-11-15.
 
 | Frente | Entrega | Estado |
 |---|---|---|
@@ -412,10 +412,19 @@ Verificação de 2026-11-15, na cópia de trabalho:
   - Paulínia: 17 vereadores em exercício, os 17 ligados à candidatura eleita de 2024. 4 cargos na Mesa e 15 em comissões. Prefeito e vice de 2024, com as despesas da prefeitura.
 - A primeira coleta de Paulínia baixou 4 páginas, sem falha. O cache não tem telefone nem e-mail.
 
+Publicação de 2026-11-15:
+
+- CI do commit `3d66088`: build, testes do ETL, testes unitários do site e E2E com axe passaram.
+- Publicado pelo workflow `dados`, com todas as fontes, das 22:50 às 23:41 UTC: 2.591 perfis, 156 deles municipais.
+- A coleta de Paulínia rodou no runner do GitHub Actions: 4 páginas, sem falha.
+- No site: 19 perfis de Paulínia (17 vereadores em exercício, prefeito e vice), os 19 com candidaturas e financiamento de campanha, e 19 cargos na Mesa e em comissões.
+- No site: piloto com 33 vereadores em exercício, três como "Fora de exercício" e um como "Fora de exercício (Cassação)"; votos sem "Nao" e sem marca sem letra; "Sessão de Julgamento" sem palavra repetida.
+- No site: nenhum vereador da capital sem candidatura ligada.
+- No Chromium, no Firefox e no WebKit, em 7 páginas: perfil de vereador e de prefeito de Paulínia, busca por Paulínia com 19 cartões, perfil do piloto fora de exercício, estado das coletas e fontes. Nenhum erro de console, nenhuma resposta com erro e nenhuma requisição a terceiros. O bloco de votos do vereador de Paulínia diz "Não coletado pelo site".
+
 Limitações:
 
 - No ensaio local, a publicação anterior era de 2026-11-11 e três perfis dela, sem relação com esta mudança, foram liberados à mão para a trava do ADR-0006 passar.
-- Não validado: a coleta de Paulínia a partir do runner do GitHub Actions e o financiamento de campanha dos perfis de Paulínia, que depende do `fetch tse`.
 - Paulínia sem proposições, votações e presença: a Câmara publica os três no SISCAM, cujo `robots.txt` recusa o projeto. Destrava com a liberação pela Câmara ou com um pedido pela Lei de Acesso à Informação, que é do mantenedor.
 - Paulínia sem a 14ª legislatura e sem o mandato dos eleitos para a prefeitura em 2020.
 - A conferência dos registros foi por amostra, fora o financiamento de campanha de 2024, conferido em todos os perfis.

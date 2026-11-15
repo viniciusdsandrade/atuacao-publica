@@ -1832,7 +1832,7 @@ Ritmo da coleta: no mínimo 1 segundo entre chamadas ao portal.
 - Página fora do formato: se os pares de partido e nome não fecham, nada é normalizado.
 - Identificador canônico no projeto: `portal-3536505-{nome parlamentar em minúsculas, sem acento e com hífen}`. Chave `paulinia` em `ids_externos`.
 - Medidas da primeira coleta: 17 vereadores em exercício, os 17 com linha na página de legislaturas, 4 cargos na Mesa e 15 em cinco comissões.
-- Não validado: a coleta a partir do runner do GitHub Actions.
+- O portal respondeu ao runner do GitHub Actions em 2026-11-15: 4 páginas, sem falha.
 
 ### `paulinia-camara-siscam`: não coletado
 
