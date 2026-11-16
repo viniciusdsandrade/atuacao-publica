@@ -181,6 +181,9 @@ A descrição diz o que a fonte traz. Biografia citada na descrição não é ex
 - Cada ZIP traz, por UF e `_BRASIL`, `receitas_candidatos`, `receitas_candidatos_doador_originario`, `despesas_contratadas_candidatos` e `despesas_pagas_candidatos`. Layout igual de 2018 a 2026: 60 colunas nas receitas e 53 nas despesas contratadas.
 - A CDN aceita Range (`Accept-Ranges: bytes`). O ETL lê só receitas e despesas contratadas: `_BRASIL` na eleição geral e `_SP` na municipal. Na primeira carga, cerca de 530 MB das entradas, contra cerca de 3,8 GB dos ZIPs.
 - Colunas usadas: `SQ_CANDIDATO`, `SQ_RECEITA`, `DS_FONTE_RECEITA`, `DS_ORIGEM_RECEITA` e `VR_RECEITA`; `SQ_DESPESA`, `DS_ORIGEM_DESPESA`, `NR_CPF_CNPJ_FORNECEDOR`, `NM_FORNECEDOR`, `NM_FORNECEDOR_RFB` e `VR_DESPESA_CONTRATADA`.
+- A mesma chave (`SQ_RECEITA`, `SQ_DESPESA`) aparece em várias linhas: uma por item da mesma receita ou despesa, cada uma com a sua descrição e o seu valor. O valor da receita ou da despesa é a soma das linhas.
+- Validado em 2026-11-15 com `despesas_pagas_candidatos`, nas candidaturas dos perfis municipais de 2018 a 2026: em 2.754 das 2.762 chaves repetidas, o total pago é igual à soma das linhas. Nas outras 8, não há pagamento ou o pagamento é parcial. Em nenhuma o total pago é o da primeira linha.
+- A linha de chave `-1`, com valor zero e categorias `#NULO`, é o marcador da prestação entregue sem lançamento.
 - As linhas trazem nome e CPF de doador e de fornecedor pessoa física, CPF do candidato e do vice, gênero e cor ou raça do candidato. Nenhum desses campos entra no cache nem no site.
 
 ### `tse-divulgacand`: DivulgaCandContas
@@ -360,8 +363,11 @@ Em 2024, o município (`SG_UE` 62910) tem 1 prefeito, 1 vice-prefeito e 33 verea
   - Pagina com `page` e `page_size`, no máximo 100 por página. `sessaoplenaria` ignora `page_size` e devolve a lista inteira, inclusive sessões futuras.
   - Filtro booleano exige `True`: `ativo=true` responde 400.
   - Filtros de intervalo valem em campos diretos (`data_ordem__gte`) e em chaves (`votacao__gte`, `sessao_plenaria__gte`, `ordem__gte`). Filtro por relação indireta (`sessao_plenaria__legislatura`) e `ordering` são ignorados em silêncio.
-  - `ordemdia` e `expedientemateria` vêm ordenados por data, com empate instável: a mesma lista paginada repete e omite itens entre páginas (136 de 1.754 em 2026-11-01). As demais listas vêm por id e paginam de forma estável. Por isso os itens são coletados por sessão, numa página só.
-  - `votoparlamentar` não traz `ordem` nem `expediente`, e `data_hora` vem nula ou com a data da migração do sistema (2024-01-04). A data do voto vem do item votado: voto -> `votacao` (registro) -> `ordem` ou `expediente` -> `data_ordem`.
+  - `ordemdia` e `expedientemateria` vêm ordenados por data, com empate instável: a mesma lista paginada repete e omite itens entre páginas (136 de 1.754 em 2026-11-01). Por isso os itens são coletados por sessão, numa página só.
+  - `materia/materialegislativa?autores=` não vem por id nem por data: a matéria nova entra no meio da lista e desloca as seguintes de página. Página renovada sozinha perde a matéria que mudou de página e repete a que voltou.
+  - Por isso as páginas de cada lista renovam todas na mesma execução: no dia de rodízio da lista, ou já, quando as cópias em cache são de coletas com mais de 12 horas de diferença. O item repetido em duas páginas entra uma vez (ADR-0067).
+  - Em 2026-11-15, com um dia de rodízio por página, o site tinha 351 proposições e 22 presenças repetidas nos 50 perfis, e faltavam proposições da fonte.
+  - `votoparlamentar` não traz `ordem` nem `expediente`, e `data_hora` vem nula ou com a data da migração do sistema (2024-01-04). A data do voto vem do item votado: voto -> `votacao` (registro) -> `ordem` ou `expediente` -> `data_ordem`. Em 2 das 1.053 votações de 2026-11-15, o item trazia uma data anterior à sessão, num dia sem sessão: nesses casos vale a data da sessão.
   - `autoria.autor` aponta para `base/autor`, e não para o parlamentar. A ligação é por `autor.object_id`.
   - Discursos: só ordem e tempo do orador. `url_discurso` vem vazio.
   - Não há chave comum com o TSE: o vínculo é por nome, partido e legislatura.
@@ -1718,6 +1724,10 @@ Validação em 2026-11-06.
 - Proposições, validadas em 2026-11-06:
   - `LeisAprovadasPorPromoventeJSON`, `ProjetosVetadosPorPromoventeJSON` e `ProjetosEmTramitacaoPorPromoventeJSON`, com `Codigo` igual à `chave` do vereador. Trazem os projetos de que o vereador é promovente, autor ou coautor: os que viraram lei (com número e data de publicação), os vetados (com o tipo de veto) e os em tramitação.
   - `ProjetosPorAnoJSON?Ano={ano}`: todos os documentos do ano, com `tipo`, `numero`, `ano`, `data` e `ementa`, sem autor. Dá a ementa e a data dos projetos das listas de autoria.
+  - O projeto que virou norma traz, na lista anual, `tipoNorma`, `numeroNorma`, `anoNorma` e `dataNorma`.
+  - A lista de tramitação segue trazendo o projeto que já virou decreto ou resolução. Nesse caso a situação é a norma da lista anual, como "Decreto nº 90/2024, de 2024-10-29". O tipo sai como a fonte grafa.
+  - Em 2026-11-15, isso valia para 380 das 6.514 proposições: 366 PDL e 14 PR. Nenhum PL: os que viraram lei estão na lista de leis.
+  - As listas anuais renovam toda semana, inclusive as de anos passados. A fonte registra a norma e acrescenta nota à ementa anos depois da apresentação.
   - O projeto encerrado sem virar lei fica fora. `ProjetosEncerradosJSON` não traz o autor, e `ProjetosAutoresJSON` pede uma chamada por projeto.
   - A fonte não separa autor de coautor. O campo `proponente` fica nulo.
   - Na validação: 6.495 proposições de 2022 a 2026 nos 55 vereadores em exercício, de 4.084 projetos distintos (PL, PDL, PLO e PR). Situação: 5.501 em tramitação, 951 viraram lei e 43 com veto total.
@@ -1833,6 +1843,8 @@ Ritmo da coleta: no mínimo 1 segundo entre chamadas ao portal.
 - Identificador canônico no projeto: `portal-3536505-{nome parlamentar em minúsculas, sem acento e com hífen}`. Chave `paulinia` em `ids_externos`.
 - Medidas da primeira coleta: 17 vereadores em exercício, os 17 com linha na página de legislaturas, 4 cargos na Mesa e 15 em cinco comissões.
 - O portal respondeu ao runner do GitHub Actions em 2026-11-15: 4 páginas, sem falha.
+- `verbaindenizatoria/`, lida em 2026-11-15: a Câmara informa que não há cotas parlamentares nem gastos com verba indenizatória, com base no art. 94, § 4º, da Lei Orgânica do Município. A página não é coletada: a nota do bloco de despesas repete a declaração, com a data.
+- Proposituras, pauta das sessões, votações e lista de frequência: o portal só traz o link para o SISCAM.
 
 ### `paulinia-camara-siscam`: não coletado
 

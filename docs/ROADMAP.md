@@ -427,7 +427,40 @@ Limitações:
 - No ensaio local, a publicação anterior era de 2026-11-11 e três perfis dela, sem relação com esta mudança, foram liberados à mão para a trava do ADR-0006 passar.
 - Paulínia sem proposições, votações e presença: a Câmara publica os três no SISCAM, cujo `robots.txt` recusa o projeto. Destrava com a liberação pela Câmara ou com um pedido pela Lei de Acesso à Informação, que é do mantenedor.
 - Paulínia sem a 14ª legislatura e sem o mandato dos eleitos para a prefeitura em 2020.
-- A conferência dos registros foi por amostra, fora o financiamento de campanha de 2024, conferido em todos os perfis.
+- A conferência dos registros foi por amostra, fora o financiamento de campanha de 2024, conferido em todos os perfis. A conferência completa veio depois (ADR-0067).
+
+## Conferência completa dos dados municipais (ADR-0067)
+
+Feita em 2026-11-15, sobre o pacote publicado no mesmo dia: 156 perfis municipais e 1.256 arquivos de detalhe.
+O ADR-0067 está como proposta.
+
+| Frente | Entrega | Estado |
+|---|---|---|
+| Conferência | Todos os registros dos quatro municípios comparados com as fontes, numa leitura separada da coleta | concluída |
+| Financiamento de campanha | O valor soma todos os itens de cada receita e despesa; a quantidade conta cada chave uma vez; a prestação sem lançamento sai com zero | concluída |
+| Piloto | As páginas de cada lista renovam juntas; o item repetido em duas páginas entra uma vez | concluída |
+| Piloto | O voto de item com data anterior à sessão sai com a data da sessão | concluída |
+| Capital | O projeto que virou decreto ou resolução sai com a norma; as listas anuais renovam toda semana | concluída |
+| Paulínia | A nota de despesas repete a declaração da Câmara sobre cota e verba indenizatória | concluída |
+
+Verificação em 2026-11-15:
+
+- Iguais à fonte no piloto: 74 mandatos, 34.666 votos, 1.051 de 1.053 votações, 11.660 presenças, 408 sessões, 3.589 discursos, 1.161 cargos em comissão, 87.582 proposições, 20.561 despesas e 3.911 atos normativos.
+- Iguais à fonte na capital: 55 vereadores, 161 cargos e 6.505 de 6.515 proposições. As outras 10 saíram das listas da fonte depois da captura.
+- Iguais à fonte em Caraguatatuba: 32 mandatos, 28 cargos na Mesa, 16 em comissões, 1.190 presenças, 3.859 proposições e 46 diárias.
+- Iguais à fonte em Paulínia: 17 vereadores e 19 cargos.
+- Nos quatro: 135 de 135 meses de despesa de prefeitura, 327 de 327 candidaturas e 12 de 12 mandatos de prefeito e vice.
+- Defeitos achados e corrigidos: os sete do ADR-0067.
+- Financiamento: nas quatro candidaturas de prova, o total com a correção é igual ao total pago da fonte.
+- Ensaio local com as correções: 2.388 perfis publicados, sem erro de schema. Capital com 366 decretos e 14 resoluções no lugar de "Em tramitação".
+- ETL: 434 testes. Site: 28 testes unitários e 109 E2E.
+
+Limitações:
+
+- A correção das listas do piloto só aparece no site depois da primeira coleta com ela: o cache do CI ainda tem páginas de dias diferentes.
+- O ensaio local do piloto não reproduz o defeito: o cache local foi baixado num dia só.
+- Paulínia segue sem proposições, votações e presença (ADR-0066).
+- As demais limitações estão no ADR-0067.
 
 ## Fase 2 (depois da POC)
 

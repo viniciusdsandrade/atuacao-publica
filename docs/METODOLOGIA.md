@@ -57,7 +57,7 @@ Não é presença. É a contagem de votos registrados em votações nominais.
 ### Câmara municipal (piloto, SAPL)
 
 1. Universo: votos individuais de `sessao/votoparlamentar` cujo registro de votação (`sessao/registrovotacao`) aponta para um item da ordem do dia ou do expediente da legislatura vigente. Item com resultado "Não votado" fica fora: não houve votação, e a fonte guarda nele marcas sem sentido ("[", "]") no lugar do voto (ADR-0065).
-2. Data: o voto individual não traz data confiável (votos migrados trazem a data da migração). A data é a do item votado (`data_ordem` da ordem do dia ou do expediente).
+2. Data: o voto individual não traz data confiável (votos migrados trazem a data da migração). A data é a do item votado (`data_ordem` da ordem do dia ou do expediente). Quando o item traz data anterior à da sessão em que foi votado, vale a data da sessão (ADR-0067).
 3. `votacoes_nominais`: votos individuais do item 1, por ano.
 4. `votos_registrados`: votos `Sim`, `Não` ou `Abstenção`.
 5. `por_tipo`: contagem de cada valor da fonte, inclusive `Não Votou` e `Ausente`.
@@ -160,7 +160,8 @@ Não é presença. É a contagem de votos registrados em votações nominais.
 - **ALESC.** Portal e-Legis paginado por iniciativa parlamentar. Cobre a 20ª legislatura, a partir de 2023-02-01. O que é anterior fica fora. Autoria e proponente vêm da listagem; o slug da iniciativa no portal pode ser o apelido ou o título parlamentar.
 - **ALBA.** API pública do NoPaper, por ano, de 2022 em diante. Entram todos os tipos com autor ou coautor deputado em exercício. O autor vem pelo nome civil, ligado ao nome civil do perfil, sem a marca "(INATIVO)" que a fonte põe no fim do nome. O primeiro autor é o proponente. Sequência de 11 dígitos na ementa (CPF) é removida.
 - **ALESE.** Consulta de produção legislativa do sistema da casa (`consulta-producao.aspx`), por autor e por tipo, a partir dos pares que a ficha do parlamentar lista. Entram as proposições com data de apresentação de 2022 em diante; sem data, vale o ano do título. Tipo, número, ano, ementa, data e situação vêm da listagem. O projeto não distingue autor de coautor nessa listagem, e os temas ficam vazios. Telefone, e-mail e sequência de 11 dígitos na ementa são removidos.
-- **Câmara municipal (piloto).** `materia/materialegislativa?autores={autor}&ano={ano}` do SAPL, por ano da legislatura vigente. O `autor` vem de `base/autor` pelo `object_id` do parlamentar. Entram todos os tipos de matéria, inclusive indicações e requerimentos. Situação: `resultado` da fonte, ou "Em tramitação" e "Tramitação encerrada" pelo campo `em_tramitacao`. Temas ficam vazios: a fonte não classifica.
+- **Câmara municipal (piloto).** `materia/materialegislativa?autores={autor}&ano={ano}` do SAPL, por ano da legislatura vigente. O `autor` vem de `base/autor` pelo `object_id` do parlamentar. Entram todos os tipos de matéria, inclusive indicações e requerimentos. Situação: `resultado` da fonte, ou "Em tramitação" e "Tramitação encerrada" pelo campo `em_tramitacao`. Temas ficam vazios: a fonte não classifica. As páginas de cada lista renovam juntas, e a matéria repetida em duas páginas entra uma vez (ADR-0067).
+- **Câmara Municipal de São Paulo (ADR-0027 e ADR-0067).** Listas de autoria do serviço da câmara, por vereador: leis aprovadas, projetos vetados e projetos em tramitação, de 2022 em diante. Ementa e data vêm da lista anual de projetos. Situação: a lei com número e data de publicação, o tipo de veto, ou "Em tramitação". O projeto da lista de tramitação que a lista anual registra como norma sai com a norma, como "Decreto nº 90/2024, de 2024-10-29". O projeto encerrado sem virar norma fica fora: o serviço não informa o autor dele.
 - **Câmara Municipal de Caraguatatuba (ADR-0057).** Pesquisa de matérias do sistema legislativo (SAGL), por código de autor e ano de mandato desde 2022. Entram todos os tipos, com tipo, número, ano, ementa, data de apresentação e link do texto integral. A pesquisa não separa autor de coautor: `proponente` fica `null`. A situação fica `null`: a Câmara não mantém o campo de tramitação, e o site não publica um "em tramitação" que a fonte não sustenta. Telefone, e-mail e CPF são removidos da ementa.
 
 ## Emendas parlamentares (ADR-0030)
@@ -232,7 +233,8 @@ Não é presença. É a contagem de votos registrados em votações nominais.
 - Candidaturas: as mesmas do bloco de candidaturas, ligadas ao perfil pela chave `SQ_CANDIDATO`.
 - Receitas: total, quantidade e soma por fonte (`DS_FONTE_RECEITA`: Fundo Especial, Fundo Partidário, outros recursos) e por origem (`DS_ORIGEM_RECEITA`). Fonte e origem repartem o mesmo total: o site não soma uma com a outra.
 - Despesas contratadas: total, quantidade e soma por tipo (`DS_ORIGEM_DESPESA`), com os até 10 maiores fornecedores com CNPJ pelo valor contratado.
-- Cada receita e cada despesa contam uma vez, pela chave da fonte (`SQ_RECEITA` e `SQ_DESPESA`). Valores como a fonte registra.
+- A fonte repete a chave (`SQ_RECEITA` e `SQ_DESPESA`) a cada item da mesma receita ou despesa. O valor soma todas as linhas. A quantidade conta cada chave uma vez (ADR-0067).
+- A linha de chave `-1` e valor zero é o marcador da prestação entregue sem lançamento. Ela não conta: o registro sai com total zero e quantidade zero.
 - Doador e fornecedor pessoa física entram só nas somas. Nome e CPF nunca são publicados. Fornecedor com CNPJ aparece pelo nome da Receita Federal, quando a fonte traz, sem a sequência de CPF do nome de MEI.
 - Ficam fora: despesas pagas (regime de caixa) e doador originário.
 - A eleição mais recente renova por semana: a prestação final chega até o 30º dia depois da eleição, ou até o 20º depois do segundo turno, e ainda pode ser retificada.
