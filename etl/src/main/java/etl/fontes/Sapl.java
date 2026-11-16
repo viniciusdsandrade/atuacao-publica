@@ -865,11 +865,14 @@ public final class Sapl implements Fonte {
         return map;
     }
 
-    /** Item votado. A data é a do item; sem ela, vale a da sessão. */
+    /**
+     * Item votado. A data é a do item. Sem ela, ou quando ela é anterior à sessão em que o item foi votado, vale a da
+     * sessão: a fonte guarda no item a data em que a pauta foi montada.
+     */
     static Item item(JsonNode no, LocalDate dataDaSessao) {
         Integer id = Json.inteiro(no, "id");
         LocalDate data = data(Json.texto(no, "data_ordem"));
-        if (data == null) {
+        if (data == null || dataDaSessao != null && data.isBefore(dataDaSessao)) {
             data = dataDaSessao;
         }
         if (id == null || data == null) {

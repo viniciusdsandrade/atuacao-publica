@@ -171,8 +171,12 @@ class SaplTest {
         JsonNode json = Json.FONTE.readTree("""
                 {"id": 15555, "__str__": "1 - Projeto de Lei Ordinária nº 280 de 2009", "data_ordem": "2026-06-29"}
                 """);
-        Sapl.Item item = Sapl.item(json, LocalDate.of(2026, 6, 30));
+        Sapl.Item item = Sapl.item(json, LocalDate.of(2026, 6, 29));
         assertEquals(LocalDate.of(2026, 6, 29), item.data());
+        // Sessão de mais de um dia: o item votado no segundo dia fica com a data dele.
+        assertEquals(LocalDate.of(2026, 6, 29), Sapl.item(json, LocalDate.of(2026, 6, 28)).data());
+        // Item com data anterior à sessão em que foi votado: vale a data da sessão.
+        assertEquals(LocalDate.of(2026, 6, 30), Sapl.item(json, LocalDate.of(2026, 6, 30)).data());
         assertEquals("Projeto de Lei Ordinária nº 280 de 2009", item.materia());
         JsonNode semData = Json.FONTE.readTree("{\"id\": 1, \"__str__\": \"2 - Moção nº 1 de 2026\", \"data_ordem\": null}");
         assertEquals(LocalDate.of(2026, 6, 30), Sapl.item(semData, LocalDate.of(2026, 6, 30)).data());
