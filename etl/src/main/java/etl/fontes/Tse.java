@@ -318,7 +318,10 @@ public final class Tse implements Fonte {
         }
     }
 
-    /** Somas de uma candidatura. Cada receita (SQ_RECEITA) e cada despesa (SQ_DESPESA) conta uma vez. */
+    /**
+     * Somas de uma candidatura. A fonte repete a chave (SQ_RECEITA, SQ_DESPESA) a cada item da mesma receita ou despesa:
+     * o valor soma todas as linhas, e a quantidade conta cada chave uma vez (ADR-0067).
+     */
     static final class Somas {
         private final Set<String> vistas = new HashSet<>();
         private BigDecimal total = BigDecimal.ZERO;
@@ -331,29 +334,40 @@ public final class Tse implements Fonte {
 
         void receita(Map<String, String> l) {
             BigDecimal valor = Texto.valor(l.get("VR_RECEITA"));
-            if (valor == null || !primeira(l.get("SQ_RECEITA"))) {
+            if (valor == null || semLancamento(l.get("SQ_RECEITA"), valor)) {
                 return;
             }
+            boolean nova = primeira(l.get("SQ_RECEITA"));
             total = total.add(valor);
-            quantidade++;
-            somar(porFonte, categoria(l.get("DS_FONTE_RECEITA")), valor);
-            somar(porOrigem, categoria(l.get("DS_ORIGEM_RECEITA")), valor);
+            if (nova) {
+                quantidade++;
+            }
+            somar(porFonte, categoria(l.get("DS_FONTE_RECEITA")), valor, nova);
+            somar(porOrigem, categoria(l.get("DS_ORIGEM_RECEITA")), valor, nova);
         }
 
         void despesa(Map<String, String> l) {
             BigDecimal valor = Texto.valor(l.get("VR_DESPESA_CONTRATADA"));
-            if (valor == null || !primeira(l.get("SQ_DESPESA"))) {
+            if (valor == null || semLancamento(l.get("SQ_DESPESA"), valor)) {
                 return;
             }
+            boolean nova = primeira(l.get("SQ_DESPESA"));
             total = total.add(valor);
-            quantidade++;
-            somar(porTipo, categoria(l.get("DS_ORIGEM_DESPESA")), valor);
+            if (nova) {
+                quantidade++;
+            }
+            somar(porTipo, categoria(l.get("DS_ORIGEM_DESPESA")), valor, nova);
             String cnpj = Texto.cnpj(l.get("NR_CPF_CNPJ_FORNECEDOR"));
             if (cnpj != null) {
-                somar(porFornecedor, cnpj, valor);
+                somar(porFornecedor, cnpj, valor, nova);
                 String nome = semNulo(l.get("NM_FORNECEDOR_RFB"));
                 nomeDoFornecedor.putIfAbsent(cnpj, etl.Guarda.semCpf(nome != null ? nome : semNulo(l.get("NM_FORNECEDOR"))));
             }
+        }
+
+        /** Linha de chave -1 e valor zero: o marcador da fonte para a prestação entregue sem lançamento. */
+        private static boolean semLancamento(String id, BigDecimal valor) {
+            return "-1".equals(semNulo(id)) && valor.signum() == 0;
         }
 
         /** Sem identificador na linha, a linha conta: só um identificador repetido indica a mesma receita ou despesa. */
@@ -381,10 +395,13 @@ public final class Tse implements Fonte {
             return v == null ? "(vazio na fonte)" : v;
         }
 
-        private static void somar(Map<String, BigDecimal[]> mapa, String chave, BigDecimal valor) {
+        /** O valor entra sempre. O lançamento só conta na primeira linha da chave. */
+        private static void somar(Map<String, BigDecimal[]> mapa, String chave, BigDecimal valor, boolean novoLancamento) {
             BigDecimal[] s = mapa.computeIfAbsent(chave, k -> new BigDecimal[] {BigDecimal.ZERO, BigDecimal.ZERO});
             s[0] = s[0].add(valor);
-            s[1] = s[1].add(BigDecimal.ONE);
+            if (novoLancamento) {
+                s[1] = s[1].add(BigDecimal.ONE);
+            }
         }
 
         /** Categorias do maior valor para o menor; empate pelo nome. */

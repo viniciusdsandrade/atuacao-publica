@@ -204,21 +204,60 @@ class TseTest {
     void receitasSomamPorFonteEOrigemSemNomeNemCpfDeDoador() {
         Tse.Somas somas = new Tse.Somas();
         somas.receita(receita("1", "FUNDO ESPECIAL", "Recursos de partido político", "1.000,00"));
+        // A fonte repete a chave a cada item da mesma receita: o valor soma os dois itens, e o lançamento conta uma vez.
         somas.receita(receita("2", "OUTROS RECURSOS", "Recursos de pessoas físicas", "200,50"));
-        somas.receita(receita("2", "OUTROS RECURSOS", "Recursos de pessoas físicas", "200,50"));
+        somas.receita(receita("2", "OUTROS RECURSOS", "Recursos de pessoas físicas", "100,00"));
         somas.receita(receita("3", "#NULO", "Recursos de pessoas físicas", "99,50"));
         Prov prov = new Prov("tse-cdn", "https://exemplo.invalid/contas.zip#receitas.csv", java.time.Instant.parse("2026-11-06T00:00:00Z"));
 
         var receitas = somas.receitas(2026, "DEPUTADO FEDERAL", prov);
 
-        assertEquals(new BigDecimal("1300.00"), receitas.total());
-        assertEquals(3, receitas.quantidade(), "a receita repetida (mesmo SQ_RECEITA) conta uma vez");
+        assertEquals(new BigDecimal("1400.00"), receitas.total(), "o total soma todos os itens da receita");
+        assertEquals(3, receitas.quantidade(), "a receita de dois itens (mesmo SQ_RECEITA) conta uma vez");
         assertEquals("FUNDO ESPECIAL", receitas.porFonte().getFirst().categoria());
         assertEquals("(vazio na fonte)", receitas.porFonte().getLast().categoria());
-        assertEquals(new BigDecimal("300.00"), receitas.porOrigem().stream()
-                .filter(s -> s.categoria().equals("Recursos de pessoas físicas")).findFirst().orElseThrow().valor());
+        var pessoasFisicas = receitas.porOrigem().stream()
+                .filter(s -> s.categoria().equals("Recursos de pessoas físicas")).findFirst().orElseThrow();
+        assertEquals(new BigDecimal("400.00"), pessoasFisicas.valor());
+        assertEquals(2, pessoasFisicas.quantidade());
         String json = etl.Json.arvore(receitas).toString();
         assertFalse(json.contains("12345678909") || json.contains("PESSOA DOADORA"), "doador pessoa física não sai");
+    }
+
+    @Test
+    void despesaDeVariosItensSomaTodosEContaUmLancamento() {
+        Tse.Somas somas = new Tse.Somas();
+        somas.despesa(despesa("7", "Publicidade por materiais impressos", "99999999000199", "GRAFICA EXEMPLO LTDA", "148,80"));
+        somas.despesa(despesa("7", "Publicidade por materiais impressos", "99999999000199", "GRAFICA EXEMPLO LTDA", "1.750,00"));
+        somas.despesa(despesa("7", "Publicidade por materiais impressos", "99999999000199", "GRAFICA EXEMPLO LTDA", "1.750,00"));
+        somas.despesa(despesa("8", "Despesas com pessoal", "88888888000188", "SERVICOS EXEMPLO LTDA", "100,00"));
+        Prov prov = new Prov("tse-cdn", "https://exemplo.invalid/contas.zip#despesas.csv", java.time.Instant.parse("2026-11-06T00:00:00Z"));
+
+        var despesas = somas.despesas(2024, "VEREADOR", prov);
+
+        assertEquals(new BigDecimal("3748.80"), despesas.total());
+        assertEquals(2, despesas.quantidade());
+        assertEquals(new BigDecimal("3648.80"), despesas.porTipo().getFirst().valor());
+        assertEquals(1, despesas.porTipo().getFirst().quantidade());
+        assertEquals(new BigDecimal("3648.80"), despesas.maioresFornecedores().getFirst().valor());
+    }
+
+    @Test
+    void prestacaoSemLancamentoSaiComTotalZeroESemCategoria() {
+        Tse.Somas receitasVazias = new Tse.Somas();
+        receitasVazias.receita(receita("-1", "#NULO", "#NULO", "0,00"));
+        Tse.Somas despesasVazias = new Tse.Somas();
+        despesasVazias.despesa(despesa("-1", "#NULO", "", "#NULO", "0,00"));
+        Prov prov = new Prov("tse-cdn", "https://exemplo.invalid/contas.zip#receitas.csv", java.time.Instant.parse("2026-11-06T00:00:00Z"));
+
+        var receitas = receitasVazias.receitas(2018, "DEPUTADO ESTADUAL", prov);
+        var despesas = despesasVazias.despesas(2018, "DEPUTADO ESTADUAL", prov);
+
+        assertEquals(0, receitas.total().signum());
+        assertEquals(0, receitas.quantidade());
+        assertTrue(receitas.porFonte().isEmpty() && receitas.porOrigem().isEmpty());
+        assertEquals(0, despesas.quantidade());
+        assertTrue(despesas.porTipo().isEmpty());
     }
 
     @Test
