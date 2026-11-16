@@ -263,7 +263,7 @@ export function notaDoBloco(bloco: string, esfera?: string | null, ente?: string
     return 'A Câmara Municipal de Paulínia publica proposituras, votações e lista de frequência no sistema legislativo dela. O sistema não permite coleta automática, e o site não o coleta. O bloco vazio não quer dizer que o vereador não tenha registro.';
   }
   if (bloco === 'despesas' && esfera === 'municipal' && ente === ENTE_DE_PAULINIA) {
-    return 'O projeto ainda não tem fonte validada para as despesas por vereador deste município.';
+    return 'Em 2026-11-15, a Câmara Municipal de Paulínia informava, na página "Verba Indenizatória" do portal, que não há cota parlamentar nem verba indenizatória (Lei Orgânica do Município, art. 94, § 4º). O projeto não tem fonte validada para outros gastos por vereador, como diárias.';
   }
   if (bloco === 'atos_normativos' && esfera === 'municipal') {
     if (ente && ente !== ENTE_DO_PILOTO) {

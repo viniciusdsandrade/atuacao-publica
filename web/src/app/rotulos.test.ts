@@ -176,7 +176,8 @@ test('vereador de Paulínia: o que fica no sistema legislativo sai como não col
   assert.equal(textoDoBlocoVazio('votos', 'municipal', '3536505', 'prefeito'), SEM_REGISTRO);
   assert.equal(textoDoBlocoVazio('votos', 'municipal', '3510500', 'vereador'), SEM_REGISTRO);
   assert.equal(textoDoBlocoVazio('votos', 'federal', 'BR', 'deputado_federal'), SEM_REGISTRO);
-  assert.match(notaDoBloco('despesas', 'municipal', '3536505', 'vereador') ?? '', /ainda não tem fonte validada/);
+  // A câmara declara no portal que não paga cota nem verba indenizatória: a nota repete a declaração, com a data.
+  assert.match(notaDoBloco('despesas', 'municipal', '3536505', 'vereador') ?? '', /não há cota parlamentar nem verba indenizatória/);
   assert.match(notaDoBloco('atos_normativos', 'municipal', '3536505', 'prefeito') ?? '', /ainda não tem fonte validada/);
 });
 
