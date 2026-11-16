@@ -4,6 +4,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
@@ -11,6 +13,7 @@ import java.util.Set;
 
 import org.junit.jupiter.api.Test;
 
+import etl.Coleta.Politica;
 import etl.Json;
 import tools.jackson.databind.JsonNode;
 
@@ -180,6 +183,43 @@ class SaplTest {
         assertEquals("Projeto de Lei Ordinária nº 280 de 2009", item.materia());
         JsonNode semData = Json.FONTE.readTree("{\"id\": 1, \"__str__\": \"2 - Moção nº 1 de 2026\", \"data_ordem\": null}");
         assertEquals(LocalDate.of(2026, 6, 30), Sapl.item(semData, LocalDate.of(2026, 6, 30)).data());
+    }
+
+    @Test
+    void paginasDaMesmaListaRenovamJuntas() {
+        // Lista que desloca: com um dia por página, o item que muda de página entre duas renovações some ou repete.
+        Instant captura = Instant.parse("2026-10-01T06:00:00Z");
+        String lista = "materias/1-2026";
+        List<Instant> mesmoDia = List.of(captura, captura.plusSeconds(90), captura.plusSeconds(200));
+        int renovacoes = 0;
+        for (int dia = 1; dia <= 7; dia++) {
+            Politica politica = Sapl.politicaDaLista(mesmoDia, lista, Politica.SEMANAL, captura.plus(Duration.ofDays(dia)));
+            assertTrue(politica == Politica.SEMPRE || politica == Politica.SE_AUSENTE, "decisão única para a lista inteira");
+            if (politica == Politica.SEMPRE) {
+                renovacoes++;
+            }
+        }
+        assertEquals(1, renovacoes, "a lista renova inteira num dia da semana");
+        // Cópias de coletas diferentes: a lista renova já, mesmo de período fechado.
+        List<Instant> diasDiferentes = List.of(captura, captura.plus(Duration.ofDays(3)));
+        Instant agora = captura.plus(Duration.ofDays(3)).plusSeconds(3600);
+        assertEquals(Politica.SEMPRE, Sapl.politicaDaLista(diasDiferentes, lista, Politica.SEMANAL, agora));
+        assertEquals(Politica.SEMPRE, Sapl.politicaDaLista(diasDiferentes, lista, Politica.SE_AUSENTE, agora));
+        // Período fechado com cópias da mesma coleta segue em cache. Sem cópia, vale a política pedida.
+        assertEquals(Politica.SE_AUSENTE, Sapl.politicaDaLista(mesmoDia, lista, Politica.SE_AUSENTE, agora));
+        assertEquals(Politica.SEMANAL, Sapl.politicaDaLista(List.of(), lista, Politica.SEMANAL, agora));
+    }
+
+    @Test
+    void itemRepetidoEmDuasPaginasEntraUmaVez() throws Exception {
+        List<JsonNode> p1 = List.of(Json.FONTE.readTree("{\"id\": 10}"), Json.FONTE.readTree("{\"id\": 11}"));
+        List<JsonNode> p2 = List.of(Json.FONTE.readTree("{\"id\": 11}"), Json.FONTE.readTree("{\"id\": 12}"),
+                Json.FONTE.readTree("{\"nome\": \"sem id\"}"), Json.FONTE.readTree("{\"nome\": \"sem id\"}"));
+
+        List<JsonNode> itens = Sapl.semRepetidos(List.of(p1, p2));
+
+        assertEquals(5, itens.size());
+        assertEquals(List.of("10", "11", "12"), itens.stream().filter(i -> i.has("id")).map(i -> Json.texto(i, "id")).toList());
     }
 
     @Test

@@ -340,7 +340,7 @@ public final class Coleta {
     }
 
     /** Cópia SEMANAL vencida: é o dia de rodízio do arquivo, ou a cópia passou de uma semana porque uma execução falhou. */
-    static boolean vencida(String caminho, Instant capturadaEm, Instant agora) {
+    public static boolean vencida(String caminho, Instant capturadaEm, Instant agora) {
         LocalDate hoje = LocalDate.ofInstant(agora, ZoneOffset.UTC);
         boolean diaDoRodizio = Math.floorMod(caminho.hashCode() + hoje.toEpochDay(), DIAS_DO_RODIZIO) == 0;
         return diaDoRodizio || capturadaEm.isBefore(agora.minus(Duration.ofDays(DIAS_DO_RODIZIO)));

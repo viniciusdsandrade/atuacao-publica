@@ -3,8 +3,11 @@ package etl.fontes;
 import java.math.BigDecimal;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Duration;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -235,28 +238,85 @@ public final class Sapl implements Fonte {
         coleta.periodo(new Meta.Periodo(inicioDaCobertura(cobertas), ctx.hoje()));
     }
 
-    /** Baixa as páginas de uma listagem até a fonte não indicar próxima página. A URL já contém "?". */
+    /** Cópias de páginas da mesma lista com mais que isto de diferença são de coletas diferentes. */
+    static final Duration FOLGA_ENTRE_PAGINAS = Duration.ofHours(12);
+
+    /**
+     * Baixa as páginas de uma listagem até a fonte não indicar próxima página. A URL já contém "?".
+     * Todas as páginas da lista seguem a mesma decisão de renovar (ADR-0067).
+     */
     private static void paginas(Contexto ctx, Coleta coleta, String url, String caminho, Politica politica) throws Exception {
+        Politica daLista = politicaDaLista(capturasDaLista(ctx, caminho), caminho, politica, ctx.agora());
         for (int p = 1; p <= LIMITE_DE_PAGINAS; p++) {
-            Coleta.Arquivo arq = coleta.obterOpcional(url + "&page_size=" + PAGINA + "&page=" + p, caminho + "-p" + p + ".json", JSON, politica);
+            Coleta.Arquivo arq = coleta.obterOpcional(url + "&page_size=" + PAGINA + "&page=" + p, caminho + "-p" + p + ".json", JSON, daLista);
             if (arq == null || proxima(Json.ler(Coleta.caminho(ctx, arq))) == null) {
                 return;
             }
         }
     }
 
-    /** Lê as páginas já coletadas de uma listagem, na ordem, até a última. */
+    /** Momento de captura de cada página em cache de uma lista, da primeira até a que não indica próxima. */
+    private static List<Instant> capturasDaLista(Contexto ctx, String caminho) {
+        List<Instant> capturas = new ArrayList<>();
+        for (int p = 1; p <= LIMITE_DE_PAGINAS; p++) {
+            Coleta.Arquivo arq = Coleta.metadados(ctx, "sapl", caminho + "-p" + p + ".json");
+            if (arq == null || !Files.exists(Coleta.caminho(ctx, arq))) {
+                break;
+            }
+            capturas.add(arq.capturadoEm());
+            if (proxima(Json.ler(Coleta.caminho(ctx, arq))) == null) {
+                break;
+            }
+        }
+        return capturas;
+    }
+
+    /**
+     * Política de uma lista paginada. A lista desloca a cada item novo: a página renovada sozinha perde o item que mudou
+     * de página e repete o que voltou. Por isso as páginas renovam todas na mesma execução: no dia de rodízio da lista,
+     * ou já, quando as cópias em cache são de coletas diferentes. Isso vale também para a lista de período fechado.
+     */
+    static Politica politicaDaLista(List<Instant> capturas, String caminho, Politica politica, Instant agora) {
+        if (capturas.isEmpty() || politica == Politica.SEMPRE) {
+            return politica;
+        }
+        Instant primeira = Collections.min(capturas);
+        if (Duration.between(primeira, Collections.max(capturas)).compareTo(FOLGA_ENTRE_PAGINAS) > 0) {
+            return Politica.SEMPRE;
+        }
+        if (politica == Politica.SEMANAL || politica == Politica.SEMANAL_EM_LISTA) {
+            return Coleta.vencida(caminho, primeira, agora) ? Politica.SEMPRE : Politica.SE_AUSENTE;
+        }
+        return politica;
+    }
+
+    /** Lê as páginas já coletadas de uma listagem, na ordem, até a última. O item repetido em duas páginas entra uma vez. */
     private static List<JsonNode> paginados(Contexto ctx, String caminho) {
-        List<JsonNode> itens = new ArrayList<>();
+        List<List<JsonNode>> paginas = new ArrayList<>();
         for (int p = 1; p <= LIMITE_DE_PAGINAS; p++) {
             Coleta.Arquivo arq = Coleta.metadados(ctx, "sapl", caminho + "-p" + p + ".json");
             if (arq == null) {
-                return itens;
+                break;
             }
             JsonNode pagina = Json.ler(Coleta.caminho(ctx, arq));
-            itens.addAll(resultados(pagina));
+            paginas.add(resultados(pagina));
             if (proxima(pagina) == null) {
-                return itens;
+                break;
+            }
+        }
+        return semRepetidos(paginas);
+    }
+
+    /** Junta as páginas na ordem. O item com o mesmo `id` de um anterior fica fora. Item sem `id` entra sempre. */
+    static List<JsonNode> semRepetidos(List<List<JsonNode>> paginas) {
+        List<JsonNode> itens = new ArrayList<>();
+        Set<String> vistos = new HashSet<>();
+        for (List<JsonNode> pagina : paginas) {
+            for (JsonNode item : pagina) {
+                String id = Json.texto(item, "id");
+                if (id == null || vistos.add(id)) {
+                    itens.add(item);
+                }
             }
         }
         return itens;
