@@ -86,10 +86,11 @@ public final class Cmsp implements Fonte {
         coleta.obter(URL_GABINETES, "gabinetes.json", "application/json", Politica.SEMANAL);
         coleta.obterOuVazio(URL_COMISSOES, "comissoes.json", "application/json", Politica.SEMANAL);
         coleta.obterOuVazio(URL_MEMBROS, "membros.html", "text/html", Politica.SEMANAL);
-        // Proposições: o autor só aparece nas consultas por vereador. Ementa e data vêm da lista anual de projetos.
+        // Proposições: o autor só aparece nas consultas por vereador. Ementa, data e norma vêm da lista anual de projetos.
+        // A lista de ano passado também muda: o projeto vira norma e a ementa recebe nota anos depois. Por isso renova toda semana.
         for (int ano = PRIMEIRO_ANO_PROPOSICOES; ano <= ctx.hoje().getYear(); ano++) {
             coleta.obterOpcional(URL_PROJETOS_POR_ANO + "?Ano=" + ano, "projetos/" + ano + ".json", "application/json",
-                    Politica.porAnoSemanal(ano, ctx.hoje()));
+                    Politica.SEMANAL);
         }
         List<HistoricoDeputados.Entrada> entradas = HistoricoDeputados.mesclar(
                 ctx, nome(), emExercicio(ctx), provVereadores(ctx), Cmsp::paraSnapshot);
@@ -242,14 +243,21 @@ public final class Cmsp implements Fonte {
     public record Autoria(JsonNode itens, Prov prov) {
     }
 
-    /** Data e ementa do projeto na lista anual, que as listas de autoria nem sempre trazem. */
-    public record ProjetoDoAno(String data, String ementa) {
+    /**
+     * Data e ementa do projeto na lista anual, que as listas de autoria nem sempre trazem, e a norma em que ele se
+     * converteu, quando a lista anual a registra.
+     */
+    public record ProjetoDoAno(String data, String ementa, String norma) {
+        public ProjetoDoAno(String data, String ementa) {
+            this(data, ementa, null);
+        }
     }
 
     /**
      * Proposições do vereador desde 2022, pelas listas de autoria do serviço. O projeto que está em mais de uma lista
      * entra uma vez, com a situação mais avançada: lei, veto, tramitação. Projeto encerrado sem virar lei fica fora,
-     * porque o serviço não informa o autor dele.
+     * porque o serviço não informa o autor dele. A lista de tramitação segue trazendo o projeto que já virou decreto ou
+     * resolução: nesse caso vale a norma que a lista anual registra.
      */
     public static List<Proposicao> proposicoes(Autoria leis, Autoria vetados, Autoria tramitacao,
                                                Map<String, ProjetoDoAno> projetosDoAno) {
@@ -281,7 +289,9 @@ public final class Cmsp implements Fonte {
         for (JsonNode t : itens(tramitacao)) {
             String id = identificacao(t);
             if (id != null && !porIdentificacao.containsKey(id)) {
-                porIdentificacao.put(id, proposicao(t, id, null, "Em tramitação", projetosDoAno, tramitacao.prov()));
+                ProjetoDoAno doAno = projetosDoAno.get(id);
+                String situacao = doAno == null || doAno.norma() == null ? "Em tramitação" : doAno.norma();
+                porIdentificacao.put(id, proposicao(t, id, null, situacao, projetosDoAno, tramitacao.prov()));
             }
         }
         return new ArrayList<>(porIdentificacao.values());
@@ -307,6 +317,23 @@ public final class Cmsp implements Fonte {
         return new Proposicao(tipo + "-" + numero + "-" + ano, tipo, numero, ano, identificacao,
                 ementa != null ? ementa : doAno == null ? null : doAno.ementa(), situacao, null,
                 doAno == null ? null : doAno.data(), null, null, null, prov);
+    }
+
+    /**
+     * "Decreto nº 90/2024, de 2024-10-29": a norma em que o projeto se converteu, com o tipo que a lista anual registra.
+     * Sem tipo ou sem número, null.
+     */
+    static String norma(JsonNode projeto) {
+        String tipo = Json.texto(projeto, "tipoNorma");
+        Integer numero = Json.inteiro(projeto, "numeroNorma");
+        if (tipo == null || tipo.isBlank() || numero == null) {
+            return null;
+        }
+        Integer ano = Json.inteiro(projeto, "anoNorma");
+        String texto = titulo(tipo) + " nº " + String.format(Locale.forLanguageTag("pt-BR"), "%,d", numero)
+                + (ano == null ? "" : "/" + ano);
+        String data = dia(projeto, "dataNorma");
+        return data == null ? texto : texto + ", de " + data;
     }
 
     /** "Lei nº 18.253, publicada em 2025-05-22". */
@@ -353,7 +380,7 @@ public final class Cmsp implements Fonte {
             for (JsonNode p : Json.ler(Coleta.caminho(ctx, arq))) {
                 String id = identificacao(p);
                 if (id != null && procurados.contains(id)) {
-                    projetos.putIfAbsent(id, new ProjetoDoAno(dia(p, "data"), Json.texto(p, "ementa")));
+                    projetos.putIfAbsent(id, new ProjetoDoAno(dia(p, "data"), Json.texto(p, "ementa"), norma(p)));
                 }
             }
         }

@@ -291,6 +291,36 @@ class CmspTest {
     }
 
     @Test
+    void projetoDaListaDeTramitacaoQueJaVirouNormaMostraANorma() throws Exception {
+        Prov tramitacao = new Prov(Cmsp.FONTE_API, Cmsp.URL_TRAMITACAO + "?Codigo=1", Instant.parse("2026-11-05T12:00:00Z"));
+        JsonNode listaTramitacao = Json.FONTE.readTree("""
+                [{"tipo": "PDL", "numero": 5, "ano": 2025}, {"tipo": "PR", "numero": 7, "ano": 2025},
+                 {"tipo": "PL", "numero": 9, "ano": 2025}]
+                """);
+        JsonNode anual = Json.FONTE.readTree("""
+                [{"tipo": "PDL", "numero": 5, "ano": 2025, "data": "2025-02-10T00:00:00", "ementa": "Concede C.",
+                  "tipoNorma": "DECRETO", "numeroNorma": 90, "anoNorma": 2025, "dataNorma": "2025-10-29T00:00:00"},
+                 {"tipo": "PR", "numero": 7, "ano": 2025, "data": "2025-03-01T00:00:00", "ementa": "Altera D.",
+                  "tipoNorma": "RESOLUÇÃO", "numeroNorma": 1234},
+                 {"tipo": "PL", "numero": 9, "ano": 2025, "data": "2025-03-02T00:00:00", "ementa": "Dispõe sobre E."}]
+                """);
+        assertEquals("Decreto nº 90/2025, de 2025-10-29", Cmsp.norma(anual.get(0)));
+        assertEquals("Resolução nº 1.234", Cmsp.norma(anual.get(1)));
+        assertNull(Cmsp.norma(anual.get(2)));
+        Map<String, Cmsp.ProjetoDoAno> doAno = Map.of(
+                "PDL 5/2025", new Cmsp.ProjetoDoAno("2025-02-10", "Concede C.", Cmsp.norma(anual.get(0))),
+                "PR 7/2025", new Cmsp.ProjetoDoAno("2025-03-01", "Altera D.", Cmsp.norma(anual.get(1))),
+                "PL 9/2025", new Cmsp.ProjetoDoAno("2025-03-02", "Dispõe sobre E.", Cmsp.norma(anual.get(2))));
+
+        List<Proposicao> lista = Cmsp.proposicoes(new Cmsp.Autoria(null, null), new Cmsp.Autoria(null, null),
+                new Cmsp.Autoria(listaTramitacao, tramitacao), doAno);
+
+        assertEquals("Decreto nº 90/2025, de 2025-10-29", lista.get(0).situacao());
+        assertEquals("Resolução nº 1.234", lista.get(1).situacao());
+        assertEquals("Em tramitação", lista.get(2).situacao());
+    }
+
+    @Test
     void normalizaPreservaVereadorQuePerdeuGabineteEmExecucaoAnterior(@TempDir Path tempDir) throws Exception {
         Path rawCmsp = tempDir.resolve("data/raw/cmsp");
         Files.createDirectories(rawCmsp);
