@@ -432,7 +432,7 @@ Limitações:
 ## Conferência completa dos dados municipais (ADR-0067)
 
 Feita em 2026-11-15, sobre o pacote publicado no mesmo dia: 156 perfis municipais e 1.256 arquivos de detalhe.
-O ADR-0067 está como proposta.
+Aceita em 2026-11-17, depois de conferidas as correções no site.
 
 | Frente | Entrega | Estado |
 |---|---|---|
@@ -455,10 +455,17 @@ Verificação em 2026-11-15:
 - Ensaio local com as correções: 2.388 perfis publicados, sem erro de schema. Capital com 366 decretos e 14 resoluções no lugar de "Em tramitação".
 - ETL: 434 testes. Site: 28 testes unitários e 109 E2E.
 
+Verificação no site em 2026-11-17, sobre o pacote publicado às 07:10 UTC, depois de três coletas com as correções:
+
+- Piloto: nenhum registro repetido em proposições, presenças e atos normativos. São 88.165 proposições, 11.841 presenças e 3.927 atos normativos. Os 3.927 atos são os 3.911 distintos da conferência, mais os 5 decretos que faltavam e os 11 que entraram na fonte depois.
+- Piloto, votos: os 35.145 votos estão em 1.442 votações. Todas caem em dia de sessão. Três dias não têm presença no site: 2024-12-12 e 2025-05-08 são reuniões extraordinárias sem presença registrada na fonte, e 2022-03-11 é a sessão do dia 10 que passou da meia-noite.
+- Capital: 372 PDL com decreto e 14 PR com resolução, no lugar de "Em tramitação".
+- Financiamento: nos 136 perfis municipais presentes também no ensaio local, os totais e as quantidades publicados são iguais aos do ensaio com a correção. Nenhum registro com um lançamento de valor zero.
+- Paulínia: a nota de despesas do site repete a declaração da Câmara.
+- Não é repetição: 937 despesas do piloto aparecem iguais no site em data, categoria e valor. Na fonte, são itens distintos, com `id` e descrição próprios. Exemplo: em 2025-11-26, um apontador e um pacote de envelopes, de R$ 1,10 cada. O site não mostra a descrição do item.
+
 Limitações:
 
-- A correção das listas do piloto só aparece no site depois da primeira coleta com ela: o cache do CI ainda tem páginas de dias diferentes.
-- O ensaio local do piloto não reproduz o defeito: o cache local foi baixado num dia só.
 - Paulínia segue sem proposições, votações e presença (ADR-0066).
 - As demais limitações estão no ADR-0067.
 

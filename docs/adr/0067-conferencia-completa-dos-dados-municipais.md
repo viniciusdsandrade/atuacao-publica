@@ -1,6 +1,6 @@
 # ADR-0067: Conferência completa dos dados municipais e correções que ela trouxe
 
-- **Status**: Proposta
+- **Status**: Aceita
 - **Data**: 2026-11-15
 
 ## Contexto
