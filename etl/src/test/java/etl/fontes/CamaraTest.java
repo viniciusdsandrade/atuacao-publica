@@ -60,6 +60,19 @@ class CamaraTest {
     }
 
     @Test
+    void cargoNasDuasLegislaturasEntraUmaVez() {
+        String linha = """
+                {"uriOrgao": "https://dadosabertos.camara.leg.br/api/v2/orgaos/6855", "siglaOrgao": "CMO",
+                 "cargo": "Titular", "dataInicio": "2022-05-04", "dataFim": "%s"}
+                """;
+        JsonNode l56 = Json.FONTE.readTree(linha.formatted("2023-02-01"));
+        JsonNode l57 = Json.FONTE.readTree(linha.formatted("2023-02-01"));
+        JsonNode outroPeriodo = Json.FONTE.readTree(linha.formatted("2022-12-31"));
+        assertEquals(Camara.chaveOrgao(l56), Camara.chaveOrgao(l57));
+        assertNotEquals(Camara.chaveOrgao(l56), Camara.chaveOrgao(outroPeriodo));
+    }
+
+    @Test
     void valorNegativoDeCompensacaoEntra() {
         assertEquals(-120, Camara.despesa(cota("CIA AEREA", "12.345.678/0001-95", "-120.00", "0"), PROV).valor().intValue());
     }

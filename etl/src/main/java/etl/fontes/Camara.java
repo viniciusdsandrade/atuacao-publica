@@ -272,6 +272,7 @@ public final class Camara implements Fonte {
         final List<Proposicao> proposicoes = new ArrayList<>();
         final List<Evento> eventos = new ArrayList<>();
         final List<OrgaoOuFrente> orgaos = new ArrayList<>();
+        final Set<String> chavesOrgao = new HashSet<>();
         final Map<String, int[]> participacao = new TreeMap<>();
         final Map<String, Map<String, Integer>> porTipo = new TreeMap<>();
     }
@@ -695,7 +696,7 @@ public final class Camara implements Fonte {
             Json.paraCada(Coleta.caminho(ctx, arq), "dados", o -> {
                 String uri = Json.texto(o, "uriDeputado");
                 Acumulado a = uri == null ? null : acumulados.get(uri.substring(uri.lastIndexOf('/') + 1));
-                if (a == null) {
+                if (a == null || !a.chavesOrgao.add(chaveOrgao(o))) {
                     return;
                 }
                 a.orgaos.add(new OrgaoOuFrente("orgao", primeiro(Json.texto(o, "nomeOrgao"), Json.texto(o, "siglaOrgao")),
@@ -705,6 +706,18 @@ public final class Camara implements Fonte {
             usadas.add(FonteUsada.de("camara-arquivos", arq));
         }
         fontes.put("orgaos_e_frentes", usadas);
+    }
+
+    /**
+     * O cargo que atravessa a troca de legislatura vem igual no arquivo das duas (ADR-0068).
+     * Mesmo órgão, cargo, início e fim é o mesmo registro.
+     */
+    static String chaveOrgao(JsonNode o) {
+        StringBuilder chave = new StringBuilder();
+        for (String campo : List.of("uriOrgao", "siglaOrgao", "cargo", "dataInicio", "dataFim")) {
+            chave.append(Json.texto(o, campo)).append('|');
+        }
+        return chave.toString();
     }
 
     /** Frentes são dado complementar: sem coleta do deputado, a lista fica vazia (coleta parcial). */
