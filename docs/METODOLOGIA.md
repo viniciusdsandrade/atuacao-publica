@@ -195,7 +195,7 @@ Não é presença. É a contagem de votos registrados em votações nominais.
 
 ## Órgãos e frentes
 
-- **Câmara.** `orgaosDeputados-L{legislatura}` de cada legislatura coberta (cargo, início e fim) e `/deputados/{id}/frentes` filtrado pelas legislaturas cobertas.
+- **Câmara.** `orgaosDeputados-L{legislatura}` de cada legislatura coberta (cargo, início e fim) e `/deputados/{id}/frentes` filtrado pelas legislaturas cobertas. O cargo que vem igual no arquivo de duas legislaturas (mesmo órgão, cargo, início e fim) entra uma vez (ADR-0068).
 - **Senado.** `/senador/{codigo}/comissoes`, com participação ativa em algum momento desde o início da cobertura (2022-01-01).
 - **ALMT.** Composição da Mesa Diretora por sessão legislativa da 20ª Legislatura (2023 a 2026), com cargos institucionais (Presidente, Vice-Presidentes e Secretários) e vigência anual de cada biênio regimental.
 - **ALEMS.** Composição da Mesa Diretora da 12ª Legislatura (2023–2027), com cargos institucionais (Presidente, Vice-Presidentes e Secretários) e vigência regimental dos biênios.

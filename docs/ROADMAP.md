@@ -65,7 +65,7 @@ Estado real de cada fase. Atualizado ao fechar cada fase.
 - A auditoria de acessibilidade (axe) roda no CI sobre dados sintéticos e só no Chromium (ADR-0028). Desde 2026-11-14 usa as regras da WCAG 2.2 AA, nos temas claro e escuro, no desktop e no celular emulado, e varre também o perfil com os blocos expandidos (ADR-0064). Dado real longo, outros navegadores e os demais estados interativos seguem sem varredura automática.
 - Órgãos e frentes (ADR-0062): perfil com mais de 40 registros mostra de início todos os órgãos e comissões, as frentes com cargo de liderança e as 20 frentes mais recentes. As demais frentes vêm sob demanda, no arquivo completo. Frente sem data de início na fonte entra na ordem pelo nome.
 - Assembleias em SAPL (ADR-0063): `votoparlamentar` lista só quem tem voto individual registrado. O projeto não infere ausência, e `sem_registro` sai nulo. A fonte não publica orientação de bancada. ALEAL, ALERR e ALETO seguem sem votações e sem presença: na ALEAL os registros de sessão terminam em 2019, na ALERR o SAPL não tem votação, e na ALETO a sondagem de 2026-11-14 parou na verificação do certificado do servidor.
-- Assembleias em SAPL (ADR-0063): só a ALEAC teve ensaio local completo. A primeira carga no CI rodou em 2026-11-15 nas cinco casas. A da ALEAM levou 19 minutos, dentro do orçamento de 25. Uma página de votos de 2023 da ALEAM respondeu 404, e o bloco de votos da casa sai marcado como desatualizado. Não validado: a conferência dos votos contra a fonte em ALPB, ALEAM, ALERO e ALEPI.
+- Assembleias em SAPL (ADR-0063): só a ALEAC teve ensaio local completo. A primeira carga no CI rodou em 2026-11-15 nas cinco casas. A da ALEAM levou 19 minutos, dentro do orçamento de 25. Uma página de votos de 2023 da ALEAM respondeu 404 na primeira carga; no pacote de 2026-11-17, o bloco já não sai desatualizado. Os votos de ALPB, ALEAM, ALERO e ALEPI foram conferidos contra a fonte em 2026-11-17 (ADR-0068).
 - ALESE: o sistema legislativo (`aleselegis.al.se.leg.br`) não aceitou conexão do runner do GitHub Actions nas execuções de 2026-11-12 (15 tentativas, todas com tempo esgotado). O portal (`al.se.leg.br`) respondeu. Sem as fichas no cache, a normalização parava com erro, e a publicação de 2026-11-13 das 00:19 UTC não tinha nenhum perfil de Sergipe. Corrigido em 2026-11-13: a normalização aceita a ficha ausente, e a casa vem da coleta local cifrada (ADR-0034). Os dados atualizam só quando a coleta local roda. Na publicação das 07:18 UTC, ainda sem a semente, entraram os 24 perfis só com mandato e candidaturas. Na das 13:04 UTC, com a semente coletada às 12:54 UTC, entraram comissões e proposições.
 - ALESE: 21.576 das 27.800 proposições do ensaio local de 2026-11-13 são do tipo "Requerimento de Voto". O tipo vem da fonte e entra como os demais.
 - ALESE: no ensaio local de 2026-11-13, 22 dos 24 deputados ficaram ligados a candidaturas do TSE, e não os 24 registrados em 2026-11-11. Em dois, o nome parlamentar difere do nome de urna: "Carminha Paiva" (urna "CARMINHA") e "Luizão Donatrampi" (urna "LUIZAO DONA TRAMPI"). O vínculo não casa por palavras soltas. No site em 2026-11-13, os mesmos 22 de 24. O ADR-0053 passa a aceitar o nome igual a menos dos espaços: no ensaio local de 2026-11-13, "Luizão Donatrampi" ficou ligado, e a casa foi a 23 de 24. No site desde a publicação de 2026-11-13 das 15:27 UTC. "Carminha Paiva" segue sem vínculo. Decidido pelo mantenedor em 2026-11-13: os três deputados em exercício sem vínculo por nome ("Carminha Paiva", "Cristiano D’Angelo" e "Andreia M. Rezende") ficam assim, sem tabela manual.
@@ -469,6 +469,32 @@ Limitações:
 - Paulínia segue sem proposições, votações e presença (ADR-0066).
 - As demais limitações estão no ADR-0067.
 
+## Conferência das assembleias em SAPL e dos perfis fundidos (ADR-0068)
+
+Feita em 2026-11-17, sobre o pacote publicado às 07:10 UTC.
+O ADR-0068 está como proposta.
+
+| Frente | Entrega | Estado |
+|---|---|---|
+| Votos de ALPB, ALEAM, ALERO e ALEPI | Cada voto publicado comparado com a leitura por parlamentar na API do SAPL | concluída |
+| Perfil municipal com mandato federal | Mandato, votos, participação, presenças, despesas, proposições, discursos, órgãos, frentes e emendas de Roberto Alves | concluída |
+| Perfil municipal com mandato estadual | Mandato de Janaina Paschoal na ALESP | concluída |
+| Perfil municipal com mandato estadual | Votos em comissão, despesas e proposições na ALESP | pendente: o repositório de dados abertos da ALESP respondeu 503 durante toda a conferência |
+| Eleitos deputado federal em 2026 | Mandato com posse prevista nos sete vereadores da capital | concluída |
+| Câmara | O cargo em órgão que vem no arquivo de duas legislaturas entra uma vez | concluída |
+
+Verificação em 2026-11-17:
+
+- Iguais à fonte em voto, data, matéria e resultado: ALPB 4.554 votos, ALEAM 61.309, ALERO 7.740 e ALEPI 3.172. Na ALEPI, 76 votos dados depois da captura de 2026-11-15 entram na renovação semanal.
+- Roberto Alves, contra os arquivos e a API da Câmara e o arquivo da CGU: 389 votos, 427 votações na participação, 146 presenças, 382 despesas, 42 proposições, 6 discursos, 262 frentes e 32 emendas iguais. Nos órgãos, um cargo da CMO aparecia duas vezes.
+- Nos arquivos de órgãos da 56ª e da 57ª legislatura, 53 linhas se repetem, de 53 deputados.
+- ETL: 435 testes.
+
+Limitações:
+
+- Eleito deputado estadual em 2026 não ganha mandato com posse prevista (ADR-0006 e ADR-0068). Nos perfis municipais, são quatro casos.
+- As demais limitações estão no ADR-0068.
+
 ## Fase 2 (depois da POC)
 
 ### Esfera federal
@@ -788,7 +814,7 @@ Limitações:
     - Workflow `dados`: o passo da ALEAM passa a 25 minutos de orçamento e 30 de limite, para a primeira carga de mais de 63 mil votos.
     - Primeira carga no CI em 2026-11-15, na execução agendada do `dados`. No site, entre os perfis com identificador da casa, têm votos 24 de 24 na ALEAC, 48 de 55 na ALPB, 25 de 25 na ALEAM, 26 de 26 na ALERO e 40 de 41 na ALEPI. Têm presença 24, 54, 25, 26 e 41.
     - Um perfil de cada casa abre no Chromium com os blocos de votos e de presença, sem erro de console e sem requisição a terceiros.
-    - Não validado: a conferência dos votos contra a fonte nas quatro casas sem ensaio local. Ver "Limitações conhecidas".
+    - Conferência dos votos contra a fonte nas quatro casas sem ensaio local: feita em 2026-11-17 (ADR-0068).
 31. Metadados de candidatos, partidos, navegação de fontes e WCAG 2.2 AA (ADR-0064): implementado e publicado em 2026-11-14.
     - `Texto.capitalizarNome`: nome do TSE todo em maiúsculas ou todo em minúsculas vira nome próprio no perfil. O `nome_urna` das candidaturas segue como na fonte.
     - Nome completo do partido por tabela de código (`Partidos.nomeCompleto` e `rotulos.ts`), sem mudar o schema do índice. Aparece no filtro, no selo do perfil e no Lado a lado, e a busca indexa o nome por extenso.
