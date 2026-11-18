@@ -495,6 +495,23 @@ Limitações:
 - Eleito deputado estadual em 2026 não ganha mandato com posse prevista (ADR-0006 e ADR-0068). Nos perfis municipais, são quatro casos.
 - As demais limitações estão no ADR-0068.
 
+## Parada da coleta quando a restauração do cache falha (ADR-0069)
+
+Em 2026-11-17, a execução manual do `dados` não baixou o cache: "Egress is over the account limit".
+A coleta recomeçou do zero, estourou o limite de 3 horas na ALEP e não publicou.
+O passo final guardou um cache parcial, sem as fontes que não rodaram.
+
+| Frente | Entrega | Estado |
+|---|---|---|
+| Workflow | Passo que para a coleta quando existe cache e nenhum foi baixado | concluída |
+| Workflow | Nenhum cache guardado depois dessa parada | concluída |
+| Cache | Cache parcial de 2026-11-17 apagado, para a execução seguinte partir do completo | concluída |
+
+Limitações:
+
+- Se o limite de tráfego da conta persistir, nenhuma execução coleta até ele ceder.
+- A correção do cargo repetido em órgão da Câmara (ADR-0068) só chega ao site na próxima execução completa.
+
 ## Fase 2 (depois da POC)
 
 ### Esfera federal

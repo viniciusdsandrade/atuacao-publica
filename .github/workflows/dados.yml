@@ -28,6 +28,7 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 180
     permissions:
+      actions: read
       contents: read
       issues: write
     env:
@@ -47,6 +48,7 @@ jobs:
           cache: npm
           cache-dependency-path: web/package-lock.json
       - name: baixa pacote cifrado do cache (se houver)
+        id: pacote-cifrado
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: .cache-cifrado
@@ -58,6 +60,7 @@ jobs:
           CACHE_CHAVE: ${{ secrets.CACHE_CHAVE }}
         run: scripts/cache-restaurar.sh
       - name: restaura dados brutos e cursores (fallback sem cifra)
+        id: cache-aberto
         if: steps.cache-cifrado.outputs.cifrado_restaurado != 'true'
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
@@ -67,6 +70,14 @@ jobs:
             data/publicado/index.json
           key: dados-${{ github.run_id }}-${{ github.run_attempt }}
           restore-keys: dados-
+      - name: confere a restauração do cache (ADR-0069)
+        # A restauração pode falhar com o cache existente, por exemplo no limite de tráfego da conta.
+        # Sem esta parada, a coleta recomeça do zero e guarda um cache parcial por cima do bom.
+        id: confere-cache
+        if: steps.pacote-cifrado.outputs.cache-matched-key == '' && steps.cache-aberto.outputs.cache-matched-key == ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: scripts/cache-conferir.sh
       - name: semente da coleta local para ALMG, ALRS, ALES, ALEPE, CLDF, ALBA, ALEMA, ALERR, ALAP, ALESE e Câmara de Caraguatatuba
         # Essas casas recusam conexão ou respondem 403 de fora do Brasil.
         # O mantenedor coleta na rede dele e envia o cache cifrado (ADR-0034). Sem o segredo, o passo não faz nada.
@@ -463,14 +474,14 @@ jobs:
         run: scripts/cache-preparar.sh
       - name: guarda cache cifrado
         # Roda mesmo se um passo falhar ou estourar o limite: a próxima execução reaproveita o que já foi baixado.
-        if: always() && steps.prepara-cache.outputs.usar_cifrado == 'true'
+        if: always() && steps.confere-cache.outcome != 'failure' && steps.prepara-cache.outputs.usar_cifrado == 'true'
         uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: .cache-cifrado
           key: dados-cifrado-${{ github.run_id }}-${{ github.run_attempt }}
       - name: guarda dados brutos e cursores (sem cifra)
         # Fallback quando CACHE_CHAVE não está configurada.
-        if: always() && steps.prepara-cache.outputs.usar_cifrado != 'true'
+        if: always() && steps.confere-cache.outcome != 'failure' && steps.prepara-cache.outputs.usar_cifrado != 'true'
         uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: |
