@@ -488,6 +488,7 @@ Verificação em 2026-11-17:
 - Iguais à fonte em voto, data, matéria e resultado: ALPB 4.554 votos, ALEAM 61.309, ALERO 7.740 e ALEPI 3.172. Na ALEPI, 76 votos dados depois da captura de 2026-11-15 entram na renovação semanal.
 - Roberto Alves, contra os arquivos e a API da Câmara e o arquivo da CGU: 389 votos, 427 votações na participação, 146 presenças, 382 despesas, 42 proposições, 6 discursos, 262 frentes e 32 emendas iguais. Nos órgãos, um cargo da CMO aparecia duas vezes.
 - Nos arquivos de órgãos da 56ª e da 57ª legislatura, 53 linhas se repetem, de 53 deputados.
+- No site, em 2026-11-18, depois da execução 44209066071: o bloco de órgãos e frentes de Roberto Alves tem 298 registros, 25 deles cargos em órgãos da Câmara, sem repetição. A CMO de 2022-05-04 a 2023-02-01 aparece uma vez.
 - ETL: 435 testes.
 
 Limitações:
@@ -510,7 +511,6 @@ O passo final guardou um cache parcial, sem as fontes que não rodaram.
 Limitações:
 
 - Se o limite de tráfego da conta persistir, nenhuma execução coleta até ele ceder.
-- A correção do cargo repetido em órgão da Câmara (ADR-0068) só chega ao site na próxima execução completa.
 
 ## Fase 2 (depois da POC)
 
