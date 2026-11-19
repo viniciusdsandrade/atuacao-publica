@@ -426,7 +426,7 @@ Publicação de 2026-11-15:
 Limitações:
 
 - No ensaio local, a publicação anterior era de 2026-11-11 e três perfis dela, sem relação com esta mudança, foram liberados à mão para a trava do ADR-0006 passar.
-- Paulínia sem proposições, votações e presença: a Câmara publica os três no SISCAM, cujo `robots.txt` recusa o projeto. Destrava com a liberação pela Câmara ou com um pedido pela Lei de Acesso à Informação, que é do mantenedor.
+- Paulínia sem proposições, votações e presença: a Câmara publica os três no SISCAM, cujo `robots.txt` recusa o projeto. Destrava com a liberação pela Câmara ou com um pedido pela Lei de Acesso à Informação, que é do mantenedor. Revisto em 2026-11-19: o `robots.txt` segue com `User-agent: *` e `Disallow: /`, e Paulínia não tem SAPL (`sapl.paulinia.sp.leg.br` não resolve).
 - Paulínia sem a 14ª legislatura e sem o mandato dos eleitos para a prefeitura em 2020.
 - A conferência dos registros foi por amostra, fora o financiamento de campanha de 2024, conferido em todos os perfis. A conferência completa veio depois (ADR-0067).
 
