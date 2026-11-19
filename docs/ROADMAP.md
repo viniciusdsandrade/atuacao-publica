@@ -531,7 +531,8 @@ Verificação em 2026-11-19:
 - Texto lido no portal de legislação da ALESP (`alesp-legislacao`): art. 9º, § 2º, e ADCT, art. 1º-A, na redação da EC 47/2019. O snapshot do Internet Archive de 2026-10-02 traz os dois trechos literais.
 - No site publicado em 2026-11-19, os quatro perfis municipais sem posse prevista: Keit Lima, Marina Bragante e Thammy Miranda, da capital, e Mariana Conti, do piloto.
 - ETL: 439 testes, com três novos de vínculo (posse prevista só na UF da regra, sem registro de exercício depois da posse, mandato registrado pela assembleia) e um exemplo inválido de schema.
-- Não validado: o efeito no site, que depende da próxima publicação.
+- Ensaio local de publicação sobre os dados normalizados de 2026-11-15, que não têm a ALESP: os quatro vereadores ganham o mandato estadual de 2027-02-01 a 2031-02-01, com posse prevista, e seguem em exercício como vereadores. Entram 87 perfis novos do TSE, todos de São Paulo, e nada mais muda: de 2.388 para 2.475 perfis.
+- Não validado: o número de perfis novos com a ALESP, que depende da próxima publicação. Os deputados reeleitos ficam no perfil da assembleia, e o número cai.
 
 Limitações:
 
