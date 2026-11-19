@@ -114,7 +114,7 @@ Estado real de cada fase. Atualizado ao fechar cada fase.
 - Cartão "Total no período" das despesas: até 2026-11-13, valor com dez dígitos antes da vírgula quebrava a linha no meio do número, na largura de 1366 px. Corrigido em 2026-11-14: de R$ 100 milhões para cima, o cartão usa letra menor.
 - Sigla de partido (ADR-0058): o partido na data de cada voto não é unificado, e a linha do voto mostra a grafia da casa. A tabela de nomes por extenso e abreviações é mantida à mão; grafia nova de uma casa volta a partir o filtro até entrar na tabela, e a saída do `publish` a lista.
 - Cache do GitHub Actions, conferido em 2026-11-13: o cache `dados-*` guarda em claro o cache bruto de todas as fontes (1 GB), com CPF e contato de gabinete que as fontes publicam e o projeto não. O cache é da `main`, o `ci.yml` roda em pull request, e a aprovação de workflow de fork só é exigida de quem contribui pela primeira vez. Um pull request de fork que altere o workflow conseguiria restaurar esse cache. O pacote da coleta local é cifrado por esse motivo (ADR-0034); o cache não é. Em 2026-11-14, a aprovação passou a ser exigida de todo colaborador externo (`all_external_contributors`, nas configurações do repositório). O cache continua em claro: quem aprova a execução de um pull request de fork precisa ler antes a mudança no workflow. Cifrar o cache com um segredo fica em aberto.
-- Coleta local agendada (ADR-0034): depende de a máquina do mantenedor estar ligada. Desligada por mais de três dias, o alerta de coleta abre uma issue para cada uma das onze casas.
+- Coleta local agendada (ADR-0034): depende de a máquina do mantenedor estar ligada, com a sessão aberta. Desde 2026-11-19, a coleta perdida com a máquina desligada roda na entrada seguinte da sessão. Sem coleta por mais de três dias, o alerta de coleta abre uma issue para cada uma das onze casas. Uma casa com falha aborta o envio das outras.
 - Até 2026-11-06, nove adaptadores (ALECE, ALEGO, ALEPE, ALERJ, ALEPA, ALES, ALRS, ALESC e CLDF) gravavam o bloco `fontes` como lista, e o `Vinculo` lê um objeto por bloco. Os perfis dessas casas saíam com os blocos sem fonte e com `atualizado_em` nulo (verificado no perfil `alerj-505` publicado). Corrigido: as fontes de cada bloco vêm da proveniência dos registros (`Registros.fontesDosBlocos`), e o `Vinculo` interrompe o `publish` se receber uma lista. No ensaio local das treze casas, nenhum bloco com registro ficou sem fonte.
 - Até 2026-11-07, a ALESP repetia a mesma fonte a cada registro (um perfil citava 2.106 vezes o mesmo arquivo de despesas), e o bloco de participação em votações saía sem fonte. Corrigido no adaptador. O `publish` passou a tirar fontes repetidas de qualquer bloco e, se um adaptador não declarar a fonte de um bloco com registro, a citar a proveniência dos registros, com o caso contado no log.
 - Até 2026-11-06, o cargo `deputado_distrital` não estava na tabela de blocos do `Publicador`, e os perfis da CLDF saíam sem bloco nenhum, nem mandato. Corrigido, com um teste que confere os blocos de todo cargo do schema.
@@ -514,6 +514,35 @@ Limitações:
 
 - Se o limite de tráfego da conta persistir, nenhuma execução coleta até ele ceder.
 
+## Coleta local na entrada da sessão (ADR-0034, atualização de 2026-11-19)
+
+Em 2026-11-19, as onze casas da coleta local estavam com dado de 2026-11-14.
+O alerta de coleta tinha aberto as issues #16 a #26 em 2026-11-17.
+De 2026-11-14 a 2026-11-19, o agendamento rodou pelo horário uma vez só, em 2026-11-18, e essa execução foi encerrada antes do envio.
+Nos outros dias, a máquina estava desligada no horário, e o launchd não recupera o horário perdido nesse caso.
+
+| Frente | Entrega | Estado |
+|---|---|---|
+| Semente | Coleta das onze casas e envio, disparados pelo launchd em 2026-11-19 | concluída |
+| Agendamento | Coleta também na entrada da sessão (`RunAtLoad`) | concluída |
+| Agendamento | Registro do último envio, sem coleta repetida | concluída |
+| Agendamento | Máquina acordada durante a coleta (`caffeinate -is`) | concluída |
+| Instalação | O clone vai para a `main` remota antes de o agente ser carregado | concluída |
+
+Verificação em 2026-11-19:
+
+- Regra do registro de envio ensaiada em onze casos, num repositório descartável. O envio recente pula a coleta. Envio antigo, registro corrompido, hora inválida, falta de registro e simulação coletam. A folga de seis horas foi conferida dos dois lados do limite.
+- Instalação ensaiada com `launchctl` falso: plist válido, com `caffeinate -is`, `RunAtLoad`, `SEMENTE_HORA` e `SEMENTE_ESTADO`, registro inicial lido da release e clone levado de um ramo local para a `main` remota. A remoção não deixou o agente.
+- Coleta de 2026-11-19, disparada pelo launchd: as onze casas renovaram, dez com status "ok". A Câmara de Caraguatatuba saiu "parcial": 7 arquivos do sistema legislativo ficaram com a cópia anterior, por tempo esgotado na conexão. A ALBA levou 55 minutos, com um HTTP 500 repetido com sucesso.
+- Semente enviada às 21:29 UTC, com 22 itens (177 MB) e a impressão da chave no nome. A release guarda o pacote novo e o de 2026-11-14. O pacote de nome fixo saiu.
+- Agente regravado na máquina do mantenedor: a carga rodou a versão nova do script, sob `caffeinate -is`, e não coletou, porque o envio do dia cobre o horário. Saída 0.
+- Não validado: a publicação com a semente nova e o fechamento das issues #16 a #26, que dependem da próxima execução do `dados`.
+
+Limitações:
+
+- O fim da sessão e o desligamento ainda encerram a coleta em andamento. Ela recomeça na entrada seguinte, com o cache.
+- Uma casa com falha aborta o envio das outras dez.
+
 ## Posse prevista de deputado estadual (ADR-0070)
 
 Feita em 2026-11-19.
@@ -837,7 +866,7 @@ Limitações:
     - Instalação na máquina do mantenedor: agente do launchd com execução diária, num clone separado do de trabalho. Duas execuções disparadas à mão pelo launchd, uma em simulação e uma real, as duas com saída 0.
     - A execução real coletou as onze casas, enviou o pacote (22 itens, 177 MB) com a impressão da chave no nome e trocou o segredo às 00:33 UTC. O release guarda o pacote novo e o anterior.
     - O `dados` das 00:34 UTC restaurou esse pacote e publicou. No site, as onze casas saíram com status "ok" e coleta entre 00:11 e 00:32 UTC do mesmo dia.
-    - Não validado: a execução disparada pelo calendário do launchd, que ainda não ocorreu, e a coleta com a máquina dormindo no horário.
+    - Em 2026-11-18, a execução disparada pelo calendário do launchd começou no horário e foi encerrada antes do envio. Nos outros dias até 2026-11-19, a máquina estava desligada no horário (seção "Coleta local na entrada da sessão"). Não validado: a coleta com a máquina dormindo no horário.
 28. Tarefas pequenas de `docs/TAREFAS.md`: feitas e publicadas em 2026-11-14. Os planos de 2018 chegaram com a coleta de 2026-11-15.
     - Glossário das siglas de voto do Senado em `docs/METODOLOGIA.md`. O nome por extenso de cada sigla foi conferido com o campo `descricaoVotoParlamentar` do cache bruto de 2022 a 2026 (48.188 votos). A frase que explica cada sigla é leitura do projeto, sem definição oficial conferida.
     - Apelidos de bancada na orientação de voto (`Orientacao.java`): de 1 para 5 rótulos (`PROGRES`, `PODEMOS`, `REPUBLICA` e `UNIAOBRASIL`, além de `PROGRESSISTAS`).
