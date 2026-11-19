@@ -1,6 +1,6 @@
 # ADR-0068: Conferência dos votos das assembleias em SAPL e dos blocos de outra esfera nos perfis municipais
 
-- **Status**: Proposta
+- **Status**: Aceita
 - **Data**: 2026-11-17
 
 ## Contexto
@@ -52,7 +52,7 @@ O texto do art. 29 da Constituição nos mandatos de prefeito vem do `planalto-l
 | Roberto Alves | 262 frentes | `/deputados/{id}/frentes`, 56ª legislatura | 262 iguais |
 | Roberto Alves | 32 emendas | `EmendasParlamentares.csv` da CGU | 32 iguais nos seis valores |
 | Janaina Paschoal | Mandato estadual | portal de parlamentares da ALESP | igual: de 2019-03-15 a 2023-03-14 |
-| Janaina Paschoal | 38 votos em comissão, 16 despesas e 52 proposições | arquivos abertos da ALESP | não conferidos: o repositório respondeu HTTP 503 durante toda a conferência |
+| Janaina Paschoal | 38 votos em comissão, 16 despesas e 52 proposições | arquivos abertos da ALESP | não conferidos: o repositório respondeu HTTP 503 de 2026-11-17 a 2026-11-19 |
 | Sete eleitos em 2026 | Mandato federal com posse prevista | resultado do TSE e `/legislaturas/57` | 7 iguais: eleitos, posse em 2027-02-01, 58ª legislatura |
 
 ### Defeitos e diferenças achados
@@ -66,6 +66,7 @@ O texto do art. 29 da Constituição nos mandatos de prefeito vem do `planalto-l
 
 1. **Câmara: o cargo em órgão com mesmo órgão, cargo, início e fim entra uma vez**, mesmo vindo do arquivo de duas legislaturas.
 2. Os votos das quatro assembleias em SAPL passam a contar como conferidos contra a fonte.
+3. Os blocos de Janaina Paschoal na ALESP ficam como não conferidos. A conferência deles espera o repositório de dados abertos da ALESP voltar a responder.
 
 ## Consequências
 
@@ -74,6 +75,7 @@ O texto do art. 29 da Constituição nos mandatos de prefeito vem do `planalto-l
 ## Limitações
 
 - A conferência compara o site com a fonte num dia. Voto dado depois da captura entra na renovação semanal da lista do ano.
+- Os 38 votos em comissão, as 16 despesas e as 52 proposições de Janaina Paschoal na ALESP não foram conferidos. O repositório de dados abertos da ALESP respondeu HTTP 503 de 2026-11-17 a 2026-11-19, inclusive à coleta do CI. A API do portal da ALESP não entrou nesta conferência.
 - Os cargos em órgãos da Câmara seguem o arquivo da legislatura inteira, inclusive os períodos anteriores a 2022 (docs/METODOLOGIA.md, "Órgãos e frentes").
 - Eleito deputado estadual em 2026 não ganha mandato com posse prevista. O ADR-0006 tira a data de posse da legislatura da Câmara, que só vale para deputado federal e senador. A posse estadual segue a constituição de cada estado; em São Paulo, a legislatura começa em 15 de março. Nos perfis municipais, são quatro casos.
 

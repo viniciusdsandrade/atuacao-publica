@@ -118,6 +118,7 @@ Estado real de cada fase. Atualizado ao fechar cada fase.
 - Até 2026-11-06, nove adaptadores (ALECE, ALEGO, ALEPE, ALERJ, ALEPA, ALES, ALRS, ALESC e CLDF) gravavam o bloco `fontes` como lista, e o `Vinculo` lê um objeto por bloco. Os perfis dessas casas saíam com os blocos sem fonte e com `atualizado_em` nulo (verificado no perfil `alerj-505` publicado). Corrigido: as fontes de cada bloco vêm da proveniência dos registros (`Registros.fontesDosBlocos`), e o `Vinculo` interrompe o `publish` se receber uma lista. No ensaio local das treze casas, nenhum bloco com registro ficou sem fonte.
 - Até 2026-11-07, a ALESP repetia a mesma fonte a cada registro (um perfil citava 2.106 vezes o mesmo arquivo de despesas), e o bloco de participação em votações saía sem fonte. Corrigido no adaptador. O `publish` passou a tirar fontes repetidas de qualquer bloco e, se um adaptador não declarar a fonte de um bloco com registro, a citar a proveniência dos registros, com o caso contado no log.
 - Até 2026-11-06, o cargo `deputado_distrital` não estava na tabela de blocos do `Publicador`, e os perfis da CLDF saíam sem bloco nenhum, nem mandato. Corrigido, com um teste que confere os blocos de todo cargo do schema.
+- ALESP: o repositório de dados abertos (`www.al.sp.gov.br/repositorioDados`) respondeu HTTP 503 de 2026-11-17 a 2026-11-19, à máquina do mantenedor e ao CI. A ALESP e o `executivosp`, que lê o arquivo de normas desse repositório, saem com status "parcial" e com a cópia anterior.
 
 
 ## Publicação
@@ -472,14 +473,14 @@ Limitações:
 ## Conferência das assembleias em SAPL e dos perfis fundidos (ADR-0068)
 
 Feita em 2026-11-17, sobre o pacote publicado às 07:10 UTC.
-O ADR-0068 está como proposta.
+Aceita em 2026-11-19, com os blocos de Janaina Paschoal na ALESP não conferidos.
 
 | Frente | Entrega | Estado |
 |---|---|---|
 | Votos de ALPB, ALEAM, ALERO e ALEPI | Cada voto publicado comparado com a leitura por parlamentar na API do SAPL | concluída |
 | Perfil municipal com mandato federal | Mandato, votos, participação, presenças, despesas, proposições, discursos, órgãos, frentes e emendas de Roberto Alves | concluída |
 | Perfil municipal com mandato estadual | Mandato de Janaina Paschoal na ALESP | concluída |
-| Perfil municipal com mandato estadual | Votos em comissão, despesas e proposições na ALESP | pendente: o repositório de dados abertos da ALESP respondeu 503 durante toda a conferência |
+| Perfil municipal com mandato estadual | Votos em comissão, despesas e proposições na ALESP | não conferida: o repositório de dados abertos da ALESP respondeu 503 de 2026-11-17 a 2026-11-19 |
 | Eleitos deputado federal em 2026 | Mandato com posse prevista nos sete vereadores da capital | concluída |
 | Câmara | O cargo em órgão que vem no arquivo de duas legislaturas entra uma vez | concluída |
 
@@ -494,6 +495,7 @@ Verificação em 2026-11-17:
 Limitações:
 
 - Eleito deputado estadual em 2026 não ganha mandato com posse prevista (ADR-0006 e ADR-0068). Nos perfis municipais, são quatro casos.
+- Os blocos de Janaina Paschoal na ALESP esperam o repositório de dados abertos voltar para a conferência.
 - As demais limitações estão no ADR-0068.
 
 ## Parada da coleta quando a restauração do cache falha (ADR-0069)
