@@ -553,8 +553,8 @@ A posse de deputado estadual vem de `contrib/mandatos.yaml`, por UF, com o texto
 | Regra | `deputado_estadual` em `contrib/mandatos.yaml`, com a UF obrigatória no schema | concluída |
 | São Paulo | Eleitos em 2026: posse em 2027-02-01 e fim em 2031-02-01, pela Emenda Constitucional estadual nº 47/2019 | concluída |
 | Depois da posse | Vale o mandato que a assembleia registra; sem ele, "sem registro de exercício" | concluída |
-| Outras 22 UFs | AC, AL, AP, BA, CE, ES, GO, MA, MS, MT, PA, PB, PE, PI, PR, RN, RO, SC, SE e TO com posse em 2027-02-01, RS em 2027-01-31 e RR em 2027-01-05 | concluída |
-| AM, DF, MG e RJ | Regra com fonte oficial, data e snapshot | pendente, pelos motivos do ADR-0070, item 7 |
+| Outras 23 UFs | AC, AL, AM, AP, BA, CE, ES, GO, MA, MS, MT, PA, PB, PE, PI, PR, RN, RO, SC, SE e TO com posse em 2027-02-01, RS em 2027-01-31 e RR em 2027-01-05 | concluída |
+| DF, MG e RJ | Regra com fonte oficial, data e snapshot | pendente, pelos motivos do ADR-0070, item 7 |
 
 Verificação em 2026-11-19:
 
@@ -571,10 +571,11 @@ Verificação em 2026-11-19:
 - RR: segundo o STF, as ADIs 6654, 6658 e 6703, citadas em nota no texto oficial, tratam da reeleição da Mesa da Assembleia, e não da data da posse.
 - `normalize contrib`: 41 regras de mandato válidas. Ensaio local com as 23 UFs: 840 mandatos com posse prevista, o mesmo número de eleitos do TSE em cada UF; RR com posse em 2027-01-05 e RS em 2027-01-31. De 2.388 para 2.793 perfis, com 405 perfis novos do TSE (87 de São Paulo, número que cai com a ALESP).
 - Trava do `publish` (ADR-0006): dois ensaios com o índice publicado em 2026-11-19 como publicação anterior, um com o código de antes da regra e outro com o de agora. Nenhum id publicado some só com a regra nova, e todo perfil do código anterior segue com o mesmo id ou como alias. Os ids que somem nos dois ensaios são da ALESP, da ALEGO e da ALESC, que os dados locais não têm completas.
+- AM: a Constituição não fixa a data, e a regra cita o Regimento Interno da ALEAM, art. 4º ("A primeira reunião preparatória se realiza no dia primeiro de fevereiro"). O snapshot foi capturado na terceira tentativa, com o texto literal. `normalize contrib`: 42 regras válidas.
 
 Limitações:
 
-- AM, DF, MG e RJ seguem sem posse prevista de deputado estadual (ADR-0070, item 7).
+- DF, MG e RJ seguem sem posse prevista de deputado estadual ou distrital (ADR-0070, item 7).
 - Depois da posse, cada adaptador de assembleia precisa da legislatura nova. Até lá, os eleitos ficam sem registro de exercício.
 - O adaptador da ALRS usa 2023-02-01 a 2027-01-31 para a 56ª legislatura. Pela Constituição do RS, a posse é em 31 de janeiro. As datas do adaptador não foram mudadas.
 

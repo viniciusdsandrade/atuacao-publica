@@ -1400,6 +1400,21 @@
   status: validado
   validado_em: 2026-11-19
 
+- id: aleam-regimento
+  nome: Assembleia Legislativa do Estado do Amazonas, Regimento Interno
+  orgao: Assembleia Legislativa do Estado do Amazonas
+  esfera: estadual
+  ente: AM
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://sapl.al.am.leg.br/media/sapl/public/normajuridica
+  formato: PDF
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Regimento compilado até a Resolução nº 1.081, de 14/02/2025. A Constituição do Amazonas não fixa a data da posse. A regra de mandato (ADR-0070) cita o snapshot do Internet Archive."
+  status: validado
+  validado_em: 2026-11-19
+
 - id: constituicao-ap
   nome: Assembleia Legislativa do Estado do Amapá, Constituição do Estado do Amapá
   orgao: Assembleia Legislativa do Estado do Amapá

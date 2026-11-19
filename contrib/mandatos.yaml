@@ -115,6 +115,19 @@
   capturado_em: 2026-11-19T22:35:18Z
   contribuidor: viniciusdsandrade
 
+# Estado do Amazonas. A Constituição não fixa a data; vale o Regimento Interno da Assembleia (ADR-0070, item 8).
+- cargo: deputado_estadual
+  ente: AM
+  eleicao: 2026
+  inicio: 2027-02-01
+  fim: 2031-02-01
+  texto_oficial: "Art. 4º A primeira reunião preparatória se realiza no dia primeiro de fevereiro, a partir das nove horas, independente de convocação, a fim de dar posse aos Deputados"
+  fonte_id: aleam-regimento
+  url_origem: https://sapl.al.am.leg.br/media/sapl/public/normajuridica/2010/13437/regimento_interno_-_compilado_ate_a_resolucao_no_1.081_de_14.2.2025.pdf
+  snapshot_url: https://web.archive.org/web/20261119231718/https://sapl.al.am.leg.br/media/sapl/public/normajuridica/2010/13437/regimento_interno_-_compilado_ate_a_resolucao_no_1.081_de_14.2.2025.pdf
+  capturado_em: 2026-11-19T23:17:31Z
+  contribuidor: viniciusdsandrade
+
 # Estado do Amapá.
 - cargo: deputado_estadual
   ente: AP

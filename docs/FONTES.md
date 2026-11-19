@@ -497,6 +497,7 @@ Um acervo local de legislação serviu para achar o dispositivo e o endereço of
 |---|---|---|---|---|
 | `constituicao-ac` | Governo do Estado do Acre | HTML | validado | 2026-10-18 |
 | `constituicao-al` | Assembleia Legislativa de Alagoas (SAPL) | PDF | validado | 2026-11-19 |
+| `aleam-regimento` | Assembleia Legislativa do Amazonas (SAPL), Regimento Interno | PDF | validado | 2026-11-19 |
 | `constituicao-ap` | Assembleia Legislativa do Amapá | PDF | validado | 2026-01-21 |
 | `constituicao-ba` | Governo do Estado da Bahia (LegislaBahia) | HTML | validado | 2026-10-17 |
 | `constituicao-ce` | Assembleia Legislativa do Ceará | PDF | validado | 2026-11-19 |
@@ -523,7 +524,8 @@ Um acervo local de legislação serviu para achar o dispositivo e o endereço of
 - No PI, o SAPL marca como desativada a redação de 2008 do § 4º. A regra cita a redação vigente.
 - No PR, a visualização compilada da Casa Civil traz só a redação vigente. Em GO, o PDF compilado traz todas as redações do art. 16, § 3º, e todas fixam 1º de fevereiro; na camada de texto, o ordinal sai como a letra o.
 - AL, MA e PR têm, em outros endereços, cópias que não vêm de quem publica a norma (polícia militar, universidade e secretaria de ciência e tecnologia). As regras citam a assembleia (AL e MA) e a Casa Civil (PR).
-- Sem regra: AM e MG têm a data no regimento interno, mas sem snapshot (o Internet Archive falhou no PDF da ALEAM e não alcança a ALMG). A base de textos da ALERJ não entregou o texto do RJ. No DF, a posse dos distritais passou a 6 de janeiro pela Emenda à Lei Orgânica nº 131/2024, segundo a imprensa; o texto oficial fica no portal da CLDF, que recusa conexão de fora do Brasil, e não foi validado.
+- No AM, a Constituição não fixa a data da posse, e a regra cita o Regimento Interno da ALEAM (art. 4º). A captura do PDF falhou duas vezes e deu certo na terceira, em 2026-11-19.
+- Sem regra: MG tem a data no regimento interno, mas sem snapshot, porque o Internet Archive não alcança a ALMG. A base de textos da ALERJ não entregou o texto do RJ. No DF, a posse dos distritais passou a 6 de janeiro pela Emenda à Lei Orgânica nº 131/2024, segundo a imprensa; o texto oficial fica no portal da CLDF, que recusa conexão de fora do Brasil, e não foi validado.
 
 ## Governo do Estado de São Paulo (Executivo Estadual)
 
