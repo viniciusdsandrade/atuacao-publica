@@ -2055,8 +2055,9 @@ final class Vinculo {
     }
 
     /**
-     * Presidente e governadores de todas as regras de contrib/mandatos.yaml: mandato vigente, encerrado ou com posse
-     * prevista (ADR-0006). O TSE registra a eleição; renúncia ou sucessão entram por contribuição com fonte T0.
+     * Presidente, governadores e deputados estaduais das regras de contrib/mandatos.yaml: mandato vigente, encerrado ou
+     * com posse prevista (ADR-0006 e ADR-0070). O TSE registra a eleição; renúncia ou sucessão entram por contribuição
+     * com fonte T0.
      */
     private static List<Perfil> executivos(Contexto ctx, Catalogo catalogo, List<Perfil> existentes, Ligacoes ligacoes,
                                            List<JsonNode> candidaturas) {
@@ -2070,10 +2071,15 @@ final class Vinculo {
             int eleicao = Json.inteiro(regra, "eleicao");
             Fase fase = Fase.de(ctx.hoje(), inicio, fim, eleicao);
             boolean municipal = cargo.equals("prefeito") || cargo.equals("vice_prefeito");
+            // A posse na assembleia segue a constituição de cada estado: a regra de deputado estadual vale só para a UF dela.
+            boolean assembleia = cargo.equals("deputado_estadual");
             String enteDaRegra = regra.hasNonNull("ente") ? Json.texto(regra, "ente") : Sapl.IBGE;
             for (JsonNode c : eleitos(candidaturas, eleicao, cargo)) {
                 // A regra municipal vale só para o município dela. Com mais de um município coberto, o eleito de outro não entra.
                 if (municipal && !enteDaRegra.equals(Json.texto(c.path("registro"), "ente"))) {
+                    continue;
+                }
+                if (assembleia && !enteDaRegra.equals(Json.texto(c, "uf"))) {
                     continue;
                 }
                 Perfil p = perfilDoEleito(c, ligacoes, perfilPorCpf, perfilPorPessoa, novos);
@@ -2083,6 +2089,15 @@ final class Vinculo {
                 // Candidatura a outro cargo na eleição seguinte: o mandato acaba no prazo de renúncia (ADR-0033).
                 Fase faseDoEleito = fase;
                 LocalDate fimDoEleito = fim;
+                if (assembleia && !ctx.hoje().isBefore(inicio)) {
+                    // Depois da posse, o exercício vem da assembleia, como na Câmara (ADR-0006): o mandato que ela registra
+                    // fica, e sem ele o eleito continua no arquivo, sem registro de exercício.
+                    if (temMandatoDesde(p, cargo, uf, inicio)) {
+                        continue;
+                    }
+                    faseDoEleito = new Fase("Eleito em " + eleicao + "; sem registro de exercício na "
+                            + (uf.equals("DF") ? "Câmara Legislativa" : "Assembleia Legislativa"), Perfil.FORA_DE_EXERCICIO);
+                }
                 // A Constituição exige a renúncia do chefe do Executivo; o vice não precisa renunciar para concorrer.
                 boolean chefe = cargo.equals("presidente") || cargo.equals("governador") || cargo.equals("prefeito");
                 JsonNode outroCargo = chefe ? candidaturaAOutroCargo(c, eleicao + 4, candidaturas, ligacoes.chaves()) : null;
@@ -2126,6 +2141,18 @@ final class Vinculo {
             }
         }
         return novos;
+    }
+
+    /** Mandato do cargo na UF que começa na data indicada ou depois dela, como o que a assembleia registra depois da posse. */
+    private static boolean temMandatoDesde(Perfil p, String cargo, String uf, LocalDate data) {
+        for (JsonNode m : p.bloco("mandatos")) {
+            String inicio = Json.texto(m, "inicio");
+            if (cargo.equals(Json.texto(m, "cargo")) && uf.equals(Json.texto(m, "uf")) && inicio != null
+                    && !LocalDate.parse(inicio).isBefore(data)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**

@@ -21,7 +21,8 @@ Decisão do mantenedor: o site funciona como biblioteca, histórico e auditoria.
 3. Há perfil para toda pessoa que exerceu mandato coberto, inclusive suplente que assumiu e quem saiu antes do fim.
 4. Há perfil para quem foi eleito e ainda não tomou posse:
    - presidente e governador: as datas de posse e de fim vêm de `contrib/mandatos.yaml`, com fonte T0;
-   - deputado e senador: a posse é o início da legislatura seguinte, o dia depois do fim da legislatura vigente segundo a API da Câmara (Constituição, art. 57, § 4º).
+   - deputado e senador: a posse é o início da legislatura seguinte, o dia depois do fim da legislatura vigente segundo a API da Câmara (Constituição, art. 57, § 4º);
+   - deputado estadual: a posse vem de `contrib/mandatos.yaml`, por UF, com o texto da constituição estadual (ADR-0070, 2026-11-19).
 5. Depois da data de posse, eleito que a casa legislativa ainda não registra em exercício continua no arquivo, com a situação "sem registro de exercício".
 6. Cada perfil informa se a pessoa está em exercício (`em_exercicio`) e a situação do papel principal: o mandato em exercício; sem ele, a posse prevista; sem ela, o mandato mais recente. O perfil traz os blocos de todos os cargos que a pessoa ocupou.
 7. O arquivo é reconstruído a partir das fontes oficiais a cada execução. Ele não depende da publicação anterior: se o cache sumir, a execução seguinte publica o mesmo arquivo.

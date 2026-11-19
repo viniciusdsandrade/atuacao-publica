@@ -221,6 +221,62 @@ class VinculoTest {
         assertEquals("MARIA DO CARMO E SILVA", sp.bloco("candidaturas").getFirst().get("nome_urna").stringValue());
     }
 
+    private static final String REGRA_DEPUTADO_ESTADUAL_SP = "- cargo: deputado_estadual\n  ente: SP\n  eleicao: 2026\n"
+            + "  inicio: '2027-02-01'\n  fim: '2031-02-01'\n  fonte_id: alesp-legislacao\n";
+
+    @Test
+    void deputadoEstadualEleitoGanhaPossePrevistaSoNaUfDaRegra(@TempDir Path tmp) throws IOException {
+        Fixture f = new Fixture(tmp);
+        Files.writeString(f.raiz.resolve("contrib").resolve("mandatos.yaml"), REGRA_DEPUTADO_ESTADUAL_SP);
+        f.candidatura(2026, "880001", "DEPUTADO ESTADUAL", "SP", "FULANA DE TAL", "PL", true,
+                "FULANA DE TAL", "44400044400", "04/04/1980");
+        f.candidatura(2026, "880002", "DEPUTADO ESTADUAL", "RJ", "CICLANO SOUZA", "PT", true,
+                "CICLANO SOUZA", "55500055500", "05/05/1981");
+        f.candidatura(2026, "880003", "DEPUTADO ESTADUAL", "SP", "BELTRANO LIMA", "MDB", false,
+                "BELTRANO LIMA", "66600066600", "06/06/1982");
+
+        List<Perfil> perfis = f.vincular();
+        Perfil sp = perfis.stream().filter(p -> "tse-880001".equals(p.id)).findFirst().orElseThrow();
+        assertEquals("Eleito em 2026; posse prevista em 2027-02-01", sp.situacao);
+        assertEquals(Perfil.POSSE_PREVISTA, sp.prioridade);
+        JsonNode mandato = sp.bloco("mandatos").getFirst();
+        assertEquals("deputado_estadual", mandato.get("cargo").stringValue());
+        assertEquals("estadual", mandato.get("esfera").stringValue());
+        assertEquals("SP", mandato.get("ente").stringValue());
+        assertEquals("2027-02-01", mandato.get("inicio").stringValue());
+        assertEquals("2031-02-01", mandato.get("fim").stringValue());
+        assertEquals("alesp-legislacao", mandato.get("fonte_id").stringValue());
+        assertTrue(perfis.stream().noneMatch(p -> "tse-880002".equals(p.id)), "A regra de SP não vale para o eleito do RJ");
+        assertTrue(perfis.stream().noneMatch(p -> "tse-880003".equals(p.id)), "Suplente não ganha mandato");
+    }
+
+    @Test
+    void depoisDaPosseDeputadoEstadualSemRegistroDaAssembleiaFicaSemExercicio(@TempDir Path tmp) throws IOException {
+        Fixture f = new Fixture(tmp, Instant.parse("2027-03-01T12:00:00Z"));
+        Files.writeString(f.raiz.resolve("contrib").resolve("mandatos.yaml"), REGRA_DEPUTADO_ESTADUAL_SP);
+        f.candidatura(2026, "880001", "DEPUTADO ESTADUAL", "SP", "FULANA DE TAL", "PL", true,
+                "FULANA DE TAL", "44400044400", "04/04/1980");
+
+        Perfil sp = f.vincular().stream().filter(p -> "tse-880001".equals(p.id)).findFirst().orElseThrow();
+        assertEquals("Eleito em 2026; sem registro de exercício na Assembleia Legislativa", sp.situacao);
+        assertEquals(Perfil.FORA_DE_EXERCICIO, sp.prioridade);
+    }
+
+    @Test
+    void depoisDaPosseValeOMandatoQueAAssembleiaRegistra(@TempDir Path tmp) throws IOException {
+        Fixture f = new Fixture(tmp, Instant.parse("2027-03-01T12:00:00Z"));
+        Files.writeString(f.raiz.resolve("contrib").resolve("mandatos.yaml"), REGRA_DEPUTADO_ESTADUAL_SP);
+        f.pessoa("alesp", "77", "Fulana de Tal", "deputado_estadual", "SP", true, "2027-02-01", "2031-01-31");
+        f.candidatura(2026, "880001", "DEPUTADO ESTADUAL", "SP", "FULANA DE TAL", "PL", true,
+                "FULANA DE TAL", "44400044400", "04/04/1980");
+
+        List<Perfil> perfis = f.vincular();
+        Perfil p = porId(perfis, "alesp", "77");
+        assertEquals("880001", p.tse.get("2026"));
+        assertEquals(1, p.bloco("mandatos").stream().filter(m -> "deputado_estadual".equals(m.get("cargo").stringValue())).count());
+        assertTrue(perfis.stream().noneMatch(q -> "tse-880001".equals(q.id)), "O eleito que a assembleia registra não ganha outro perfil");
+    }
+
     private static ObjectNode eleita(String sq, String nomeUrna, String partido) {
         ObjectNode c = Json.SAIDA.createObjectNode();
         c.put("sq", sq);
@@ -319,11 +375,15 @@ class VinculoTest {
         private final List<Cgu.AutorDeEmendas> autoresEmendas = new ArrayList<>();
 
         Fixture(Path raiz) throws IOException {
+            this(raiz, CAPTURA);
+        }
+
+        Fixture(Path raiz, Instant agora) throws IOException {
             this.raiz = raiz;
             this.dados = raiz.resolve("data");
             Files.createDirectories(raiz.resolve("contrib"));
             Files.writeString(raiz.resolve("contrib").resolve("mandatos.yaml"), "[]\n");
-            this.ctx = new Contexto(raiz, dados, null, null, CAPTURA, null);
+            this.ctx = new Contexto(raiz, dados, null, null, agora, null);
         }
 
         void pessoa(String casa, String id, String nome, String cargo, String uf, boolean emExercicio,

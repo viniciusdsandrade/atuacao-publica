@@ -1,0 +1,11 @@
+- cargo: deputado_estadual
+  ente: BR
+  eleicao: 2026
+  inicio: 2027-02-01
+  fim: 2031-02-01
+  texto_oficial: "Trecho literal da constituição estadual."
+  fonte_id: alesp-legislacao
+  url_origem: https://www.al.sp.gov.br/repositorio/legislacao/exemplo.html
+  snapshot_url: https://web.archive.org/web/20261002163338/https://www.al.sp.gov.br/repositorio/legislacao/exemplo.html
+  capturado_em: 2026-11-19T20:09:19Z
+  contribuidor: login-exemplo

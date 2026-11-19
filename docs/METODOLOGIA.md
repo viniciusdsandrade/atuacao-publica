@@ -6,7 +6,7 @@ As fontes estão descritas em `docs/FONTES.md`.
 ## Regras gerais
 
 - **Cobertura temporal.** Começa em 2022-01-01 (ADR-0009, que revisa o ADR-0006): a 56ª legislatura entra pela parte a partir dessa data, e os mandatos executivos em curso nela entram com os atos a partir dela. Só entra quem exerceu mandato a partir dessa data. A cobertura só cresce: quem sai do cargo continua no arquivo. Histórico anterior a 2022 fica fora. No piloto municipal, a 18ª legislatura da câmara (2021 a 2024) entra pela parte a partir de 2022-01-01, e o mandato de prefeito de 2021 a 2025 entra com as despesas a partir dessa data.
-- **Transição.** As datas de posse vêm dos dados: `contrib/mandatos.yaml` para presidente e governador, e a legislatura da Câmara para deputado e senador. A troca de mandatos não exige mudança de código.
+- **Transição.** As datas de posse vêm dos dados: `contrib/mandatos.yaml` para presidente e governador e, por UF, para deputado estadual (ADR-0070), e a legislatura da Câmara para deputado federal e senador. A troca de mandatos não exige mudança de código. Hoje só São Paulo tem regra de deputado estadual: posse em 2027-02-01 pela Emenda Constitucional estadual nº 47/2019.
 - **Situação.** Cada perfil diz se a pessoa está em exercício. A situação mostrada é a do papel principal:
   - deputado e senador: a situação informada pela casa legislativa (por exemplo, `Exercício`);
   - presidente e governador: "Mandato vigente" ou "Mandato encerrado em {data}". O TSE registra a eleição; o exercício é deduzido das datas legais de posse. Renúncia ou sucessão entram por contribuição com fonte T0;

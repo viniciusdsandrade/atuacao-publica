@@ -1355,6 +1355,21 @@
   status: validado com limitação
   validado_em: 2026-11-03
 
+- id: alesp-legislacao
+  nome: Assembleia Legislativa do Estado de São Paulo, legislação estadual
+  orgao: Assembleia Legislativa do Estado de São Paulo
+  esfera: estadual
+  ente: SP
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://www.al.sp.gov.br/repositorio/legislacao
+  formato: HTML
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Texto compilado, com as redações anteriores no mesmo documento. A regra de mandato cita o snapshot do Internet Archive."
+  status: validado
+  validado_em: 2026-11-19
+
 - id: almg-deputados
   nome: Assembleia Legislativa do Estado de Minas Gerais, deputados e legislaturas
   orgao: Assembleia Legislativa do Estado de Minas Gerais

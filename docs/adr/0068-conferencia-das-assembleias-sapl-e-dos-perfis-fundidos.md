@@ -77,7 +77,7 @@ O texto do art. 29 da Constituição nos mandatos de prefeito vem do `planalto-l
 - A conferência compara o site com a fonte num dia. Voto dado depois da captura entra na renovação semanal da lista do ano.
 - Os 38 votos em comissão, as 16 despesas e as 52 proposições de Janaina Paschoal na ALESP não foram conferidos. O repositório de dados abertos da ALESP respondeu HTTP 503 de 2026-11-17 a 2026-11-19, inclusive à coleta do CI. A API do portal da ALESP não entrou nesta conferência.
 - Os cargos em órgãos da Câmara seguem o arquivo da legislatura inteira, inclusive os períodos anteriores a 2022 (docs/METODOLOGIA.md, "Órgãos e frentes").
-- Eleito deputado estadual em 2026 não ganha mandato com posse prevista. O ADR-0006 tira a data de posse da legislatura da Câmara, que só vale para deputado federal e senador. A posse estadual segue a constituição de cada estado; em São Paulo, a legislatura começa em 15 de março. Nos perfis municipais, são quatro casos.
+- Eleito deputado estadual em 2026 não ganha mandato com posse prevista. O ADR-0006 tira a data de posse da legislatura da Câmara, que só vale para deputado federal e senador. A posse estadual segue a constituição de cada estado; em São Paulo, a legislatura começa em 15 de março. Nos perfis municipais, são quatro casos. Correção em 2026-11-19: desde a Emenda Constitucional estadual nº 47/2019, a legislatura de São Paulo começa em 1º de fevereiro a partir de 2027. O ADR-0070 resolve os quatro casos.
 
 ## Alternativas consideradas
 

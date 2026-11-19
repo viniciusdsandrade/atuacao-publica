@@ -437,6 +437,7 @@ Nenhum servidor bloqueou o cliente.
 | `alesp-comissoes-votacoes` | ALESP, votações em comissões permanentes | T0 | XML | nenhuma | validado | 2026-11-03 |
 | `alesp-proposituras` | ALESP, proposituras e autores | T0 | XML em ZIP | nenhuma | validado | 2026-11-03 |
 | `alesp-sessoes` | ALESP, sessões plenárias e pautas | T0 | JSON e PDF | nenhuma | validado com limitação | 2026-11-03 |
+| `alesp-legislacao` | ALESP, legislação estadual | T0 | HTML | nenhuma | validado | 2026-11-19 |
 
 ### `alesp-deputados`: parlamentares da ALESP
 
@@ -478,6 +479,13 @@ Nenhum servidor bloqueou o cliente.
 - Limitações:
   - Matérias votadas em plenário estão abertas em JSON, mas os votos nominais individuais dos deputados em plenário são publicados em PDF do painel eletrônico (`urlArquivoPrincipal`).
   - O projeto não realiza parsing de PDF do painel nesta fase, priorizando dados primários estruturados.
+
+### `alesp-legislacao`: legislação estadual
+
+- URL base: `https://www.al.sp.gov.br/repositorio/legislacao`.
+- Uso: a regra de posse de deputado estadual em `contrib/mandatos.yaml` (ADR-0070) cita a Constituição do Estado compilada, em `constituicao/1989/compilacao-constituicao-0-05.10.1989.html`.
+- Validação em 2026-11-19: a página respondeu 200, com o texto do art. 9º, § 2º, e do ADCT, art. 1º-A, na redação da Emenda Constitucional nº 47/2019. No mesmo dia, o repositório de dados abertos respondia 503.
+- O texto compilado traz as redações anteriores no mesmo documento. A regra cita a redação vigente e o snapshot do Internet Archive de 2026-10-02.
 
 ## Governo do Estado de São Paulo (Executivo Estadual)
 

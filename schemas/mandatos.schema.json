@@ -6,10 +6,17 @@
   "minItems": 1,
   "items": {
     "type": "object",
-    "allOf": [{ "$ref": "comum.schema.json#/$defs/proveniencia_manual" }],
+    "allOf": [
+      { "$ref": "comum.schema.json#/$defs/proveniencia_manual" },
+      {
+        "description": "A posse de deputado estadual segue a constituição de cada estado: a regra diz a UF em ente (ADR-0070).",
+        "if": { "properties": { "cargo": { "const": "deputado_estadual" } }, "required": ["cargo"] },
+        "then": { "required": ["ente"], "properties": { "ente": { "$ref": "comum.schema.json#/$defs/uf" } } }
+      }
+    ],
     "required": ["cargo", "eleicao", "inicio", "fim", "texto_oficial"],
     "properties": {
-      "cargo": { "enum": ["presidente", "governador", "prefeito", "vice_prefeito"] },
+      "cargo": { "enum": ["presidente", "governador", "prefeito", "vice_prefeito", "deputado_estadual"] },
       "ente": { "anyOf": [{ "$ref": "comum.schema.json#/$defs/ente" }, { "type": "null" }] },
       "eleicao": { "type": "integer", "minimum": 1990 },
       "inicio": { "$ref": "comum.schema.json#/$defs/data" },

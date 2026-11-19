@@ -494,7 +494,7 @@ Verificação em 2026-11-17:
 
 Limitações:
 
-- Eleito deputado estadual em 2026 não ganha mandato com posse prevista (ADR-0006 e ADR-0068). Nos perfis municipais, são quatro casos.
+- Eleito deputado estadual em 2026 não ganhava mandato com posse prevista (ADR-0006 e ADR-0068). Nos perfis municipais, eram quatro casos, todos em São Paulo. Resolvido para São Paulo em 2026-11-19 (ADR-0070).
 - Os blocos de Janaina Paschoal na ALESP esperam o repositório de dados abertos voltar para a conferência.
 - As demais limitações estão no ADR-0068.
 
@@ -513,6 +513,30 @@ O passo final guardou um cache parcial, sem as fontes que não rodaram.
 Limitações:
 
 - Se o limite de tráfego da conta persistir, nenhuma execução coleta até ele ceder.
+
+## Posse prevista de deputado estadual (ADR-0070)
+
+Feita em 2026-11-19.
+A posse de deputado estadual vem de `contrib/mandatos.yaml`, por UF, com o texto da constituição estadual.
+
+| Frente | Entrega | Estado |
+|---|---|---|
+| Regra | `deputado_estadual` em `contrib/mandatos.yaml`, com a UF obrigatória no schema | concluída |
+| São Paulo | Eleitos em 2026: posse em 2027-02-01 e fim em 2031-02-01, pela Emenda Constitucional estadual nº 47/2019 | concluída |
+| Depois da posse | Vale o mandato que a assembleia registra; sem ele, "sem registro de exercício" | concluída |
+| Outras 26 UFs | Regra com o texto da constituição de cada uma | pendente |
+
+Verificação em 2026-11-19:
+
+- Texto lido no portal de legislação da ALESP (`alesp-legislacao`): art. 9º, § 2º, e ADCT, art. 1º-A, na redação da EC 47/2019. O snapshot do Internet Archive de 2026-10-02 traz os dois trechos literais.
+- No site publicado em 2026-11-19, os quatro perfis municipais sem posse prevista: Keit Lima, Marina Bragante e Thammy Miranda, da capital, e Mariana Conti, do piloto.
+- ETL: 439 testes, com três novos de vínculo (posse prevista só na UF da regra, sem registro de exercício depois da posse, mandato registrado pela assembleia) e um exemplo inválido de schema.
+- Não validado: o efeito no site, que depende da próxima publicação.
+
+Limitações:
+
+- As outras 26 UFs seguem sem posse prevista de deputado estadual.
+- Depois de 2027-02-01, o adaptador da ALESP precisa da 21ª legislatura. Até lá, os eleitos de São Paulo ficam sem registro de exercício.
 
 ## Fase 2 (depois da POC)
 

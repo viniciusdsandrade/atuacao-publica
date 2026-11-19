@@ -1,5 +1,5 @@
-# Regras de mandato do Executivo que o TSE não publica: datas de posse e de fim.
-# Fonte: Emenda Constitucional 111/2021 (art. 4º e nova redação dos arts. 28 e 82 da Constituição).
+# Regras de mandato que o TSE não publica: datas de posse e de fim do Executivo e, por UF, de deputado estadual.
+# Fonte do Executivo: Emenda Constitucional 111/2021 (art. 4º e nova redação dos arts. 28 e 82 da Constituição).
 
 # Mandato presidencial de 2019 a 2023 (ADR-0009): posse em 1º de janeiro pelo art. 82 na redação da EC 16/1997;
 # o fim é a posse do sucessor em 1º de janeiro de 2023 (EC 111/2021, art. 4º, regra abaixo).
@@ -70,6 +70,21 @@
   url_origem: https://www.planalto.gov.br/ccivil_03/constituicao/emendas/emc/emc111.htm
   snapshot_url: https://web.archive.org/web/20261023091924/https://www.planalto.gov.br/ccivil_03/constituicao/emendas/emc/emc111.htm
   capturado_em: 2026-10-30T02:55:00Z
+  contribuidor: viniciusdsandrade
+
+# Deputados estaduais de São Paulo eleitos em 2026 (ADR-0070): desde a Emenda Constitucional estadual nº 47/2019, a
+# legislatura começa em 1º de fevereiro (Constituição do Estado, art. 9º, § 2º, e ADCT, art. 1º-A). O fim é a posse
+# da legislatura seguinte, também em 1º de fevereiro.
+- cargo: deputado_estadual
+  ente: SP
+  eleicao: 2026
+  inicio: 2027-02-01
+  fim: 2031-02-01
+  texto_oficial: "Parágrafo único - A legislatura subsequente começará em 15 de março de 2023, e se encerrará em 31 de janeiro de 2027, iniciando-se a imediatamente posterior, assim como as que se seguirão a ela, em 1° de fevereiro, nos termos do § 2° do artigo 9° desta Constituição."
+  fonte_id: alesp-legislacao
+  url_origem: https://www.al.sp.gov.br/repositorio/legislacao/constituicao/1989/compilacao-constituicao-0-05.10.1989.html
+  snapshot_url: https://web.archive.org/web/20261002163338/https://www.al.sp.gov.br/repositorio/legislacao/constituicao/1989/compilacao-constituicao-0-05.10.1989.html
+  capturado_em: 2026-11-19T20:09:19Z
   contribuidor: viniciusdsandrade
 
 - cargo: prefeito
