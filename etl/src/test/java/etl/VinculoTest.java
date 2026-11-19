@@ -251,6 +251,26 @@ class VinculoTest {
     }
 
     @Test
+    void deputadoDistritalEleitoGanhaPossePrevistaPelaLeiOrganica(@TempDir Path tmp) throws IOException {
+        Fixture f = new Fixture(tmp);
+        Files.writeString(f.raiz.resolve("contrib").resolve("mandatos.yaml"), "- cargo: deputado_distrital\n  ente: DF\n"
+                + "  eleicao: 2026\n  inicio: '2027-01-06'\n  fim: '2031-01-06'\n  fonte_id: lei-organica-df\n");
+        f.candidatura(2026, "890001", "DEPUTADO DISTRITAL", "DF", "SICRANA ALVES", "PSB", true,
+                "SICRANA ALVES", "77700077700", "07/07/1983");
+        f.candidatura(2026, "890002", "DEPUTADO ESTADUAL", "GO", "BELTRANO DIAS", "PL", true,
+                "BELTRANO DIAS", "88800088800", "08/08/1984");
+
+        List<Perfil> perfis = f.vincular();
+        Perfil df = perfis.stream().filter(p -> "tse-890001".equals(p.id)).findFirst().orElseThrow();
+        assertEquals("Eleito em 2026; posse prevista em 2027-01-06", df.situacao);
+        JsonNode mandato = df.bloco("mandatos").getFirst();
+        assertEquals("deputado_distrital", mandato.get("cargo").stringValue());
+        assertEquals("DF", mandato.get("ente").stringValue());
+        assertEquals("2027-01-06", mandato.get("inicio").stringValue());
+        assertTrue(perfis.stream().noneMatch(p -> "tse-890002".equals(p.id)), "A regra distrital não vale para deputado estadual");
+    }
+
+    @Test
     void depoisDaPosseDeputadoEstadualSemRegistroDaAssembleiaFicaSemExercicio(@TempDir Path tmp) throws IOException {
         Fixture f = new Fixture(tmp, Instant.parse("2027-03-01T12:00:00Z"));
         Files.writeString(f.raiz.resolve("contrib").resolve("mandatos.yaml"), REGRA_DEPUTADO_ESTADUAL_SP);

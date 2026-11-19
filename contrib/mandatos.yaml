@@ -167,6 +167,19 @@
   capturado_em: 2026-11-19T21:57:54Z
   contribuidor: viniciusdsandrade
 
+# Distrito Federal: Lei Orgânica, art. 66, na redação da Emenda à Lei Orgânica nº 135, de 11/11/2026.
+- cargo: deputado_distrital
+  ente: DF
+  eleicao: 2026
+  inicio: 2027-01-06
+  fim: 2031-01-06
+  texto_oficial: "Art. 66. A Câmara Legislativa reúne-se no dia 6 de janeiro do primeiro ano de cada legislatura para posse dos deputados distritais e para eleição e posse da Mesa Diretora, vedada a reeleição para o mesmo cargo na eleição imediatamente subsequente"
+  fonte_id: lei-organica-df
+  url_origem: https://www.sinj.df.gov.br/sinj/Norma/66634/Lei_Org_nica__08_06_1993.html
+  snapshot_url: https://web.archive.org/web/20261119231940/https://www.sinj.df.gov.br/sinj/Norma/66634/Lei_Org_nica__08_06_1993.html
+  capturado_em: 2026-11-19T23:20:12Z
+  contribuidor: viniciusdsandrade
+
 # Estado do Espírito Santo.
 - cargo: deputado_estadual
   ente: ES

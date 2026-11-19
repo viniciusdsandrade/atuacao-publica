@@ -1460,6 +1460,21 @@
   status: validado
   validado_em: 2026-11-19
 
+- id: lei-organica-df
+  nome: Governo do Distrito Federal, SINJ-DF, Lei Orgânica do Distrito Federal
+  orgao: Governo do Distrito Federal
+  esfera: estadual
+  ente: DF
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://www.sinj.df.gov.br/sinj/Norma
+  formato: HTML
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Texto compilado do SINJ-DF, com as redações anteriores tachadas. A regra de mandato (ADR-0070) cita o snapshot do Internet Archive."
+  status: validado
+  validado_em: 2026-11-19
+
 - id: constituicao-es
   nome: Assembleia Legislativa do Estado do Espírito Santo, Constituição do Estado do Espírito Santo
   orgao: Assembleia Legislativa do Estado do Espírito Santo

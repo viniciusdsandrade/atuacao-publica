@@ -501,6 +501,7 @@ Um acervo local de legislação serviu para achar o dispositivo e o endereço of
 | `constituicao-ap` | Assembleia Legislativa do Amapá | PDF | validado | 2026-01-21 |
 | `constituicao-ba` | Governo do Estado da Bahia (LegislaBahia) | HTML | validado | 2026-10-17 |
 | `constituicao-ce` | Assembleia Legislativa do Ceará | PDF | validado | 2026-11-19 |
+| `lei-organica-df` | Governo do Distrito Federal (SINJ-DF), Lei Orgânica | HTML | validado | 2026-11-19 |
 | `constituicao-es` | Assembleia Legislativa do Espírito Santo | HTML | validado | 2025-05-12 |
 | `constituicao-go` | Governo do Estado de Goiás (Casa Civil) | PDF | validado | 2025-08-01 |
 | `constituicao-ma` | Assembleia Legislativa do Maranhão | PDF | validado | 2025-07-31 |
@@ -525,7 +526,8 @@ Um acervo local de legislação serviu para achar o dispositivo e o endereço of
 - No PR, a visualização compilada da Casa Civil traz só a redação vigente. Em GO, o PDF compilado traz todas as redações do art. 16, § 3º, e todas fixam 1º de fevereiro; na camada de texto, o ordinal sai como a letra o.
 - AL, MA e PR têm, em outros endereços, cópias que não vêm de quem publica a norma (polícia militar, universidade e secretaria de ciência e tecnologia). As regras citam a assembleia (AL e MA) e a Casa Civil (PR).
 - No AM, a Constituição não fixa a data da posse, e a regra cita o Regimento Interno da ALEAM (art. 4º). A captura do PDF falhou duas vezes e deu certo na terceira, em 2026-11-19.
-- Sem regra: MG tem a data no regimento interno, mas sem snapshot, porque o Internet Archive não alcança a ALMG. A base de textos da ALERJ não entregou o texto do RJ. No DF, a posse dos distritais passou a 6 de janeiro pela Emenda à Lei Orgânica nº 131/2024, segundo a imprensa; o texto oficial fica no portal da CLDF, que recusa conexão de fora do Brasil, e não foi validado.
+- Sem regra: MG tem a data no regimento interno, mas sem snapshot, porque o Internet Archive não alcança a ALMG. A base de textos da ALERJ não entregou o texto do RJ.
+- No DF, a regra cita o texto compilado da Lei Orgânica no SINJ-DF, art. 66, na redação da Emenda à Lei Orgânica nº 135, de 11/11/2026. O SINJ mostra tachadas as redações anteriores: 1º de janeiro (original) e 6 de janeiro em incisos (Emenda à Lei Orgânica nº 131/2024).
 
 ## Governo do Estado de São Paulo (Executivo Estadual)
 

@@ -2055,8 +2055,8 @@ final class Vinculo {
     }
 
     /**
-     * Presidente, governadores e deputados estaduais das regras de contrib/mandatos.yaml: mandato vigente, encerrado ou
-     * com posse prevista (ADR-0006 e ADR-0070). O TSE registra a eleição; renúncia ou sucessão entram por contribuição
+     * Presidente, governadores e deputados estaduais e distritais das regras de contrib/mandatos.yaml: mandato vigente,
+     * encerrado ou com posse prevista (ADR-0006 e ADR-0070). O TSE registra a eleição; renúncia ou sucessão entram por contribuição
      * com fonte T0.
      */
     private static List<Perfil> executivos(Contexto ctx, Catalogo catalogo, List<Perfil> existentes, Ligacoes ligacoes,
@@ -2071,8 +2071,9 @@ final class Vinculo {
             int eleicao = Json.inteiro(regra, "eleicao");
             Fase fase = Fase.de(ctx.hoje(), inicio, fim, eleicao);
             boolean municipal = cargo.equals("prefeito") || cargo.equals("vice_prefeito");
-            // A posse na assembleia segue a constituição de cada estado: a regra de deputado estadual vale só para a UF dela.
-            boolean assembleia = cargo.equals("deputado_estadual");
+            // A posse na assembleia segue a constituição de cada estado, e a da Câmara Legislativa, a Lei Orgânica do DF:
+            // a regra de deputado estadual ou distrital vale só para a UF dela.
+            boolean assembleia = cargo.equals("deputado_estadual") || cargo.equals("deputado_distrital");
             String enteDaRegra = regra.hasNonNull("ente") ? Json.texto(regra, "ente") : Sapl.IBGE;
             for (JsonNode c : eleitos(candidaturas, eleicao, cargo)) {
                 // A regra municipal vale só para o município dela. Com mais de um município coberto, o eleito de outro não entra.
