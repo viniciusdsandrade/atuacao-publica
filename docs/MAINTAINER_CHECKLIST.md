@@ -65,13 +65,14 @@ ALMG, ALRS, ALES, ALEPE, CLDF, ALEMA e ALAP recusam conexão de fora do Brasil; 
 
 O envio à mão acima vira uma coleta diária, feita pelo launchd num clone separado do de trabalho.
 
-1. Na raiz do clone de trabalho, com o `gh` autenticado: `scripts/semente-agendar.sh --copiar-cache`. Ele cria o clone em `~/.atuacao-publica/semente/repo`, leva para lá o cache das onze casas e agenda a coleta para as 01:30, no horário da máquina. `--hora HH:MM` muda o horário, e `--destino PASTA` muda a pasta.
-2. A cada execução, o clone vai para a `main` remota, o ETL é compilado e `scripts/semente-enviar.sh` roda. O registro fica em `~/.atuacao-publica/semente/logs/semente.log`.
-3. Para rodar na hora: `launchctl kickstart gui/$(id -u)/atuacao-publica.semente`.
-4. Para ensaiar sem coletar e sem enviar: `launchctl setenv SEMENTE_SIMULAR 1`, rode como no passo 3 e depois `launchctl unsetenv SEMENTE_SIMULAR`.
+1. Na raiz do clone de trabalho, com o `gh` autenticado: `scripts/semente-agendar.sh --copiar-cache`. Ele cria o clone em `~/.atuacao-publica/semente/repo`, leva para lá o cache das onze casas e agenda a coleta para as 01:30, no horário da máquina, e para a entrada na sessão. `--hora HH:MM` muda o horário, e `--destino PASTA` muda a pasta.
+2. A cada execução, o clone vai para a `main` remota, o ETL é compilado e `scripts/semente-enviar.sh` roda. O registro fica em `~/.atuacao-publica/semente/logs/semente.log`. Cada envio grava a hora UTC em `~/.atuacao-publica/semente/ultimo-envio`.
+3. Para rodar na hora: `launchctl kickstart gui/$(id -u)/atuacao-publica.semente`. A coleta só acontece se o último envio não cobre o horário diário. Para forçar, apague antes `~/.atuacao-publica/semente/ultimo-envio`.
+4. Para ensaiar sem coletar e sem enviar: `launchctl setenv SEMENTE_SIMULAR 1`, rode como no passo 3 e depois `launchctl unsetenv SEMENTE_SIMULAR`. A simulação ignora o registro de envio.
 5. Para tirar o agendamento: `scripts/semente-agendar.sh --remover`. O clone e o cache ficam na pasta.
 6. O token do `gh` não vai para o agendamento. A coleta usa a autenticação que o `gh` já guarda na máquina.
-7. A máquina precisa estar ligada. Dormindo no horário, a coleta roda quando ela acordar: `scripts/semente-agendada.sh` aguarda até 60 s pela rede (`SEMENTE_ESPERA_REDE_S`) antes do `git fetch` para evitar erro imediato enquanto o DNS restabelece. Desligada, a coleta daquele dia não roda. Falhas transitórias de rede nos portais estaduais tentam novamente na execução seguinte.
+7. A máquina precisa estar ligada. Dormindo no horário, a coleta roda quando ela acordar: `scripts/semente-agendada.sh` aguarda até 60 s pela rede (`SEMENTE_ESPERA_REDE_S`) antes do `git fetch` para evitar erro imediato enquanto o DNS restabelece. Desligada no horário, a coleta roda na entrada seguinte da sessão. Durante a coleta, o `caffeinate -is` impede o repouso por inatividade. O fim da sessão e o desligamento encerram a coleta, que recomeça na entrada seguinte, com o cache. Falhas transitórias de rede nos portais estaduais tentam novamente na execução seguinte.
+8. Depois de mudar `scripts/semente-agendar.sh`, rode-o de novo para regravar o agente. Ele leva o clone para a `main` remota antes de carregar o agente.
 
 ## Cache cifrado no GitHub Actions (ADR-0061)
 

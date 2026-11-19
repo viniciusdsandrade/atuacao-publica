@@ -10,6 +10,10 @@
 #   --hora          horário local da coleta diária (padrão: 01:30; o workflow dados roda às 06:17 UTC)
 #   --copiar-cache  leva para o clone o cache das casas da semente que já está neste clone de trabalho
 #   --remover       tira o agendamento; o clone e o cache ficam na pasta de destino
+#
+# O agente roda também quando é carregado, o que acontece na entrada da sessão: o launchd não recupera o horário
+# perdido com a máquina desligada. O registro do último envio evita coleta repetida, e o caffeinate mantém a máquina
+# acordada enquanto a coleta dura.
 set -euo pipefail
 
 ROTULO=atuacao-publica.semente
@@ -71,6 +75,17 @@ if [[ $copiar == 1 ]]; then
   echo "semente-agendar: cache copiado para $clone/data ($(du -sh "$clone/data" | cut -f1))"
 fi
 
+# Sem registro de envio, vale a semente mais nova da release: a carga do agente não dispara coleta à toa.
+estado="$destino/ultimo-envio"
+if [[ ! -s "$estado" ]]; then
+  release=$(sed -nE 's/^RELEASE=(.*)$/\1/p' scripts/semente-enviar.sh)
+  mais_nova=$(gh release view "$release" --json assets --jq '[.assets[].createdAt] | max // empty' 2> /dev/null || true)
+  if [[ -n "$mais_nova" ]]; then
+    printf '%s\n' "$mais_nova" > "$estado"
+    echo "semente-agendar: último envio registrado pela release: $mais_nova"
+  fi
+fi
+
 # O agendador não lê o perfil do shell: o PATH leva as pastas dos comandos que valem hoje.
 caminho=$(for comando in git gh java openssl tar; do dirname "$(command -v "$comando")"; done | awk '!visto[$0]++' | paste -sd: -)
 caminho="$caminho:/usr/bin:/bin:/usr/sbin:/sbin"
@@ -88,6 +103,8 @@ cat > "$agente" <<PLIST
   <key>Label</key><string>$ROTULO</string>
   <key>ProgramArguments</key>
   <array>
+    <string>/usr/bin/caffeinate</string>
+    <string>-is</string>
     <string>/bin/bash</string>
     <string>$clone/scripts/semente-agendada.sh</string>
   </array>
@@ -96,6 +113,8 @@ cat > "$agente" <<PLIST
   <dict>
     <key>PATH</key><string>$caminho</string>
     <key>SEMENTE_LOG</key><string>$destino/logs/semente.log</string>
+    <key>SEMENTE_HORA</key><string>$hora</string>
+    <key>SEMENTE_ESTADO</key><string>$estado</string>
 $java_home
   </dict>
   <key>StartCalendarInterval</key>
@@ -103,6 +122,7 @@ $java_home
     <key>Hour</key><integer>$horas</integer>
     <key>Minute</key><integer>$minutos</integer>
   </dict>
+  <key>RunAtLoad</key><true/>
   <key>StandardOutPath</key><string>$destino/logs/semente.log</string>
   <key>StandardErrorPath</key><string>$destino/logs/semente.log</string>
   <key>ProcessType</key><string>Background</string>
@@ -113,9 +133,13 @@ $java_home
 PLIST
 plutil -lint "$agente" > /dev/null
 launchctl bootout "$dominio/$ROTULO" 2> /dev/null || true
+# A carga do agente já roda o script do clone: ele vai antes para a main remota, como em cada execução.
+git -C "$clone" fetch --quiet origin main
+git -C "$clone" checkout --quiet --detach origin/main
 launchctl bootstrap "$dominio" "$agente"
 
-echo "semente-agendar: coleta local agendada para as $hora, todo dia, no horário desta máquina"
-echo "  rodar agora:  launchctl kickstart $dominio/$ROTULO"
+echo "semente-agendar: coleta local agendada para as $hora, todo dia, no horário desta máquina, e na entrada da sessão"
+echo "  rodar agora:  launchctl kickstart $dominio/$ROTULO (coleta só se o último envio não cobre o horário)"
+echo "  forçar:       apague $estado e rode agora"
 echo "  registro:     $destino/logs/semente.log"
 echo "  remover:      scripts/semente-agendar.sh --remover"

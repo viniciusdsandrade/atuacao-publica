@@ -62,6 +62,17 @@ O cache bruto dessas casas tem CPF de fornecedor (verbas da ALMG) e telefone e e
 - **Simulação.** `SEMENTE_SIMULAR=1` monta e cifra o pacote com o cache que existe, sem coletar, sem enviar e sem trocar o segredo.
 - Com o agendamento ativo, a semente sai do clone agendado. O envio à mão a partir do clone de trabalho continua possível, mas leva o cache de lá, que deixa de ser o mais novo.
 
+## Atualização em 2026-11-19: coleta na entrada da sessão e máquina acordada
+
+- **O que aconteceu.** De 2026-11-14 a 2026-11-19, o agendamento rodou pelo horário uma vez só, em 2026-11-18. Nos outros dias, a máquina estava desligada no horário. O launchd recupera o horário perdido quando a máquina dorme, mas não quando ela está desligada.
+- A execução de 2026-11-18 recebeu sinal de encerramento 38 minutos depois de começar, no meio da ALEPE, provavelmente pelo fim da sessão. Não houve envio. A semente ficou com a coleta de 2026-11-14, e o alerta abriu issue para as onze casas em 2026-11-17.
+- **Entrada da sessão.** O agente roda também quando é carregado (`RunAtLoad`), o que acontece na entrada da sessão e na instalação.
+- **Sem coleta repetida.** Cada envio grava a hora UTC no arquivo `ultimo-envio`, na pasta do agendamento. A execução não coleta quando esse envio é posterior ao horário diário mais recente ou anterior a ele em até seis horas. Sem esse registro, a instalação parte da semente mais nova da release. A simulação ignora o registro.
+- **Máquina acordada.** O agente roda o script sob `caffeinate -is`, que impede o repouso por inatividade enquanto a coleta dura.
+- **Clone atualizado na instalação.** A carga do agente já roda o script do clone. Por isso, a instalação leva o clone para a `main` remota antes de carregar o agente.
+- **Sem tentativa de hora em hora.** Uma casa com falha aborta o envio. Com tentativas de hora em hora, uma falha persistente repetiria a coleta das onze casas o dia todo.
+- Limitações: o fim da sessão e o desligamento ainda encerram a coleta em andamento, que recomeça na entrada seguinte com o cache. O repouso forçado, como o da tampa fechada, suspende a coleta até a máquina acordar.
+
 ## Alternativas consideradas
 
 - Release sem cifra: descartada. O repositório é público, e o cache tem CPF e contatos de gabinete.

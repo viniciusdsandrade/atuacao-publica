@@ -6,15 +6,38 @@
 # Uma trava impede duas coletas ao mesmo tempo. Trava com mais de seis horas é de execução que morreu, e é desfeita.
 # SEMENTE_SIMULAR=1 passa para o envio: atualiza e compila, mas não coleta, não envia e não troca o segredo.
 # SEMENTE_RAMO troca o ramo seguido, para ensaio (padrão: main).
+# SEMENTE_HORA (HH:MM, horário local da coleta diária) e SEMENTE_ESTADO (arquivo com a hora UTC do último envio) vêm
+# do agendamento, que roda também na entrada da sessão. Com os dois, não há coleta quando o último envio já cobre o
+# horário diário mais recente.
 set -euo pipefail
 
 raiz=$(cd "$(dirname "$0")/.." && pwd)
 cd "$raiz"
 trava="${TMPDIR:-/tmp}/atuacao-publica-semente.trava"
 ramo="${SEMENTE_RAMO:-main}"
+hora="${SEMENTE_HORA:-}"
+estado="${SEMENTE_ESTADO:-}"
 soltar() { rmdir "$trava" 2> /dev/null || true; }
 
+# O envio cobre o horário diário mais recente quando veio depois dele ou até seis horas antes:
+# a coleta feita na entrada da sessão, à noite, já serve para a madrugada seguinte.
+envio_cobre_o_horario() {
+  [[ "$hora" =~ ^([01][0-9]|2[0-3]):[0-5][0-9]$ && -n "$estado" && -s "$estado" ]] || return 1
+  local enviado marco
+  enviado=$(head -n 1 "$estado")
+  [[ "$enviado" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$ ]] || return 1
+  marco=$(date -j -f '%Y-%m-%d %H:%M:%S' "$(date +%Y-%m-%d) $hora:00" +%s)
+  if (( marco > $(date +%s) )); then
+    marco=$(( marco - 86400 ))
+  fi
+  (( $(date -j -u -f '%Y-%m-%dT%H:%M:%SZ' "$enviado" +%s) >= marco - 6 * 3600 ))
+}
+
 if [[ "${SEMENTE_AGENDADA_FASE:-1}" == 1 ]]; then
+  if [[ "${SEMENTE_SIMULAR:-}" != 1 ]] && envio_cobre_o_horario; then
+    echo "semente agendada: o envio de $(head -n 1 "$estado") já cobre o horário das $hora; nada a fazer"
+    exit 0
+  fi
   if [[ -d "$trava" && -n "$(find "$trava" -maxdepth 0 -mmin +360 2> /dev/null)" ]]; then
     echo "semente agendada: trava antiga desfeita"
     soltar
@@ -57,4 +80,8 @@ fi
 trap soltar EXIT
 (cd etl && ./mvnw -B -ntp -q package -DskipTests)
 scripts/semente-enviar.sh
-echo "semente agendada: fim em $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+fim=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+if [[ -n "$estado" && "${SEMENTE_SIMULAR:-}" != 1 ]]; then
+  printf '%s\n' "$fim" > "$estado"
+fi
+echo "semente agendada: fim em $fim"
