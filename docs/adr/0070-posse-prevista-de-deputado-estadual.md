@@ -36,7 +36,7 @@ Há exceções: o Rio Grande do Sul dá posse em 31 de janeiro, e Roraima, desde
    - AM: a Constituição não fixa a data. O Regimento Interno da ALEAM põe a primeira reunião preparatória, para a posse, em 1º de fevereiro (art. 4º), mas o Internet Archive não capturou o PDF em 2026-11-19;
    - MG: a Constituição fixa uma janela, de 1º a 15 de fevereiro. O Regimento Interno da ALMG põe a primeira reunião preparatória em 1º de fevereiro (art. 5º), mas a ALMG recusa conexão de fora do Brasil, e o Internet Archive não a alcança;
    - RJ: a base de textos da ALERJ não entregou o texto em 2026-11-19, e o snapshot da página não o guarda;
-   - DF: o cargo é deputado distrital, e a regra estaria na Lei Orgânica do Distrito Federal, com indícios conflitantes sobre a data.
+   - DF: o cargo é deputado distrital. Segundo a imprensa, a Emenda à Lei Orgânica nº 131/2024, publicada em 2024-05-27, pôs a posse em 6 de janeiro (art. 66). O texto oficial consolidado fica no portal de legislação da CLDF, que recusa conexão de fora do Brasil, e a regra ainda pede o cargo `deputado_distrital` no código e no schema. Não validado no texto oficial.
 8. Quando a constituição não fixa o dia, a regra pode citar o regimento interno da assembleia, com snapshot, como a constituição.
 9. Em RR, as notas do texto oficial sobre as ADIs 6654, 6658 e 6703 tratam da reeleição da Mesa, segundo o STF, e não da data da posse.
 
