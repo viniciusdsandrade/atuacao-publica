@@ -570,6 +570,7 @@ Verificação em 2026-11-19:
 - Mais cinco UFs no mesmo dia: AL pela Constituição no SAPL da Assembleia, GO pelo PDF compilado da Casa Civil, MA pela edição anotada de 2025 da Assembleia, PR pela visualização compilada da Casa Civil e RR pelo texto articulado do SAPL da Assembleia, na redação da Emenda Constitucional estadual nº 91/2023. AL e PR ganharam snapshot a pedido do projeto. As cinco citações batem com o snapshot de cada regra; em GO, com o ordinal da camada de texto do PDF (1o) lido como 1º.
 - RR: segundo o STF, as ADIs 6654, 6658 e 6703, citadas em nota no texto oficial, tratam da reeleição da Mesa da Assembleia, e não da data da posse.
 - `normalize contrib`: 41 regras de mandato válidas. Ensaio local com as 23 UFs: 840 mandatos com posse prevista, o mesmo número de eleitos do TSE em cada UF; RR com posse em 2027-01-05 e RS em 2027-01-31. De 2.388 para 2.793 perfis, com 405 perfis novos do TSE (87 de São Paulo, número que cai com a ALESP).
+- Trava do `publish` (ADR-0006): dois ensaios com o índice publicado em 2026-11-19 como publicação anterior, um com o código de antes da regra e outro com o de agora. Nenhum id publicado some só com a regra nova, e todo perfil do código anterior segue com o mesmo id ou como alias. Os ids que somem nos dois ensaios são da ALESP, da ALEGO e da ALESC, que os dados locais não têm completas.
 
 Limitações:
 
