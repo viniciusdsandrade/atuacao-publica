@@ -1370,6 +1370,261 @@
   status: validado
   validado_em: 2026-11-19
 
+- id: constituicao-ac
+  nome: Governo do Estado do Acre, Constituição do Estado do Acre
+  orgao: Governo do Estado do Acre
+  esfera: estadual
+  ente: AC
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://www.legis.ac.gov.br
+  formato: HTML
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "A regra de mandato (ADR-0070) cita o snapshot do Internet Archive."
+  status: validado
+  validado_em: 2026-11-19
+
+- id: constituicao-ap
+  nome: Assembleia Legislativa do Estado do Amapá, Constituição do Estado do Amapá
+  orgao: Assembleia Legislativa do Estado do Amapá
+  esfera: estadual
+  ente: AP
+  categoria: dados
+  nivel_confianca: T0
+  url_base: http://silegis.al.ap.leg.br/proposicaopdf
+  formato: PDF
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "A regra de mandato (ADR-0070) cita o snapshot do Internet Archive."
+  status: validado
+  validado_em: 2026-11-19
+
+- id: constituicao-ba
+  nome: Governo do Estado da Bahia, Constituição do Estado da Bahia
+  orgao: Governo do Estado da Bahia
+  esfera: estadual
+  ente: BA
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://www.legislabahia.ba.gov.br/documentos
+  formato: HTML
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "A regra de mandato (ADR-0070) cita o snapshot do Internet Archive."
+  status: validado
+  validado_em: 2026-11-19
+
+- id: constituicao-ce
+  nome: Assembleia Legislativa do Estado do Ceará, Constituição do Estado do Ceará
+  orgao: Assembleia Legislativa do Estado do Ceará
+  esfera: estadual
+  ente: CE
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://www.al.ce.gov.br/download-file
+  formato: PDF
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "A regra de mandato (ADR-0070) cita o snapshot do Internet Archive."
+  status: validado
+  validado_em: 2026-11-19
+
+- id: constituicao-es
+  nome: Assembleia Legislativa do Estado do Espírito Santo, Constituição do Estado do Espírito Santo
+  orgao: Assembleia Legislativa do Estado do Espírito Santo
+  esfera: estadual
+  ente: ES
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://www3.al.es.gov.br/Arquivo/Documents/legislacao
+  formato: HTML
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "A regra de mandato (ADR-0070) cita o snapshot do Internet Archive."
+  status: validado
+  validado_em: 2026-11-19
+
+- id: constituicao-ms
+  nome: Governo do Estado de Mato Grosso do Sul, Constituição do Estado de Mato Grosso do Sul
+  orgao: Governo do Estado de Mato Grosso do Sul
+  esfera: estadual
+  ente: MS
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://aacpdappls.net.ms.gov.br/appls/legislacao
+  formato: HTML
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "A regra de mandato (ADR-0070) cita o snapshot do Internet Archive."
+  status: validado
+  validado_em: 2026-11-19
+
+- id: constituicao-mt
+  nome: Assembleia Legislativa do Estado de Mato Grosso, Constituição do Estado de Mato Grosso
+  orgao: Assembleia Legislativa do Estado de Mato Grosso
+  esfera: estadual
+  ente: MT
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://storage.al.mt.gov.br/api/v1/download
+  formato: PDF
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "O endereço respondeu 404 em 2026-11-19; o texto vem do snapshot de 2026-10-23. A regra de mandato (ADR-0070) cita o snapshot do Internet Archive."
+  status: validado com limitação
+  validado_em: 2026-11-19
+
+- id: constituicao-pa
+  nome: Assembleia Legislativa do Estado do Pará, Constituição do Estado do Pará
+  orgao: Assembleia Legislativa do Estado do Pará
+  esfera: estadual
+  ente: PA
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://www.alepa.pa.gov.br/Servicos/Download
+  formato: PDF
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "O endereço respondeu 500 em 2026-11-19; o texto vem do snapshot de 2026-05-17. A regra de mandato (ADR-0070) cita o snapshot do Internet Archive."
+  status: validado com limitação
+  validado_em: 2026-11-19
+
+- id: constituicao-pb
+  nome: Assembleia Legislativa do Estado da Paraíba, Constituição do Estado da Paraíba
+  orgao: Assembleia Legislativa do Estado da Paraíba
+  esfera: estadual
+  ente: PB
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://www.al.pb.leg.br/elegispb
+  formato: PDF
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "A regra de mandato (ADR-0070) cita o snapshot do Internet Archive."
+  status: validado
+  validado_em: 2026-11-19
+
+- id: constituicao-pe
+  nome: Assembleia Legislativa do Estado de Pernambuco, Constituição do Estado de Pernambuco
+  orgao: Assembleia Legislativa do Estado de Pernambuco
+  esfera: estadual
+  ente: PE
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://legis.alepe.pe.gov.br
+  formato: HTML
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "A regra de mandato (ADR-0070) cita o snapshot do Internet Archive."
+  status: validado
+  validado_em: 2026-11-19
+
+- id: constituicao-pi
+  nome: Assembleia Legislativa do Estado do Piauí, Constituição do Estado do Piauí
+  orgao: Assembleia Legislativa do Estado do Piauí
+  esfera: estadual
+  ente: PI
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://sapl.al.pi.leg.br/ta
+  formato: HTML
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "A regra de mandato (ADR-0070) cita o snapshot do Internet Archive."
+  status: validado
+  validado_em: 2026-11-19
+
+- id: constituicao-rn
+  nome: Assembleia Legislativa do Estado do Rio Grande do Norte, Constituição do Estado do Rio Grande do Norte
+  orgao: Assembleia Legislativa do Estado do Rio Grande do Norte
+  esfera: estadual
+  ente: RN
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://www.al.rn.leg.br/documentos
+  formato: PDF
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "A regra de mandato (ADR-0070) cita o snapshot do Internet Archive."
+  status: validado
+  validado_em: 2026-11-19
+
+- id: constituicao-ro
+  nome: Assembleia Legislativa do Estado de Rondônia, Constituição do Estado de Rondônia
+  orgao: Assembleia Legislativa do Estado de Rondônia
+  esfera: estadual
+  ente: RO
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://sapl.al.ro.leg.br/media/sapl/public/normajuridica
+  formato: PDF
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "A regra de mandato (ADR-0070) cita o snapshot do Internet Archive."
+  status: validado
+  validado_em: 2026-11-19
+
+- id: constituicao-rs
+  nome: Assembleia Legislativa do Estado do Rio Grande do Sul, Constituição do Estado do Rio Grande do Sul
+  orgao: Assembleia Legislativa do Estado do Rio Grande do Sul
+  esfera: estadual
+  ente: RS
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://www2.al.rs.gov.br/dal
+  formato: HTML
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "A regra de mandato (ADR-0070) cita o snapshot do Internet Archive."
+  status: validado
+  validado_em: 2026-11-19
+
+- id: constituicao-sc
+  nome: Assembleia Legislativa do Estado de Santa Catarina, Constituição do Estado de Santa Catarina
+  orgao: Assembleia Legislativa do Estado de Santa Catarina
+  esfera: estadual
+  ente: SC
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://leis.alesc.sc.gov.br/ato-normativo
+  formato: HTML
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "A regra de mandato (ADR-0070) cita o snapshot do Internet Archive."
+  status: validado
+  validado_em: 2026-11-19
+
+- id: constituicao-se
+  nome: Assembleia Legislativa do Estado de Sergipe, Constituição do Estado de Sergipe
+  orgao: Assembleia Legislativa do Estado de Sergipe
+  esfera: estadual
+  ente: SE
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://aleselegis.al.se.leg.br/Arquivo/Documents/legislacao
+  formato: HTML
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "A regra de mandato (ADR-0070) cita o snapshot do Internet Archive."
+  status: validado
+  validado_em: 2026-11-19
+
+- id: constituicao-to
+  nome: Assembleia Legislativa do Estado do Tocantins, Constituição do Estado do Tocantins
+  orgao: Assembleia Legislativa do Estado do Tocantins
+  esfera: estadual
+  ente: TO
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://www.al.to.leg.br/arquivos
+  formato: PDF
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "A regra de mandato (ADR-0070) cita o snapshot do Internet Archive."
+  status: validado
+  validado_em: 2026-11-19
+
 - id: almg-deputados
   nome: Assembleia Legislativa do Estado de Minas Gerais, deputados e legislaturas
   orgao: Assembleia Legislativa do Estado de Minas Gerais

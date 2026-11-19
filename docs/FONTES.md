@@ -487,6 +487,37 @@ Nenhum servidor bloqueou o cliente.
 - Validação em 2026-11-19: a página respondeu 200, com o texto do art. 9º, § 2º, e do ADCT, art. 1º-A, na redação da Emenda Constitucional nº 47/2019. No mesmo dia, o repositório de dados abertos respondia 503.
 - O texto compilado traz as redações anteriores no mesmo documento. A regra cita a redação vigente e o snapshot do Internet Archive de 2026-10-02.
 
+## Constituições estaduais (ADR-0070)
+
+Fontes da regra de posse de deputado estadual em `contrib/mandatos.yaml`.
+Cada regra cita o dispositivo da posse e o snapshot do Internet Archive em que o texto foi conferido, literalmente, em 2026-11-19.
+O acervo `leis` do mantenedor serviu para achar o dispositivo e o endereço oficial.
+
+| id | Fonte | Formato | Status | Snapshot |
+|---|---|---|---|---|
+| `constituicao-ac` | Governo do Estado do Acre | HTML | validado | 2026-10-18 |
+| `constituicao-ap` | Assembleia Legislativa do Amapá | PDF | validado | 2026-01-21 |
+| `constituicao-ba` | Governo do Estado da Bahia (LegislaBahia) | HTML | validado | 2026-10-17 |
+| `constituicao-ce` | Assembleia Legislativa do Ceará | PDF | validado | 2026-11-19 |
+| `constituicao-es` | Assembleia Legislativa do Espírito Santo | HTML | validado | 2025-05-12 |
+| `constituicao-ms` | Governo do Estado de Mato Grosso do Sul | HTML | validado | 2026-11-19 |
+| `constituicao-mt` | Assembleia Legislativa de Mato Grosso | PDF | validado com limitação: o endereço respondeu 404 | 2026-10-23 |
+| `constituicao-pa` | Assembleia Legislativa do Pará | PDF | validado com limitação: o endereço respondeu 500 | 2026-05-17 |
+| `constituicao-pb` | Assembleia Legislativa da Paraíba | PDF | validado | 2026-11-19 |
+| `constituicao-pe` | Assembleia Legislativa de Pernambuco | HTML | validado | 2026-10-16 |
+| `constituicao-pi` | Assembleia Legislativa do Piauí (SAPL) | HTML | validado | 2026-11-19 |
+| `constituicao-rn` | Assembleia Legislativa do Rio Grande do Norte | PDF | validado | 2026-08-08 |
+| `constituicao-ro` | Assembleia Legislativa de Rondônia (SAPL) | PDF | validado | 2026-11-19 |
+| `constituicao-rs` | Assembleia Legislativa do Rio Grande do Sul | HTML | validado | 2023-09-28 |
+| `constituicao-sc` | Assembleia Legislativa de Santa Catarina | HTML | validado | 2026-07-13 |
+| `constituicao-se` | Assembleia Legislativa de Sergipe | HTML | validado | 2026-04-23 |
+| `constituicao-to` | Assembleia Legislativa do Tocantins | PDF | validado | 2026-11-19 |
+
+- Os snapshots de 2026-11-19 foram capturados a pedido do projeto, porque a fonte não tinha snapshot ou o snapshot guardava só a página, sem o texto.
+- Os endereços oficiais responderam em 2026-11-19, exceto os de MT (404) e PA (500).
+- No PI, o SAPL marca como desativada a redação de 2008 do § 4º. A regra cita a redação vigente.
+- Fontes não usadas: o texto de AL vem do sistema de legislação da Polícia Militar, o do MA de uma universidade e o do PR de uma secretaria. As fontes oficiais de GO e RJ montam o texto na hora, e o snapshot não o guarda.
+
 ## Governo do Estado de São Paulo (Executivo Estadual)
 
 Poder Executivo do Estado de São Paulo (ADR-0014).
