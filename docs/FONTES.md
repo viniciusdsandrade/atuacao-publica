@@ -496,18 +496,23 @@ Um acervo local de legislação serviu para achar o dispositivo e o endereço of
 | id | Fonte | Formato | Status | Snapshot |
 |---|---|---|---|---|
 | `constituicao-ac` | Governo do Estado do Acre | HTML | validado | 2026-10-18 |
+| `constituicao-al` | Assembleia Legislativa de Alagoas (SAPL) | PDF | validado | 2026-11-19 |
 | `constituicao-ap` | Assembleia Legislativa do Amapá | PDF | validado | 2026-01-21 |
 | `constituicao-ba` | Governo do Estado da Bahia (LegislaBahia) | HTML | validado | 2026-10-17 |
 | `constituicao-ce` | Assembleia Legislativa do Ceará | PDF | validado | 2026-11-19 |
 | `constituicao-es` | Assembleia Legislativa do Espírito Santo | HTML | validado | 2025-05-12 |
+| `constituicao-go` | Governo do Estado de Goiás (Casa Civil) | PDF | validado | 2025-08-01 |
+| `constituicao-ma` | Assembleia Legislativa do Maranhão | PDF | validado | 2025-07-31 |
 | `constituicao-ms` | Governo do Estado de Mato Grosso do Sul | HTML | validado | 2026-11-19 |
 | `constituicao-mt` | Assembleia Legislativa de Mato Grosso | PDF | validado com limitação: o endereço respondeu 404 | 2026-10-23 |
 | `constituicao-pa` | Assembleia Legislativa do Pará | PDF | validado com limitação: o endereço respondeu 500 | 2026-05-17 |
 | `constituicao-pb` | Assembleia Legislativa da Paraíba | PDF | validado | 2026-11-19 |
 | `constituicao-pe` | Assembleia Legislativa de Pernambuco | HTML | validado | 2026-10-16 |
 | `constituicao-pi` | Assembleia Legislativa do Piauí (SAPL) | HTML | validado | 2026-11-19 |
+| `constituicao-pr` | Governo do Estado do Paraná (Casa Civil) | HTML | validado | 2026-11-19 |
 | `constituicao-rn` | Assembleia Legislativa do Rio Grande do Norte | PDF | validado | 2026-08-08 |
 | `constituicao-ro` | Assembleia Legislativa de Rondônia (SAPL) | PDF | validado | 2026-11-19 |
+| `constituicao-rr` | Assembleia Legislativa de Roraima (SAPL) | HTML | validado | 2025-10-29 |
 | `constituicao-rs` | Assembleia Legislativa do Rio Grande do Sul | HTML | validado | 2023-09-28 |
 | `constituicao-sc` | Assembleia Legislativa de Santa Catarina | HTML | validado | 2026-07-13 |
 | `constituicao-se` | Assembleia Legislativa de Sergipe | HTML | validado | 2026-04-23 |
@@ -516,7 +521,9 @@ Um acervo local de legislação serviu para achar o dispositivo e o endereço of
 - Os snapshots de 2026-11-19 foram capturados a pedido do projeto, porque a fonte não tinha snapshot ou o snapshot guardava só a página, sem o texto.
 - Os endereços oficiais responderam em 2026-11-19, exceto os de MT (404) e PA (500).
 - No PI, o SAPL marca como desativada a redação de 2008 do § 4º. A regra cita a redação vigente.
-- Fontes não usadas: o texto de AL vem do sistema de legislação da Polícia Militar, o do MA de uma universidade e o do PR de uma secretaria. As fontes oficiais de GO e RJ montam o texto na hora, e o snapshot não o guarda.
+- No PR, a visualização compilada da Casa Civil traz só a redação vigente. Em GO, o PDF compilado traz todas as redações do art. 16, § 3º, e todas fixam 1º de fevereiro; na camada de texto, o ordinal sai como a letra o.
+- AL, MA e PR têm, em outros endereços, cópias que não vêm de quem publica a norma (polícia militar, universidade e secretaria de ciência e tecnologia). As regras citam a assembleia (AL e MA) e a Casa Civil (PR).
+- Sem regra: AM e MG têm a data no regimento interno, mas sem snapshot (o Internet Archive falhou no PDF da ALEAM e não alcança a ALMG). A base de textos da ALERJ não entregou o texto do RJ. O DF depende da Lei Orgânica.
 
 ## Governo do Estado de São Paulo (Executivo Estadual)
 

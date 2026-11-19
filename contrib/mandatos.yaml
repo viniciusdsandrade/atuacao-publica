@@ -102,6 +102,19 @@
   capturado_em: 2026-11-19T21:48:02Z
   contribuidor: viniciusdsandrade
 
+# Estado de Alagoas.
+- cargo: deputado_estadual
+  ente: AL
+  eleicao: 2026
+  inicio: 2027-02-01
+  fim: 2031-02-01
+  texto_oficial: "A Assembleia Legislativa Estadual reunir-se-á, em sessão preparatória, a partir de 1º de fevereiro, no primeiro ano de cada legislatura, para posse de seus membros e eleição da Mesa Diretora"
+  fonte_id: constituicao-al
+  url_origem: https://sapl.al.al.leg.br/media/sapl/public/normajuridica/1989/2/constituicao_de_alagoas_novo_livro_ate_ec_53.pdf
+  snapshot_url: https://web.archive.org/web/20261119223433/https://sapl.al.al.leg.br/media/sapl/public/normajuridica/1989/2/constituicao_de_alagoas_novo_livro_ate_ec_53.pdf
+  capturado_em: 2026-11-19T22:35:18Z
+  contribuidor: viniciusdsandrade
+
 # Estado do Amapá.
 - cargo: deputado_estadual
   ente: AP
@@ -152,6 +165,32 @@
   url_origem: https://www3.al.es.gov.br/Arquivo/Documents/legislacao/html/COE11989.html?identificador=330033003100320032003A004C00
   snapshot_url: https://web.archive.org/web/20250512185558/https://www3.al.es.gov.br/Arquivo/Documents/legislacao/html/COE11989.html?identificador=330033003100320032003A004C00
   capturado_em: 2026-11-19T22:04:34Z
+  contribuidor: viniciusdsandrade
+
+# Estado de Goiás. No PDF, o ordinal sai como letra na camada de texto; a citação usa o ordinal visível.
+- cargo: deputado_estadual
+  ente: GO
+  eleicao: 2026
+  inicio: 2027-02-01
+  fim: 2031-02-01
+  texto_oficial: "§ 3º A Assembleia Legislativa reunir-se-á em sessões preparatórias, a partir de 1º de fevereiro, no primeiro ano da legislatura, para a posse de seus membros e constituição de sua Mesa Diretora, para mandato de dois anos"
+  fonte_id: constituicao-go
+  url_origem: https://legisla.casacivil.go.gov.br/api/v2/pesquisa/legislacoes/103152/pdf
+  snapshot_url: https://web.archive.org/web/20250801235523/https://legisla.casacivil.go.gov.br/api/v2/pesquisa/legislacoes/103152/pdf
+  capturado_em: 2026-11-19T22:44:22Z
+  contribuidor: viniciusdsandrade
+
+# Estado do Maranhão.
+- cargo: deputado_estadual
+  ente: MA
+  eleicao: 2026
+  inicio: 2027-02-01
+  fim: 2031-02-01
+  texto_oficial: "§ 3° A partir de 1° de fevereiro, no primeiro ano da Legislatura, a Assembleia Legislativa reunir-se-á em Sessões Preparatórias, para a posse de seus membros e eleição da Mesa Diretora para o mandato de dois anos, permitida a reeleição"
+  fonte_id: constituicao-ma
+  url_origem: https://www.al.ma.leg.br/sitealema/wp-content/uploads/2025/02/constituicao-ma-anotada.pdf
+  snapshot_url: https://web.archive.org/web/20250731165535/https://www.al.ma.leg.br/sitealema/wp-content/uploads/2025/02/constituicao-ma-anotada.pdf
+  capturado_em: 2026-11-19T22:43:01Z
   contribuidor: viniciusdsandrade
 
 # Estado de Mato Grosso do Sul.
@@ -232,6 +271,19 @@
   capturado_em: 2026-11-19T21:56:14Z
   contribuidor: viniciusdsandrade
 
+# Estado do Paraná.
+- cargo: deputado_estadual
+  ente: PR
+  eleicao: 2026
+  inicio: 2027-02-01
+  fim: 2031-02-01
+  texto_oficial: "A Assembléia Legislativa do Paraná reunir-se-á em sessão preparatória, a partir de 1º de fevereiro, no primeiro ano de legislatura, para a posse de seus membros e eleição da mesa para mandato de dois anos"
+  fonte_id: constituicao-pr
+  url_origem: https://www.legislacao.pr.gov.br/legislacao/pesquisarAto.do?action=exibir&codAto=9779&tipoVisualizacao=compilado
+  snapshot_url: https://web.archive.org/web/20261119224046/https://www.legislacao.pr.gov.br/legislacao/pesquisarAto.do?action=exibir&codAto=9779&tipoVisualizacao=compilado
+  capturado_em: 2026-11-19T22:41:27Z
+  contribuidor: viniciusdsandrade
+
 # Estado do Rio Grande do Norte.
 - cargo: deputado_estadual
   ente: RN
@@ -256,6 +308,19 @@
   url_origem: https://sapl.al.ro.leg.br/media/sapl/public/normajuridica/1989/7419/ce1989_ec134a.pdf
   snapshot_url: https://web.archive.org/web/20261119220331/https://sapl.al.ro.leg.br/media/sapl/public/normajuridica/1989/7419/ce1989_ec134a.pdf
   capturado_em: 2026-11-19T22:03:54Z
+  contribuidor: viniciusdsandrade
+
+# Estado de Roraima.
+- cargo: deputado_estadual
+  ente: RR
+  eleicao: 2026
+  inicio: 2027-01-05
+  fim: 2031-01-05
+  texto_oficial: "§ 4º No primeiro ano da Legislatura, a Assembleia Legislativa reunir-se-á em sessões preparatórias, no dia 5 (cinco) de janeiro, para a posse dos deputados estaduais e eleição da Mesa, e no dia 6 (seis) de janeiro, para a posse do governador e do vice-governador"
+  fonte_id: constituicao-rr
+  url_origem: https://sapl.al.rr.leg.br/ta/564/text
+  snapshot_url: https://web.archive.org/web/20251029000026/https://sapl.al.rr.leg.br/ta/564/text
+  capturado_em: 2026-11-19T22:34:04Z
   contribuidor: viniciusdsandrade
 
 # Estado do Rio Grande do Sul.

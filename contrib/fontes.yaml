@@ -1385,6 +1385,21 @@
   status: validado
   validado_em: 2026-11-19
 
+- id: constituicao-al
+  nome: Assembleia Legislativa do Estado de Alagoas, Constituição do Estado de Alagoas
+  orgao: Assembleia Legislativa do Estado de Alagoas
+  esfera: estadual
+  ente: AL
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://sapl.al.al.leg.br/media/sapl/public/normajuridica
+  formato: PDF
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "A regra de mandato (ADR-0070) cita o snapshot do Internet Archive."
+  status: validado
+  validado_em: 2026-11-19
+
 - id: constituicao-ap
   nome: Assembleia Legislativa do Estado do Amapá, Constituição do Estado do Amapá
   orgao: Assembleia Legislativa do Estado do Amapá
@@ -1442,6 +1457,36 @@
   autenticacao: nenhuma
   licenca: null
   limitacoes: "A regra de mandato (ADR-0070) cita o snapshot do Internet Archive."
+  status: validado
+  validado_em: 2026-11-19
+
+- id: constituicao-go
+  nome: Governo do Estado de Goiás, Constituição do Estado de Goiás
+  orgao: Governo do Estado de Goiás
+  esfera: estadual
+  ente: GO
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://legisla.casacivil.go.gov.br/api/v2/pesquisa/legislacoes
+  formato: PDF
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Texto compilado da Casa Civil, com as redações anteriores no mesmo documento. Na camada de texto do PDF, o ordinal sai como a letra o (1o). A regra de mandato (ADR-0070) cita o snapshot do Internet Archive."
+  status: validado
+  validado_em: 2026-11-19
+
+- id: constituicao-ma
+  nome: Assembleia Legislativa do Estado do Maranhão, Constituição do Estado do Maranhão
+  orgao: Assembleia Legislativa do Estado do Maranhão
+  esfera: estadual
+  ente: MA
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://www.al.ma.leg.br/sitealema/wp-content/uploads
+  formato: PDF
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Edição anotada de fevereiro de 2025. A regra de mandato (ADR-0070) cita o snapshot do Internet Archive."
   status: validado
   validado_em: 2026-11-19
 
@@ -1535,6 +1580,21 @@
   status: validado
   validado_em: 2026-11-19
 
+- id: constituicao-pr
+  nome: Governo do Estado do Paraná, Constituição do Estado do Paraná
+  orgao: Governo do Estado do Paraná
+  esfera: estadual
+  ente: PR
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://www.legislacao.pr.gov.br/legislacao
+  formato: HTML
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Visualização compilada da Casa Civil, só com a redação vigente. A regra de mandato (ADR-0070) cita o snapshot do Internet Archive."
+  status: validado
+  validado_em: 2026-11-19
+
 - id: constituicao-rn
   nome: Assembleia Legislativa do Estado do Rio Grande do Norte, Constituição do Estado do Rio Grande do Norte
   orgao: Assembleia Legislativa do Estado do Rio Grande do Norte
@@ -1562,6 +1622,21 @@
   autenticacao: nenhuma
   licenca: null
   limitacoes: "A regra de mandato (ADR-0070) cita o snapshot do Internet Archive."
+  status: validado
+  validado_em: 2026-11-19
+
+- id: constituicao-rr
+  nome: Assembleia Legislativa do Estado de Roraima, Constituição do Estado de Roraima
+  orgao: Assembleia Legislativa do Estado de Roraima
+  esfera: estadual
+  ente: RR
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://sapl.al.rr.leg.br/ta
+  formato: HTML
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Texto articulado do SAPL. A nota sobre as ADIs 6654, 6658 e 6703 trata da reeleição da Mesa, não da data da posse. A regra de mandato (ADR-0070) cita o snapshot do Internet Archive."
   status: validado
   validado_em: 2026-11-19
 

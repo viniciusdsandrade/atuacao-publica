@@ -553,8 +553,8 @@ A posse de deputado estadual vem de `contrib/mandatos.yaml`, por UF, com o texto
 | Regra | `deputado_estadual` em `contrib/mandatos.yaml`, com a UF obrigatória no schema | concluída |
 | São Paulo | Eleitos em 2026: posse em 2027-02-01 e fim em 2031-02-01, pela Emenda Constitucional estadual nº 47/2019 | concluída |
 | Depois da posse | Vale o mandato que a assembleia registra; sem ele, "sem registro de exercício" | concluída |
-| Outras 17 UFs | AC, AP, BA, CE, ES, MS, MT, PA, PB, PE, PI, RN, RO, SC, SE e TO com posse em 2027-02-01, e RS em 2027-01-31 | concluída |
-| AL, AM, DF, GO, MA, MG, PR, RJ e RR | Regra com fonte oficial e data | pendente, pelos motivos do ADR-0070, item 7 |
+| Outras 22 UFs | AC, AL, AP, BA, CE, ES, GO, MA, MS, MT, PA, PB, PE, PI, PR, RN, RO, SC, SE e TO com posse em 2027-02-01, RS em 2027-01-31 e RR em 2027-01-05 | concluída |
+| AM, DF, MG e RJ | Regra com fonte oficial, data e snapshot | pendente, pelos motivos do ADR-0070, item 7 |
 
 Verificação em 2026-11-19:
 
@@ -567,10 +567,13 @@ Verificação em 2026-11-19:
 - `normalize contrib`: 36 regras de mandato válidas, com schema, allowlist e domínio. ETL: 439 testes.
 - Ensaio local com as 18 UFs, sobre os mesmos dados: 652 mandatos com posse prevista, o mesmo número de eleitos do TSE em cada UF. Deputados reeleitos de ALBA, ALRS e ALEPE ganham o mandato novo e seguem em exercício. Entram 300 perfis novos do TSE, 87 deles de São Paulo: de 2.388 para 2.688 perfis.
 - AP: o TSE de 2026 não marca nenhuma candidatura a deputado, estadual ou federal, como eleita. A regra do AP só tem efeito quando a totalização entrar. A falta atinge também os oito deputados federais do AP.
+- Mais cinco UFs no mesmo dia: AL pela Constituição no SAPL da Assembleia, GO pelo PDF compilado da Casa Civil, MA pela edição anotada de 2025 da Assembleia, PR pela visualização compilada da Casa Civil e RR pelo texto articulado do SAPL da Assembleia, na redação da Emenda Constitucional estadual nº 91/2023. AL e PR ganharam snapshot a pedido do projeto. As cinco citações batem com o snapshot de cada regra; em GO, com o ordinal da camada de texto do PDF (1o) lido como 1º.
+- RR: segundo o STF, as ADIs 6654, 6658 e 6703, citadas em nota no texto oficial, tratam da reeleição da Mesa da Assembleia, e não da data da posse.
+- `normalize contrib`: 41 regras de mandato válidas. Ensaio local com as 23 UFs: 840 mandatos com posse prevista, o mesmo número de eleitos do TSE em cada UF; RR com posse em 2027-01-05 e RS em 2027-01-31. De 2.388 para 2.793 perfis, com 405 perfis novos do TSE (87 de São Paulo, número que cai com a ALESP).
 
 Limitações:
 
-- AL, AM, DF, GO, MA, MG, PR, RJ e RR seguem sem posse prevista de deputado estadual (ADR-0070, item 7).
+- AM, DF, MG e RJ seguem sem posse prevista de deputado estadual (ADR-0070, item 7).
 - Depois da posse, cada adaptador de assembleia precisa da legislatura nova. Até lá, os eleitos ficam sem registro de exercício.
 - O adaptador da ALRS usa 2023-02-01 a 2027-01-31 para a 56ª legislatura. Pela Constituição do RS, a posse é em 31 de janeiro. As datas do adaptador não foram mudadas.
 
