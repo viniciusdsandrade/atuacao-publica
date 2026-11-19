@@ -491,7 +491,7 @@ Nenhum servidor bloqueou o cliente.
 
 Fontes da regra de posse de deputado estadual em `contrib/mandatos.yaml`.
 Cada regra cita o dispositivo da posse e o snapshot do Internet Archive em que o texto foi conferido, literalmente, em 2026-11-19.
-O acervo `leis` do mantenedor serviu para achar o dispositivo e o endereço oficial.
+Um acervo local de legislação serviu para achar o dispositivo e o endereço oficial.
 
 | id | Fonte | Formato | Status | Snapshot |
 |---|---|---|---|---|

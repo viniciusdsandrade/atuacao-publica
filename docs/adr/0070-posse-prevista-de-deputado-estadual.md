@@ -18,7 +18,7 @@ O adaptador da ALESP já usa 2027-01-31 como fim da 20ª legislatura.
 O texto foi lido em 2026-11-19 no portal de legislação da ALESP, que respondeu 200 enquanto o repositório de dados abertos respondia 503.
 O snapshot do Internet Archive de 2026-10-02 traz os dois trechos literais.
 
-Nas outras UFs, o acervo `leis` do mantenedor serviu para achar o dispositivo e a fonte oficial de cada constituição.
+Nas outras UFs, um acervo local de legislação serviu para achar o dispositivo e a fonte oficial de cada constituição.
 O texto citado em cada regra foi conferido, literalmente, no snapshot do Internet Archive da fonte oficial.
 Onde não havia snapshot com o texto, a captura foi pedida ao Internet Archive em 2026-11-19.
 A maioria das constituições põe a posse a partir de 1º de fevereiro, como a Constituição Federal para a Câmara.
