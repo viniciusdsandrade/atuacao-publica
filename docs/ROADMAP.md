@@ -600,6 +600,34 @@ Limitações:
 - O adaptador da ALRS usa 2023-02-01 a 2027-01-31 para a 56ª legislatura. Pela Constituição do RS, a posse é em 31 de janeiro. As datas do adaptador não foram mudadas.
 - O adaptador da CLDF termina a 9ª legislatura em 2027-01-31. Pela Lei Orgânica, a posse seguinte é em 6 de janeiro. As datas do adaptador não foram mudadas.
 
+## Virada de legislatura nas assembleias (ADR-0071)
+
+Feita em 2026-11-20, antes das posses de 2027.
+Os adaptadores das assembleias fixam a legislatura de 2023 a 2027 no código.
+Sem a mudança, depois da posse o site publicaria o reeleito em exercício num mandato encerrado e o estreante com um mandato de 2023 a 2027 que ele não exerceu.
+
+| Frente | Entrega | Estado |
+|---|---|---|
+| Publish | Perfil de casa legislativa só fica em exercício com algum mandato da casa ainda vigente | concluída |
+| Publish | Na assembleia, a trava espera a posse dos sucessores da regra de `contrib/mandatos.yaml` | concluída |
+| Histórico | Quem aparece na listagem só depois do fim da legislatura coberta fica fora dela, e segue no arquivo acumulado | concluída |
+| ALESC | Ficha do portal conta para a legislatura só com data de publicação dentro dela | concluída |
+| Adaptadores | Legislatura nova em cada casa, com a fonte validada | pendente: depende da posse |
+
+Verificação em 2026-11-20:
+
+- ETL: 448 testes, sete deles novos (trava, espera da posse e corte no histórico).
+- Ensaio de `publish` sobre os dados normalizados locais de 2026-11-15, sem a ALESP, com o código anterior e com o novo, sem publicação anterior: 3.333 perfis nos dois.
+- Com `ETL_AGORA=2026-11-20`, nenhum perfil muda de situação.
+- Com `ETL_AGORA=2027-01-20`, só os 24 da ALERR saem de em exercício (posse em RR em 2027-01-05). Os 30 da ALEPI, cujo SAPL encerra o mandato em 2026-12-31, seguem em exercício até 2027-02-01.
+- Com `ETL_AGORA=2027-02-02`, 1.506 perfis saem de em exercício com "Mandato encerrado em {fim}": 939 de 24 assembleias e da CLDF (a ALESP não está nos dados locais), 513 da Câmara e 54 do Senado. Câmara e Senado mudam porque os dados locais são anteriores à posse: a legislatura nova delas vem da API.
+
+Limitações:
+
+- Entre a posse e a atualização de cada adaptador, os deputados estaduais aparecem fora de exercício, e os eleitos, sem registro de exercício (ADR-0070).
+- CLDF: a trava age só em 2027-02-01, e a posse é em 2027-01-06. ALRS: um dia de diferença.
+- Não validado: se os adaptadores em SAPL incluem a legislatura nova pelo filtro da fonte.
+
 ## Fase 2 (depois da POC)
 
 ### Esfera federal
