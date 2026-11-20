@@ -617,10 +617,10 @@ Sem a mudança, depois da posse o site publicaria o reeleito em exercício num m
 Verificação em 2026-11-20:
 
 - ETL: 448 testes, sete deles novos (trava, espera da posse e corte no histórico).
-- Ensaio de `publish` sobre os dados normalizados locais de 2026-11-15, sem a ALESP, com o código anterior e com o novo, sem publicação anterior: 3.333 perfis nos dois.
+- Ensaio de `publish` sobre os dados normalizados locais de 2026-11-15 e o cache bruto local, sem a ALESP, com o código anterior e com o novo: 2.861 perfis nos dois. Uma primeira rodada, sem o cache bruto, deu 3.333 perfis, porque sem as chaves do TSE nenhum perfil se funde; os números abaixo são da rodada com o cache.
 - Com `ETL_AGORA=2026-11-20`, nenhum perfil muda de situação.
 - Com `ETL_AGORA=2027-01-20`, só os 24 da ALERR saem de em exercício (posse em RR em 2027-01-05). Os 30 da ALEPI, cujo SAPL encerra o mandato em 2026-12-31, seguem em exercício até 2027-02-01.
-- Com `ETL_AGORA=2027-02-02`, 1.506 perfis saem de em exercício com "Mandato encerrado em {fim}": 939 de 24 assembleias e da CLDF (a ALESP não está nos dados locais), 513 da Câmara e 54 do Senado. Câmara e Senado mudam porque os dados locais são anteriores à posse: a legislatura nova delas vem da API.
+- Com `ETL_AGORA=2027-02-02`, 1.501 perfis saem de em exercício: 935 de 24 assembleias e da CLDF (a ALESP não está nos dados locais), 513 da Câmara e 53 do Senado. Câmara e Senado mudam porque os dados locais são anteriores à posse: a legislatura nova delas vem da API. Com o cache bruto, parte dos reeleitos passa a "Eleito em 2026; sem registro de exercício", pelo ADR-0070.
 
 Limitações:
 
