@@ -513,6 +513,7 @@ Um acervo local de legislação serviu para achar o dispositivo e o endereço of
 | `constituicao-pe` | Assembleia Legislativa de Pernambuco | HTML | validado | 2026-10-16 |
 | `constituicao-pi` | Assembleia Legislativa do Piauí (SAPL) | HTML | validado | 2026-11-19 |
 | `constituicao-pr` | Governo do Estado do Paraná (Casa Civil) | HTML | validado | 2026-11-19 |
+| `constituicao-rj` | Governo do Estado do Rio de Janeiro (Secretaria de Fazenda), cópia do texto compilado da ALERJ | PDF | validado com limitação: a ALERJ não respondeu, e o site da Fazenda recusou a conexão | 2025-05-09 |
 | `constituicao-rn` | Assembleia Legislativa do Rio Grande do Norte | PDF | validado | 2026-08-08 |
 | `constituicao-ro` | Assembleia Legislativa de Rondônia (SAPL) | PDF | validado | 2026-11-19 |
 | `constituicao-rr` | Assembleia Legislativa de Roraima (SAPL) | HTML | validado | 2025-10-29 |
@@ -528,7 +529,7 @@ Um acervo local de legislação serviu para achar o dispositivo e o endereço of
 - AL, MA e PR têm, em outros endereços, cópias que não vêm de quem publica a norma (polícia militar, universidade e secretaria de ciência e tecnologia). As regras citam a assembleia (AL e MA) e a Casa Civil (PR).
 - No AM, a Constituição não fixa a data da posse, e a regra cita o Regimento Interno da ALEAM (art. 4º). A captura do PDF falhou duas vezes e deu certo na terceira, em 2026-11-19.
 - Em MG, a Constituição fixa uma janela, de 1º a 15 de fevereiro, e a regra cita o Regimento Interno da ALMG (arts. 3º e 5º). A captura a pedido falhou (HTTP 520 e 523), porque a ALMG recusa conexão de fora do Brasil; a regra cita o snapshot que o Internet Archive fez em 2026-11-12, com o texto literal.
-- Sem regra: a base de textos da ALERJ não entregou o texto do RJ, e o Internet Archive não guardou o art. 107.
+- No RJ, a base de textos da ALERJ não respondeu em 2026-11-19 e 2026-11-20, e o Internet Archive não guardou o art. 107 dela. A regra cita a cópia do texto compilado da ALERJ, com as notas dela, publicada pela Secretaria de Fazenda do estado, pelo snapshot de 2025-05-09. O PDF traz a redação original do § 3º ("a partir de 1º de janeiro"), questionada no STF, e a vigente, da Emenda Constitucional nº 06/1994 ("a partir de 1º de fevereiro"). Quando a base da ALERJ voltar, a regra passa a citá-la.
 - No DF, a regra cita o texto compilado da Lei Orgânica no SINJ-DF, art. 66, na redação da Emenda à Lei Orgânica nº 135, de 11/11/2026. O SINJ mostra tachadas as redações anteriores: 1º de janeiro (original) e 6 de janeiro em incisos (Emenda à Lei Orgânica nº 131/2024).
 
 ## Governo do Estado de São Paulo (Executivo Estadual)

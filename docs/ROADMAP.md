@@ -567,7 +567,7 @@ A posse de deputado estadual vem de `contrib/mandatos.yaml`, por UF, com o texto
 | Outras 23 UFs | AC, AL, AM, AP, BA, CE, ES, GO, MA, MS, MT, PA, PB, PE, PI, PR, RN, RO, SC, SE e TO com posse em 2027-02-01, RS em 2027-01-31 e RR em 2027-01-05 | concluída |
 | DF | `deputado_distrital` no código e no schema; posse em 2027-01-06 pela Lei Orgânica, art. 66 | concluída |
 | MG | Regimento Interno da ALMG, art. 3º, com posse em 2027-02-01 | concluída em 2026-11-20 |
-| RJ | Regra com fonte oficial, data e snapshot | pendente, pelo motivo do ADR-0070, item 7 |
+| RJ | Art. 107, § 3º, pela cópia do texto compilado da ALERJ publicada pela Secretaria de Fazenda, com posse em 2027-02-01 | concluída em 2026-11-20, com limitação |
 
 Verificação em 2026-11-19:
 
@@ -589,11 +589,12 @@ Verificação em 2026-11-19:
 - DF: o SINJ-DF traz a Lei Orgânica compilada, com o art. 66 na redação da Emenda à Lei Orgânica nº 135, de 11/11/2026 ("reúne-se no dia 6 de janeiro do primeiro ano de cada legislatura para posse dos deputados distritais"). Snapshot capturado em 2026-11-19, com o texto literal. O cargo `deputado_distrital` entrou no código e no schema, com um teste novo de vínculo. `normalize contrib`: 43 regras válidas.
 - Ensaio com o índice publicado como publicação anterior e as 25 UFs: 888 mandatos com posse prevista em 24 UFs (o AP não tem eleito no TSE), com os 24 distritais em 2027-01-06 e os 24 do AM em 2027-02-01. Nenhum id publicado some só com a regra nova. 346 perfis novos do TSE, de 2.809.
 - MG, em 2026-11-20: a Constituição fixa só uma janela, de 1º a 15 de fevereiro. O Regimento Interno da ALMG traz, literalmente, o art. 3º (reuniões preparatórias para a posse "a partir do dia 1º de fevereiro") e o art. 5º (a primeira delas "no dia 1º de fevereiro, às 14 horas"), no snapshot que o Internet Archive fez em 2026-11-12. A captura a pedido falhou, porque a ALMG recusa conexão de fora do Brasil. `normalize contrib`: 44 regras válidas.
-- RJ: nenhum dos 13 documentos da Constituição arquivados no Internet Archive traz o art. 107, e a base de textos da ALERJ não respondeu de 2026-11-19 a 2026-11-20.
+- RJ: nenhum dos 13 documentos da Constituição arquivados no Internet Archive traz o art. 107, e a base de textos da ALERJ não respondeu de 2026-11-19 a 2026-11-20. A regra cita a cópia do texto compilado da ALERJ publicada pela Secretaria de Fazenda do estado, no snapshot de 2025-05-09: art. 107, § 3º, na redação da EC 06/1994, com o texto literal. O site da Fazenda recusou a conexão do ambiente de validação. `normalize contrib`: 45 regras válidas, 27 delas de deputado estadual ou distrital, uma por UF.
 
 Limitações:
 
-- O RJ segue sem posse prevista de deputado estadual (ADR-0070, item 7).
+- A regra do RJ cita a cópia da Secretaria de Fazenda. Quando a base de textos da ALERJ voltar, a regra passa a citá-la.
+- Não validado no site: MG e RJ, que entram na publicação seguinte.
 - Depois da posse, cada adaptador de assembleia precisa da legislatura nova. Até lá, os eleitos ficam sem registro de exercício.
 - O adaptador da ALRS usa 2023-02-01 a 2027-01-31 para a 56ª legislatura. Pela Constituição do RS, a posse é em 31 de janeiro. As datas do adaptador não foram mudadas.
 - O adaptador da CLDF termina a 9ª legislatura em 2027-01-31. Pela Lei Orgânica, a posse seguinte é em 6 de janeiro. As datas do adaptador não foram mudadas.

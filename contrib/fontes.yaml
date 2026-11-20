@@ -1640,6 +1640,21 @@
   status: validado
   validado_em: 2026-11-19
 
+- id: constituicao-rj
+  nome: Governo do Estado do Rio de Janeiro, Secretaria de Fazenda, Constituição do Estado do Rio de Janeiro
+  orgao: Governo do Estado do Rio de Janeiro
+  esfera: estadual
+  ente: RJ
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://portal2.fazenda.rj.gov.br/wp-content/uploads
+  formato: PDF
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Cópia do texto compilado da ALERJ, com as notas dela, publicada pela Secretaria de Fazenda. A base de textos da ALERJ não respondeu em 2026-11-19 e 2026-11-20, e o site da Fazenda recusou a conexão do ambiente de validação. A regra de mandato (ADR-0070) cita o snapshot do Internet Archive de 2025-05-09."
+  status: validado com limitação
+  validado_em: 2026-11-20
+
 - id: constituicao-rn
   nome: Assembleia Legislativa do Estado do Rio Grande do Norte, Constituição do Estado do Rio Grande do Norte
   orgao: Assembleia Legislativa do Estado do Rio Grande do Norte

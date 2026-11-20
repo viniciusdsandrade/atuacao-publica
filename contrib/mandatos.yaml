@@ -324,6 +324,19 @@
   capturado_em: 2026-11-19T22:41:27Z
   contribuidor: viniciusdsandrade
 
+# Estado do Rio de Janeiro: art. 107, § 3º, na redação da Emenda Constitucional estadual nº 06/1994.
+- cargo: deputado_estadual
+  ente: RJ
+  eleicao: 2026
+  inicio: 2027-02-01
+  fim: 2031-02-01
+  texto_oficial: "§ 3º - A Assembleia Legislativa reunir-se-á em sessões preparatórias, a partir de 1º de fevereiro, no primeiro ano da legislatura, para a posse de seus membros"
+  fonte_id: constituicao-rj
+  url_origem: https://portal2.fazenda.rj.gov.br/wp-content/uploads/2022/09/constituicao-do-estado-do-rio-de-janeiro.pdf
+  snapshot_url: https://web.archive.org/web/20250509033634/https://portal2.fazenda.rj.gov.br/wp-content/uploads/2022/09/constituicao-do-estado-do-rio-de-janeiro.pdf
+  capturado_em: 2026-11-20T07:52:16Z
+  contribuidor: viniciusdsandrade
+
 # Estado do Rio Grande do Norte.
 - cargo: deputado_estadual
   ente: RN
