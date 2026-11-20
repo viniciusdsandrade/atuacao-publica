@@ -483,7 +483,7 @@ Aceita em 2026-11-19. Os blocos de Janaina Paschoal na ALESP foram conferidos em
 | Perfil municipal com mandato estadual | Votos em comissão, despesas e proposições na ALESP | concluída em 2026-11-20, pelas cópias do Internet Archive dos arquivos oficiais |
 | Eleitos deputado federal em 2026 | Mandato com posse prevista nos sete vereadores da capital | concluída |
 | Câmara | O cargo em órgão que vem no arquivo de duas legislaturas entra uma vez | concluída |
-| ALESP | A proposição que o arquivo repete entra uma vez | concluída no código; vale no site a partir da publicação seguinte |
+| ALESP | A proposição que o arquivo repete entra uma vez | concluída; no site desde a publicação de 2026-11-20 às 21:48 UTC |
 
 Verificação em 2026-11-17:
 
@@ -500,7 +500,7 @@ Verificação em 2026-11-20, dos blocos de Janaina Paschoal na ALESP, sobre o pa
 - 16 despesas iguais em ano, mês, categoria, valor, fornecedor e CNPJ, com o mesmo total de R$ 5.143,65. O arquivo não tem despesa dela em 2023.
 - 52 proposições publicadas: 51 iguais em documento, ano, número, ementa e data, e a RCN 1620/2022 duas vezes. O `proposituras.xml` repete o documento em dois registros iguais. Na captura de 2024, 197 dos 30.603 documentos de 2022 em diante vêm repetidos, nenhum com conteúdo diferente (defeito 5 do ADR-0068).
 - Correção: cada documento entra uma vez. Teste novo no `AlespTest`, que falha sem a correção. ETL: 441 testes.
-- Não validado no site: a lista sem a proposição repetida, que entra na publicação seguinte.
+- No site, na publicação de 2026-11-20 às 21:48 UTC (execução manual 44822212535): 51 proposições da ALESP no perfil dela, nenhuma repetida, além das 36 da Câmara Municipal.
 
 Limitações:
 
@@ -595,7 +595,7 @@ Limitações:
 
 - A regra do RJ cita a cópia da Secretaria de Fazenda. Quando a base de textos da ALERJ voltar, a regra passa a citá-la.
 - Ensaio de 2026-11-20 com as 27 UFs, contra o índice publicado às 07:26 UTC como publicação anterior: 1.035 mandatos com posse prevista, o total de eleitos deputado estadual ou distrital de 2026 no TSE, com MG em 77 e RJ em 70, os dois em 2027-02-01. Nenhum id publicado some só com a regra nova.
-- Não validado no site: MG, RJ e a proposição repetida da ALESP, que entram na publicação seguinte.
+- No site, na publicação de 2026-11-20 às 21:48 UTC (execução manual 44822212535, 2.989 perfis): 1.035 mandatos com posse prevista em 26 UFs (o AP não tem eleito no TSE), com MG em 77 e RJ em 70, os dois em 2027-02-01.
 - Depois da posse, cada adaptador de assembleia precisa da legislatura nova. Até lá, os eleitos ficam sem registro de exercício.
 - O adaptador da ALRS usa 2023-02-01 a 2027-01-31 para a 56ª legislatura. Pela Constituição do RS, a posse é em 31 de janeiro. As datas do adaptador não foram mudadas.
 - O adaptador da CLDF termina a 9ª legislatura em 2027-01-31. Pela Lei Orgânica, a posse seguinte é em 6 de janeiro. As datas do adaptador não foram mudadas.
