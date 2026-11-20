@@ -594,7 +594,8 @@ Verificação em 2026-11-19:
 Limitações:
 
 - A regra do RJ cita a cópia da Secretaria de Fazenda. Quando a base de textos da ALERJ voltar, a regra passa a citá-la.
-- Não validado no site: MG e RJ, que entram na publicação seguinte.
+- Ensaio de 2026-11-20 com as 27 UFs, contra o índice publicado às 07:26 UTC como publicação anterior: 1.035 mandatos com posse prevista, o total de eleitos deputado estadual ou distrital de 2026 no TSE, com MG em 77 e RJ em 70, os dois em 2027-02-01. Nenhum id publicado some só com a regra nova.
+- Não validado no site: MG, RJ e a proposição repetida da ALESP, que entram na publicação seguinte.
 - Depois da posse, cada adaptador de assembleia precisa da legislatura nova. Até lá, os eleitos ficam sem registro de exercício.
 - O adaptador da ALRS usa 2023-02-01 a 2027-01-31 para a 56ª legislatura. Pela Constituição do RS, a posse é em 31 de janeiro. As datas do adaptador não foram mudadas.
 - O adaptador da CLDF termina a 9ª legislatura em 2027-01-31. Pela Lei Orgânica, a posse seguinte é em 6 de janeiro. As datas do adaptador não foram mudadas.
