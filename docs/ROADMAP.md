@@ -118,7 +118,7 @@ Estado real de cada fase. Atualizado ao fechar cada fase.
 - Até 2026-11-06, nove adaptadores (ALECE, ALEGO, ALEPE, ALERJ, ALEPA, ALES, ALRS, ALESC e CLDF) gravavam o bloco `fontes` como lista, e o `Vinculo` lê um objeto por bloco. Os perfis dessas casas saíam com os blocos sem fonte e com `atualizado_em` nulo (verificado no perfil `alerj-505` publicado). Corrigido: as fontes de cada bloco vêm da proveniência dos registros (`Registros.fontesDosBlocos`), e o `Vinculo` interrompe o `publish` se receber uma lista. No ensaio local das treze casas, nenhum bloco com registro ficou sem fonte.
 - Até 2026-11-07, a ALESP repetia a mesma fonte a cada registro (um perfil citava 2.106 vezes o mesmo arquivo de despesas), e o bloco de participação em votações saía sem fonte. Corrigido no adaptador. O `publish` passou a tirar fontes repetidas de qualquer bloco e, se um adaptador não declarar a fonte de um bloco com registro, a citar a proveniência dos registros, com o caso contado no log.
 - Até 2026-11-06, o cargo `deputado_distrital` não estava na tabela de blocos do `Publicador`, e os perfis da CLDF saíam sem bloco nenhum, nem mandato. Corrigido, com um teste que confere os blocos de todo cargo do schema.
-- ALESP: o repositório de dados abertos (`www.al.sp.gov.br/repositorioDados`) respondeu HTTP 503 de 2026-11-17 a 2026-11-19, à máquina do mantenedor e ao CI. A ALESP e o `executivosp`, que lê o arquivo de normas desse repositório, saem com status "parcial" e com a cópia anterior.
+- ALESP: o repositório de dados abertos (`www.al.sp.gov.br/repositorioDados`) respondeu HTTP 503 de 2026-11-17 a 2026-11-20, à máquina do mantenedor e ao CI. A ALESP e o `executivosp`, que lê o arquivo de normas desse repositório, saem com status "parcial" e com a cópia anterior.
 
 
 ## Publicação
@@ -536,7 +536,8 @@ Verificação em 2026-11-19:
 - Coleta de 2026-11-19, disparada pelo launchd: as onze casas renovaram, dez com status "ok". A Câmara de Caraguatatuba saiu "parcial": 7 arquivos do sistema legislativo ficaram com a cópia anterior, por tempo esgotado na conexão. A ALBA levou 55 minutos, com um HTTP 500 repetido com sucesso.
 - Semente enviada às 21:29 UTC, com 22 itens (177 MB) e a impressão da chave no nome. A release guarda o pacote novo e o de 2026-11-14. O pacote de nome fixo saiu.
 - Agente regravado na máquina do mantenedor: a carga rodou a versão nova do script, sob `caffeinate -is`, e não coletou, porque o envio do dia cobre o horário. Saída 0.
-- Não validado: a publicação com a semente nova e o fechamento das issues #16 a #26, que dependem da próxima execução do `dados`.
+- Em 2026-11-20, a execução disparada pelo horário do launchd rodou a versão nova do script (`58fbc8d`): coletou as onze casas, enviou a semente (22 itens, 177 MB) e gravou o registro de envio. O agente soma duas execuções, as duas com saída 0.
+- O `dados` agendado de 2026-11-20 (execução 44687859170) restaurou essa semente e publicou às 07:26 UTC. As issues #16 a #26 fecharam sozinhas no mesmo minuto ("voltou; issue fechada"). No site, as onze casas saíram com coleta de 2026-11-20: nove com status "ok", e ALEPE e Câmara de Caraguatatuba com "parcial".
 
 Limitações:
 
@@ -546,6 +547,7 @@ Limitações:
 ## Posse prevista de deputado estadual (ADR-0070)
 
 Feita em 2026-11-19.
+Aceita em 2026-11-20, depois da conferência no site.
 A posse de deputado estadual vem de `contrib/mandatos.yaml`, por UF, com o texto da constituição estadual.
 
 | Frente | Entrega | Estado |
@@ -563,7 +565,8 @@ Verificação em 2026-11-19:
 - No site publicado em 2026-11-19, os quatro perfis municipais sem posse prevista: Keit Lima, Marina Bragante e Thammy Miranda, da capital, e Mariana Conti, do piloto.
 - ETL: 439 testes, com três novos de vínculo (posse prevista só na UF da regra, sem registro de exercício depois da posse, mandato registrado pela assembleia) e um exemplo inválido de schema.
 - Ensaio local de publicação sobre os dados normalizados de 2026-11-15, que não têm a ALESP: os quatro vereadores ganham o mandato estadual de 2027-02-01 a 2031-02-01, com posse prevista, e seguem em exercício como vereadores. Entram 87 perfis novos do TSE, todos de São Paulo, e nada mais muda: de 2.388 para 2.475 perfis.
-- Não validado: o número de perfis novos com a ALESP, que depende da próxima publicação. Os deputados reeleitos ficam no perfil da assembleia, e o número cai.
+- No site, na publicação de 2026-11-20 às 07:26 UTC (execução 44687859170, com as 43 regras de mandato válidas): 2.937 perfis, eram 2.591. Os quatro vereadores têm o mandato estadual de São Paulo com posse prevista em 2027-02-01 e seguem em exercício como vereadores. Há 357 perfis novos com papel principal de deputado estadual ou distrital aguardando posse, em 24 UFs, 40 deles de São Paulo. O DF sai com posse em 2027-01-06, RR em 2027-01-05, RS em 2027-01-31 e AM em 2027-02-01.
+- Amostra de 12 deputados da ALESP com candidatura em 2026: os 7 eleitos deputado estadual têm o mandato de 2027 e seguem em exercício. Os outros 5 não ganharam o mandato estadual: um foi eleito deputado federal, um senador, e três ficaram suplentes.
 - Outras 17 UFs: o dispositivo de cada constituição foi achado num acervo local de legislação e conferido, literalmente, no snapshot do Internet Archive da fonte oficial. Seis snapshots foram capturados a pedido do projeto em 2026-11-19: CE, MS, PB, PI, RO e TO. As 17 citações batem com o snapshot de cada regra.
 - `normalize contrib`: 36 regras de mandato válidas, com schema, allowlist e domínio. ETL: 439 testes.
 - Ensaio local com as 18 UFs, sobre os mesmos dados: 652 mandatos com posse prevista, o mesmo número de eleitos do TSE em cada UF. Deputados reeleitos de ALBA, ALRS e ALEPE ganham o mandato novo e seguem em exercício. Entram 300 perfis novos do TSE, 87 deles de São Paulo: de 2.388 para 2.688 perfis.
@@ -881,7 +884,7 @@ Limitações:
     - Instalação na máquina do mantenedor: agente do launchd com execução diária, num clone separado do de trabalho. Duas execuções disparadas à mão pelo launchd, uma em simulação e uma real, as duas com saída 0.
     - A execução real coletou as onze casas, enviou o pacote (22 itens, 177 MB) com a impressão da chave no nome e trocou o segredo às 00:33 UTC. O release guarda o pacote novo e o anterior.
     - O `dados` das 00:34 UTC restaurou esse pacote e publicou. No site, as onze casas saíram com status "ok" e coleta entre 00:11 e 00:32 UTC do mesmo dia.
-    - Em 2026-11-18, a execução disparada pelo calendário do launchd começou no horário e foi encerrada antes do envio. Nos outros dias até 2026-11-19, a máquina estava desligada no horário (seção "Coleta local na entrada da sessão"). Não validado: a coleta com a máquina dormindo no horário.
+    - Em 2026-11-18, a execução disparada pelo calendário do launchd começou no horário e foi encerrada antes do envio. Nos outros dias até 2026-11-19, a máquina estava desligada no horário (seção "Coleta local na entrada da sessão"). Em 2026-11-20, a execução pelo calendário foi do começo ao envio. Não validado: a coleta com a máquina dormindo no horário.
 28. Tarefas pequenas de `docs/TAREFAS.md`: feitas e publicadas em 2026-11-14. Os planos de 2018 chegaram com a coleta de 2026-11-15.
     - Glossário das siglas de voto do Senado em `docs/METODOLOGIA.md`. O nome por extenso de cada sigla foi conferido com o campo `descricaoVotoParlamentar` do cache bruto de 2022 a 2026 (48.188 votos). A frase que explica cada sigla é leitura do projeto, sem definição oficial conferida.
     - Apelidos de bancada na orientação de voto (`Orientacao.java`): de 1 para 5 rótulos (`PROGRES`, `PODEMOS`, `REPUBLICA` e `UNIAOBRASIL`, além de `PROGRESSISTAS`).

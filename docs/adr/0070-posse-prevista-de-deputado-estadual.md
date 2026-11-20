@@ -1,6 +1,6 @@
 # ADR-0070: Posse prevista de deputado estadual
 
-- **Status**: Proposta
+- **Status**: Aceita
 - **Data**: 2026-11-19
 
 ## Contexto
