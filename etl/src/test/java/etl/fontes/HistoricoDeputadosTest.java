@@ -11,6 +11,7 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.Test;
@@ -108,5 +109,44 @@ class HistoricoDeputadosTest {
         assertFalse(porId.get("outro-suplente").emExercicio());
         assertNull(porId.get("outro-suplente").ultimoVistoEm());
         assertEquals(T2, porId.get("outro-suplente").provOu(provLista).capturadoEm());
+    }
+
+    @Test
+    void quemApareceSoDepoisDoFimDaLegislaturaFicaForaMasSegueNoArquivo(@TempDir Path tempDir) {
+        // ADR-0071: a 12ª legislatura da ALEMS termina em 2027-01-31.
+        Instant antes = Instant.parse("2027-01-20T12:00:00Z");
+        Instant depois = Instant.parse("2027-02-02T12:00:00Z");
+        Prov provAntes = new Prov("alems-deputados", "https://exemplo.leg.br/deputados", antes);
+        Prov provDepois = new Prov("alems-deputados", "https://exemplo.leg.br/deputados", depois);
+        Contexto c1 = new Contexto(tempDir, tempDir.resolve("data"), null, null, antes, null);
+        HistoricoDeputados.mesclar(c1, "alems", List.of(
+                HistoricoDeputados.Snapshot.de("reeleita", "Ana Silva", "PSOL", null, null, provAntes),
+                HistoricoDeputados.Snapshot.de("saiu", "Bruno Souza", "MDB", null, null, provAntes)), provAntes);
+
+        // Depois do fim, a listagem traz a legislatura nova: a reeleita e uma estreante.
+        Contexto c2 = new Contexto(tempDir, tempDir.resolve("data"), null, null, depois, null);
+        List<HistoricoDeputados.Entrada> res = HistoricoDeputados.mesclar(c2, "alems", List.of(
+                HistoricoDeputados.Snapshot.de("reeleita", "Ana Silva", "PSOL", null, null, provDepois),
+                HistoricoDeputados.Snapshot.de("estreante", "Carla Lima", "PT", null, null, provDepois)), provDepois);
+        Map<String, HistoricoDeputados.Entrada> porId = res.stream()
+                .collect(Collectors.toMap(HistoricoDeputados.Entrada::id, e -> e));
+
+        assertEquals(Set.of("reeleita", "saiu"), porId.keySet());
+        assertTrue(porId.get("reeleita").emExercicio());
+        assertFalse(porId.get("saiu").emExercicio());
+        // A estreante fica no arquivo acumulado, com a data em que apareceu.
+        assertTrue(HistoricoDeputados.salvos(c2, "alems").stream()
+                .anyMatch(e -> e.id().equals("estreante") && e.primeiroVistoEm().equals(LocalDate.of(2027, 2, 2))));
+    }
+
+    @Test
+    void casaSemFimDeLegislaturaRegistradoNaoCorta(@TempDir Path tempDir) {
+        Instant depois = Instant.parse("2027-02-02T12:00:00Z");
+        Prov prov = new Prov("teste", "https://exemplo.leg.br/vereadores", depois);
+        Contexto ctx = new Contexto(tempDir, tempDir.resolve("data"), null, null, depois, null);
+        List<HistoricoDeputados.Entrada> res = HistoricoDeputados.mesclar(ctx, "cmsp", List.of(
+                HistoricoDeputados.Snapshot.de("nova", "Dora Reis", "PV", null, null, prov)), prov);
+
+        assertEquals(1, res.size());
     }
 }

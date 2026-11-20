@@ -477,6 +477,8 @@ final class Vinculo {
         if (!Files.exists(pasta.resolve("pessoas.json"))) {
             return perfis;
         }
+        int encerradosPelaData = 0;
+        Map<String, List<LocalDate>> posses = possesDasAssembleias(ctx);
         for (JsonNode pessoa : Json.ler(pasta.resolve("pessoas.json"))) {
             String idFonte = pessoa.get("id_fonte").stringValue();
             Perfil p = new Perfil();
@@ -487,17 +489,32 @@ final class Vinculo {
             if (p.nome != null) {
                 p.nomesParlamentares.add(p.nome);
             }
-            boolean emExercicio = !pessoa.hasNonNull("em_exercicio") || pessoa.get("em_exercicio").asBoolean();
-            p.papel(Json.texto(pessoa, "cargo"), Json.texto(pessoa, "esfera"), Json.texto(pessoa, "ente"), Json.texto(pessoa, "uf"),
-                    Json.texto(pessoa, "partido"), Json.texto(pessoa, "situacao"),
-                    emExercicio ? Perfil.EM_EXERCICIO : Perfil.FORA_DE_EXERCICIO, null);
-            p.foto = Json.texto(pessoa, "foto_url");
-            p.ids.put(chaveId, idFonte);
-            pessoa.path("links").forEach(p.links::add);
             // Só mandatos e fontes ficam em memória: contribuições e vínculo os consultam. Os blocos pesados (votos,
             // despesas, proposições) são lidos de novo ao publicar cada perfil: a memória é a de um perfil, não a do arquivo todo.
             Path arquivoDeBlocos = pasta.resolve("blocos").resolve(idFonte + ".json");
             JsonNode blocos = Json.ler(arquivoDeBlocos);
+            boolean emExercicio = !pessoa.hasNonNull("em_exercicio") || pessoa.get("em_exercicio").asBoolean();
+            String situacao = Json.texto(pessoa, "situacao");
+            LocalDate encerradoEm = emExercicio ? fimSeTodosEncerrados(blocos.path("mandatos"), ctx.hoje()) : null;
+            if (encerradoEm != null) {
+                // Na assembleia, quem está no cargo segue até a posse dos sucessores, que vem de contrib/mandatos.yaml (ADR-0070).
+                LocalDate posse = posseSeguinte(posses.get(Json.texto(pessoa, "cargo") + "/" + Json.texto(pessoa, "uf")), encerradoEm);
+                if (posse != null && ctx.hoje().isBefore(posse)) {
+                    encerradoEm = null;
+                }
+            }
+            if (encerradoEm != null) {
+                // A casa ainda lista a pessoa como ativa, mas o mandato que a casa registra já acabou (ADR-0071).
+                emExercicio = false;
+                situacao = "Mandato encerrado em " + encerradoEm;
+                encerradosPelaData++;
+            }
+            p.papel(Json.texto(pessoa, "cargo"), Json.texto(pessoa, "esfera"), Json.texto(pessoa, "ente"), Json.texto(pessoa, "uf"),
+                    Json.texto(pessoa, "partido"), situacao,
+                    emExercicio ? Perfil.EM_EXERCICIO : Perfil.FORA_DE_EXERCICIO, null);
+            p.foto = Json.texto(pessoa, "foto_url");
+            p.ids.put(chaveId, idFonte);
+            pessoa.path("links").forEach(p.links::add);
             blocos.path("mandatos").forEach(p.bloco("mandatos")::add);
             p.arquivosDeBlocos.add(arquivoDeBlocos);
             JsonNode fontesPorBloco = blocos.path("fontes");
@@ -512,7 +529,61 @@ final class Vinculo {
             }
             perfis.add(p);
         }
+        if (encerradosPelaData > 0) {
+            System.out.println(fonte + ": " + encerradosPelaData + " perfis listados como em exercício com o mandato da casa"
+                    + " já encerrado saem de em exercício (ADR-0071)");
+        }
         return perfis;
+    }
+
+    /** Datas de posse de deputado estadual e distrital das regras de contrib/mandatos.yaml, por cargo e UF (ADR-0070). */
+    static Map<String, List<LocalDate>> possesDasAssembleias(Contexto ctx) {
+        Map<String, List<LocalDate>> posses = new HashMap<>();
+        Path arquivo = ctx.contrib().resolve("mandatos.yaml");
+        if (!Files.exists(arquivo)) {
+            return posses;
+        }
+        for (JsonNode regra : Json.lerYaml(arquivo)) {
+            String cargo = Json.texto(regra, "cargo");
+            if ("deputado_estadual".equals(cargo) || "deputado_distrital".equals(cargo)) {
+                posses.computeIfAbsent(cargo + "/" + Json.texto(regra, "ente"), k -> new ArrayList<>())
+                        .add(LocalDate.parse(Json.texto(regra, "inicio")));
+            }
+        }
+        return posses;
+    }
+
+    /** Primeira posse depois do fim do mandato, ou nulo se não há regra para a UF. */
+    static LocalDate posseSeguinte(List<LocalDate> posses, LocalDate fim) {
+        LocalDate seguinte = null;
+        for (LocalDate posse : posses == null ? List.<LocalDate>of() : posses) {
+            if (posse.isAfter(fim) && (seguinte == null || posse.isBefore(seguinte))) {
+                seguinte = posse;
+            }
+        }
+        return seguinte;
+    }
+
+    /**
+     * Fim do mandato mais recente, se todos os mandatos registrados pela casa acabaram antes de hoje. Mandato sem fim,
+     * ou lista vazia, devolve nulo: nesse caso vale o que a casa diz.
+     */
+    static LocalDate fimSeTodosEncerrados(JsonNode mandatos, LocalDate hoje) {
+        LocalDate ultimo = null;
+        for (JsonNode m : mandatos) {
+            String fim = Json.texto(m, "fim");
+            if (fim == null || fim.isBlank()) {
+                return null;
+            }
+            LocalDate data = LocalDate.parse(fim.substring(0, Math.min(10, fim.length())));
+            if (!data.isBefore(hoje)) {
+                return null;
+            }
+            if (ultimo == null || data.isAfter(ultimo)) {
+                ultimo = data;
+            }
+        }
+        return ultimo;
     }
 
     /** Câmara por CPF; Senado por nome civil, UF e data de nascimento (com fallback único); SAPL por nome e urna (ADR-0007). */

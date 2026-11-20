@@ -1113,7 +1113,8 @@ public final class Alesc implements Fonte {
                     continue;
                 }
                 boolean naLegislatura = jaSalvos.contains(slug)
-                        || (perfil.publicadoEm() != null && !perfil.publicadoEm().isBefore(INICIO_LEG_20))
+                        || (perfil.publicadoEm() != null && !perfil.publicadoEm().isBefore(INICIO_LEG_20)
+                            && !perfil.publicadoEm().isAfter(FIM_LEG_20))
                         || temDespesaNaLegislatura(slug, perfil.nome(), contasDespesas);
                 if (!naLegislatura) {
                     continue;

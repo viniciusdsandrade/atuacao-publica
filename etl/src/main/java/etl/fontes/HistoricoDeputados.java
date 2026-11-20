@@ -27,6 +27,29 @@ public final class HistoricoDeputados {
 
     public static final String ARQUIVO = "historico-deputados.json";
 
+    /**
+     * Fim da legislatura que cada adaptador cobre (ADR-0071). Depois dele, a listagem de quem está em exercício já é a da
+     * legislatura seguinte: quem aparece nela pela primeira vez depois do fim não exerceu a legislatura coberta.
+     */
+    private static final Map<String, LocalDate> FIM_DA_LEGISLATURA = Map.ofEntries(
+            Map.entry("alap", Alap.FIM_LEG_9),
+            Map.entry("alba", Alba.FIM_LEG_20),
+            Map.entry("alece", Alece.FIM_LEG_31),
+            Map.entry("alego", Alego.FIM_LEG_20),
+            Map.entry("alema", Alema.FIM_LEG_20),
+            Map.entry("alems", Alems.FIM_LEG_12),
+            Map.entry("alep", Alep.FIM_LEG_20),
+            Map.entry("alepa", Alepa.FIM_LEG_60),
+            Map.entry("alepe", Alepe.FIM_LEG_20),
+            Map.entry("alerj", Alerj.FIM_LEG_13),
+            Map.entry("ales", Ales.FIM_LEG_20),
+            Map.entry("alesc", Alesc.FIM_LEG_20),
+            Map.entry("alese", Alese.FIM_LEG_20),
+            Map.entry("almt", Almt.FIM_LEG_20),
+            Map.entry("alrn", Alrn.FIM_LEG_63),
+            Map.entry("alrs", Alrs.FIM_LEG_56),
+            Map.entry("cldf", Cldf.FIM_LEG_9));
+
     private HistoricoDeputados() {
     }
 
@@ -184,11 +207,27 @@ public final class HistoricoDeputados {
         }
 
         List<Entrada> resultado = new ArrayList<>(atualizados.size());
+        LocalDate fimDaLegislatura = FIM_DA_LEGISLATURA.get(fonte);
+        int vistosDepoisDoFim = 0;
         for (Salvo s : atualizados) {
+            if (vistoSoDepoisDoFim(s, fimDaLegislatura)) {
+                // Segue no arquivo acumulado, para quando o adaptador cobrir a legislatura nova.
+                vistosDepoisDoFim++;
+                continue;
+            }
             resultado.add(new Entrada(s.id(), s.nome(), s.partido(), s.fotoUrl(), s.extra(), s.prov(),
                     s.primeiroVistoEm(), s.ultimoVistoEm(), ativosIds.contains(s.id())));
         }
+        if (vistosDepoisDoFim > 0) {
+            System.out.println(fonte + ": " + vistosDepoisDoFim + " parlamentares vistos só depois do fim da legislatura"
+                    + " coberta (" + fimDaLegislatura + ") ficam fora até o adaptador cobrir a legislatura nova (ADR-0071)");
+        }
         return resultado;
+    }
+
+    /** Quem foi visto pela primeira vez depois do fim da legislatura coberta é da legislatura seguinte. */
+    static boolean vistoSoDepoisDoFim(Salvo salvo, LocalDate fimDaLegislatura) {
+        return fimDaLegislatura != null && salvo.primeiroVistoEm() != null && salvo.primeiroVistoEm().isAfter(fimDaLegislatura);
     }
 
     private static List<Salvo> ler(Path arquivo) {
