@@ -52,7 +52,7 @@ O texto do art. 29 da Constituição nos mandatos de prefeito vem do `planalto-l
 | Roberto Alves | 262 frentes | `/deputados/{id}/frentes`, 56ª legislatura | 262 iguais |
 | Roberto Alves | 32 emendas | `EmendasParlamentares.csv` da CGU | 32 iguais nos seis valores |
 | Janaina Paschoal | Mandato estadual | portal de parlamentares da ALESP | igual: de 2019-03-15 a 2023-03-14 |
-| Janaina Paschoal | 38 votos em comissão, 16 despesas e 52 proposições | arquivos abertos da ALESP | não conferidos: o repositório respondeu HTTP 503 de 2026-11-17 a 2026-11-19 |
+| Janaina Paschoal | 38 votos em comissão, 16 despesas e 52 proposições | arquivos abertos da ALESP, nas cópias do Internet Archive (conferência de 2026-11-20) | 38 votos iguais em votação, data e voto; 16 despesas iguais em ano, mês, categoria, valor, fornecedor e CNPJ (R$ 5.143,65); 51 proposições iguais e uma repetida (defeito 5) |
 | Sete eleitos em 2026 | Mandato federal com posse prevista | resultado do TSE e `/legislaturas/57` | 7 iguais: eleitos, posse em 2027-02-01, 58ª legislatura |
 
 ### Defeitos e diferenças achados
@@ -61,21 +61,24 @@ O texto do art. 29 da Constituição nos mandatos de prefeito vem do `planalto-l
 2. **Câmara, sinal da despesa na API.** Na 56ª legislatura, a API devolve com sinal negativo o valor líquido de 328 das 382 despesas de Roberto Alves. O arquivo anual de cotas, que o projeto usa, traz o valor positivo. O valor absoluto é igual nas 382. Não é defeito do projeto.
 3. **Câmara, fim do cargo diferente entre arquivo e API.** No arquivo da 56ª legislatura, um período de Roberto Alves na CCTI termina em 2021-05-19. A API diz 2022-02-02. O projeto repete o arquivo.
 4. **Câmara, sessões canceladas.** A API lista Roberto Alves em 6 sessões canceladas de 2022. O arquivo de presença não as traz, e o site também não.
+5. **ALESP, proposição repetida.** O `proposituras.xml` repete o mesmo documento em registros iguais: 197 dos 30.603 documentos de 2022 em diante, na captura de 2024, nenhum com conteúdo diferente. O projeto criava uma proposição por registro. No perfil de Janaina Paschoal, a RCN 1620/2022 aparecia duas vezes. Os autores (`documento_autor.xml`) não se repetem.
 
 ## Decisão
 
 1. **Câmara: o cargo em órgão com mesmo órgão, cargo, início e fim entra uma vez**, mesmo vindo do arquivo de duas legislaturas.
 2. Os votos das quatro assembleias em SAPL passam a contar como conferidos contra a fonte.
-3. Os blocos de Janaina Paschoal na ALESP ficam como não conferidos. A conferência deles espera o repositório de dados abertos da ALESP voltar a responder.
+3. Os blocos de Janaina Paschoal na ALESP são conferidos contra as cópias dos arquivos oficiais no Internet Archive, porque o repositório de dados abertos seguia em HTTP 503. Atualização em 2026-11-20: conferidos.
+4. **ALESP: cada documento entra uma vez nas proposições**, mesmo que o arquivo o repita.
 
 ## Consequências
 
 - Até 53 perfis federais perdem um cargo repetido na lista de órgãos.
+- Perfis da ALESP perdem proposições repetidas. Na captura de 2024, os documentos repetidos de 2022 em diante somam 276 vínculos de autor a mais, inclusive de autores que não são deputados.
 
 ## Limitações
 
 - A conferência compara o site com a fonte num dia. Voto dado depois da captura entra na renovação semanal da lista do ano.
-- Os 38 votos em comissão, as 16 despesas e as 52 proposições de Janaina Paschoal na ALESP não foram conferidos. O repositório de dados abertos da ALESP respondeu HTTP 503 de 2026-11-17 a 2026-11-19, inclusive à coleta do CI. A API do portal da ALESP não entrou nesta conferência.
+- O repositório de dados abertos da ALESP respondeu HTTP 503 de 2026-11-17 a 2026-11-20, inclusive à coleta do CI. Os blocos de Janaina Paschoal foram conferidos contra as cópias do Internet Archive: votações em comissão de 2025-11-01, reuniões de 2026-01-23, despesas de 2024-05-21, autores de 2024-05-31 e proposituras de 2024-06-17. Todas cobrem o período dela, de 2022 a 2023-03-14. A API do portal da ALESP não entrou nesta conferência.
 - Os cargos em órgãos da Câmara seguem o arquivo da legislatura inteira, inclusive os períodos anteriores a 2022 (docs/METODOLOGIA.md, "Órgãos e frentes").
 - Eleito deputado estadual em 2026 não ganha mandato com posse prevista. O ADR-0006 tira a data de posse da legislatura da Câmara, que só vale para deputado federal e senador. A posse estadual segue a constituição de cada estado; em São Paulo, a legislatura começa em 15 de março. Nos perfis municipais, são quatro casos. Correção em 2026-11-19: desde a Emenda Constitucional estadual nº 47/2019, a legislatura de São Paulo começa em 1º de fevereiro a partir de 2027. O ADR-0070 resolve os quatro casos.
 

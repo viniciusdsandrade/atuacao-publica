@@ -165,6 +165,44 @@ class AlespTest {
     }
 
     @Test
+    void proposicaoRepetidaNoArquivoEntraUmaVez(@org.junit.jupiter.api.io.TempDir java.nio.file.Path tempDir) throws Exception {
+        etl.Contexto ctx = new etl.Contexto(tempDir, tempDir.resolve("data"), null, null, Instant.now(), null);
+        java.nio.file.Path rawAlesp = ctx.raw().resolve("alesp");
+        java.nio.file.Files.createDirectories(rawAlesp);
+        String autores = """
+                <?xml version="1.0" encoding="UTF-8"?>
+                <DocumentosAutores>
+                  <DocumentoAutor><IdAutor>900</IdAutor><IdDocumento>5001</IdDocumento><NomeAutor>Fulana</NomeAutor></DocumentoAutor>
+                </DocumentosAutores>
+                """;
+        String registro = "<propositura><AnoLegislativo>2022</AnoLegislativo><DtPublicacao>2022-06-29T00:00:00-03:00</DtPublicacao>"
+                + "<Ementa>Constitui comissão de representação.</Ementa><IdDocumento>5001</IdDocumento><IdNatureza>7</IdNatureza>"
+                + "<NroLegislativo>1620</NroLegislativo></propositura>";
+        // O arquivo oficial repete o mesmo documento em registros iguais.
+        String proposituras = "<?xml version=\"1.0\" encoding=\"UTF-8\"?><proposituras>" + registro + registro + "</proposituras>";
+        zipar(rawAlesp, "documento_autor.zip", "documento_autor.xml", autores);
+        zipar(rawAlesp, "proposituras.zip", "proposituras.xml", proposituras);
+        java.util.Map<String, Alesp.Acumulado> acumulados = new java.util.HashMap<>();
+        acumulados.put("300630", new Alesp.Acumulado());
+
+        Alesp.processarProposicoes(ctx, acumulados, java.util.Map.of(900, "300630"));
+
+        assertEquals(1, acumulados.get("300630").proposicoes.size());
+        assertEquals("5001", acumulados.get("300630").proposicoes.getFirst().idFonte());
+    }
+
+    private static void zipar(java.nio.file.Path pasta, String zip, String entrada, String conteudo) throws Exception {
+        java.nio.file.Path destino = pasta.resolve(zip);
+        try (var zos = new java.util.zip.ZipOutputStream(java.nio.file.Files.newOutputStream(destino))) {
+            zos.putNextEntry(new java.util.zip.ZipEntry(entrada));
+            zos.write(conteudo.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+            zos.closeEntry();
+        }
+        var arq = new etl.Coleta.Arquivo("https://www.al.sp.gov.br", "raw/alesp/" + zip, "hash", java.nio.file.Files.size(destino), Instant.now());
+        etl.Json.gravar(pasta.resolve(zip + ".meta.json"), arq, true);
+    }
+
+    @Test
     void carregaIndicesDeputadosXmlCorretamente(@org.junit.jupiter.api.io.TempDir java.nio.file.Path tempDir) throws Exception {
         java.nio.file.Path xmlPath = tempDir.resolve("deputados.xml");
         String xml = """

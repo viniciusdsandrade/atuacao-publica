@@ -12,6 +12,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -129,7 +130,7 @@ public final class Alesp implements Fonte {
                          Map<String, List<FonteUsada>> fontes) {
     }
 
-    private static final class Acumulado {
+    static final class Acumulado {
         final List<Mandato> mandatos = new ArrayList<>();
         final List<Despesa> despesas = new ArrayList<>();
         final Set<String> chavesDespesa = new HashSet<>();
@@ -736,6 +737,9 @@ public final class Alesp implements Fonte {
 
         Prov prov = Prov.de(FONTE_PROPOSITURAS, REPO + "/processo_legislativo/proposituras.zip", arqProps);
         FonteUsada fonteUsada = FonteUsada.de(FONTE_PROPOSITURAS, arqProps);
+        // O arquivo repete o mesmo documento em registros iguais (197 dos 30.603 documentos de 2022 em diante, na
+        // captura de 2024): cada documento entra uma vez no perfil (ADR-0068).
+        Set<String> documentosLidos = new HashSet<>();
 
         // 2. Ler proposituras.xml em streaming do zip
         try (ZipInputStream zis = new ZipInputStream(Files.newInputStream(camProps))) {
@@ -768,7 +772,7 @@ public final class Alesp implements Fonte {
                                     int ano = Integer.parseInt(anoStr.strip());
                                     if (ano >= 2022) {
                                         List<String> mats = matriculasPorDocumento.get(idDoc.strip());
-                                        if (mats != null && !mats.isEmpty()) {
+                                        if (mats != null && !mats.isEmpty() && documentosLidos.add(idDoc.strip())) {
                                             Integer nro = nroStr == null || nroStr.isBlank() ? null : Integer.parseInt(nroStr.strip());
                                             TipoNatureza nat = natureza(idNat);
                                             String ident = nro != null ? (nat.sigla() + " " + nro + "/" + ano) : (nat.nome() + " " + idDoc.strip());
@@ -779,7 +783,7 @@ public final class Alesp implements Fonte {
                                             Proposicao prop = new Proposicao(idDoc.strip(), nat.nome(), nro, ano, ident,
                                                     ementa, "Apresentada", null, dataApresentacao, null, true, urlTexto, prov);
 
-                                            for (String mat : mats) {
+                                            for (String mat : new LinkedHashSet<>(mats)) {
                                                 Acumulado ac = acumulados.get(mat);
                                                 if (ac != null) {
                                                     ac.proposicoes.add(prop);

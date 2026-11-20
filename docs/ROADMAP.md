@@ -473,16 +473,17 @@ Limitações:
 ## Conferência das assembleias em SAPL e dos perfis fundidos (ADR-0068)
 
 Feita em 2026-11-17, sobre o pacote publicado às 07:10 UTC.
-Aceita em 2026-11-19, com os blocos de Janaina Paschoal na ALESP não conferidos.
+Aceita em 2026-11-19. Os blocos de Janaina Paschoal na ALESP foram conferidos em 2026-11-20, pelas cópias do Internet Archive.
 
 | Frente | Entrega | Estado |
 |---|---|---|
 | Votos de ALPB, ALEAM, ALERO e ALEPI | Cada voto publicado comparado com a leitura por parlamentar na API do SAPL | concluída |
 | Perfil municipal com mandato federal | Mandato, votos, participação, presenças, despesas, proposições, discursos, órgãos, frentes e emendas de Roberto Alves | concluída |
 | Perfil municipal com mandato estadual | Mandato de Janaina Paschoal na ALESP | concluída |
-| Perfil municipal com mandato estadual | Votos em comissão, despesas e proposições na ALESP | não conferida: o repositório de dados abertos da ALESP respondeu 503 de 2026-11-17 a 2026-11-19 |
+| Perfil municipal com mandato estadual | Votos em comissão, despesas e proposições na ALESP | concluída em 2026-11-20, pelas cópias do Internet Archive dos arquivos oficiais |
 | Eleitos deputado federal em 2026 | Mandato com posse prevista nos sete vereadores da capital | concluída |
 | Câmara | O cargo em órgão que vem no arquivo de duas legislaturas entra uma vez | concluída |
+| ALESP | A proposição que o arquivo repete entra uma vez | concluída no código; vale no site a partir da publicação seguinte |
 
 Verificação em 2026-11-17:
 
@@ -492,10 +493,18 @@ Verificação em 2026-11-17:
 - No site, em 2026-11-18, depois da execução 44209066071: o bloco de órgãos e frentes de Roberto Alves tem 298 registros, 25 deles cargos em órgãos da Câmara, sem repetição. A CMO de 2022-05-04 a 2023-02-01 aparece uma vez.
 - ETL: 435 testes.
 
+Verificação em 2026-11-20, dos blocos de Janaina Paschoal na ALESP, sobre o pacote publicado às 07:26 UTC:
+
+- O repositório de dados abertos da ALESP seguia em HTTP 503. A conferência usou as cópias do Internet Archive dos arquivos oficiais: votações em comissão de 2025-11-01, reuniões de 2026-01-23, despesas de 2024-05-21, autores de 2024-05-31 e proposituras de 2024-06-17.
+- 38 votos em comissão iguais em votação, data e voto, todos os dela a partir de 2022-01-01 no arquivo. O IdDeputado dela é 1000000339.
+- 16 despesas iguais em ano, mês, categoria, valor, fornecedor e CNPJ, com o mesmo total de R$ 5.143,65. O arquivo não tem despesa dela em 2023.
+- 52 proposições publicadas: 51 iguais em documento, ano, número, ementa e data, e a RCN 1620/2022 duas vezes. O `proposituras.xml` repete o documento em dois registros iguais. Na captura de 2024, 197 dos 30.603 documentos de 2022 em diante vêm repetidos, nenhum com conteúdo diferente (defeito 5 do ADR-0068).
+- Correção: cada documento entra uma vez. Teste novo no `AlespTest`, que falha sem a correção. ETL: 441 testes.
+- Não validado no site: a lista sem a proposição repetida, que entra na publicação seguinte.
+
 Limitações:
 
 - Eleito deputado estadual em 2026 não ganhava mandato com posse prevista (ADR-0006 e ADR-0068). Nos perfis municipais, eram quatro casos, todos em São Paulo. Resolvido para São Paulo em 2026-11-19 (ADR-0070).
-- Os blocos de Janaina Paschoal na ALESP esperam o repositório de dados abertos voltar para a conferência.
 - As demais limitações estão no ADR-0068.
 
 ## Parada da coleta quando a restauração do cache falha (ADR-0069)
