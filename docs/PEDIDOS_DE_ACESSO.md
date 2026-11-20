@@ -11,6 +11,8 @@ Por quê: a Câmara publica os três no SISCAM (`paulinia.siscam.com.br`).
 O `robots.txt` do SISCAM recusa coletores que não sejam buscadores nomeados, e o projeto não contorna essa recusa (ADR-0066).
 Revisto em 2026-11-19: a recusa continua, e Paulínia não tem SAPL.
 
+Canal: o Sistema InformaBR, da CGU (`informabr.cgu.gov.br`). A página da Ouvidoria/SIC da Câmara (`www.camarapaulinia.sp.gov.br/ouvidoria/`) o indica para pedido de acesso à informação. Conferido em 2026-11-20.
+
 Texto:
 
 > À Câmara Municipal de Paulínia.
@@ -30,6 +32,8 @@ Texto:
 
 Por quê: a consulta das verbas por deputado (`api/ressarcimento`) exige reCAPTCHA v3, e o projeto não contorna CAPTCHA (`alep-ressarcimento`, em `docs/FONTES.md`).
 As votações nominais da ALEP já têm download aberto, sem CAPTCHA.
+
+Canal: não validado. A busca na web de 2026-11-20 não achou a página do serviço de informação ao cidadão da Assembleia.
 
 Texto:
 
