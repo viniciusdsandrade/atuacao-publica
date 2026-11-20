@@ -38,7 +38,7 @@ const ANCORA_DO_RECORTE = 'recorte';
 const ESPERA_DO_AQUECIMENTO_MS = 120;
 const ORDEM_ESFERAS = ['federal', 'estadual', 'municipal'];
 const ORDEM_CARGOS = [
-  'presidente', 'governador', 'prefeito', 'vice_prefeito', 'senador', 'deputado_federal', 'deputado_estadual',
+  'presidente', 'vice_presidente', 'governador', 'vice_governador', 'prefeito', 'vice_prefeito', 'senador', 'deputado_federal', 'deputado_estadual',
   'deputado_distrital', 'vereador',
 ];
 

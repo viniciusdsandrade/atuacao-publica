@@ -271,6 +271,63 @@ class VinculoTest {
     }
 
     @Test
+    void vicePresidenteEleitoSaiNaEsferaFederalSemUf(@TempDir Path tmp) throws IOException {
+        Fixture f = new Fixture(tmp);
+        Files.writeString(f.raiz.resolve("contrib").resolve("mandatos.yaml"), "- cargo: vice_presidente\n"
+                + "  eleicao: 2022\n  inicio: '2023-01-01'\n  fim: '2027-01-05'\n  fonte_id: planalto-legislacao\n");
+        f.candidatura(2022, "900001", "VICE-PRESIDENTE", "BR", "FULANO VICE", "PSB", true,
+                "FULANO VICE", "11100011100", "01/01/1960");
+
+        Perfil vice = f.vincular().stream().filter(p -> "tse-900001".equals(p.id)).findFirst().orElseThrow();
+        assertEquals("vice_presidente", vice.cargo);
+        assertEquals("Mandato vigente (eleito em 2022), até 2027-01-05", vice.situacao);
+        JsonNode mandato = vice.bloco("mandatos").getFirst();
+        assertEquals("federal", mandato.get("esfera").stringValue());
+        assertEquals("BR", mandato.get("ente").stringValue());
+        assertTrue(mandato.get("uf").isNull());
+    }
+
+    @Test
+    void viceGovernadorQueConcorreAOutroCargoSegueNoMandato(@TempDir Path tmp) throws IOException {
+        // O vice não precisa renunciar para concorrer (Constituição, art. 14, § 6º, só fala do chefe do Executivo).
+        Fixture f = new Fixture(tmp);
+        Files.writeString(f.raiz.resolve("contrib").resolve("mandatos.yaml"), "- cargo: vice_governador\n"
+                + "  eleicao: 2022\n  inicio: '2023-01-01'\n  fim: '2027-01-06'\n  fonte_id: planalto-legislacao\n");
+        f.candidatura(2022, "910001", "VICE-GOVERNADOR", "MG", "CICLANA VICE", "NOVO", true,
+                "CICLANA VICE", "22200022200", "02/02/1970");
+        f.candidatura(2026, "910002", "GOVERNADOR", "MG", "CICLANA VICE", "NOVO", false,
+                "CICLANA VICE", "22200022200", "02/02/1970");
+
+        Perfil vice = f.vincular().stream().filter(p -> "tse-910001".equals(p.id)).findFirst().orElseThrow();
+        assertEquals("vice_governador", vice.cargo);
+        assertEquals("Mandato vigente (eleito em 2022), até 2027-01-06", vice.situacao);
+        JsonNode mandato = vice.bloco("mandatos").getFirst();
+        assertEquals("estadual", mandato.get("esfera").stringValue());
+        assertEquals("MG", mandato.get("uf").stringValue());
+        assertEquals("2027-01-06", mandato.get("fim").stringValue());
+    }
+
+    @Test
+    void viceQueTambemFoiEleitoDeOutroCargoMantemOIdentificadorDoPerfil(@TempDir Path tmp) throws IOException {
+        // A regra do vice vem antes no arquivo, mas é aplicada depois: o perfil publicado antes não muda de id (ADR-0006).
+        Fixture f = new Fixture(tmp);
+        Files.writeString(f.raiz.resolve("contrib").resolve("mandatos.yaml"), "- cargo: vice_governador\n"
+                + "  eleicao: 2022\n  inicio: '2023-01-01'\n  fim: '2027-01-06'\n  fonte_id: planalto-legislacao\n"
+                + REGRA_DEPUTADO_ESTADUAL_SP);
+        f.candidatura(2022, "920001", "VICE-GOVERNADOR", "SP", "FULANA VICE", "PSD", true,
+                "FULANA VICE", "33300033300", "03/03/1975");
+        f.candidatura(2026, "920002", "DEPUTADO ESTADUAL", "SP", "FULANA VICE", "PSD", true,
+                "FULANA VICE", "33300033300", "03/03/1975");
+
+        List<Perfil> perfis = f.vincular();
+        assertTrue(perfis.stream().noneMatch(p -> "tse-920001".equals(p.id)), "O vice não ganha perfil à parte");
+        Perfil p = perfis.stream().filter(q -> "tse-920002".equals(q.id)).findFirst().orElseThrow();
+        assertEquals(List.of("deputado_estadual", "vice_governador"),
+                p.bloco("mandatos").stream().map(m -> m.get("cargo").stringValue()).sorted().toList());
+        assertEquals("Mandato vigente (eleito em 2022), até 2027-01-06", p.situacao);
+    }
+
+    @Test
     void depoisDaPosseDeputadoEstadualSemRegistroDaAssembleiaFicaSemExercicio(@TempDir Path tmp) throws IOException {
         Fixture f = new Fixture(tmp, Instant.parse("2027-03-01T12:00:00Z"));
         Files.writeString(f.raiz.resolve("contrib").resolve("mandatos.yaml"), REGRA_DEPUTADO_ESTADUAL_SP);

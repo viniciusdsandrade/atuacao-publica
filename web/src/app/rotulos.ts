@@ -2,7 +2,9 @@
 
 export const CARGOS: Record<string, string> = {
   presidente: 'Presidente da República',
+  vice_presidente: 'Vice-presidente da República',
   governador: 'Governador(a)',
+  vice_governador: 'Vice-governador(a)',
   deputado_federal: 'Deputado(a) federal',
   senador: 'Senador(a)',
   deputado_estadual: 'Deputado(a) estadual',

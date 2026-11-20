@@ -72,6 +72,74 @@
   capturado_em: 2026-10-30T02:55:00Z
   contribuidor: viniciusdsandrade
 
+# Vice-presidente e vice-governador (ADR-0072): o vice é eleito com o titular da chapa e toma posse com ele.
+# As datas são as das regras do titular acima. Os textos foram conferidos, literalmente, nos snapshots citados em 2026-11-20.
+- cargo: vice_presidente
+  eleicao: 2018
+  inicio: 2019-01-01
+  fim: 2023-01-01
+  texto_oficial: "Art. 77. [...] § 1º A eleição do Presidente da República importará a do Vice-Presidente com ele registrado. [...] Art. 78. O Presidente e o Vice-Presidente da República tomarão posse em sessão do Congresso Nacional, prestando o compromisso de manter, defender e cumprir a Constituição, observar as leis, promover o bem geral do povo brasileiro, sustentar a união, a integridade e a independência do Brasil."
+  fonte_id: planalto-legislacao
+  url_origem: https://www.planalto.gov.br/ccivil_03/constituicao/constituicao.htm
+  snapshot_url: https://web.archive.org/web/20261023091924/https://www.planalto.gov.br/ccivil_03/constituicao/constituicao.htm
+  capturado_em: 2026-11-20T22:56:00Z
+  contribuidor: viniciusdsandrade
+
+- cargo: vice_presidente
+  eleicao: 2022
+  inicio: 2023-01-01
+  fim: 2027-01-05
+  texto_oficial: "Art. 77. [...] § 1º A eleição do Presidente da República importará a do Vice-Presidente com ele registrado. [...] Art. 78. O Presidente e o Vice-Presidente da República tomarão posse em sessão do Congresso Nacional, prestando o compromisso de manter, defender e cumprir a Constituição, observar as leis, promover o bem geral do povo brasileiro, sustentar a união, a integridade e a independência do Brasil."
+  fonte_id: planalto-legislacao
+  url_origem: https://www.planalto.gov.br/ccivil_03/constituicao/constituicao.htm
+  snapshot_url: https://web.archive.org/web/20261023091924/https://www.planalto.gov.br/ccivil_03/constituicao/constituicao.htm
+  capturado_em: 2026-11-20T22:56:00Z
+  contribuidor: viniciusdsandrade
+
+- cargo: vice_presidente
+  eleicao: 2026
+  inicio: 2027-01-05
+  fim: 2031-01-05
+  texto_oficial: "Art. 77. [...] § 1º A eleição do Presidente da República importará a do Vice-Presidente com ele registrado. [...] Art. 78. O Presidente e o Vice-Presidente da República tomarão posse em sessão do Congresso Nacional, prestando o compromisso de manter, defender e cumprir a Constituição, observar as leis, promover o bem geral do povo brasileiro, sustentar a união, a integridade e a independência do Brasil."
+  fonte_id: planalto-legislacao
+  url_origem: https://www.planalto.gov.br/ccivil_03/constituicao/constituicao.htm
+  snapshot_url: https://web.archive.org/web/20261023091924/https://www.planalto.gov.br/ccivil_03/constituicao/constituicao.htm
+  capturado_em: 2026-11-20T22:56:00Z
+  contribuidor: viniciusdsandrade
+
+- cargo: vice_governador
+  eleicao: 2018
+  inicio: 2019-01-01
+  fim: 2023-01-01
+  texto_oficial: "Art. 28. A eleição do Governador e do Vice-Governador de Estado, para mandato de quatro anos, realizar-se-á no primeiro domingo de outubro, em primeiro turno, e no último domingo de outubro, em segundo turno, se houver, do ano anterior ao do término do mandato de seus antecessores, e a posse ocorrerá em primeiro de janeiro do ano subseqüente, observado, quanto ao mais, o disposto no art. 77."
+  fonte_id: planalto-legislacao
+  url_origem: https://www.planalto.gov.br/ccivil_03/constituicao/constituicao.htm
+  snapshot_url: https://web.archive.org/web/20261023091924/https://www.planalto.gov.br/ccivil_03/constituicao/constituicao.htm
+  capturado_em: 2026-11-20T22:56:00Z
+  contribuidor: viniciusdsandrade
+
+- cargo: vice_governador
+  eleicao: 2022
+  inicio: 2023-01-01
+  fim: 2027-01-06
+  texto_oficial: "Art. 28. A eleição do Governador e do Vice-Governador de Estado, para mandato de 4 (quatro) anos, realizar-se-á no primeiro domingo de outubro, em primeiro turno, e no último domingo de outubro, em segundo turno, se houver, do ano anterior ao do término do mandato de seus antecessores, e a posse ocorrerá em 6 de janeiro do ano subsequente, observado, quanto ao mais, o disposto no art. 77 desta Constituição."
+  fonte_id: planalto-legislacao
+  url_origem: https://www.planalto.gov.br/ccivil_03/constituicao/emendas/emc/emc111.htm
+  snapshot_url: https://web.archive.org/web/20261023091924/https://www.planalto.gov.br/ccivil_03/constituicao/emendas/emc/emc111.htm
+  capturado_em: 2026-11-20T22:56:00Z
+  contribuidor: viniciusdsandrade
+
+- cargo: vice_governador
+  eleicao: 2026
+  inicio: 2027-01-06
+  fim: 2031-01-06
+  texto_oficial: "Art. 28. A eleição do Governador e do Vice-Governador de Estado, para mandato de 4 (quatro) anos, realizar-se-á no primeiro domingo de outubro, em primeiro turno, e no último domingo de outubro, em segundo turno, se houver, do ano anterior ao do término do mandato de seus antecessores, e a posse ocorrerá em 6 de janeiro do ano subsequente, observado, quanto ao mais, o disposto no art. 77 desta Constituição."
+  fonte_id: planalto-legislacao
+  url_origem: https://www.planalto.gov.br/ccivil_03/constituicao/emendas/emc/emc111.htm
+  snapshot_url: https://web.archive.org/web/20261023091924/https://www.planalto.gov.br/ccivil_03/constituicao/emendas/emc/emc111.htm
+  capturado_em: 2026-11-20T22:56:00Z
+  contribuidor: viniciusdsandrade
+
 # Deputados estaduais de São Paulo eleitos em 2026 (ADR-0070): desde a Emenda Constitucional estadual nº 47/2019, a
 # legislatura começa em 1º de fevereiro (Constituição do Estado, art. 9º, § 2º, e ADCT, art. 1º-A). O fim é a posse
 # da legislatura seguinte, também em 1º de fevereiro.

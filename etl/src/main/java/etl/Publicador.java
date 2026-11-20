@@ -28,24 +28,26 @@ import tools.jackson.databind.node.ObjectNode;
 public final class Publicador {
 
     /** Mesmos blocos para todos os políticos do mesmo cargo (política editorial). */
-    static final Map<String, List<String>> BLOCOS = Map.of(
-            "deputado_federal", List.of("mandatos", "participacao_votacoes", "votos", "despesas", "proposicoes", "emendas",
-                    "discursos", "eventos", "orgaos_e_frentes", "candidaturas", "financiamento_campanha", "posicionamentos_declarados"),
-            "senador", List.of("mandatos", "participacao_votacoes", "votos", "despesas", "proposicoes", "emendas",
-                    "discursos", "eventos", "orgaos_e_frentes", "candidaturas", "financiamento_campanha", "posicionamentos_declarados"),
-            "deputado_estadual", List.of("mandatos", "participacao_votacoes", "votos", "despesas", "proposicoes",
-                    "discursos", "eventos", "orgaos_e_frentes", "candidaturas", "financiamento_campanha", "posicionamentos_declarados"),
-            "deputado_distrital", List.of("mandatos", "participacao_votacoes", "votos", "despesas", "proposicoes",
-                    "discursos", "eventos", "orgaos_e_frentes", "candidaturas", "financiamento_campanha", "posicionamentos_declarados"),
-            "vereador", List.of("mandatos", "participacao_votacoes", "votos", "despesas", "proposicoes",
-                    "discursos", "eventos", "orgaos_e_frentes", "candidaturas", "financiamento_campanha", "posicionamentos_declarados"),
-            "presidente", List.of("mandatos", "candidaturas", "financiamento_campanha", "despesas_executivo", "atos_normativos", "agenda_oficial",
-                    "posicionamentos_declarados"),
-            "governador", List.of("mandatos", "candidaturas", "financiamento_campanha", "despesas_executivo", "atos_normativos", "agenda_oficial",
-                    "posicionamentos_declarados"),
-            "prefeito", List.of("mandatos", "candidaturas", "financiamento_campanha", "despesas_executivo", "atos_normativos", "agenda_oficial",
-                    "posicionamentos_declarados"),
-            "vice_prefeito", List.of("mandatos", "candidaturas", "financiamento_campanha", "posicionamentos_declarados"));
+    static final Map<String, List<String>> BLOCOS = Map.ofEntries(
+            Map.entry("deputado_federal", List.of("mandatos", "participacao_votacoes", "votos", "despesas", "proposicoes", "emendas",
+                    "discursos", "eventos", "orgaos_e_frentes", "candidaturas", "financiamento_campanha", "posicionamentos_declarados")),
+            Map.entry("senador", List.of("mandatos", "participacao_votacoes", "votos", "despesas", "proposicoes", "emendas",
+                    "discursos", "eventos", "orgaos_e_frentes", "candidaturas", "financiamento_campanha", "posicionamentos_declarados")),
+            Map.entry("deputado_estadual", List.of("mandatos", "participacao_votacoes", "votos", "despesas", "proposicoes",
+                    "discursos", "eventos", "orgaos_e_frentes", "candidaturas", "financiamento_campanha", "posicionamentos_declarados")),
+            Map.entry("deputado_distrital", List.of("mandatos", "participacao_votacoes", "votos", "despesas", "proposicoes",
+                    "discursos", "eventos", "orgaos_e_frentes", "candidaturas", "financiamento_campanha", "posicionamentos_declarados")),
+            Map.entry("vereador", List.of("mandatos", "participacao_votacoes", "votos", "despesas", "proposicoes",
+                    "discursos", "eventos", "orgaos_e_frentes", "candidaturas", "financiamento_campanha", "posicionamentos_declarados")),
+            Map.entry("presidente", List.of("mandatos", "candidaturas", "financiamento_campanha", "despesas_executivo", "atos_normativos", "agenda_oficial",
+                    "posicionamentos_declarados")),
+            Map.entry("governador", List.of("mandatos", "candidaturas", "financiamento_campanha", "despesas_executivo", "atos_normativos", "agenda_oficial",
+                    "posicionamentos_declarados")),
+            Map.entry("prefeito", List.of("mandatos", "candidaturas", "financiamento_campanha", "despesas_executivo", "atos_normativos", "agenda_oficial",
+                    "posicionamentos_declarados")),
+            Map.entry("vice_prefeito", List.of("mandatos", "candidaturas", "financiamento_campanha", "posicionamentos_declarados")),
+            Map.entry("vice_presidente", List.of("mandatos", "candidaturas", "financiamento_campanha", "posicionamentos_declarados")),
+            Map.entry("vice_governador", List.of("mandatos", "candidaturas", "financiamento_campanha", "posicionamentos_declarados")));
 
     /** Ordem dos blocos no perfil. Quem ocupou mais de um cargo recebe os blocos de todos eles (ADR-0006). */
     private static final List<String> ORDEM_DOS_BLOCOS = List.of("mandatos", "participacao_votacoes", "votos", "despesas",

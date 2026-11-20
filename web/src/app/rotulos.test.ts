@@ -38,6 +38,8 @@ import {
 test('rotuloCargo retorna nome legível dos cargos municipais e gerais', () => {
   assert.equal(rotuloCargo('prefeito'), 'Prefeito(a)');
   assert.equal(rotuloCargo('vice_prefeito'), 'Vice-prefeito(a)');
+  assert.equal(rotuloCargo('vice_governador'), 'Vice-governador(a)');
+  assert.equal(rotuloCargo('vice_presidente'), 'Vice-presidente da República');
   assert.equal(rotuloCargo('vereador'), 'Vereador(a)');
   assert.equal(rotuloCargo('deputado_federal'), 'Deputado(a) federal');
   assert.equal(rotuloCargo('deputado_estadual'), 'Deputado(a) estadual');

@@ -84,8 +84,10 @@ final class Vinculo {
             }
             Ligacoes ligacoes = new Ligacoes(chaves, porCpf, porPessoa);
             vincularLegisladores(ctx, perfis, ligacoes, candidaturas);
-            perfis.addAll(executivos(ctx, catalogo, perfis, ligacoes, candidaturas));
+            perfis.addAll(executivos(ctx, catalogo, perfis, ligacoes, candidaturas, false));
             perfis.addAll(legisladoresEleitos(ctx, perfis, ligacoes, candidaturas));
+            // Vices por último: quem também é eleito de outro cargo fica no perfil que já existia (ADR-0072).
+            perfis.addAll(executivos(ctx, catalogo, perfis, ligacoes, candidaturas, true));
             atos(ctx, perfis);
             despesasDoExecutivoMunicipal(ctx, perfis);
             despesasDoExecutivoFederal(ctx, perfis);
@@ -2131,11 +2133,14 @@ final class Vinculo {
      * com fonte T0.
      */
     private static List<Perfil> executivos(Contexto ctx, Catalogo catalogo, List<Perfil> existentes, Ligacoes ligacoes,
-                                           List<JsonNode> candidaturas) {
+                                           List<JsonNode> candidaturas, boolean vices) {
         List<Perfil> novos = new ArrayList<>();
         Map<String, Perfil> perfilPorCpf = perfilPorCpf(existentes, ligacoes.chaves());
         Map<String, Perfil> perfilPorPessoa = perfilPorPessoa(existentes, ligacoes.chaves());
         for (JsonNode regra : Json.lerYaml(ctx.contrib().resolve("mandatos.yaml"))) {
+            if (viceDaChapa(Json.texto(regra, "cargo")) != vices) {
+                continue;
+            }
             LocalDate inicio = LocalDate.parse(Json.texto(regra, "inicio"));
             LocalDate fim = LocalDate.parse(Json.texto(regra, "fim"));
             String cargo = Json.texto(regra, "cargo");
@@ -2156,8 +2161,10 @@ final class Vinculo {
                 }
                 Perfil p = perfilDoEleito(c, ligacoes, perfilPorCpf, perfilPorPessoa, novos);
                 String uf = Json.texto(c, "uf");
-                String esfera = cargo.equals("presidente") ? "federal" : (municipal ? "municipal" : "estadual");
-                String ente = cargo.equals("presidente") ? "BR" : (municipal ? enteDaRegra : uf);
+                // A chapa presidencial é federal e não tem UF (ADR-0072).
+                boolean federal = cargo.equals("presidente") || cargo.equals("vice_presidente");
+                String esfera = federal ? "federal" : (municipal ? "municipal" : "estadual");
+                String ente = federal ? "BR" : (municipal ? enteDaRegra : uf);
                 // Candidatura a outro cargo na eleição seguinte: o mandato acaba no prazo de renúncia (ADR-0033).
                 Fase faseDoEleito = fase;
                 LocalDate fimDoEleito = fim;
@@ -2180,10 +2187,10 @@ final class Vinculo {
                             + " em " + (eleicao + 4) + " (eleito em " + eleicao + "). A Constituição exige a renúncia até " + prazo
                             + " (art. 14, § 6º); o TSE não informa a data exata.", Perfil.FORA_DE_EXERCICIO);
                 }
-                p.papel(cargo, esfera, ente, cargo.equals("presidente") ? null : uf, Json.texto(c, "partido"), faseDoEleito.situacao(),
+                p.papel(cargo, esfera, ente, federal ? null : uf, Json.texto(c, "partido"), faseDoEleito.situacao(),
                         faseDoEleito.prioridade(), inicio);
                 ObjectNode mandato = Json.SAIDA.createObjectNode();
-                mandato.put("cargo", cargo).put("esfera", esfera).put("ente", ente).put("uf", cargo.equals("presidente") ? null : uf)
+                mandato.put("cargo", cargo).put("esfera", esfera).put("ente", ente).put("uf", federal ? null : uf)
                         .put("inicio", inicio.toString()).put("fim", fimDoEleito.toString()).put("situacao", faseDoEleito.situacao())
                         .putNull("condicao").putNull("legislatura").put("eleicao", eleicao);
                 for (String campo : List.of("texto_oficial", "fonte_id", "url_origem", "snapshot_url", "capturado_em", "contribuidor")) {
@@ -2213,6 +2220,11 @@ final class Vinculo {
             }
         }
         return novos;
+    }
+
+    /** Vice-presidente e vice-governador entram numa passada própria, depois dos demais eleitos (ADR-0072). */
+    static boolean viceDaChapa(String cargo) {
+        return "vice_presidente".equals(cargo) || "vice_governador".equals(cargo);
     }
 
     /** Mandato do cargo na UF que começa na data indicada ou depois dela, como o que a assembleia registra depois da posse. */
