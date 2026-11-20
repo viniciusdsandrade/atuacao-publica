@@ -32,18 +32,17 @@ No Distrito Federal, o cargo é deputado distrital, e a posse segue a Lei Orgân
 3. Antes da posse, o eleito ganha o mandato com a situação "Eleito em {ano}; posse prevista em {data}".
 4. Depois da posse, vale o mandato que a assembleia registra. Sem ele, o eleito fica com "Eleito em {ano}; sem registro de exercício na Assembleia Legislativa", como o deputado federal no ADR-0006.
 5. A primeira regra é a de São Paulo, eleição de 2026: posse em 2027-02-01 e fim em 2031-02-01, início da legislatura seguinte. A fonte é `alesp-legislacao`, o portal de legislação da ALESP (T0).
-6. Têm regra, além de São Paulo, 23 UFs. Em AC, AL, AM, AP, BA, CE, ES, GO, MA, MS, MT, PA, PB, PE, PI, PR, RN, RO, SC, SE e TO, a posse é em 2027-02-01; no RS, em 2027-01-31; e em RR, em 2027-01-05. A fonte de cada uma é `constituicao-{uf}`, da assembleia ou do portal de legislação do governo do estado. No AM, a Constituição não fixa a data, e a regra cita o Regimento Interno da ALEAM, art. 4º (`aleam-regimento`). No DF, a regra de `deputado_distrital` cita a Lei Orgânica, art. 66, na redação da Emenda à Lei Orgânica nº 135, de 11/11/2026: posse em 2027-01-06 (`lei-organica-df`, texto compilado do SINJ-DF).
-7. Ficam sem regra, até haver fonte com snapshot:
-   - MG: a Constituição fixa uma janela, de 1º a 15 de fevereiro. O Regimento Interno da ALMG põe a primeira reunião preparatória em 1º de fevereiro (art. 5º), mas a ALMG recusa conexão de fora do Brasil, e o Internet Archive não a alcança;
-   - RJ: a base de textos da ALERJ não entregou o texto em 2026-11-19, e o snapshot da página não o guarda.
+6. Têm regra, além de São Paulo, 25 UFs. Em AC, AL, AM, AP, BA, CE, ES, GO, MA, MG, MS, MT, PA, PB, PE, PI, PR, RN, RO, SC, SE e TO, a posse é em 2027-02-01; no RS, em 2027-01-31; e em RR, em 2027-01-05. A fonte de cada uma é `constituicao-{uf}`, da assembleia ou do portal de legislação do governo do estado. No AM, a Constituição não fixa a data, e a regra cita o Regimento Interno da ALEAM, art. 4º (`aleam-regimento`). Em MG, a Constituição fixa uma janela, de 1º a 15 de fevereiro, e a regra cita o Regimento Interno da ALMG, art. 3º, com o art. 5º pondo a primeira reunião preparatória em 1º de fevereiro (`almg-regimento`, pelo snapshot de 2026-11-12, porque a ALMG recusa conexão de fora do Brasil). No DF, a regra de `deputado_distrital` cita a Lei Orgânica, art. 66, na redação da Emenda à Lei Orgânica nº 135, de 11/11/2026: posse em 2027-01-06 (`lei-organica-df`, texto compilado do SINJ-DF).
+7. Fica sem regra, até haver fonte com snapshot:
+   - RJ: a base de textos da ALERJ (`alerjln1.alerj.rj.gov.br`) não respondeu de 2026-11-19 a 2026-11-20, a página de entrada não guarda o texto, e nenhum dos 13 documentos da Constituição arquivados no Internet Archive traz o art. 107.
 8. Quando a constituição não fixa o dia, a regra pode citar o regimento interno da assembleia, com snapshot, como a constituição.
 9. Em RR, as notas do texto oficial sobre as ADIs 6654, 6658 e 6703 tratam da reeleição da Mesa, segundo o STF, e não da data da posse.
 
 ## Consequências
 
-- Os eleitos deputado estadual ou distrital em 2026 nas 25 UFs com regra ganham o mandato com posse prevista, inclusive os quatro vereadores dos perfis municipais.
+- Os eleitos deputado estadual ou distrital em 2026 nas 26 UFs com regra ganham o mandato com posse prevista, inclusive os quatro vereadores dos perfis municipais.
 - Eleito sem perfil ganha um perfil do TSE, como os deputados federais eleitos.
-- As duas UFs do item 7 seguem sem posse prevista até ganharem regra própria.
+- O RJ segue sem posse prevista até ganhar regra própria.
 - No AP, o TSE ainda não marca nenhum eleito de 2026 para deputado, estadual ou federal. A regra do AP só tem efeito quando a totalização entrar.
 - Depois da posse, cada adaptador de assembleia precisa da legislatura nova. Até lá, os eleitos ficam sem registro de exercício.
 

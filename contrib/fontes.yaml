@@ -1520,6 +1520,21 @@
   status: validado
   validado_em: 2026-11-19
 
+- id: almg-regimento
+  nome: Assembleia Legislativa do Estado de Minas Gerais, Regimento Interno
+  orgao: Assembleia Legislativa do Estado de Minas Gerais
+  esfera: estadual
+  ente: MG
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://www.almg.gov.br/legislacao-mineira
+  formato: HTML
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Texto atualizado da Resolução nº 5.176/1997. A Constituição de Minas Gerais fixa só uma janela, de 1º a 15 de fevereiro. A ALMG recusa conexão de fora do Brasil, e a captura a pedido falhou em 2026-11-19; a regra cita o snapshot do Internet Archive de 2026-11-12."
+  status: validado com limitação
+  validado_em: 2026-11-20
+
 - id: constituicao-ms
   nome: Governo do Estado de Mato Grosso do Sul, Constituição do Estado de Mato Grosso do Sul
   orgao: Governo do Estado de Mato Grosso do Sul
