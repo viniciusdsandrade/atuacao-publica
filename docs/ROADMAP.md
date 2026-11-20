@@ -628,6 +628,32 @@ Limitações:
 - CLDF: a trava age só em 2027-02-01, e a posse é em 2027-01-06. ALRS: um dia de diferença.
 - Não validado: se os adaptadores em SAPL incluem a legislatura nova pelo filtro da fonte.
 
+## Vice-presidente e vice-governador (ADR-0072)
+
+Feito em 2026-11-20.
+Oito governadores eleitos em 2022 saíram para concorrer em 2026 (ADR-0033), e quem assumiu esses governos não tinha perfil.
+
+| Frente | Entrega | Estado |
+|---|---|---|
+| Modelo | Cargos `vice_presidente` e `vice_governador` no schema, nas regras de mandato, no caminho de contribuição e no site | concluída |
+| Regras | Seis regras em `contrib/mandatos.yaml` (2018, 2022 e 2026), com o texto conferido literalmente nos snapshots | concluída |
+| Vínculo | Chapa presidencial federal, sem UF; vice sem a regra de renúncia para concorrer; vices numa passada própria, depois dos demais eleitos | concluída |
+| Regra de governador de 2018 | Texto citado trocado pela redação literal da EC 16/1997, como está no snapshot | concluída |
+| Sucessão nos oito estados | Posse do vice no governo por contribuição com fonte T0 | pendente: não validada |
+
+Verificação em 2026-11-20:
+
+- ETL: 451 testes, três novos de vínculo (vice-presidente federal sem UF, vice-governador que concorre e segue no mandato, vice eleito de outro cargo que mantém o id). Site: 28 testes unitários e a checagem de tipos.
+- `normalize contrib`: 51 regras de mandato válidas.
+- Ensaio de `publish` sobre os dados locais e o cache bruto, com a publicação do código anterior como publicação anterior: a trava do ADR-0006 não disparou. De 2.861 para 2.913 perfis, nenhum id some, e 13 perfis passam a ter o vice como papel principal.
+- Os 27 vice-governadores eleitos em 2022 e o vice-presidente saem com "Mandato vigente (eleito em 2022)". Nos oito estados sem o titular: Mailza Gomes (AC), Tadeu de Souza (AM), Ricardo Ferraço (ES), Daniel Vilela (GO), Professor Mateus (MG), Otaviano Pivetta (MT), Hana (PA) e Lucas Ribeiro (PB).
+- Uma primeira versão aplicava a regra do vice antes da de deputado estadual. No ensaio, três ids já publicados sumiam sem alias (vices de 2022 eleitos deputado estadual em 2026, como Jade Romero, no CE). A passada própria dos vices corrigiu.
+
+Limitações:
+
+- O perfil não diz que o vice assumiu o governo. A data da posse no governo só entra por contribuição com fonte T0.
+- O vice não tem agenda, despesas nem atos próprios.
+
 ## Fase 2 (depois da POC)
 
 ### Esfera federal
