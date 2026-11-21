@@ -480,7 +480,8 @@ final class Vinculo {
             return perfis;
         }
         int encerradosPelaData = 0;
-        Map<String, List<LocalDate>> posses = possesDasAssembleias(ctx);
+        int encerradosPelaPosse = 0;
+        Map<String, List<Posse>> posses = possesDasAssembleias(ctx);
         for (JsonNode pessoa : Json.ler(pasta.resolve("pessoas.json"))) {
             String idFonte = pessoa.get("id_fonte").stringValue();
             Perfil p = new Perfil();
@@ -510,6 +511,16 @@ final class Vinculo {
                 emExercicio = false;
                 situacao = "Mandato encerrado em " + encerradoEm;
                 encerradosPelaData++;
+            } else if (emExercicio) {
+                // A fonte pode fixar o fim da legislatura depois da posse dos sucessores: na CLDF, 2027-01-31, com posse em
+                // 2027-01-06. A posse dos eleitos numa eleição posterior encerra o mandato (ADR-0073).
+                LocalDate posse = posseDosSucessores(posses.get(Json.texto(pessoa, "cargo") + "/" + Json.texto(pessoa, "uf")),
+                        blocos.path("mandatos"), ctx.hoje());
+                if (posse != null) {
+                    emExercicio = false;
+                    situacao = "Mandato encerrado em " + posse;
+                    encerradosPelaPosse++;
+                }
             }
             p.papel(Json.texto(pessoa, "cargo"), Json.texto(pessoa, "esfera"), Json.texto(pessoa, "ente"), Json.texto(pessoa, "uf"),
                     Json.texto(pessoa, "partido"), situacao,
@@ -535,12 +546,20 @@ final class Vinculo {
             System.out.println(fonte + ": " + encerradosPelaData + " perfis listados como em exercício com o mandato da casa"
                     + " já encerrado saem de em exercício (ADR-0071)");
         }
+        if (encerradosPelaPosse > 0) {
+            System.out.println(fonte + ": " + encerradosPelaPosse + " perfis saem de em exercício com a posse dos sucessores,"
+                    + " antes do fim que a casa registra (ADR-0073)");
+        }
         return perfis;
     }
 
-    /** Datas de posse de deputado estadual e distrital das regras de contrib/mandatos.yaml, por cargo e UF (ADR-0070). */
-    static Map<String, List<LocalDate>> possesDasAssembleias(Contexto ctx) {
-        Map<String, List<LocalDate>> posses = new HashMap<>();
+    /** Posse de deputado estadual ou distrital de uma regra de contrib/mandatos.yaml, com a eleição dos empossados. */
+    record Posse(LocalDate inicio, int eleicao) {
+    }
+
+    /** Posses de deputado estadual e distrital das regras de contrib/mandatos.yaml, por cargo e UF (ADR-0070). */
+    static Map<String, List<Posse>> possesDasAssembleias(Contexto ctx) {
+        Map<String, List<Posse>> posses = new HashMap<>();
         Path arquivo = ctx.contrib().resolve("mandatos.yaml");
         if (!Files.exists(arquivo)) {
             return posses;
@@ -549,21 +568,46 @@ final class Vinculo {
             String cargo = Json.texto(regra, "cargo");
             if ("deputado_estadual".equals(cargo) || "deputado_distrital".equals(cargo)) {
                 posses.computeIfAbsent(cargo + "/" + Json.texto(regra, "ente"), k -> new ArrayList<>())
-                        .add(LocalDate.parse(Json.texto(regra, "inicio")));
+                        .add(new Posse(LocalDate.parse(Json.texto(regra, "inicio")), regra.path("eleicao").asInt()));
             }
         }
         return posses;
     }
 
     /** Primeira posse depois do fim do mandato, ou nulo se não há regra para a UF. */
-    static LocalDate posseSeguinte(List<LocalDate> posses, LocalDate fim) {
+    static LocalDate posseSeguinte(List<Posse> posses, LocalDate fim) {
         LocalDate seguinte = null;
-        for (LocalDate posse : posses == null ? List.<LocalDate>of() : posses) {
-            if (posse.isAfter(fim) && (seguinte == null || posse.isBefore(seguinte))) {
-                seguinte = posse;
+        for (Posse posse : posses == null ? List.<Posse>of() : posses) {
+            if (posse.inicio().isAfter(fim) && (seguinte == null || posse.inicio().isBefore(seguinte))) {
+                seguinte = posse.inicio();
             }
         }
         return seguinte;
+    }
+
+    /**
+     * Primeira posse, até hoje, de eleitos numa eleição posterior à de todos os mandatos registrados pela casa. Mandato
+     * sem eleição, lista vazia ou UF sem regra devolvem nulo: nesse caso vale o que a casa diz.
+     */
+    static LocalDate posseDosSucessores(List<Posse> posses, JsonNode mandatos, LocalDate hoje) {
+        if (posses == null || !mandatos.isArray() || mandatos.isEmpty()) {
+            return null;
+        }
+        int ultimaEleicao = Integer.MIN_VALUE;
+        for (JsonNode m : mandatos) {
+            if (!m.hasNonNull("eleicao")) {
+                return null;
+            }
+            ultimaEleicao = Math.max(ultimaEleicao, m.get("eleicao").asInt());
+        }
+        LocalDate primeira = null;
+        for (Posse posse : posses) {
+            if (posse.eleicao() > ultimaEleicao && !posse.inicio().isAfter(hoje)
+                    && (primeira == null || posse.inicio().isBefore(primeira))) {
+                primeira = posse.inicio();
+            }
+        }
+        return primeira;
     }
 
     /**

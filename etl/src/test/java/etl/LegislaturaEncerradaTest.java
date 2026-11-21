@@ -74,11 +74,48 @@ class LegislaturaEncerradaTest {
 
     @Test
     void posseSeguinteEAPrimeiraDepoisDoFim() {
-        List<LocalDate> posses = List.of(LocalDate.of(2031, 2, 1), LocalDate.of(2027, 2, 1), LocalDate.of(2023, 2, 1));
+        List<Vinculo.Posse> posses = List.of(new Vinculo.Posse(LocalDate.of(2031, 2, 1), 2030),
+                new Vinculo.Posse(LocalDate.of(2027, 2, 1), 2026), new Vinculo.Posse(LocalDate.of(2023, 2, 1), 2022));
 
         assertEquals(LocalDate.of(2027, 2, 1), Vinculo.posseSeguinte(posses, LocalDate.of(2026, 12, 31)));
         assertNull(Vinculo.posseSeguinte(null, LocalDate.of(2026, 12, 31)));
-        assertNull(Vinculo.posseSeguinte(List.of(LocalDate.of(2027, 1, 31)), LocalDate.of(2027, 1, 31)));
+        assertNull(Vinculo.posseSeguinte(List.of(new Vinculo.Posse(LocalDate.of(2027, 1, 31), 2026)), LocalDate.of(2027, 1, 31)));
+    }
+
+    @Test
+    void aPosseDosSucessoresEncerraOMandatoAntesDoFimDaFonte(@TempDir Path tmp) throws IOException {
+        // Como na CLDF: a fonte encerra a legislatura em 2027-01-31, e a posse dos eleitos em 2026 é em 2027-01-06.
+        Files.createDirectories(tmp.resolve("contrib"));
+        Files.writeString(tmp.resolve("contrib").resolve("mandatos.yaml"), """
+                - cargo: deputado_estadual
+                  ente: MS
+                  eleicao: 2026
+                  inicio: 2027-01-06
+                  fim: 2031-01-06
+                """);
+
+        Perfil naVespera = perfil(tmp.resolve("v"), "2027-01-05T12:00:00Z", BLOCOS, tmp.resolve("contrib"));
+        Perfil naPosse = perfil(tmp.resolve("p"), "2027-01-06T12:00:00Z", BLOCOS, tmp.resolve("contrib"));
+
+        assertTrue(naVespera.emExercicio);
+        assertFalse(naPosse.emExercicio);
+        assertEquals("Mandato encerrado em 2027-01-06", naPosse.situacao);
+    }
+
+    @Test
+    void posseDosSucessoresSoContaEleicaoPosteriorAosMandatos() {
+        List<Vinculo.Posse> posses = List.of(new Vinculo.Posse(LocalDate.of(2023, 1, 6), 2022),
+                new Vinculo.Posse(LocalDate.of(2027, 1, 6), 2026));
+        LocalDate hoje = LocalDate.of(2027, 1, 10);
+
+        assertEquals(LocalDate.of(2027, 1, 6), Vinculo.posseDosSucessores(posses,
+                Json.FONTE.readTree("[{\"eleicao\": 2022, \"fim\": \"2027-01-31\"}]"), hoje));
+        // O mandato da eleição de 2026, já coberto pela fonte, não se encerra com a posse da própria eleição.
+        assertNull(Vinculo.posseDosSucessores(posses,
+                Json.FONTE.readTree("[{\"eleicao\": 2022}, {\"eleicao\": 2026}]"), hoje));
+        assertNull(Vinculo.posseDosSucessores(posses, Json.FONTE.readTree("[{\"fim\": \"2027-01-31\"}]"), hoje));
+        assertNull(Vinculo.posseDosSucessores(null, Json.FONTE.readTree("[{\"eleicao\": 2022}]"), hoje));
+        assertNull(Vinculo.posseDosSucessores(posses, Json.FONTE.readTree("[{\"eleicao\": 2022}]"), LocalDate.of(2027, 1, 5)));
     }
 
     @Test
