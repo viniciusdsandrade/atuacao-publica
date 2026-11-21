@@ -39,6 +39,7 @@ import etl.fontes.Cldf;
 import etl.fontes.Cmsp;
 import etl.fontes.Contrib;
 import etl.fontes.Executivo;
+import etl.fontes.ExecutivoEs;
 import etl.fontes.ExecutivoGo;
 import etl.fontes.ExecutivoMg;
 import etl.fontes.ExecutivoSp;
@@ -68,6 +69,7 @@ public final class Main {
         registrar(new ExecutivoSp());
         registrar(new ExecutivoMg());
         registrar(new ExecutivoGo());
+        registrar(new ExecutivoEs());
         registrar(new Almg());
         registrar(new Alep());
         registrar(new Alba());
@@ -100,8 +102,8 @@ public final class Main {
     }
 
     /** Fontes que rodam quando o comando não recebe fonte. contrib e fontes rodam só quando pedidas no fetch. */
-    private static final List<String> FETCH_PADRAO = List.of("camara", "senado", "tse", "executivo", "sapl", "tcesp", "cgu", "agenda", "alesp", "executivosp", "executivomg", "executivogo", "almg", "alep", "alba", "alerj", "alrs", "alece", "alesc", "alego", "ales", "alepa", "alepe", "cldf", "almt", "alems", "alpb", "aleam", "aleal", "alero", "alepi", "alrn", "aleto", "alese", "alema", "aleac", "alerr", "alap", "cmsp", "caraguatatuba", "paulinia");
-    private static final List<String> NORMALIZE_PADRAO = List.of("camara", "senado", "tse", "executivo", "contrib", "sapl", "tcesp", "cgu", "agenda", "alesp", "executivosp", "executivomg", "executivogo", "almg", "alep", "alba", "alerj", "alrs", "alece", "alesc", "alego", "ales", "alepa", "alepe", "cldf", "almt", "alems", "alpb", "aleam", "aleal", "alero", "alepi", "alrn", "aleto", "alese", "alema", "aleac", "alerr", "alap", "cmsp", "caraguatatuba", "paulinia");
+    private static final List<String> FETCH_PADRAO = List.of("camara", "senado", "tse", "executivo", "sapl", "tcesp", "cgu", "agenda", "alesp", "executivosp", "executivomg", "executivogo", "executivoes", "almg", "alep", "alba", "alerj", "alrs", "alece", "alesc", "alego", "ales", "alepa", "alepe", "cldf", "almt", "alems", "alpb", "aleam", "aleal", "alero", "alepi", "alrn", "aleto", "alese", "alema", "aleac", "alerr", "alap", "cmsp", "caraguatatuba", "paulinia");
+    private static final List<String> NORMALIZE_PADRAO = List.of("camara", "senado", "tse", "executivo", "contrib", "sapl", "tcesp", "cgu", "agenda", "alesp", "executivosp", "executivomg", "executivogo", "executivoes", "almg", "alep", "alba", "alerj", "alrs", "alece", "alesc", "alego", "ales", "alepa", "alepe", "cldf", "almt", "alems", "alpb", "aleam", "aleal", "alero", "alepi", "alrn", "aleto", "alese", "alema", "aleac", "alerr", "alap", "cmsp", "caraguatatuba", "paulinia");
 
     public static void main(String[] args) {
         // O validador de schema usa SLF4J sem provedor; o aviso de "no providers" não interessa aqui.

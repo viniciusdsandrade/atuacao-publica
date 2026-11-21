@@ -573,6 +573,21 @@
   status: validado
   validado_em: 2026-11-21
 
+- id: es-agenda-governador
+  nome: Agenda do Governador do Espírito Santo, calendário público do governo
+  orgao: Governo do Estado do Espírito Santo
+  esfera: estadual
+  ente: ES
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://calendar.google.com/calendar/ical/4oc9k18uk3p5ffmpm621hm33ig%40group.calendar.google.com/public/basic.ics
+  formato: iCalendar
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Hospedado no Google Agenda; o portal do governo (https://www.es.gov.br/agenda-das-autoridades) o publica como Agenda do Governador. Parte dos eventos é genérica (Agendas Internas, Despachos Administrativos)."
+  status: validado com limitação
+  validado_em: 2026-11-21
+
 - id: go-diario-oficial
   nome: Diário Oficial do Estado de Goiás
   orgao: Imprensa oficial do estado (GO)
