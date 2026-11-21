@@ -27,6 +27,22 @@ class PublicadorTest {
     }
 
     @Test
+    void blocosDoGovernadorSoEnvelhecemComAColetaDaPropriaUf() {
+        Publicador.Perfil sp = new Publicador.Perfil();
+        sp.papel("governador", "estadual", "SP", "SP", "AAA", "Mandato vigente", Publicador.Perfil.EM_EXERCICIO, null);
+        Publicador.Perfil mg = new Publicador.Perfil();
+        mg.papel("governador", "estadual", "MG", "MG", "AAA", "Mandato vigente", Publicador.Perfil.EM_EXERCICIO, null);
+
+        assertEquals("executivosp", sp.origemDoBloco("atos_normativos"));
+        assertEquals("executivosp", sp.origemDoBloco("agenda_oficial"));
+        assertEquals("executivosp", sp.origemDoBloco("despesas_executivo"));
+        // Sem coleta do governo de MG, o bloco vazio não fica desatualizado pela coleta de SP.
+        assertEquals(null, mg.origemDoBloco("atos_normativos"));
+        assertEquals(null, mg.origemDoBloco("agenda_oficial"));
+        assertEquals(null, mg.origemDoBloco("despesas_executivo"));
+    }
+
+    @Test
     void situacaoTemAMesmaGrafiaEmTodasAsCasas() {
         assertEquals("Em exercício", Publicador.situacaoPadronizada("Exercício"));
         assertEquals("Em exercício", Publicador.situacaoPadronizada("em exercício"));

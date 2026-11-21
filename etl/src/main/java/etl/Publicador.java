@@ -157,11 +157,11 @@ public final class Publicador {
                 return null;
             }
             if (nome.equals("agenda_oficial")) {
-                return cargos.contains("presidente") ? "agenda" : (cargos.contains("governador") ? "executivosp" : null);
+                return cargos.contains("presidente") ? "agenda" : (cargos.contains("governador") ? Vinculo.EXECUTIVOS_ESTADUAIS.get(uf) : null);
             }
             if (nome.equals("atos_normativos")) {
                 if (cargos.contains("governador")) {
-                    return "executivosp";
+                    return Vinculo.EXECUTIVOS_ESTADUAIS.get(uf);
                 }
                 if (cargos.contains("prefeito") && !cargos.contains("presidente")) {
                     // Só o município do piloto tem atos pelo SAPL. Nos outros o bloco não tem coleta, e não envelhece.
@@ -169,7 +169,7 @@ public final class Publicador {
                 }
             }
             if (nome.equals("despesas_executivo")) {
-                return cargos.contains("presidente") ? "cgu" : (cargos.contains("governador") ? "executivosp" : "tcesp");
+                return cargos.contains("presidente") ? "cgu" : (cargos.contains("governador") ? Vinculo.EXECUTIVOS_ESTADUAIS.get(uf) : "tcesp");
             }
             return ORIGEM_DO_BLOCO.getOrDefault(nome, fonteCli);
         }

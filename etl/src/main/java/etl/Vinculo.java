@@ -2677,11 +2677,19 @@ final class Vinculo {
         }
     }
 
+    /** Fonte da CLI com agenda, atos e despesas do governo de cada UF (ADR-0014). */
+    static final Map<String, String> EXECUTIVOS_ESTADUAIS = Map.of("SP", "executivosp");
+
     /**
      * Despesas do Poder Executivo estadual (ADR-0014) no perfil do governador já empossado.
      */
     private static void despesasDoExecutivoEstadual(Contexto ctx, List<Perfil> perfis) {
-        Path arquivo = ctx.normalizado().resolve("executivosp").resolve("despesas.json");
+        for (var executivo : EXECUTIVOS_ESTADUAIS.entrySet()) {
+            despesasDoExecutivoEstadual(ctx, perfis, executivo.getKey(), ctx.normalizado().resolve(executivo.getValue()).resolve("despesas.json"));
+        }
+    }
+
+    private static void despesasDoExecutivoEstadual(Contexto ctx, List<Perfil> perfis, String uf, Path arquivo) {
         if (!Files.exists(arquivo)) {
             return;
         }
@@ -2695,7 +2703,7 @@ final class Vinculo {
                 String inicio = Json.texto(mandato, "inicio");
                 String fim = Json.texto(mandato, "fim");
                 String ente = Json.texto(mandato, "ente");
-                if (!"governador".equals(Json.texto(mandato, "cargo")) || inicio == null || inicio.compareTo(hoje) > 0 || !"SP".equals(ente)) {
+                if (!"governador".equals(Json.texto(mandato, "cargo")) || inicio == null || inicio.compareTo(hoje) > 0 || !uf.equals(ente)) {
                     continue;
                 }
                 for (JsonNode a : agregados) {
@@ -2723,7 +2731,12 @@ final class Vinculo {
 
     /** Compromissos da agenda oficial em cada mandato de governador (ADR-0014). */
     private static void agendaEstadual(Contexto ctx, List<Perfil> perfis) {
-        Path arquivo = ctx.normalizado().resolve("executivosp").resolve("compromissos.json");
+        for (var executivo : EXECUTIVOS_ESTADUAIS.entrySet()) {
+            agendaEstadual(ctx, perfis, executivo.getKey(), ctx.normalizado().resolve(executivo.getValue()).resolve("compromissos.json"));
+        }
+    }
+
+    private static void agendaEstadual(Contexto ctx, List<Perfil> perfis, String uf, Path arquivo) {
         if (!Files.exists(arquivo)) {
             return;
         }
@@ -2737,7 +2750,7 @@ final class Vinculo {
                 String inicio = Json.texto(mandato, "inicio");
                 String fim = Json.texto(mandato, "fim");
                 String ente = Json.texto(mandato, "ente");
-                if (!"governador".equals(Json.texto(mandato, "cargo")) || inicio == null || inicio.compareTo(hoje) > 0 || !"SP".equals(ente)) {
+                if (!"governador".equals(Json.texto(mandato, "cargo")) || inicio == null || inicio.compareTo(hoje) > 0 || !uf.equals(ente)) {
                     continue;
                 }
                 for (JsonNode c : compromissos) {
@@ -2764,7 +2777,12 @@ final class Vinculo {
 
     /** Atos normativos e decretos do Poder Executivo estadual (ADR-0014) no perfil do governador. */
     private static void atosEstadual(Contexto ctx, List<Perfil> perfis) {
-        Path arquivo = ctx.normalizado().resolve("executivosp").resolve("atos.json");
+        for (var executivo : EXECUTIVOS_ESTADUAIS.entrySet()) {
+            atosEstadual(ctx, perfis, executivo.getKey(), ctx.normalizado().resolve(executivo.getValue()).resolve("atos.json"));
+        }
+    }
+
+    private static void atosEstadual(Contexto ctx, List<Perfil> perfis, String uf, Path arquivo) {
         if (!Files.exists(arquivo)) {
             return;
         }
@@ -2778,7 +2796,7 @@ final class Vinculo {
                 String inicio = Json.texto(mandato, "inicio");
                 String fim = Json.texto(mandato, "fim");
                 String ente = Json.texto(mandato, "ente");
-                if (!"governador".equals(Json.texto(mandato, "cargo")) || inicio == null || inicio.compareTo(hoje) > 0 || !"SP".equals(ente)) {
+                if (!"governador".equals(Json.texto(mandato, "cargo")) || inicio == null || inicio.compareTo(hoje) > 0 || !uf.equals(ente)) {
                     continue;
                 }
                 for (JsonNode ato : atos) {
