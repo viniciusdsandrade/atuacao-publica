@@ -11,7 +11,7 @@ on:
       fonte:
         description: Fonte a coletar. As demais seguem do cache de dados brutos.
         type: choice
-        options: [todas, camara, senado, tse, executivo, sapl, tcesp, cgu, agenda, contrib, alesp, executivosp, executivomg, almg, alep, alba, alerj, alrs, alece, alesc, alego, ales, alepa, alepe, cldf, almt, alems, alpb, aleam, aleal, alero, alepi, alrn, aleto, alese, alema, aleac, alerr, alap, cmsp, caraguatatuba, paulinia]
+        options: [todas, camara, senado, tse, executivo, sapl, tcesp, cgu, agenda, contrib, alesp, executivosp, executivomg, executivogo, almg, alep, alba, alerj, alrs, alece, alesc, alego, ales, alepa, alepe, cldf, almt, alems, alpb, aleam, aleal, alero, alepi, alrn, aleto, alese, alema, aleac, alerr, alap, cmsp, caraguatatuba, paulinia]
         default: todas
 
 permissions:
@@ -189,6 +189,14 @@ jobs:
         env:
           ETL_ORCAMENTO_MINUTOS: '15'
         run: java -Xmx2g -jar etl/target/etl.jar fetch executivomg
+      - name: fetch executivogo
+        # Poder Executivo do Estado de Goiás: decretos numerados e execução orçamentária mensal por órgão (ADR-0076).
+        if: env.FONTE == 'todas' || env.FONTE == 'executivogo'
+        continue-on-error: true
+        timeout-minutes: 20
+        env:
+          ETL_ORCAMENTO_MINUTOS: '15'
+        run: java -Xmx2g -jar etl/target/etl.jar fetch executivogo
       - name: fetch almg
         # Assembleia Legislativa do Estado de Minas Gerais: deputados, comissões e verbas indenizatórias.
         if: (env.FONTE == 'todas' || env.FONTE == 'almg') && !contains(env.SEMENTE, ' almg ')
