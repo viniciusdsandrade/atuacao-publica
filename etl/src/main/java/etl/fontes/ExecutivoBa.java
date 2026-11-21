@@ -139,6 +139,8 @@ public final class ExecutivoBa implements Fonte {
             }
         }
         List<ExecutivoSp.Ato> decretos = new ArrayList<>(atos.values());
+        // O título traz a data; há título com o ano errado (um decreto de 2025 sai como de 1975): data fora da cobertura sai.
+        decretos.removeIf(a -> a.data().compareTo(ANO_INICIAL + "-01-01") < 0 || a.data().compareTo(ctx.hoje().toString()) > 0);
         decretos.sort(java.util.Comparator.comparing(ExecutivoSp.Ato::data).reversed().thenComparing(ExecutivoSp.Ato::idFonte));
         Json.gravar(saida.resolve("atos.json"), Json.SAIDA.valueToTree(decretos));
         Json.gravar(saida.resolve("compromissos.json"), Json.SAIDA.createArrayNode());

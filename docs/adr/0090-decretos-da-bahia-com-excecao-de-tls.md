@@ -26,4 +26,6 @@ O mantenedor autorizou, em 2026-11-21, a exceção restrita à coleta da Bahia.
 
 - A troca de chave RSA não tem sigilo futuro. Os dados são públicos e não há credencial na conexão; o risco aceito é de confidencialidade de dado público.
 - Sem a opção, a coleta dos decretos falha no handshake, e a da despesa segue normal. Quem roda `fetch` de todas as fontes num processo só fica sem os decretos da Bahia.
+- O servidor responde HTTP 404 de forma intermitente: a mesma consulta volta 200 minutos depois. O mês que falha fica para a execução seguinte; na coleta de 2026-11-21, duas rodadas trouxeram 2.428 decretos, de 2022-10 a 2026-11, com meses ainda incompletos.
+- Data fora da cobertura (um título com o ano 1975) fica de fora.
 - Se o Legisla Bahia passar a negociar troca de chave com sigilo futuro, a exceção deve sair.
