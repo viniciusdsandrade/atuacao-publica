@@ -335,7 +335,7 @@ Validação em 2026-11-21: as páginas citadas responderam 200, e cada trecho ci
 
 Não validado com snapshot:
 
-- AM: Diário Oficial Eletrônico da Aleam, edições extras 2420 a 2422 (`https://www.aleam.gov.br/wp-content/uploads/2026/04/`), com as cartas de renúncia e o termo de assunção do governador interino. O termo traz RG e filiação: não citar esse trecho.
+- AM: Diário Oficial Eletrônico da Aleam, edições extras 2420 a 2422 (`https://www.aleam.gov.br/wp-content/uploads/2026/04/`), com as cartas de renúncia e o termo de assunção do governador interino. O termo traz RG e filiação: não citar esse trecho. O servidor respondeu 503 à captura do Internet Archive em 2026-11-21. No lugar, a contribuição cita o expediente do Diário Oficial do Estado (`am-diario-oficial`), edições de 2026-04-01 e 2026-04-06, que têm snapshot.
 - MT: IOMAT, publicação do ATO nº 647/2026 (`https://www.iomat.mt.gov.br/apifront/portal/edicoes/publicacoes_ver_conteudo/1821838`).
 - PB: Diário do Poder Legislativo nº 9.107, de 2026-04-02 (`https://www.al.pb.leg.br/wp-content/uploads/2026/04/DPL-02.04.2026.pdf`).
 - MG: o Jornal Minas Gerais só entrega as edições por uma API com token. Não há URL estável de publicação.
