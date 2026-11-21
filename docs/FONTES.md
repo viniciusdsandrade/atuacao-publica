@@ -1736,6 +1736,15 @@ Validação em 2026-11-03 com o User-Agent do projeto.
 - URL base: `https://www.al.ma.leg.br/sitealema/mesa-diretora/`
 - Composição oficial da Mesa Diretora da 20ª Legislatura (biênio 2025–2027: Presidente Iracema Vale, Vice-Presidentes e Secretários).
 
+### `alema-legis`: proposições (ADR-0079)
+
+- API pública do sistema legislativo: `https://alemalegis.al.ma.leg.br/api/v1/public/`. Validação em 2026-11-21, numa rede no Brasil.
+- Lista: `legislative-matter/filter/access?page={n}&size=200&initialPresentationPeriod=2023-02-01T00:00:00&finalPresentationPeriod={AAAA-MM-DD}T23:59:59&sort=id,asc`. As datas precisam de hora; só a data responde 400. Em 2026-11-21: 22.575 matérias em 113 páginas.
+- Campos usados: `id`, `matterTypeSigla`, `number`, `year`, `ement`, `situation`, `presentationDate`, `authorNames` e `files[].id`.
+- Texto: `legislative-matter/download/{id do arquivo}`.
+- Os endpoints de parlamentar (`parliamentary/{id}`) trazem CPF, RG, endereço e e-mail. Não são usados.
+- Sessões, presença (`plenary-session-presence/plenary-session/{id}`) e votos (`votes/plenary-session/{id}`) existem, mas só com sessões de 2026-10 em diante.
+
 ### `alema-portal`: fotografias oficiais
 
 - URL base: `https://www.al.ma.leg.br/`
