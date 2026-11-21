@@ -335,7 +335,7 @@ public final class Alerj implements Fonte {
             nomePorId.putIfAbsent(e.id(), e.nome());
         }
         Map<String, List<Registros.Proposicao>> proposicoesPorDeputado =
-                AlerjProposicoes.porDeputado(ctx, AlerjProposicoes.idsPorNome(nomePorId));
+                AlerjProposicoes.porDeputado(ctx, new AutoriaPorNome(nomePorId));
 
         for (HistoricoDeputados.Entrada ent : entradas) {
             String id = ent.id();

@@ -87,8 +87,8 @@ final class AlerjProposicoes {
         return linhas;
     }
 
-    /** Proposições por id de deputado, pelo nome do autor como a ALERJ escreve (mapa de idsPorNome). Autor que não é deputado fica de fora. */
-    static Map<String, List<Proposicao>> porDeputado(Contexto ctx, Map<String, String> idPorNome) {
+    /** Proposições por id de deputado, pelo nome do autor como a ALERJ escreve. Autor que não é deputado fica de fora. */
+    static Map<String, List<Proposicao>> porDeputado(Contexto ctx, AutoriaPorNome autoria) {
         Map<String, Linha> porCodigo = new LinkedHashMap<>();
         Map<String, Prov> provs = new HashMap<>();
         int anoAtual = ctx.hoje().getYear();
@@ -108,7 +108,7 @@ final class AlerjProposicoes {
             int ano = Integer.parseInt(l.codigo().substring(0, 4));
             int numero = Integer.parseInt(l.codigo().substring(6));
             for (int i = 0; i < l.autores().size(); i++) {
-                String id = idDoAutor(idPorNome, l.autores().get(i));
+                String id = autoria.id(l.autores().get(i));
                 if (id == null) {
                     semPerfil.add(l.autores().get(i));
                     continue;
@@ -190,48 +190,9 @@ final class AlerjProposicoes {
         return lista;
     }
 
-    /** Tratamento antes do nome ("Dr.", "Prof."): a ALERJ escreve o autor com ou sem ele. */
-    private static final Pattern TRATAMENTO = Pattern.compile(
-            "^(DR|DRA|PROF|PROFA|PROFESSOR|PROFESSORA|DELEGADO|DELEGADA|PASTOR|PASTORA|CORONEL|CAPITAO|SARGENTO|TENENTE) ");
-
-    /** Nome do autor ou do deputado como chave: sem acento e sem pontuação, em maiúsculas, com um espaço entre as palavras. */
+    /** Nome do autor como chave (AutoriaPorNome). */
     static String chave(String nome) {
-        String n = Texto.normalizarNome(Texto.semEntidades(nome));
-        return n == null ? null : n.replaceAll("[.,;]", " ").replaceAll("\\s+", " ").strip();
-    }
-
-    /** Chave sem o tratamento, para a segunda tentativa de ligação. */
-    static String semTratamento(String chave) {
-        return chave == null ? null : TRATAMENTO.matcher(chave).replaceFirst("");
-    }
-
-    /** Mapa de nome para id com as duas chaves. A chave sem tratamento só entra se não for de mais de um deputado. */
-    static Map<String, String> idsPorNome(Map<String, String> nomePorId) {
-        Map<String, String> exatos = new HashMap<>();
-        Map<String, String> semTratamento = new HashMap<>();
-        Set<String> repetidas = new java.util.HashSet<>();
-        nomePorId.forEach((id, nome) -> {
-            String c = chave(nome);
-            if (c == null) {
-                return;
-            }
-            exatos.putIfAbsent(c, id);
-            String s = semTratamento(c);
-            if (semTratamento.containsKey(s) && !semTratamento.get(s).equals(id)) {
-                repetidas.add(s);
-            }
-            semTratamento.putIfAbsent(s, id);
-        });
-        repetidas.forEach(semTratamento::remove);
-        Map<String, String> mapa = new HashMap<>(exatos);
-        semTratamento.forEach((s, id) -> mapa.putIfAbsent("~" + s, id));
-        return mapa;
-    }
-
-    private static String idDoAutor(Map<String, String> idPorNome, String autor) {
-        String c = chave(autor);
-        String id = idPorNome.get(c);
-        return id != null ? id : idPorNome.get("~" + semTratamento(c));
+        return AutoriaPorNome.chave(nome);
     }
 
     private static String limpar(String html) {

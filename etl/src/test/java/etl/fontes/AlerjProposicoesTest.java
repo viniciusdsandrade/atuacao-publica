@@ -41,17 +41,6 @@ class AlerjProposicoesTest {
     }
 
     @Test
-    void tratamentoSoLigaQuandoNaoHaDuvida() {
-        java.util.Map<String, String> ids = AlerjProposicoes.idsPorNome(java.util.Map.of("1", "Dr. Pedro Ricardo", "2", "Prof Josemar",
-                "3", "Dr. Ana Souza", "4", "Delegada Ana Souza"));
-
-        assertEquals("1", ids.get("~" + AlerjProposicoes.semTratamento(AlerjProposicoes.chave("PEDRO RICARDO"))));
-        assertEquals("2", ids.get(AlerjProposicoes.chave("PROF. JOSEMAR")));
-        // Dois deputados com o mesmo nome sem o tratamento: a segunda tentativa não liga nenhum.
-        assertNull(ids.get("~ANA SOUZA"));
-    }
-
-    @Test
     void consultaPeloPrefixoDoCodigo() {
         assertEquals("https://alerjln1.alerj.rj.gov.br/scpro2327.nsf/18c1dd68f96be3e7832566ec0018d833?SearchView&Query=FIELD%20prop_cod_prop"
                 + "%20CONTAINS%20202303*&SearchMax=0&SearchOrder=4", AlerjProposicoes.url(AlerjProposicoes.TIPOS.get(2), "202303"));
