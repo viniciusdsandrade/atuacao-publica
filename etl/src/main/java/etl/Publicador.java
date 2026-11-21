@@ -257,7 +257,7 @@ public final class Publicador {
         ObjectNode doc = Json.SAIDA.createObjectNode();
         doc.put("id", perfil.id).put("nome", perfil.nome).put("cargo_atual", perfil.cargo).put("esfera", perfil.esfera)
                 .put("ente", perfil.ente).put("uf", perfil.uf).put("partido_atual", perfil.partido)
-                .put("situacao", perfil.situacao).put("em_exercicio", perfil.emExercicio).put("foto_url", Texto.url(perfil.foto));
+                .put("situacao", situacaoPadronizada(perfil.situacao)).put("em_exercicio", perfil.emExercicio).put("foto_url", Texto.url(perfil.foto));
         ObjectNode ids = doc.putObject("ids_externos");
         perfil.ids.forEach(ids::put);
         if (!perfil.tse.isEmpty()) {
@@ -629,6 +629,21 @@ public final class Publicador {
             return Integer.valueOf(data.substring(0, 4));
         }
         return bloco.equals("proposicoes") && registro.hasNonNull("ano") ? Integer.valueOf(registro.get("ano").asInt()) : null;
+    }
+
+    /**
+     * Situação do perfil com a mesma grafia em todas as casas: as fontes escrevem "Exercício", "em exercício" e
+     * "Em exercício" para o mesmo estado. O texto da fonte fica, só com a inicial maiúscula e sem espaço repetido.
+     */
+    static String situacaoPadronizada(String situacao) {
+        if (situacao == null || situacao.isBlank()) {
+            return situacao;
+        }
+        String texto = situacao.strip().replaceAll("\\s+", " ");
+        if (texto.equalsIgnoreCase("exercício") || texto.equalsIgnoreCase("em exercício")) {
+            return "Em exercício";
+        }
+        return Character.toUpperCase(texto.charAt(0)) + texto.substring(1);
     }
 
     private static ObjectNode entradaDoIndice(ObjectNode doc) {

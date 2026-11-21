@@ -27,6 +27,20 @@ class PublicadorTest {
     }
 
     @Test
+    void situacaoTemAMesmaGrafiaEmTodasAsCasas() {
+        assertEquals("Em exercício", Publicador.situacaoPadronizada("Exercício"));
+        assertEquals("Em exercício", Publicador.situacaoPadronizada("em exercício"));
+        assertEquals("Em exercício", Publicador.situacaoPadronizada(" Em exercício "));
+        assertEquals("Mandato encerrado", Publicador.situacaoPadronizada("mandato encerrado"));
+        assertEquals("Término de exercício de suplência", Publicador.situacaoPadronizada("término de exercício de suplência"));
+        assertEquals("Fora de exercício desde 2024-02-01 (Afastamento de titular por Recontagem de Votos)",
+                Publicador.situacaoPadronizada("Fora de exercício desde 2024-02-01 (Afastamento de titular  por Recontagem de Votos)"));
+        assertEquals("Eleito em 2026; posse prevista em 2027-02-01",
+                Publicador.situacaoPadronizada("Eleito em 2026; posse prevista em 2027-02-01"));
+        assertEquals(null, Publicador.situacaoPadronizada(null));
+    }
+
+    @Test
     void fontesDoBlocoSaemSemRepeticaoEVemDosRegistrosQuandoFaltam() {
         JsonNode fonte = Json.FONTE.readTree("{\"fonte_id\": \"x\", \"url_origem\": \"https://exemplo.invalid/a\", \"capturado_em\": \"2026-11-07T00:00:00Z\"}");
         JsonNode registro = Json.FONTE.readTree("{\"valor\": 1, \"fonte_id\": \"y\", \"url_origem\": \"https://exemplo.invalid/b\","
