@@ -11,7 +11,7 @@ on:
       fonte:
         description: Fonte a coletar. As demais seguem do cache de dados brutos.
         type: choice
-        options: [todas, camara, senado, tse, executivo, sapl, tcesp, cgu, agenda, contrib, alesp, executivosp, executivomg, executivogo, almg, alep, alba, alerj, alrs, alece, alesc, alego, ales, alepa, alepe, cldf, almt, alems, alpb, aleam, aleal, alero, alepi, alrn, aleto, alese, alema, aleac, alerr, alap, cmsp, caraguatatuba, paulinia]
+        options: [todas, camara, senado, tse, executivo, sapl, tcesp, cgu, agenda, contrib, alesp, executivosp, executivomg, executivogo, executivoes, almg, alep, alba, alerj, alrs, alece, alesc, alego, ales, alepa, alepe, cldf, almt, alems, alpb, aleam, aleal, alero, alepi, alrn, aleto, alese, alema, aleac, alerr, alap, cmsp, caraguatatuba, paulinia]
         default: todas
 
 permissions:
@@ -197,6 +197,14 @@ jobs:
         env:
           ETL_ORCAMENTO_MINUTOS: '15'
         run: java -Xmx2g -jar etl/target/etl.jar fetch executivogo
+      - name: fetch executivoes
+        # Poder Executivo do Estado do Espírito Santo: agenda do Governador, no calendário público do governo (ADR-0077).
+        if: env.FONTE == 'todas' || env.FONTE == 'executivoes'
+        continue-on-error: true
+        timeout-minutes: 10
+        env:
+          ETL_ORCAMENTO_MINUTOS: '7'
+        run: java -Xmx2g -jar etl/target/etl.jar fetch executivoes
       - name: fetch almg
         # Assembleia Legislativa do Estado de Minas Gerais: deputados, comissões e verbas indenizatórias.
         if: (env.FONTE == 'todas' || env.FONTE == 'almg') && !contains(env.SEMENTE, ' almg ')
