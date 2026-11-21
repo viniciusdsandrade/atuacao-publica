@@ -603,6 +603,36 @@
   status: validado
   validado_em: 2026-10-30
 
+- id: go-legisla
+  nome: Casa Civil de Goiás, API de pesquisa da legislação estadual
+  orgao: Secretaria de Estado da Casa Civil (GO)
+  esfera: estadual
+  ente: GO
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://legisla.casacivil.go.gov.br/api/v2/pesquisa/legislacoes
+  formato: JSON
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Pesquisa por tipo e período, 100 itens por página. A página de cada norma no portal é montada por JavaScript; o link oficial do texto é o do Diário Oficial."
+  status: validado
+  validado_em: 2026-11-21
+
+- id: go-execucao-orcamentaria
+  nome: Dados Abertos de Goiás, execução orçamentária por natureza da despesa
+  orgao: Secretaria de Estado da Economia (GO)
+  esfera: estadual
+  ente: GO
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://dadosabertos.go.gov.br/
+  formato: CSV e ZIP (CKAN)
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Um ZIP por ano fechado e um CSV por mês do ano corrente. Cada linha já soma o mês por órgão, função, elemento e ação, sem favorecido."
+  status: validado
+  validado_em: 2026-11-21
+
 - id: ma-diario-oficial
   nome: Diário Oficial do Estado do Maranhão (DOEMA)
   orgao: Imprensa oficial do estado (MA)
