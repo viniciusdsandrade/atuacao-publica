@@ -1251,6 +1251,14 @@ Validação em 2026-11-03 com o User-Agent do projeto.
 - Na coleta de 2026-11-10, 198 votações de 2022-03-22 a 2026-11-03. Em 22 dos 59 meses não houve votação nominal, entre eles janeiro e julho de todos os anos.
 - Mesmo host dos perfis, que o CI coleta desde 2026-11-06.
 
+### `alepa-proposicoes`: proposições (ADR-0087)
+
+- Primeira página: POST `https://www.alepa.pa.gov.br/Legislativo/CallbackPanelProposicoes` com `DXCallbackName=cbpProposicoes`, `__DXCallbackArgument=c0:`, `model[IdTipoProposicao]={tipo}` e `model[Ano]={AAAA}`. Validação em 2026-11-21.
+- Tipos (`/Legislativo/GetTipoProposicoes`): 1 PDL, 2 PEC, 3 PL ordinária, 4 PLC, 5 PR.
+- Páginas seguintes: POST `/Legislativo/CardViewProposicoes` com `DXCallbackName=cardViewProposicoes`, o argumento prefixado pelos tamanhos ("c0:GB|20;12|PAGERONCLICK3|PN1;" para a página 2) e o `stateObject` da página anterior em `cardViewProposicoes`. Exige o cookie `ASP.NET_SessionId` do primeiro callback.
+- Cada cartão: autor em `<h3>`, "TIPO Nº n/AAAA, DE dd/mm/AAAA" em `<span>`, ementa em `<p>` e o link do detalhe (`DetalhesProposicao?IdProposicao=...`). Dez por página.
+- Em 2026-11-21: 880 PLs em 2023, 739 em 2024, 882 em 2025 e 710 em 2026.
+
 ### `alepa-portal`: portal institucional e fotos
 
 - URL base: `https://www.alepa.pa.gov.br/`
