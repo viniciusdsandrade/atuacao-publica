@@ -633,6 +633,7 @@ export const ANCORAS_FONTES: Record<string, string> = {
   contrib: 'doc-fontes-t1-genericas',
   alesp: 'doc-assembleia-legislativa-do-estado-de-sao-paulo-alesp',
   executivosp: 'doc-governo-do-estado-de-sao-paulo-executivo-estadual',
+  executivomg: 'doc-governo-do-estado-de-minas-gerais-executivo-estadual',
   almg: 'doc-assembleia-legislativa-do-estado-de-minas-gerais-almg',
   alep: 'doc-assembleia-legislativa-do-estado-do-parana-alep',
   alba: 'doc-fontes-da-bahia-alba-governo-do-estado',

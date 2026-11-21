@@ -21,6 +21,7 @@ const NOMES: Record<string, string> = {
   contrib: 'Registros manuais revisados (contribuições)',
   alesp: 'Assembleia Legislativa do Estado de São Paulo (ALESP)',
   executivosp: 'Governo do Estado de São Paulo (agenda, despesas e atos)',
+  executivomg: 'Governo do Estado de Minas Gerais (agenda e decretos)',
   almg: 'Assembleia Legislativa do Estado de Minas Gerais (ALMG)',
   alep: 'Assembleia Legislativa do Estado do Paraná (ALEP)',
   alba: 'Assembleia Legislativa do Estado da Bahia (ALBA)',
