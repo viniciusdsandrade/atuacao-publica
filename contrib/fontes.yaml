@@ -3882,6 +3882,21 @@
   status: validado
   validado_em: 2026-11-11
 
+- id: alema-legis
+  nome: Assembleia Legislativa do Estado do Maranhão, API pública do sistema legislativo
+  orgao: Assembleia Legislativa do Estado do Maranhão
+  esfera: estadual
+  ente: MA
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://alemalegis.al.ma.leg.br/api/v1/public/
+  formato: JSON
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Lista de matérias com filtro por período de apresentação, 200 por página. Autoria pelo nome. Os endpoints de parlamentar trazem dados pessoais e não são usados. Recusa conexão de fora do Brasil, como o portal da ALEMA (ADR-0034)."
+  status: validado com limitação
+  validado_em: 2026-11-21
+
 - id: aleac-deputados
   nome: Assembleia Legislativa do Estado do Acre, mandatos e deputados da legislatura
   orgao: Assembleia Legislativa do Estado do Acre
