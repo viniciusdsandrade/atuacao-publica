@@ -1,0 +1,15 @@
+# Saída do governo de Mato Grosso para concorrer nas eleições de 2026 (ADR-0074).
+# A notícia é de 2026-04-01 e diz "nesta terça-feira (31)": a posse do sucessor foi em 2026-03-31.
+# O ATO nº 647/2026 do IOMAT (sem snapshot) declara a renúncia "com efeitos a partir de 01/04/2026". Vale a posse do sucessor.
+- tipo: mandato
+  data: 2026-03-31
+  cargo: governador
+  inicio: 2023-01-01
+  fim: 2026-03-31
+  situacao: "Deixou o mandato de governador em 2026-03-31, com a posse do sucessor, para concorrer nas eleições de 2026"
+  texto_oficial: "A Assembleia Legislativa do Estado de Mato Grosso (ALMT) oficializou, nesta terça-feira (31), a posse de Otaviano Pivetta (Republicanos) no cargo de governador do estado, em sessão solene realizada no Plenário das Deliberações Deputado Renê Barbour."
+  fonte_id: almt-noticias
+  url_origem: https://www.al.mt.gov.br/midia/texto/almt-da-posse-a-otaviano-pivetta-e-consolida-sucessao-no-comando-do-executivo-estadual/visualizar
+  snapshot_url: https://web.archive.org/web/20260416022614/https://www.al.mt.gov.br/midia/texto/almt-da-posse-a-otaviano-pivetta-e-consolida-sucessao-no-comando-do-executivo-estadual/visualizar
+  capturado_em: 2026-11-21T06:13:33Z
+  contribuidor: viniciusdsandrade
