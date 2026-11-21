@@ -130,6 +130,7 @@ public final class Alrn implements Fonte {
         // Proposições e votos pela API de transparência do e-Legis (ADR-0080 e ADR-0081).
         AlrnProposicoes.coletar(ctx, coleta);
         AlrnVotos.coletar(ctx, coleta);
+        AlrnPresenca.coletar(ctx, coleta);
     }
 
     @Override
@@ -160,6 +161,7 @@ public final class Alrn implements Fonte {
         AutoriaPorNome autoria = new AutoriaPorNome(nomePorId);
         Map<String, List<Registros.Proposicao>> proposicoes = AlrnProposicoes.porDeputado(ctx, autoria);
         AlrnVotos.Resultado votacoes = AlrnVotos.porDeputado(ctx, autoria);
+        Map<String, List<Registros.Evento>> presencas = AlrnPresenca.porDeputado(ctx, autoria);
 
         for (HistoricoDeputados.Entrada ent : entradas) {
             int id = Integer.parseInt(ent.id());
@@ -219,6 +221,7 @@ public final class Alrn implements Fonte {
             blocosNode.set("proposicoes", Json.SAIDA.valueToTree(proposicoes.getOrDefault(idStr, List.of())));
             blocosNode.set("votos", Json.SAIDA.valueToTree(votacoes.votos().getOrDefault(idStr, List.of())));
             blocosNode.set("participacao_votacoes", Json.SAIDA.valueToTree(votacoes.participacao().getOrDefault(idStr, List.of())));
+            blocosNode.set("eventos", Json.SAIDA.valueToTree(presencas.getOrDefault(idStr, List.of())));
             blocosNode.set("fontes", Json.SAIDA.valueToTree(Registros.fontesDosBlocos(blocosNode)));
 
             try {
