@@ -306,6 +306,14 @@ const NOTAS_DO_GOVERNO_ESTADUAL: Record<string, Record<string, string>> = {
     agenda_oficial:
       'Compromissos como publicados no calendário "Agenda do Governador", que o portal do governo do Espírito Santo divulga. A hora é a do fuso declarado pelo calendário. Parte dos eventos é genérica, como "Agendas Internas".',
   },
+  BA: {
+    despesas_executivo:
+      'Valor pago pelos órgãos do Poder Executivo da Bahia, somado por mês e órgão a partir do painel de despesas do portal de dados abertos. A fonte já publica cada linha como total do mês, sem favorecido; a contagem é de linhas da fonte, não de pagamentos. A fonte não informa quem autorizou cada gasto.',
+  },
+  RS: {
+    despesas_executivo:
+      'Valor pago pelos órgãos do Poder Executivo do Rio Grande do Sul, somado por mês do pagamento e por órgão a partir dos arquivos mensais "Despesa do Estado" do portal de dados abertos. Os meses mais recentes chegam incompletos na fonte. A fonte não informa quem autorizou cada gasto.',
+  },
   MG: {
     atos_normativos:
       'Decretos numerados do Poder Executivo de Minas Gerais, como registrados nos dados abertos da Assembleia Legislativa. Decretos sem número ficam fora. A fonte não informa quem assinou cada ato.',
@@ -322,7 +330,7 @@ export function unidadeDoBloco(bloco: string, esfera?: string | null, ente?: str
   if (bloco !== 'despesas_executivo') {
     return 'lançamentos';
   }
-  return esfera === 'estadual' && ente === 'GO' ? 'lançamentos' : 'pagamentos';
+  return esfera === 'estadual' && (ente === 'GO' || ente === 'BA') ? 'lançamentos' : 'pagamentos';
 }
 
 function notaDoGovernoEstadual(bloco: string, uf: string | null | undefined): string | null {
@@ -683,6 +691,8 @@ export const ANCORAS_FONTES: Record<string, string> = {
   executivomg: 'doc-governo-do-estado-de-minas-gerais-executivo-estadual',
   executivogo: 'doc-governo-do-estado-de-goias-executivo-estadual',
   executivoes: 'doc-governo-do-estado-do-espirito-santo-executivo-estadual',
+  executivors: 'doc-governo-do-estado-do-rio-grande-do-sul-executivo-estadual',
+  executivoba: 'doc-governo-do-estado-da-bahia-executivo-estadual',
   almg: 'doc-assembleia-legislativa-do-estado-de-minas-gerais-almg',
   alep: 'doc-assembleia-legislativa-do-estado-do-parana-alep',
   alba: 'doc-fontes-da-bahia-alba-governo-do-estado',
