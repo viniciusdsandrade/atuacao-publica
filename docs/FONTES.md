@@ -587,6 +587,29 @@ Nenhum servidor bloqueou o cliente.
 - Campos do XML: `Data`, `Ementa`, `IdNorma`, `Numero`, `IdTipo`, `Promulg`, `Situacao`, `URLFicha`.
 - Filtragem no projeto: normas com `Promulg == "E"` (Poder Executivo) a partir de 2022, cobrindo Decretos (`DEC`, IdTipo 3), Leis Ordinárias (`LEI`, IdTipo 9) e Leis Complementares (`LCP`, IdTipo 2).
 
+## Governo do Estado do Espírito Santo (Executivo Estadual)
+
+Poder Executivo do Estado do Espírito Santo (ADR-0077).
+Validação em 2026-11-21, com o User-Agent do projeto.
+
+| id | Fonte | Nível | Formato | Autenticação | Status | Validado em |
+|---|---|---|---|---|---|---|
+| `es-agenda-governador` | Calendário público "Agenda do Governador" | T0 | iCalendar | nenhuma | validado com limitação | 2026-11-21 |
+
+### `es-agenda-governador`: agenda oficial do Governador do Espírito Santo
+
+- Endereço: `https://calendar.google.com/calendar/ical/4oc9k18uk3p5ffmpm621hm33ig%40group.calendar.google.com/public/basic.ics`.
+- O portal do governo (`https://www.es.gov.br/agenda-das-autoridades`) publica esse calendário no menu como "Agenda do Governador". O calendário se chama "Agenda do Governador" e declara o fuso `America/Sao_Paulo`.
+- O calendário é do cargo: continua depois da posse de Ricardo Ferraço, em 2026-04-02.
+- Campos usados: `DTSTART`, `SUMMARY` e `LOCATION`. A hora em UTC passa ao fuso declarado pelo calendário. Evento cancelado e "Feriado" ficam de fora.
+- Cobre de 2018 em diante (5.111 eventos em 2026-11-21). Parte dos eventos é genérica ("Agendas Internas", "Despachos Administrativos").
+- Limitação: hospedado no Google Agenda, fora do domínio do governo.
+
+### Decretos e despesas do Executivo capixaba: não coletados
+
+- Decretos: a consulta de legislação da Ales (`www3.al.es.gov.br/legislacao/consulta-legislacao.aspx`) não devolveu decretos do Executivo nos tipos testados.
+- Despesa: o CKAN `dados.es.gov.br` publica a despesa por lançamento, com favorecido, em arquivos de até 1,5 GB por ano. Não validado: a agregação por mês sem o favorecido.
+
 ## Governo do Estado de Goiás (Executivo Estadual)
 
 Poder Executivo do Estado de Goiás (ADR-0076).

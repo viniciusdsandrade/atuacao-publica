@@ -38,7 +38,7 @@ Na maioria dos outros estados, a agenda não existe em formato estruturado.
 
 ## Limitações
 
-- A despesa do Executivo mineiro não entra. O pacote agregado do CKAN estadual está vazio, e o pacote por empenho traz o credor.
+- A despesa do Executivo mineiro não entra. O pacote agregado do CKAN estadual (`despesa`) só traz o cabeçalho, em todos os anos. O pacote por empenho (`portal_despesa_empenho`) traz o credor e o valor pago acumulado no ano de cada empenho, com a data de registro do empenho e sem a data do pagamento: a soma por mês dataria o pagamento no mês do empenho, e a sucessão de 2026-03-22 não poderia ser separada. Conferido em 2026-11-21.
 - O decreto sem número (DNE), em geral ato de pessoal, fica de fora.
 - A agenda do vice-governador (`/api/viceGovernorSchedule`) não é coletada.
 - Não validado: se a API da Agência Minas responde ao runner do GitHub, fora do Brasil. Com a semente, o CI não precisa dela.

@@ -717,9 +717,10 @@ Feito em 2026-11-21. Primeiro governo estadual depois de São Paulo.
 | Levantamento | Fontes de agenda, decretos e despesa testadas em MG, RJ, BA, PR, RS, PE, CE, GO, SC e ES | concluída |
 | Adaptador | `executivomg`: agenda do governador (Agência Minas) e decretos numerados (ALMG) | concluída |
 | Vínculo | Dados do governo estadual por UF, ligados depois das contribuições de sucessão | concluída |
-| Despesa de MG | Agregar o empenho por mês e elemento, sem o credor | pendente |
+| Despesa de MG | Agregar o empenho por mês, sem o credor | descartada: a fonte não informa o mês do pagamento (ADR-0075) |
 | Goiás | `executivogo`: decretos numerados e despesa mensal por órgão (ADR-0076) | concluída |
-| Próximos estados | ES (agenda em ICS e despesa), RS e BA (despesa em arquivos grandes) | pendente |
+| Espírito Santo | `executivoes`: agenda do governador no calendário público do governo (ADR-0077) | concluída |
+| Próximos estados | RS e BA (despesa em arquivos grandes); despesa do ES (por lançamento, com favorecido) | pendente |
 
 Verificação em 2026-11-21:
 
@@ -728,6 +729,7 @@ Verificação em 2026-11-21:
 - Ensaio de `publish`: Romeu Zema com 3.058 compromissos e 852 decretos até 2026-03-21; Mateus Simões com 472 e 125 desde 2026-03-22.
 - Goiás, na mesma data: coleta real de 26 arquivos, 982 decretos e 3.737 somas de mês e órgão, de 2022-01 a 2026-09. No ensaio, Ronaldo Caiado sai com 869 decretos e 51 meses de despesa; Daniel Vilela, com 113 decretos e 7 meses. ETL com 464 testes, três novos do adaptador de Goiás.
 - Site: a nota do bloco do governo estadual passa a ser por UF, e a contagem da despesa de Goiás sai como lançamentos.
+- Espírito Santo, na mesma data: coleta real do calendário, 2.624 compromissos de 2022 a 2026. No ensaio, Renato Casagrande sai com 2.203 e Ricardo Ferraço com 421. ETL com 466 testes, dois novos do adaptador.
 
 Resultado do levantamento, por fonte testada:
 
