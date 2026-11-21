@@ -720,7 +720,9 @@ Feito em 2026-11-21. Primeiro governo estadual depois de São Paulo.
 | Despesa de MG | Agregar o empenho por mês, sem o credor | descartada: a fonte não informa o mês do pagamento (ADR-0075) |
 | Goiás | `executivogo`: decretos numerados e despesa mensal por órgão (ADR-0076) | concluída |
 | Espírito Santo | `executivoes`: agenda do governador no calendário público do governo (ADR-0077) | concluída |
-| Próximos estados | RS e BA (despesa em arquivos grandes); despesa do ES (por lançamento, com favorecido) | pendente |
+| Rio Grande do Sul | `executivors`: despesa paga por mês e órgão, somada na coleta (ADR-0082) | concluída |
+| Bahia | `executivoba`: despesa paga por mês e órgão, somada na coleta (ADR-0083) | concluída |
+| Próximos estados | Despesa do ES (por lançamento, com favorecido, até 1,5 GB por ano); decretos da BA, de PE e de SC (HTML) | pendente |
 
 Verificação em 2026-11-21:
 
@@ -730,6 +732,7 @@ Verificação em 2026-11-21:
 - Goiás, na mesma data: coleta real de 26 arquivos, 982 decretos e 3.737 somas de mês e órgão, de 2022-01 a 2026-09. No ensaio, Ronaldo Caiado sai com 869 decretos e 51 meses de despesa; Daniel Vilela, com 113 decretos e 7 meses. ETL com 464 testes, três novos do adaptador de Goiás.
 - Site: a nota do bloco do governo estadual passa a ser por UF, e a contagem da despesa de Goiás sai como lançamentos.
 - Espírito Santo, na mesma data: coleta real do calendário, 2.624 compromissos de 2022 a 2026. No ensaio, Renato Casagrande sai com 2.203 e Ricardo Ferraço com 421. ETL com 466 testes, dois novos do adaptador.
+- RS e BA, na mesma data: 51 meses de despesa do Executivo gaúcho (2022-01 a 2026-07, sem 2022-04, 2023-02, 2023-06 e 2023-08) e 59 meses do baiano (2022-01 a 2026-11). No ensaio, Eduardo Leite sai com 51 meses e Jerônimo Rodrigues com 47. ETL com 481 testes.
 
 Resultado do levantamento, por fonte testada:
 
@@ -749,7 +752,8 @@ Feito em 2026-11-21. Primeira das assembleias com poucos blocos.
 | Votos e presença | Voto por deputado não existe na fonte; presença só por mês | não coletados |
 | ALEMA | Proposições pela API pública do sistema legislativo (ADR-0079): 2.899 proposições, 2.374 autorias em 41 deputados | concluída |
 | ALRN | Proposições pela API do e-Legis (ADR-0080): 2.525 proposições, 2.259 autorias nos 24 deputados | concluída |
-| Outras casas | Votos e presença da ALRN (JSON); ALMT (HTML, 10 por página); ALEPA (callback com sessão); ALEMS bloqueada por captcha | pendente |
+| ALRN | Votos pelo detalhamento de cada votação (ADR-0081): 4.442 votos; participação só nas votações nominais em plenário | concluída |
+| Outras casas | Presença da ALRN (JSON); ALMT (HTML, 10 por página); ALEPA (callback com sessão); ALEMS bloqueada por captcha | pendente |
 
 Verificação em 2026-11-21:
 

@@ -587,6 +587,55 @@ Nenhum servidor bloqueou o cliente.
 - Campos do XML: `Data`, `Ementa`, `IdNorma`, `Numero`, `IdTipo`, `Promulg`, `Situacao`, `URLFicha`.
 - Filtragem no projeto: normas com `Promulg == "E"` (Poder Executivo) a partir de 2022, cobrindo Decretos (`DEC`, IdTipo 3), Leis Ordinárias (`LEI`, IdTipo 9) e Leis Complementares (`LCP`, IdTipo 2).
 
+## Governo do Estado da Bahia (Executivo Estadual)
+
+Poder Executivo do Estado da Bahia (ADR-0083).
+Validação em 2026-11-21, com o User-Agent do projeto, numa rede no Brasil.
+Não validado: se o portal responde ao runner do GitHub, fora do país.
+
+| id | Fonte | Nível | Formato | Autenticação | Status | Validado em |
+|---|---|---|---|---|---|---|
+| `ba-despesas` | Painel de despesas do portal de dados abertos | T0 | CSV em ZIP (CKAN) | nenhuma | validado | 2026-11-21 |
+
+### `ba-despesas`: despesas do Executivo baiano
+
+- Pacote CKAN `despesas` em `https://dados.ba.gov.br/`, lido por `package_show`. Um ZIP único (`despesas.zip`, cerca de 230 MB), com o `VW_PAINEL_DESPESA.csv` (cerca de 2,4 GB descompactado). O ZIP traz também outras visões, como a de empenhos, com o credor e o CPF ou CNPJ: o ETL só lê o painel.
+- CSV com ponto e vírgula, todos os campos entre aspas, UTF-8 com BOM. Cada linha já soma o mês (`MES_EXERCICIO`, `ANO_EXERCICIO`) por órgão, função, programa, ação, elemento e fonte, com orçado, empenhado, liquidado e pago. Não há favorecido.
+- O ETL soma `VAL_PAGO` do poder `Executivo` (`NOM_PODER_ORCAMENTO`) por mês e por órgão (`NOM_ORGAO_ORCAMENTO`), de 2022 em diante, e conta as linhas com valor pago. A contagem é de linhas, não de pagamentos.
+- A soma é feita na coleta (`obterDerivado`): o cache guarda só a soma, não o arquivo.
+- O servidor aceita leitura por faixa de bytes (HTTP 206), usada só na validação.
+
+### Agenda e decretos do Governador da BA: não coletados
+
+- Agenda: `ba.gov.br/agenda` é uma aplicação sem a agenda no HTML.
+- Decretos: o Legisla Bahia (`legislabahia.ba.gov.br`) publica os decretos em HTML, com paginação. Não implementado.
+
+## Governo do Estado do Rio Grande do Sul (Executivo Estadual)
+
+Poder Executivo do Estado do Rio Grande do Sul (ADR-0082).
+Validação em 2026-11-21, com o User-Agent do projeto, numa rede no Brasil.
+Não validado: se o portal responde ao runner do GitHub, fora do país.
+
+| id | Fonte | Nível | Formato | Autenticação | Status | Validado em |
+|---|---|---|---|---|---|---|
+| `rs-despesa-do-estado` | Despesa do Estado, arquivos mensais do portal de dados abertos | T0 | CSV em ZIP (CKAN) | nenhuma | validado com limitação | 2026-11-21 |
+
+### `rs-despesa-do-estado`: despesas do Executivo gaúcho
+
+- Pacotes anuais "AAAA - Despesa(s) do Estado" em `https://dados.rs.gov.br/`, achados por `package_search`. O nome do pacote muda de ano para ano.
+- Um ZIP por mês (`despesas-do-estado-AAAAMM.zip`), de 12 a 16 MB, com um CSV de cerca de 250 MB em ISO-8859-1, ponto e vírgula.
+- Campos usados: `FaseGasto`, `Poder`, `Orgao`, `Data` e `Valor`. O favorecido, o CNPJ ou CPF, o ordenador e o histórico nunca são lidos.
+- O ETL soma o valor da fase `Pagamento` do `Poder Executivo` por mês da data e por órgão, e conta os pagamentos. Em julho de 2026: R$ 6,5 bilhões em 46 órgãos.
+- A soma é feita na coleta (`obterDerivado`): o cache guarda só a soma, não o arquivo.
+- O mês vem do nome do arquivo. Em 2023, o recurso "Agosto" aponta para o arquivo de setembro: agosto de 2023 fica sem dado.
+- Os meses mais recentes chegam incompletos: em 2026-11-21, agosto e setembro de 2026 tinham menos de 20 KB. A coleta renova os três últimos meses toda semana.
+- Cerca de 0,35% das linhas de julho de 2026 têm o número de colunas errado no CSV.
+
+### Agenda e decretos do Governador do RS: não coletados
+
+- Agenda: a lista de `estado.rs.gov.br/agenda-do-governador` vem por um serviço que o firewall da aplicação rejeita.
+- Decretos: a consulta da ALRS exige sessão com cookie e devolve HTML.
+
 ## Governo do Estado do Espírito Santo (Executivo Estadual)
 
 Poder Executivo do Estado do Espírito Santo (ADR-0077).
@@ -1640,7 +1689,8 @@ Validação em 2026-11-03 com o User-Agent do projeto.
 - Texto: `documento/{id}/conteudo` (PDF).
 - Os ids do e-Legis (parlamentar e iniciativa) não são os do portal: a ligação é pelo nome.
 - O endpoint `parlamentar/{id}` traz CPF e data de nascimento. Não é usado.
-- Votos por deputado (`processo/ultimas-votacoes`, `processo/{id}/detalhamento-votacao/{reuniao}`) e presença (`reuniao/presenca/{id}`): validados no levantamento, não coletados.
+- Votos por deputado (ADR-0081): `processo/ultimas-votacoes?pagina={n}&tamanhoPagina=200` e `processo/{id}/detalhamento-votacao/{reuniao}`. O código do voto vem do portal de transparência (0 Não, 1 Sim, 2 Abstenção), e o tipo da votação também (A aberta, O ostensiva, S secreta, X simbólica). A lista traz só a votação mais recente de cada processo, de 2024 em diante.
+- Presença (`reuniao/presenca/{id}`): validada no levantamento, não coletada.
 
 ### `alrn-portal`: fotografias oficiais
 
