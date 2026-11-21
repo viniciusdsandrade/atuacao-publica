@@ -302,6 +302,10 @@ const NOTAS_DO_GOVERNO_ESTADUAL: Record<string, Record<string, string>> = {
     despesas_executivo:
       'Valor pago pelos órgãos do Poder Executivo de Goiás, somado por mês e órgão a partir da execução orçamentária nos dados abertos do estado. A fonte já publica cada linha como total do mês, sem favorecido; a contagem é de linhas da fonte, não de pagamentos. A fonte não informa quem autorizou cada gasto.',
   },
+  ES: {
+    agenda_oficial:
+      'Compromissos como publicados no calendário "Agenda do Governador", que o portal do governo do Espírito Santo divulga. A hora é a do fuso declarado pelo calendário. Parte dos eventos é genérica, como "Agendas Internas".',
+  },
   MG: {
     atos_normativos:
       'Decretos numerados do Poder Executivo de Minas Gerais, como registrados nos dados abertos da Assembleia Legislativa. Decretos sem número ficam fora. A fonte não informa quem assinou cada ato.',
@@ -678,6 +682,7 @@ export const ANCORAS_FONTES: Record<string, string> = {
   executivosp: 'doc-governo-do-estado-de-sao-paulo-executivo-estadual',
   executivomg: 'doc-governo-do-estado-de-minas-gerais-executivo-estadual',
   executivogo: 'doc-governo-do-estado-de-goias-executivo-estadual',
+  executivoes: 'doc-governo-do-estado-do-espirito-santo-executivo-estadual',
   almg: 'doc-assembleia-legislativa-do-estado-de-minas-gerais-almg',
   alep: 'doc-assembleia-legislativa-do-estado-do-parana-alep',
   alba: 'doc-fontes-da-bahia-alba-governo-do-estado',

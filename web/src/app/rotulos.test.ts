@@ -156,6 +156,8 @@ test('título e nota dos atos e das despesas do Executivo dependem da esfera', (
   assert.match(notaDoBloco('atos_normativos', 'federal') ?? '', /não informa quem assinou/);
   assert.match(notaDoBloco('despesas_executivo', 'estadual', 'SP') ?? '', /Gabinete do Governador/);
   assert.match(notaDoBloco('despesas_executivo', 'estadual', 'GO') ?? '', /linhas da fonte/);
+  assert.match(notaDoBloco('agenda_oficial', 'estadual', 'ES') ?? '', /Agenda do Governador/);
+  assert.match(notaDoBloco('atos_normativos', 'estadual', 'ES') ?? '', /ainda não tem fonte validada/);
   assert.equal(unidadeDoBloco('despesas_executivo', 'estadual', 'GO'), 'lançamentos');
   assert.equal(unidadeDoBloco('despesas_executivo', 'estadual', 'SP'), 'pagamentos');
   assert.equal(unidadeDoBloco('despesas_executivo', 'municipal', null), 'pagamentos');

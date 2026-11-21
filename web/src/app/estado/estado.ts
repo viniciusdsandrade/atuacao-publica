@@ -23,6 +23,7 @@ const NOMES: Record<string, string> = {
   executivosp: 'Governo do Estado de São Paulo (agenda, despesas e atos)',
   executivomg: 'Governo do Estado de Minas Gerais (agenda e decretos)',
   executivogo: 'Governo do Estado de Goiás (decretos e despesas)',
+  executivoes: 'Governo do Estado do Espírito Santo (agenda)',
   almg: 'Assembleia Legislativa do Estado de Minas Gerais (ALMG)',
   alep: 'Assembleia Legislativa do Estado do Paraná (ALEP)',
   alba: 'Assembleia Legislativa do Estado da Bahia (ALBA)',
