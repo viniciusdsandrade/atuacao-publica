@@ -794,6 +794,13 @@ Ensaios previstos:
 - Primeira semana de janeiro de 2027: `publish` com `ETL_AGORA` em 2027-01-07 e em 2027-02-02 sobre o cache do dia, para conferir governadores, vices, CLDF e ALERR.
 - Primeira semana de fevereiro de 2027: conferir, casa por casa, se a listagem já traz a legislatura nova, e atualizar o adaptador com a fonte validada.
 
+## Tempo do job de dados (2026-11-21)
+
+- A execução de 2026-11-21 sem carga inicial nova (44902621814) levou cerca de 85 min, de 12:11 a 13:36 UTC: 65 min de coleta, 4 min de normalização e 7 min de publicação. O limite do job é 180 min.
+- A soma dos orçamentos de todos os passos de coleta é de cerca de 900 min. Isso já era assim: em dia normal, quase tudo vem do cache.
+- O risco são as cargas iniciais novas no mesmo dia: ALRN (proposições, votos, presença e tramitação), ALMT (proposições e tramitação) e RS (arquivos mensais). Os três passos passaram a 15 min de orçamento e 20 min de limite. Esgotado o orçamento, o resto segue na execução seguinte, com o cache.
+- Execução que estoura o limite do job não grava o cache, e o trabalho do dia se perde. Por isso o orçamento menor vale mais que a carga mais rápida.
+
 ## Fase 2 (depois da POC)
 
 ### Esfera federal

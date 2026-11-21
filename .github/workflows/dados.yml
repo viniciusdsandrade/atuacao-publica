@@ -208,11 +208,12 @@ jobs:
       - name: fetch executivors
         # Poder Executivo do Estado do Rio Grande do Sul: despesa paga por mês e órgão (ADR-0082). Cada arquivo mensal
         # tem 15 MB; a coleta guarda só a soma, e a carga inicial se espalha por mais de uma execução.
+        # Orçamento de 15 min: com as cargas iniciais de ALRN, ALMT e RS no mesmo dia, o job fica longe do limite de 180 min.
         if: env.FONTE == 'todas' || env.FONTE == 'executivors'
         continue-on-error: true
-        timeout-minutes: 30
+        timeout-minutes: 20
         env:
-          ETL_ORCAMENTO_MINUTOS: '25'
+          ETL_ORCAMENTO_MINUTOS: '15'
         run: java -Xmx2g -jar etl/target/etl.jar fetch executivors
       - name: fetch executivoba
         # Poder Executivo do Estado da Bahia: despesa paga por mês e órgão (ADR-0083). O arquivo único tem 230 MB e renova
@@ -336,11 +337,12 @@ jobs:
       - name: fetch almt
         # Assembleia Legislativa do Estado de Mato Grosso: deputados, perfis, Mesa Diretora e proposições.
         # A pesquisa de proposições tem dez itens por página: a carga inicial tem cerca de 1.300 páginas (ADR-0085).
+        # Orçamento de 15 min: com as cargas iniciais de ALRN, ALMT e RS no mesmo dia, o job fica longe do limite de 180 min.
         if: env.FONTE == 'todas' || env.FONTE == 'almt'
         continue-on-error: true
-        timeout-minutes: 30
+        timeout-minutes: 20
         env:
-          ETL_ORCAMENTO_MINUTOS: '25'
+          ETL_ORCAMENTO_MINUTOS: '15'
         run: java -Xmx2g -jar etl/target/etl.jar fetch almt
       - name: fetch alems
         # Assembleia Legislativa do Estado de Mato Grosso do Sul: 24 deputados estaduais, perfis e Mesa Diretora.
@@ -393,11 +395,12 @@ jobs:
       - name: fetch alrn
         # Assembleia Legislativa do Estado do Rio Grande do Norte: deputados, perfis, Mesa Diretora, proposições e votos.
         # O detalhe de cada votação vem uma vez e fica no cache: a carga inicial se espalha por mais de uma execução (ADR-0081).
+        # Orçamento de 15 min: com as cargas iniciais de ALRN, ALMT e RS no mesmo dia, o job fica longe do limite de 180 min.
         if: env.FONTE == 'todas' || env.FONTE == 'alrn'
         continue-on-error: true
-        timeout-minutes: 30
+        timeout-minutes: 20
         env:
-          ETL_ORCAMENTO_MINUTOS: '25'
+          ETL_ORCAMENTO_MINUTOS: '15'
         run: java -Xmx2g -jar etl/target/etl.jar fetch alrn
       - name: fetch aleto
         # Assembleia Legislativa do Estado do Tocantins: 24 deputados estaduais, perfis, proposições e Mesa Diretora via SAPL.
