@@ -166,6 +166,9 @@ public final class Alerj implements Fonte {
         for (String falha : falhas) {
             coleta.falhaParcial("docigp", falha);
         }
+
+        // Proposições pela pesquisa do sistema de processo legislativo (ADR-0078). Cada resposta leva de 15 s a 1 min.
+        AlerjProposicoes.coletar(ctx, coleta);
     }
 
     private static String arquivoDeOrcamentos(String id, int pagina) {
@@ -327,6 +330,12 @@ public final class Alerj implements Fonte {
 
         List<Pessoa> pessoas = new ArrayList<>();
         Map<String, List<Despesa>> despesasPorDeputado = despesasPorDeputado(ctx, deputados);
+        Map<String, String> nomePorId = new LinkedHashMap<>();
+        for (HistoricoDeputados.Entrada e : entradas) {
+            nomePorId.putIfAbsent(e.id(), e.nome());
+        }
+        Map<String, List<Registros.Proposicao>> proposicoesPorDeputado =
+                AlerjProposicoes.porDeputado(ctx, AlerjProposicoes.idsPorNome(nomePorId));
 
         for (HistoricoDeputados.Entrada ent : entradas) {
             String id = ent.id();
@@ -381,6 +390,7 @@ public final class Alerj implements Fonte {
             blocosNode.set("mandatos", Json.SAIDA.valueToTree(mandatos));
             blocosNode.set("orgaos_e_frentes", Json.SAIDA.createArrayNode());
             blocosNode.set("despesas", Json.SAIDA.valueToTree(despesasPorDeputado.getOrDefault(id, List.of())));
+            blocosNode.set("proposicoes", Json.SAIDA.valueToTree(proposicoesPorDeputado.getOrDefault(id, List.of())));
             blocosNode.set("fontes", Json.SAIDA.valueToTree(Registros.fontesDosBlocos(blocosNode)));
             Json.gravar(pastaBlocos.resolve(id + ".json"), blocosNode);
         }

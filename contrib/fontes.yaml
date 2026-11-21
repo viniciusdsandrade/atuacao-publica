@@ -2240,6 +2240,21 @@
   status: validado
   validado_em: 2026-11-07
 
+- id: alerj-proposicoes
+  nome: Assembleia Legislativa do Estado do Rio de Janeiro, pesquisa do sistema de processo legislativo
+  orgao: Assembleia Legislativa do Estado do Rio de Janeiro
+  esfera: estadual
+  ente: RJ
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://alerjln1.alerj.rj.gov.br/scpro2327.nsf/
+  formato: HTML (Lotus Domino)
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Pesquisa por visão de tipo, no máximo 1.000 linhas por consulta, de 15 s a 1 min por resposta. Autoria pelo nome, sem identificador. Sem situação explícita e sem voto por deputado."
+  status: validado com limitação
+  validado_em: 2026-11-21
+
 - id: alrs-deputados
   nome: Assembleia Legislativa do Estado do Rio Grande do Sul, deputados estaduais
   orgao: Assembleia Legislativa do Estado do Rio Grande do Sul
