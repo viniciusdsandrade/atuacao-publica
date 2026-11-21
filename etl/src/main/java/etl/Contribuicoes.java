@@ -84,10 +84,16 @@ final class Contribuicoes {
                     r.set("situacao", entrada.get("situacao"));
                     r.set("texto_oficial", entrada.get("texto_oficial"));
                     perfil.bloco("mandatos").add(proveniencia(r, entrada));
+                    String hoje = ctx.hoje().toString();
+                    boolean vigente = (inicio == null || inicio.compareTo(hoje) <= 0) && (fim == null || fim.compareTo(hoje) > 0);
                     if (cargo.equals(perfil.cargo)) {
-                        String hoje = ctx.hoje().toString();
                         perfil.situacao = Json.texto(entrada, "situacao");
-                        perfil.emExercicio = (inicio == null || inicio.compareTo(hoje) <= 0) && (fim == null || fim.compareTo(hoje) > 0);
+                        perfil.emExercicio = vigente;
+                    } else if (vigente) {
+                        // Sucessão com fonte T0: o vice que assumiu o governo tem o cargo assumido como papel principal (ADR-0074).
+                        perfil.papel(cargo, Json.texto(r, "esfera"), Json.texto(r, "ente"), Json.texto(r, "uf"), perfil.partido,
+                                Json.texto(entrada, "situacao"), Perfil.EM_EXERCICIO,
+                                inicio == null ? null : java.time.LocalDate.parse(inicio));
                     }
                 }
                 default -> rejeitados.add(new Meta.Rejeitado(origem, "tipo desconhecido: " + tipo));
