@@ -753,7 +753,8 @@ Feito em 2026-11-21. Primeira das assembleias com poucos blocos.
 | ALEMA | Proposições pela API pública do sistema legislativo (ADR-0079): 2.899 proposições, 2.374 autorias em 41 deputados | concluída |
 | ALRN | Proposições pela API do e-Legis (ADR-0080): 2.525 proposições, 2.259 autorias nos 24 deputados | concluída |
 | ALRN | Votos pelo detalhamento de cada votação (ADR-0081): 4.442 votos; participação só nas votações nominais em plenário | concluída |
-| Outras casas | Presença da ALRN (JSON); ALMT (HTML, 10 por página); ALEPA (callback com sessão); ALEMS bloqueada por captcha | pendente |
+| ALRN | Presença nas sessões deliberativas do plenário (ADR-0084): 242 sessões | concluída |
+| Outras casas | ALMT (HTML, 10 por página); ALEPA (callback com sessão); ALEMS bloqueada por captcha | pendente |
 
 Verificação em 2026-11-21:
 

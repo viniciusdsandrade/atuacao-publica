@@ -89,6 +89,7 @@ Não é presença. É a contagem de votos registrados em votações nominais.
 - Na ALRS, a fonte lista só o voto dado (Sim ou Não), por deputado e ano. Sem ausência registrada, o perfil tem os votos e não tem bloco de participação.
 - Na ALESC, o extrato de cada votação nominal lista só quem votou, com nome e voto, sem partido. Sem ausência registrada, o perfil tem os votos e não tem bloco de participação. A votação simbólica da ordem do dia não tem voto individual e fica fora.
 - Na ALRN, o detalhamento de cada votação lista quem votou, com o voto pelo código do portal (Sim, Não, Abstenção). A participação conta só as votações em plenário que listam mais de um voto; a votação em plenário sem voto listado é simbólica e fica fora da conta. Os votos em comissão entram no bloco de votos e não na participação (ADR-0081).
+- Na ALRN, a presença sai por sessão deliberativa do plenário: presença ou ausência justificada, como a fonte registra. Sem registro, a presença fica vazia, sem virar falta (ADR-0084).
 - Na ALES, as votações nominais saem só em boletim PDF. O ETL não lê PDF.
 - Na ALEPA, a seção NÃO VOTARAM não separa ausência de presença sem voto. A página de votos não traz ementa nem orientação de bancada.
 

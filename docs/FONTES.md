@@ -1690,7 +1690,7 @@ Validação em 2026-11-03 com o User-Agent do projeto.
 - Os ids do e-Legis (parlamentar e iniciativa) não são os do portal: a ligação é pelo nome.
 - O endpoint `parlamentar/{id}` traz CPF e data de nascimento. Não é usado.
 - Votos por deputado (ADR-0081): `processo/ultimas-votacoes?pagina={n}&tamanhoPagina=200` e `processo/{id}/detalhamento-votacao/{reuniao}`. O código do voto vem do portal de transparência (0 Não, 1 Sim, 2 Abstenção), e o tipo da votação também (A aberta, O ostensiva, S secreta, X simbólica). A lista traz só a votação mais recente de cada processo, de 2024 em diante.
-- Presença (`reuniao/presenca/{id}`): validada no levantamento, não coletada.
+- Presença (ADR-0084): `reuniao?situacao=R&dataInicio={AAAA}-01-01&dataFim=...&pagina={n}&tamanhoPagina=200` e `reuniao/presenca/{id}`, com o evento `presenca`, `ausencia-justificada` ou nulo. Entram as sessões deliberativas (tipos 1, 2 e 12). As sessões de 2023 e parte das de 2024 respondem HTTP 500.
 
 ### `alrn-portal`: fotografias oficiais
 
