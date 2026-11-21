@@ -587,6 +587,36 @@ Nenhum servidor bloqueou o cliente.
 - Campos do XML: `Data`, `Ementa`, `IdNorma`, `Numero`, `IdTipo`, `Promulg`, `Situacao`, `URLFicha`.
 - Filtragem no projeto: normas com `Promulg == "E"` (Poder Executivo) a partir de 2022, cobrindo Decretos (`DEC`, IdTipo 3), Leis Ordinárias (`LEI`, IdTipo 9) e Leis Complementares (`LCP`, IdTipo 2).
 
+## Governo do Estado de Goiás (Executivo Estadual)
+
+Poder Executivo do Estado de Goiás (ADR-0076).
+Validação em 2026-11-21, com o User-Agent do projeto, numa rede no Brasil.
+Não validado: se os dois servidores respondem ao runner do GitHub, fora do país.
+
+| id | Fonte | Nível | Formato | Autenticação | Status | Validado em |
+|---|---|---|---|---|---|---|
+| `go-legisla` | Pesquisa da legislação estadual, Casa Civil | T0 | JSON | nenhuma | validado | 2026-11-21 |
+| `go-execucao-orcamentaria` | Execução orçamentária por natureza da despesa, dados abertos | T0 | CSV e ZIP (CKAN) | nenhuma | validado | 2026-11-21 |
+
+### `go-legisla`: decretos do Governador
+
+- Endpoint: `https://legisla.casacivil.go.gov.br/api/v2/pesquisa/legislacoes?page={n}&qtd_por_pagina=100&tipo_legislacao=3&periodo_inicial_legislacao={AAAA}-01-01&periodo_final_legislacao={AAAA}-12-31&ordenarPor=data`.
+- Tipo 3 é "Decreto Numerado" (`/api/v1/tipos_legislacoes`). O tipo 17, com o mesmo nome, não trouxe resultado em 2025.
+- Campos usados: `numero` (com ponto de milhar), `data_legislacao` (DD/MM/AAAA), `ementa`, `tipo_legislacao`.
+- A página de cada norma no portal (`/pesquisa_legislacao/{id}`) é montada por JavaScript. O registro aponta para a consulta da API.
+
+### `go-execucao-orcamentaria`: despesas do Executivo goiano
+
+- Pacote CKAN `execucao-orcamentaria-natureza-despesa` em `https://dadosabertos.go.gov.br/`, lido por `package_show`.
+- Um ZIP por ano fechado, com um CSV por mês, e um CSV por mês do ano corrente. O ZIP de 2003 a 2025 fica de fora: repetiria 2025.
+- CSV com ponto e vírgula, UTF-8 com BOM. Cada linha já soma o mês (`NUMR_ANO_MES`) por órgão, função, subfunção, elemento, subelemento e ação, com empenho, liquidado e pago. Não há favorecido.
+- O ETL soma `VALOR_PAGO` por mês e por órgão (`NOME_ORGAO_REDUZIDO_ATUAL`) e conta as linhas com valor pago. A contagem é de linhas, não de pagamentos.
+- Só órgãos do Poder Executivo: Assembleia, Tribunal de Justiça e Ministério Público não aparecem nos arquivos.
+
+### Agenda do Governador de Goiás: não encontrada
+
+- `https://goias.gov.br/agenda-de-autoridades/` respondeu 200, com "Não foram encontrados dirigentes".
+
 ## Governo do Estado de Minas Gerais (Executivo Estadual)
 
 Poder Executivo do Estado de Minas Gerais (ADR-0075).
