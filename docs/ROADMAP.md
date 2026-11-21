@@ -639,7 +639,7 @@ Oito governadores eleitos em 2022 saíram para concorrer em 2026 (ADR-0033), e q
 | Regras | Seis regras em `contrib/mandatos.yaml` (2018, 2022 e 2026), com o texto conferido literalmente nos snapshots | concluída |
 | Vínculo | Chapa presidencial federal, sem UF; vice sem a regra de renúncia para concorrer; vices numa passada própria, depois dos demais eleitos | concluída |
 | Regra de governador de 2018 | Texto citado trocado pela redação literal da EC 16/1997, como está no snapshot | concluída |
-| Sucessão nos oito estados | Posse do vice no governo por contribuição com fonte T0 | pendente: não validada |
+| Sucessão nos oito estados | Posse do vice no governo por contribuição com fonte T0 | concluída em sete estados (ADR-0074); AM pendente |
 
 Verificação em 2026-11-20:
 
@@ -651,7 +651,7 @@ Verificação em 2026-11-20:
 
 Limitações:
 
-- O perfil não diz que o vice assumiu o governo. A data da posse no governo só entra por contribuição com fonte T0.
+- O perfil não dizia que o vice assumiu o governo. Resolvido pelo ADR-0074, menos no AM.
 - O vice não tem agenda, despesas nem atos próprios.
 
 ## Posse dos sucessores encerra o mandato (ADR-0073)
@@ -686,6 +686,27 @@ Verificação em 2026-11-21:
 - Ensaio de `publish` sobre os dados locais e o cache bruto: 1.652 perfis em exercício, todos com "Em exercício". Antes eram 874, 719 e 194 nas três grafias, na publicação de produção.
 
 Limitação: a situação de cada mandato, no bloco de mandatos, segue com a grafia da fonte.
+
+## Sucessão nos governos estaduais (ADR-0074)
+
+Feito em 2026-11-21.
+
+| Frente | Entrega | Estado |
+|---|---|---|
+| Contribuições | Posse do vice no governo e fim do mandato de vice em AC, ES, GO, MG, MT, PA e PB; data da saída do titular em seis deles | concluída |
+| Allowlist | `almt-noticias`, `pb-auniao-noticias`, `ac-agencia-noticias` e `es-governo-noticias` | concluída |
+| Publish | Mandato de contribuição vigente de outro cargo vira o papel principal; a contribuição substitui o mandato da regra do mesmo período | concluída |
+| AM | Renúncia do governador e do vice, com o presidente da Assembleia como interino | pendente: as fontes não têm snapshot |
+| MT | Data da saída do titular | pendente: o IOMAT (sem snapshot) e a ALMT divergem em um dia |
+
+Verificação em 2026-11-21:
+
+- ETL: 458 testes, quatro novos de contribuição (sucessão, troca do mandato da regra, sucessão encerrada e papel principal).
+- `normalize contrib`: 21 registros manuais e 51 regras de mandato válidos. Cada trecho citado foi conferido no snapshot.
+- Ensaio de `publish` sobre os dados locais e o cache bruto, com o índice de produção como publicação anterior (sem as casas ausentes dos dados locais): a trava do ADR-0006 não disparou.
+  - Com `ETL_AGORA=2026-11-21`, os sete vices saem como governador em exercício, e 26 governos têm governador em exercício.
+  - Com `ETL_AGORA=2027-01-07`, Mailza Gomes, Daniel Vilela, Otaviano Pivetta e Lucas Ribeiro saem com o mandato vigente da eleição de 2026. Ricardo Ferraço, Mateus Simões e Hana Ghassan saem com o mandato encerrado em 2027-01-06.
+- Uma primeira versão tirava de exercício, em 2027, o vice eleito governador em 2026: a correção da sucessão mudava o papel principal do mesmo cargo. O ensaio em 2027-01-07 achou o erro.
 
 ## Fase 2 (depois da POC)
 

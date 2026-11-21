@@ -320,6 +320,26 @@ Nenhum site bloqueou o cliente.
 | TO | `to-diario-oficial` | diário oficial | Diário Oficial do Estado do Tocantins | https://diariooficial.to.gov.br/ | 200 | PDFs servidos por doe.to.gov.br (raiz responde 403) |
 | TO | `to-transparencia` | transparência | Portal da Transparência do Tocantins | https://transparencia.to.gov.br/ | 200 | aplicação exige JavaScript; www falha no TLS |
 
+## Sucessão nos governos estaduais (ADR-0074)
+
+Fontes de primeira parte para a posse do vice no governo e a renúncia do titular em 2026.
+Os diários oficiais desses estados não têm snapshot no Internet Archive, e em vários deles a posse não sai publicada.
+Validação em 2026-11-21: as páginas citadas responderam 200, e cada trecho citado foi conferido no snapshot.
+
+| id | Fonte | Nível | Formato | Status | Validado em |
+|---|---|---|---|---|---|
+| `almt-noticias` | Notícias da Secretaria de Comunicação Social da ALMT (`https://www.al.mt.gov.br/midia/texto/`) | T0 | HTML | validado | 2026-11-21 |
+| `pb-auniao-noticias` | Notícias de A União, jornal oficial da Paraíba (`https://auniao.pb.gov.br/noticias/`) | T0 | HTML | validado | 2026-11-21 |
+| `ac-agencia-noticias` | Agência de Notícias do Acre (`https://agencia.ac.gov.br/`) | T0 | HTML | validado | 2026-11-21 |
+| `es-governo-noticias` | Notícias do governo do Espírito Santo (`https://www.es.gov.br/Noticia/`) | T0 | HTML | validado | 2026-11-21 |
+
+Não validado com snapshot:
+
+- AM: Diário Oficial Eletrônico da Aleam, edições extras 2420 a 2422 (`https://www.aleam.gov.br/wp-content/uploads/2026/04/`), com as cartas de renúncia e o termo de assunção do governador interino. O termo traz RG e filiação: não citar esse trecho.
+- MT: IOMAT, publicação do ATO nº 647/2026 (`https://www.iomat.mt.gov.br/apifront/portal/edicoes/publicacoes_ver_conteudo/1821838`).
+- PB: Diário do Poder Legislativo nº 9.107, de 2026-04-02 (`https://www.al.pb.leg.br/wp-content/uploads/2026/04/DPL-02.04.2026.pdf`).
+- MG: o Jornal Minas Gerais só entrega as edições por uma API com token. Não há URL estável de publicação.
+
 ## Piloto municipal
 
 Prefeitura e câmara de vereadores de Campinas (SP), código IBGE 3509502.
