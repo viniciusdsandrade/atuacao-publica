@@ -800,6 +800,7 @@ Ensaios previstos:
 - A soma dos orçamentos de todos os passos de coleta é de cerca de 900 min. Isso já era assim: em dia normal, quase tudo vem do cache.
 - O risco são as cargas iniciais novas no mesmo dia: ALRN (proposições, votos, presença e tramitação), ALMT (proposições e tramitação) e RS (arquivos mensais). Os três passos passaram a 15 min de orçamento e 20 min de limite. Esgotado o orçamento, o resto segue na execução seguinte, com o cache.
 - Execução que estoura o limite do job não grava o cache, e o trabalho do dia se perde. Por isso o orçamento menor vale mais que a carga mais rápida.
+- Medido em 2026-11-21 na execução 44906890364, com as cargas iniciais de RS, BA, ALMT, ALRN e ALERJ e os orçamentos antigos: 117 min (13:36 a 15:33 UTC). ALMT usou os 25 min do orçamento e publicou 5.493 das 12.616 proposições; a ALRN usou 16 min, com votos e presença completos. Com os orçamentos de 15 min, as próximas execuções ficam abaixo disso.
 
 ## Fase 2 (depois da POC)
 
