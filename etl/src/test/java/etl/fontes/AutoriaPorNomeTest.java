@@ -26,6 +26,8 @@ class AutoriaPorNomeTest {
     void semTratamentoSoQuandoUmUnicoDeputadoTemONome() {
         assertEquals("1", autoria.id("PEDRO RICARDO"));
         assertNull(autoria.id("ANA SOUZA"));
+        assertEquals("1", autoria.id("DEPUTADO DR. PEDRO RICARDO"));
+        assertEquals("2", autoria.id("DEPUTADO PROF JOSEMAR"));
     }
 
     @Test

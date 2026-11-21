@@ -3657,6 +3657,21 @@
   status: validado
   validado_em: 2026-11-11
 
+- id: alrn-elegis
+  nome: Assembleia Legislativa do Estado do Rio Grande do Norte, API de transparência do e-Legis
+  orgao: Assembleia Legislativa do Estado do Rio Grande do Norte
+  esfera: estadual
+  ente: RN
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://api-transparencialegislativa.al.rn.leg.br/elegis-api-transp-legislativa/
+  formato: JSON
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Processos por período de entrada, 200 por página, do mais novo para o mais velho. Autoria pela iniciativa, pelo nome. A situação só sai na tramitação de cada processo. O endpoint de parlamentar traz dados pessoais e não é usado."
+  status: validado com limitação
+  validado_em: 2026-11-21
+
 - id: aleto-deputados
   nome: Assembleia Legislativa do Estado do Tocantins, mandatos e deputados estaduais
   orgao: Assembleia Legislativa do Estado do Tocantins

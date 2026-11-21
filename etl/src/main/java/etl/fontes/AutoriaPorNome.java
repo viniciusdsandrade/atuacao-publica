@@ -17,7 +17,7 @@ import etl.Texto;
 final class AutoriaPorNome {
 
     private static final Pattern TRATAMENTO = Pattern.compile(
-            "^(DR|DRA|PROF|PROFA|PROFESSOR|PROFESSORA|DELEGADO|DELEGADA|PASTOR|PASTORA|CORONEL|CAPITAO|SARGENTO|TENENTE) ");
+            "^(DEPUTADO|DEPUTADA|DEP|DR|DRA|PROF|PROFA|PROFESSOR|PROFESSORA|DELEGADO|DELEGADA|PASTOR|PASTORA|CORONEL|CAPITAO|SARGENTO|TENENTE) ");
 
     private final Map<String, String> exatos = new HashMap<>();
     private final Map<String, String> semTratamento = new HashMap<>();
@@ -77,8 +77,18 @@ final class AutoriaPorNome {
         return limpo.isEmpty() ? null : limpo;
     }
 
+    /** Chave sem os tratamentos do começo, um depois do outro ("DEPUTADO DR BERNARDO" vira "BERNARDO"). */
     static String semTratamento(String chave) {
-        return chave == null ? null : TRATAMENTO.matcher(chave).replaceFirst("");
+        if (chave == null) {
+            return null;
+        }
+        String anterior;
+        String atual = chave;
+        do {
+            anterior = atual;
+            atual = TRATAMENTO.matcher(atual).replaceFirst("");
+        } while (!atual.equals(anterior) && !atual.isEmpty());
+        return atual.isEmpty() ? anterior : atual;
     }
 
     /** Mesmo número de palavras, a primeira e a última iguais, e as do meio iguais ou uma a inicial da outra. */
