@@ -22,6 +22,7 @@ import java.time.Duration;
 import java.util.HashMap;
 import java.util.HexFormat;
 import java.util.Map;
+import java.util.Set;
 import java.util.StringJoiner;
 import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
@@ -43,12 +44,24 @@ public final class Http {
     private static final int TENTATIVAS = 5;
     private static final Duration INTERVALO_POR_HOST = Duration.ofMillis(250);
 
+    /**
+     * Hosts que mantêm sessão por cookie (o painel DevExpress da ALEPA, ADR-0087). Os outros hosts não recebem cookie:
+     * o comportamento das outras fontes não muda.
+     */
+    private final Set<String> hostsComSessao = ConcurrentHashMap.newKeySet();
     private final HttpClient cliente = HttpClient.newBuilder()
             .version(HttpClient.Version.HTTP_1_1)
             .followRedirects(HttpClient.Redirect.NORMAL)
             .connectTimeout(Duration.ofSeconds(30))
             .sslContext(sslContext())
+            .cookieHandler(new java.net.CookieManager(null,
+                    (uri, cookie) -> uri.getHost() != null && hostsComSessao.contains(uri.getHost().toLowerCase())))
             .build();
+
+    /** Passa a aceitar e reenviar os cookies do host, como um navegador na mesma sessão. */
+    public void manterSessao(String host) {
+        hostsComSessao.add(host.toLowerCase());
+    }
     private final String userAgent;
     private final Semaphore vagas;
     private final Map<String, Long> proximaPorHost = new HashMap<>();
