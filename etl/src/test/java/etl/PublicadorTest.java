@@ -30,16 +30,16 @@ class PublicadorTest {
     void blocosDoGovernadorSoEnvelhecemComAColetaDaPropriaUf() {
         Publicador.Perfil sp = new Publicador.Perfil();
         sp.papel("governador", "estadual", "SP", "SP", "AAA", "Mandato vigente", Publicador.Perfil.EM_EXERCICIO, null);
-        Publicador.Perfil mg = new Publicador.Perfil();
-        mg.papel("governador", "estadual", "MG", "MG", "AAA", "Mandato vigente", Publicador.Perfil.EM_EXERCICIO, null);
+        Publicador.Perfil rj = new Publicador.Perfil();
+        rj.papel("governador", "estadual", "RJ", "RJ", "AAA", "Mandato vigente", Publicador.Perfil.EM_EXERCICIO, null);
 
         assertEquals("executivosp", sp.origemDoBloco("atos_normativos"));
         assertEquals("executivosp", sp.origemDoBloco("agenda_oficial"));
         assertEquals("executivosp", sp.origemDoBloco("despesas_executivo"));
-        // Sem coleta do governo de MG, o bloco vazio não fica desatualizado pela coleta de SP.
-        assertEquals(null, mg.origemDoBloco("atos_normativos"));
-        assertEquals(null, mg.origemDoBloco("agenda_oficial"));
-        assertEquals(null, mg.origemDoBloco("despesas_executivo"));
+        // Sem coleta do governo do RJ, o bloco vazio não fica desatualizado pela coleta de SP.
+        assertEquals(null, rj.origemDoBloco("atos_normativos"));
+        assertEquals(null, rj.origemDoBloco("agenda_oficial"));
+        assertEquals(null, rj.origemDoBloco("despesas_executivo"));
     }
 
     @Test

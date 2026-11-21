@@ -663,6 +663,36 @@
   status: validado
   validado_em: 2026-10-30
 
+- id: mg-agenda-governador
+  nome: Agenda do Governador de Minas Gerais, API da Agência Minas
+  orgao: Secretaria de Estado de Comunicação Social (MG)
+  esfera: estadual
+  ente: MG
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://www.agenciaminas.mg.gov.br/api/governorSchedule
+  formato: JSON
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "O total da resposta ignora o filtro de datas: a coleta pagina até vir uma página incompleta. A hora vem com sufixo Z, mas é a hora local publicada. O campo author_name não é usado."
+  status: validado com limitação
+  validado_em: 2026-11-21
+
+- id: almg-legislacao
+  nome: Assembleia Legislativa de Minas Gerais, legislação mineira nos dados abertos
+  orgao: Assembleia Legislativa do Estado de Minas Gerais
+  esfera: estadual
+  ente: MG
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://dadosabertos.almg.gov.br/api/v2/legislacao/mineira/
+  formato: JSON
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Pesquisa direcionada por tipo e ano, 100 itens por página. O link de cada decreto aponta para a página da norma no portal da ALMG."
+  status: validado
+  validado_em: 2026-11-21
+
 - id: ms-diario-oficial
   nome: Diário Oficial do Estado de Mato Grosso do Sul
   orgao: Imprensa oficial do estado (MS)
