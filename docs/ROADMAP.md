@@ -767,6 +767,30 @@ Verificação em 2026-11-21:
 - Na amostra de 1.000 PLs de 2023, 1.223 de 1.409 autorias se ligam.
 - Ensaio de `publish`: 67 perfis da ALERJ com o bloco de proposições, sem rejeição nova. ETL com 470 testes, quatro novos.
 
+## Checklist da virada de legislatura de 2027
+
+Preparado em 2026-11-21. O código de transição já está pronto: o mandato da casa sai de exercício quando acaba ou quando os sucessores tomam posse (ADR-0071 e ADR-0073), e os eleitos em 2026 aparecem com posse prevista (ADR-0070 e ADR-0072).
+Falta, em cada adaptador, apontar a legislatura nova quando a fonte a publicar. Até lá, o deputado reeleito e o estreante saem como "Eleito em 2026; sem registro de exercício".
+
+Datas de posse: governadores e vices em 2027-01-06; CLDF em 2027-01-06; RR em 2027-01-05; RS em 2027-01-31; as demais assembleias em 2027-02-01; Câmara e Senado em 2027-02-01.
+
+| Casa | O que muda no adaptador | Onde a legislatura nova deve aparecer (não validado) |
+|---|---|---|
+| ALEAC, ALEAL, ALEAM, ALEPI, ALERO, ALERR, ALETO, ALPB (SAPL) | Constantes `INICIO_LEG`/`FIM_LEG` e o id da legislatura no SAPL (`LEGISLATURA_*`, que não é o número ordinal em ALEAC, ALEAL e ALETO) | `/api/parlamentares/legislatura/` de cada SAPL |
+| ALBA, ALEP, ALERJ, ALESP, ALMG | Constantes da legislatura nova, ao lado das duas que já existem | listagem de deputados de cada portal |
+| ALERJ, proposições | Base `scpro2327.nsf` é da legislatura 2023-2027: a nova terá outro nome e outras visões | índice do processo legislativo em `alerjln1.alerj.rj.gov.br` |
+| ALERJ, verba de gabinete | `LEGISLATURA_DOCIGP = 2` | `/legislatures` do DOCIGP |
+| ALMT | `legislatura/21` na URL da Mesa Diretora | página da Mesa Diretora |
+| ALAP, ALECE, ALEGO, ALEMA, ALEMS, ALEPA, ALEPE, ALES, ALESC, ALESE, ALRN, ALRS, CLDF | Constantes da legislatura | listagem de deputados de cada portal |
+| ALEMA, ALRN, ALMT (proposições) | Nenhuma: a pesquisa é por data ou ano; o autor se liga pelo nome do perfil | as mesmas APIs |
+| Câmara | `LEGISLATURA = 56` passa a 57 | API de dados abertos |
+| Histórico do ADR-0059 | `FIM_DA_LEGISLATURA` em `HistoricoDeputados`, a partir das constantes novas | código |
+
+Ensaios previstos:
+
+- Primeira semana de janeiro de 2027: `publish` com `ETL_AGORA` em 2027-01-07 e em 2027-02-02 sobre o cache do dia, para conferir governadores, vices, CLDF e ALERR.
+- Primeira semana de fevereiro de 2027: conferir, casa por casa, se a listagem já traz a legislatura nova, e atualizar o adaptador com a fonte validada.
+
 ## Fase 2 (depois da POC)
 
 ### Esfera federal
