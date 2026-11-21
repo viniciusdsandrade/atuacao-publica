@@ -310,6 +310,10 @@ const NOTAS_DO_GOVERNO_ESTADUAL: Record<string, Record<string, string>> = {
     despesas_executivo:
       'Valor pago pelos órgãos do Poder Executivo da Bahia, somado por mês e órgão a partir do painel de despesas do portal de dados abertos. A fonte já publica cada linha como total do mês, sem favorecido; a contagem é de linhas da fonte, não de pagamentos. A fonte não informa quem autorizou cada gasto.',
   },
+  PE: {
+    atos_normativos:
+      'Decretos do Poder Executivo de Pernambuco, como registrados no sistema de legislação da Assembleia Legislativa, pela data de publicação no Diário Oficial. A fonte não informa quem assinou cada ato.',
+  },
   RS: {
     despesas_executivo:
       'Valor pago pelos órgãos do Poder Executivo do Rio Grande do Sul, somado por mês do pagamento e por órgão a partir dos arquivos mensais "Despesa do Estado" do portal de dados abertos. Os meses mais recentes chegam incompletos na fonte. A fonte não informa quem autorizou cada gasto.',
@@ -693,6 +697,7 @@ export const ANCORAS_FONTES: Record<string, string> = {
   executivoes: 'doc-governo-do-estado-do-espirito-santo-executivo-estadual',
   executivors: 'doc-governo-do-estado-do-rio-grande-do-sul-executivo-estadual',
   executivoba: 'doc-governo-do-estado-da-bahia-executivo-estadual',
+  executivope: 'doc-governo-do-estado-de-pernambuco-executivo-estadual',
   almg: 'doc-assembleia-legislativa-do-estado-de-minas-gerais-almg',
   alep: 'doc-assembleia-legislativa-do-estado-do-parana-alep',
   alba: 'doc-fontes-da-bahia-alba-governo-do-estado',
