@@ -1,0 +1,17 @@
+# Presidente da Assembleia Legislativa no governo do Amazonas, com a saída do governador e do vice (ADR-0086).
+# Diário Oficial do Estado: a edição nº 35.675, de 2026-04-01, traz no expediente o governador e o vice; a seguinte,
+# nº 35.676, de 2026-04-06, citada abaixo, traz Roberto Maia Cidade Filho como governador. Os decretos de 2026-11-17
+# (edição nº 18278 do sistema) ainda saem assinados por ele como Governador do Estado do Amazonas.
+# A data, 2026-04-05, vem do Diário Oficial Eletrônico da Aleam (edição extra 2422, termo de assunção), sem snapshot.
+- tipo: mandato
+  data: 2026-04-06
+  cargo: governador
+  inicio: 2026-04-05
+  fim: 2027-01-06
+  situacao: "Governador em exercício desde 2026-04-05, com a saída do governador e do vice"
+  texto_oficial: "GOVERNADORIA [...] poder executivo-seção i Governador do Estado do Amazonas ROBERTO MAIA CIDADE FILHO Secretaria de Estado da Casa Civil FLÁVIO CORDEIRO ANTONY FILHO"
+  fonte_id: am-diario-oficial
+  url_origem: https://diario.imprensaoficial.am.gov.br/portal/edicoes/download/18076
+  snapshot_url: https://web.archive.org/web/20261024014814/https://diario.imprensaoficial.am.gov.br/portal/edicoes/download/18076
+  capturado_em: 2026-11-21T06:13:33Z
+  contribuidor: viniciusdsandrade

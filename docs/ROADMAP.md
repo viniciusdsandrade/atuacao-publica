@@ -697,6 +697,7 @@ Feito em 2026-11-21.
 | Allowlist | `almt-noticias`, `pb-auniao-noticias`, `ac-agencia-noticias` e `es-governo-noticias` | concluída |
 | Publish | Mandato de contribuição vigente de outro cargo vira o papel principal; a contribuição substitui o mandato da regra do mesmo período | concluída |
 | AM | Saída do governador e do vice em 2026-04-04, pelo expediente do Diário Oficial do Estado (com snapshot); o dia vem do diário da Aleam, sem snapshot | concluída |
+| AM, governo em exercício | Roberto Cidade, presidente da Assembleia, como governador desde 2026-04-05 (ADR-0086); 27 governos com governador em exercício | concluída |
 | MT | Data da saída do titular: a posse do sucessor, 2026-03-31, pela ALMT; o IOMAT (sem snapshot) diz efeito em 2026-04-01 | concluída |
 
 Verificação em 2026-11-21:
