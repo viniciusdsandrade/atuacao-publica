@@ -144,9 +144,16 @@ test('título e nota dos atos e das despesas do Executivo dependem da esfera', (
   assert.match(tituloDoBloco('despesas_executivo', 'estadual'), /estadual/);
   assert.match(tituloDoBloco('despesas_executivo', 'municipal'), /município/);
   assert.match(notaDoBloco('atos_normativos', 'municipal') ?? '', /SAPL/);
-  assert.match(notaDoBloco('atos_normativos', 'estadual') ?? '', /São Paulo/);
+  assert.match(notaDoBloco('atos_normativos', 'estadual', 'SP') ?? '', /São Paulo/);
+  assert.match(notaDoBloco('atos_normativos', 'estadual', 'MG') ?? '', /Minas Gerais/);
+  assert.match(notaDoBloco('agenda_oficial', 'estadual', 'MG') ?? '', /Agência Minas/);
+  assert.match(notaDoBloco('agenda_oficial', 'estadual', 'SP') ?? '', /página de cada dia/);
+  // Sem fonte validada no estado, o bloco vazio diz isso, e não cita a fonte de outro estado.
+  assert.match(notaDoBloco('atos_normativos', 'estadual', 'RJ') ?? '', /ainda não tem fonte validada/);
+  assert.match(notaDoBloco('despesas_executivo', 'estadual', 'MG') ?? '', /ainda não tem fonte validada/);
+  assert.match(notaDoBloco('agenda_oficial', 'estadual', 'RJ') ?? '', /ainda não tem fonte validada/);
   assert.match(notaDoBloco('atos_normativos', 'federal') ?? '', /não informa quem assinou/);
-  assert.match(notaDoBloco('despesas_executivo', 'estadual') ?? '', /Gabinete do Governador/);
+  assert.match(notaDoBloco('despesas_executivo', 'estadual', 'SP') ?? '', /Gabinete do Governador/);
   assert.equal(notaDoBloco('votos', 'federal'), null);
 });
 

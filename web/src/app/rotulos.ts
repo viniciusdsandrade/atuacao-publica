@@ -279,16 +279,42 @@ export function notaDoBloco(bloco: string, esfera?: string | null, ente?: string
   if (bloco === 'proposicoes' && ente === ENTE_DE_CARAGUATATUBA) {
     return 'A Câmara Municipal de Caraguatatuba não mantém a situação de tramitação no sistema legislativo. Por isso o site não a publica.';
   }
-  if (bloco === 'atos_normativos' && esfera === 'estadual') {
-    return 'Decretos e leis do Poder Executivo estadual registrados no acervo oficial de legislação do Estado de São Paulo. A fonte não informa quem assinou cada ato.';
+  if (esfera === 'estadual' && (bloco === 'atos_normativos' || bloco === 'despesas_executivo' || bloco === 'agenda_oficial')) {
+    return notaDoGovernoEstadual(bloco, ente);
   }
   if (bloco === 'despesas_executivo' && esfera === 'federal') {
     return 'Cartão de pagamento do Governo Federal e viagens realizadas do órgão Presidência da República, somados por mês a partir dos arquivos do Portal da Transparência. Transações sob sigilo entram pelo valor, sem detalhe. A fonte não informa quem autorizou cada gasto.';
   }
-  if (bloco === 'despesas_executivo' && esfera === 'estadual') {
-    return 'Despesas orçamentárias do Gabinete do Governador e secretarias da administração direta, somadas por mês a partir do Portal da Transparência do Estado de São Paulo. A fonte não informa quem autorizou cada gasto.';
-  }
   return NOTAS[bloco] ?? null;
+}
+
+/** Fontes do governo estadual, por UF (ADR-0014 e ADR-0075). Sem fonte validada, o bloco vazio diz isso. */
+const NOTAS_DO_GOVERNO_ESTADUAL: Record<string, Record<string, string>> = {
+  SP: {
+    atos_normativos:
+      'Decretos e leis do Poder Executivo estadual registrados no acervo oficial de legislação do Estado de São Paulo. A fonte não informa quem assinou cada ato.',
+    despesas_executivo:
+      'Despesas orçamentárias do Gabinete do Governador e secretarias da administração direta, somadas por mês a partir do Portal da Transparência do Estado de São Paulo. A fonte não informa quem autorizou cada gasto.',
+  },
+  MG: {
+    atos_normativos:
+      'Decretos numerados do Poder Executivo de Minas Gerais, como registrados nos dados abertos da Assembleia Legislativa. Decretos sem número ficam fora. A fonte não informa quem assinou cada ato.',
+    agenda_oficial:
+      'Compromissos como publicados na agenda do Governador pela Agência Minas, com a hora publicada. Dia marcado "Sem agenda oficial" fica sem registro.',
+  },
+};
+
+function notaDoGovernoEstadual(bloco: string, uf: string | null | undefined): string | null {
+  const nota = uf ? NOTAS_DO_GOVERNO_ESTADUAL[uf]?.[bloco] : undefined;
+  if (nota) {
+    return nota;
+  }
+  if (bloco === 'agenda_oficial') {
+    return uf && NOTAS_DO_GOVERNO_ESTADUAL[uf] ? NOTAS[bloco] ?? null : 'O projeto ainda não tem fonte validada para a agenda do governo deste estado.';
+  }
+  return bloco === 'atos_normativos'
+    ? 'O projeto ainda não tem fonte validada para os atos normativos do governo deste estado.'
+    : 'O projeto ainda não tem fonte validada para as despesas do governo deste estado.';
 }
 
 export function rotuloCurtoBloco(bloco: string, esfera?: string | null): string {
