@@ -2686,7 +2686,7 @@ final class Vinculo {
 
     /** Fonte da CLI com agenda, atos e despesas do governo de cada UF (ADR-0014). */
     static final Map<String, String> EXECUTIVOS_ESTADUAIS = Map.of("SP", "executivosp", "MG", "executivomg", "GO", "executivogo", "ES", "executivoes", "RS", "executivors",
-            "BA", "executivoba");
+            "BA", "executivoba", "PE", "executivope");
 
     /**
      * Despesas do Poder Executivo estadual (ADR-0014) no perfil do governador já empossado.

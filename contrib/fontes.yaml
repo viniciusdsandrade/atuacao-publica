@@ -468,21 +468,6 @@
   status: validado
   validado_em: 2026-10-30
 
-- id: ba-legisla
-  nome: Legisla Bahia, decretos numerados
-  orgao: Casa Civil do Estado da Bahia
-  esfera: estadual
-  ente: BA
-  categoria: dados
-  nivel_confianca: T0
-  url_base: https://www.legislabahia.ba.gov.br/
-  formato: HTML
-  autenticacao: nenhuma
-  licenca: null
-  limitacoes: "Pesquisa por categoria e período, 20 por página, cerca de 12 s por página."
-  status: validado com limitação
-  validado_em: 2026-11-21
-
 - id: ba-despesas
   nome: Dados Abertos Bahia, painel de despesas
   orgao: Secretaria da Fazenda do Estado da Bahia
@@ -932,6 +917,21 @@
   limitacoes: null
   status: validado
   validado_em: 2026-10-30
+
+- id: alepe-legislacao
+  nome: Assembleia Legislativa de Pernambuco, sistema de legislação estadual
+  orgao: Assembleia Legislativa do Estado de Pernambuco
+  esfera: estadual
+  ente: PE
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://legis.alepe.pe.gov.br/
+  formato: HTML
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Uma página por ano e tipo de norma, com todas as normas (cerca de 9 MB para os decretos de 2025). A data é a da publicação no Diário Oficial; norma sem publicação na lista fica sem data."
+  status: validado com limitação
+  validado_em: 2026-11-21
 
 - id: pi-diario-oficial
   nome: Diário Oficial do Estado do Piauí
