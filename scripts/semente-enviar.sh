@@ -12,7 +12,7 @@
 # e mostra o que faria.
 set -euo pipefail
 
-FONTES=(almg alrs ales alepe cldf alba alema alerr alap alese caraguatatuba)
+FONTES=(almg alrs ales alepe cldf alba alema alerr alap alese caraguatatuba executivomg)
 RELEASE=semente-coleta-local
 simular="${SEMENTE_SIMULAR:-}"
 

@@ -11,7 +11,7 @@ on:
       fonte:
         description: Fonte a coletar. As demais seguem do cache de dados brutos.
         type: choice
-        options: [todas, camara, senado, tse, executivo, sapl, tcesp, cgu, agenda, contrib, alesp, executivosp, almg, alep, alba, alerj, alrs, alece, alesc, alego, ales, alepa, alepe, cldf, almt, alems, alpb, aleam, aleal, alero, alepi, alrn, aleto, alese, alema, aleac, alerr, alap, cmsp, caraguatatuba, paulinia]
+        options: [todas, camara, senado, tse, executivo, sapl, tcesp, cgu, agenda, contrib, alesp, executivosp, executivomg, almg, alep, alba, alerj, alrs, alece, alesc, alego, ales, alepa, alepe, cldf, almt, alems, alpb, aleam, aleal, alero, alepi, alrn, aleto, alese, alema, aleac, alerr, alap, cmsp, caraguatatuba, paulinia]
         default: todas
 
 permissions:
@@ -180,6 +180,15 @@ jobs:
         env:
           ETL_ORCAMENTO_MINUTOS: '15'
         run: java -Xmx2g -jar etl/target/etl.jar fetch executivosp
+      - name: fetch executivomg
+        # Poder Executivo do Estado de Minas Gerais: agenda do Governador e decretos numerados (ADR-0075).
+        # Os decretos vêm da ALMG, que recusa conexão de fora do país: a semente da coleta local traz o cache (ADR-0034).
+        if: (env.FONTE == 'todas' || env.FONTE == 'executivomg') && !contains(env.SEMENTE, ' executivomg ')
+        continue-on-error: true
+        timeout-minutes: 20
+        env:
+          ETL_ORCAMENTO_MINUTOS: '15'
+        run: java -Xmx2g -jar etl/target/etl.jar fetch executivomg
       - name: fetch almg
         # Assembleia Legislativa do Estado de Minas Gerais: deputados, comissões e verbas indenizatórias.
         if: (env.FONTE == 'todas' || env.FONTE == 'almg') && !contains(env.SEMENTE, ' almg ')
