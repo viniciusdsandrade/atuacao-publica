@@ -53,7 +53,60 @@ public final class ExecutivoBa implements Fonte {
             throw new IOException("executivoba: o pacote de despesas não traz o arquivo ZIP");
         }
         coleta.obterDerivado(url, "despesa/somas.json", "application/zip", Politica.SEMANAL, ExecutivoBa::somar);
+        // Decretos numerados no Legisla Bahia, um mês por consulta, 20 por página (ADR-0090). Cada página leva cerca de 12 s.
+        // O servidor só negocia TLS com troca de chave RSA: o passo roda com etl/tls-legado-ba.security.
+        java.time.YearMonth atual = java.time.YearMonth.from(ctx.hoje());
+        for (java.time.YearMonth mes = atual; !mes.isBefore(java.time.YearMonth.of(ANO_INICIAL, 1)) && !coleta.orcamentoExaurido();
+                mes = mes.minusMonths(1)) {
+            Politica politica = mes.isBefore(atual.minusMonths(2)) ? Politica.SE_AUSENTE : Politica.SEMANAL_EM_LISTA;
+            for (int p = 0; p < MAX_PAGINAS_DECRETOS && !coleta.orcamentoExaurido(); p++) {
+                Coleta.Arquivo arq = coleta.obterOpcional(urlDecretos(mes, p), caminhoDecretos(mes, p), "text/html", politica);
+                if (arq == null || !Files.exists(Coleta.caminho(ctx, arq))
+                        || decretos(etl.Texto.lerArquivo(Coleta.caminho(ctx, arq)), null).size() < POR_PAGINA_DECRETOS) {
+                    break;
+                }
+            }
+        }
         coleta.periodo(new Meta.Periodo(LocalDate.of(ANO_INICIAL, 1, 1), ctx.hoje()));
+    }
+
+    static final String FONTE_DECRETOS = "ba-legisla";
+    static final String LEGISLA = "https://www.legislabahia.ba.gov.br";
+    static final int POR_PAGINA_DECRETOS = 20;
+    static final int MAX_PAGINAS_DECRETOS = 30;
+    private static final List<String> MESES = List.of("JANEIRO", "FEVEREIRO", "MARCO", "ABRIL", "MAIO", "JUNHO", "JULHO", "AGOSTO",
+            "SETEMBRO", "OUTUBRO", "NOVEMBRO", "DEZEMBRO");
+    private static final java.util.regex.Pattern DECRETO = java.util.regex.Pattern.compile(
+            "(?s)<a href=\"(/documentos/[^\"]+)\" hreflang=\"pt-br\">\\s*DECRETO N[ºo°] ?([\\d.]+),? DE (\\d{1,2})º? DE ([^<]+?) DE (\\d{4})\\s*</a>"
+            + "\\s*</b>\\s*</a>(.*?)</span>");
+
+    static String urlDecretos(java.time.YearMonth mes, int pagina) {
+        return LEGISLA + "/documentos?categoria%5B0%5D=2&data%5Bmin%5D=" + mes.atDay(1) + "&data%5Bmax%5D=" + mes.atEndOfMonth()
+                + "&page=" + pagina;
+    }
+
+    private static String caminhoDecretos(java.time.YearMonth mes, int pagina) {
+        return "decretos/" + mes + "-" + pagina + ".html";
+    }
+
+    /** Decretos numerados de uma página do Legisla Bahia: número, data do título, ementa e link do documento. */
+    static List<ExecutivoSp.Ato> decretos(String html, Coleta.Arquivo arq) {
+        List<ExecutivoSp.Ato> lista = new ArrayList<>();
+        java.util.regex.Matcher m = DECRETO.matcher(html);
+        while (m.find()) {
+            String mes = etl.Texto.normalizarNome(m.group(4));
+            int numeroDoMes = mes == null ? -1 : MESES.indexOf(mes.strip()) + 1;
+            if (numeroDoMes <= 0) {
+                continue;
+            }
+            String numero = m.group(2).replace(".", "");
+            String data = String.format("%s-%02d-%02d", m.group(5), numeroDoMes, Integer.parseInt(m.group(3)));
+            String ementa = etl.Texto.semEntidades(m.group(6).replaceAll("(?s)<[^>]+>", " "));
+            Prov prov = arq == null ? null : Prov.de(FONTE_DECRETOS, LEGISLA + m.group(1), arq);
+            lista.add(new ExecutivoSp.Ato(UF, "ba-dec-" + numero, "DEC", numero, data, "Decreto nº " + m.group(2), ementa == null ? null
+                    : etl.Guarda.sanitizar(ementa), prov));
+        }
+        return lista;
     }
 
     @Override
@@ -70,9 +123,26 @@ public final class ExecutivoBa implements Fonte {
             }
         }
         Json.gravar(saida.resolve("despesas.json"), Json.SAIDA.valueToTree(despesas));
-        Json.gravar(saida.resolve("atos.json"), Json.SAIDA.createArrayNode());
+        Map<String, ExecutivoSp.Ato> atos = new java.util.LinkedHashMap<>();
+        java.time.YearMonth atual = java.time.YearMonth.from(ctx.hoje());
+        for (java.time.YearMonth mes = java.time.YearMonth.of(ANO_INICIAL, 1); !mes.isAfter(atual); mes = mes.plusMonths(1)) {
+            for (int p = 0; p < MAX_PAGINAS_DECRETOS; p++) {
+                Coleta.Arquivo d = Coleta.metadados(ctx, nome(), caminhoDecretos(mes, p));
+                if (d == null || !Files.exists(Coleta.caminho(ctx, d))) {
+                    break;
+                }
+                List<ExecutivoSp.Ato> pagina = decretos(etl.Texto.lerArquivo(Coleta.caminho(ctx, d)), d);
+                pagina.forEach(a -> atos.putIfAbsent(a.idFonte(), a));
+                if (pagina.size() < POR_PAGINA_DECRETOS) {
+                    break;
+                }
+            }
+        }
+        List<ExecutivoSp.Ato> decretos = new ArrayList<>(atos.values());
+        decretos.sort(java.util.Comparator.comparing(ExecutivoSp.Ato::data).reversed().thenComparing(ExecutivoSp.Ato::idFonte));
+        Json.gravar(saida.resolve("atos.json"), Json.SAIDA.valueToTree(decretos));
         Json.gravar(saida.resolve("compromissos.json"), Json.SAIDA.createArrayNode());
-        System.out.println("executivoba: " + despesas.size() + " agregados de despesa normalizados");
+        System.out.println("executivoba: " + despesas.size() + " agregados de despesa e " + decretos.size() + " decretos normalizados");
     }
 
     static String arquivo(JsonNode pacote) {

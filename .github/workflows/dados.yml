@@ -220,10 +220,11 @@ jobs:
         # uma vez por semana; a coleta guarda só a soma.
         if: env.FONTE == 'todas' || env.FONTE == 'executivoba'
         continue-on-error: true
-        timeout-minutes: 20
+        timeout-minutes: 25
         env:
-          ETL_ORCAMENTO_MINUTOS: '15'
-        run: java -Xmx2g -jar etl/target/etl.jar fetch executivoba
+          ETL_ORCAMENTO_MINUTOS: '20'
+        # Os decretos vêm do Legisla Bahia, que só negocia TLS com troca de chave RSA: a exceção vale só neste passo (ADR-0090).
+        run: java -Xmx2g -Djava.security.properties=etl/tls-legado-ba.security -jar etl/target/etl.jar fetch executivoba
       - name: fetch executivope
         # Poder Executivo do Estado de Pernambuco: decretos do Executivo na legislação da Alepe, uma página por ano (ADR-0089).
         if: env.FONTE == 'todas' || env.FONTE == 'executivope'

@@ -31,4 +31,23 @@ class ExecutivoBaTest {
         assertEquals(2, linhas.get("2026|03|Secretaria da Saúde"));
         assertEquals(List.of("1", "2013", "Legislativo"), ExecutivoBa.campos("\"1\";\"2013\";\"Legislativo\""));
     }
+
+    @Test
+    void decretoNumeradoDoLegislaBahia() {
+        String html = "<tr><td><span> <a href=\"/documentos/decreto-no-23570-de-31-de-marco-de-2025\"><b class=\"clearfix\">"
+                + "<a href=\"/documentos/decreto-no-23570-de-31-de-marco-de-2025\" hreflang=\"pt-br\">DECRETO Nº 23.570 DE 31 DE MARÇO DE 2025</a>"
+                + "</b></a> Homologa o Decreto Municipal de &quot;Situação de Emergência” que indica. </span> </td></tr>"
+                + "<tr><td><span><a href=\"/documentos/decreto-no-23001-de-1o-de-janeiro-de-2025\"><b class=\"clearfix\">"
+                + "<a href=\"/documentos/decreto-no-23001-de-1o-de-janeiro-de-2025\" hreflang=\"pt-br\">DECRETO Nº 23.001 DE 1º DE JANEIRO DE 2025</a>"
+                + "</b></a> Dispõe sobre o calendário. </span></td></tr>";
+
+        List<ExecutivoSp.Ato> atos = ExecutivoBa.decretos(html, null);
+
+        assertEquals(2, atos.size());
+        assertEquals("ba-dec-23570", atos.get(0).idFonte());
+        assertEquals("2025-03-31", atos.get(0).data());
+        assertEquals("Decreto nº 23.570", atos.get(0).nome());
+        assertEquals("Homologa o Decreto Municipal de \"Situação de Emergência” que indica.", atos.get(0).ementa());
+        assertEquals("2025-01-01", atos.get(1).data());
+    }
 }

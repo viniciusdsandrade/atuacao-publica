@@ -1,0 +1,7 @@
+# Exceção de TLS só para o passo `fetch executivoba` (ADR-0090): o Legisla Bahia só negocia TLS 1.2 com troca de chave RSA
+# (AES256-GCM-SHA384), sem sigilo futuro. A lista é a do JDK 25 sem `TLS_RSA_*`; o resto das restrições fica igual.
+# Uso: java -Djava.security.properties=etl/tls-legado-ba.security -jar etl/target/etl.jar fetch executivoba
+jdk.tls.disabledAlgorithms=SSLv3, TLSv1, TLSv1.1, DTLSv1.0, RC4, DES, \
+    MD5withRSA, DH keySize < 1024, EC keySize < 224, 3DES_EDE_CBC, anon, NULL, \
+    ECDH, rsa_pkcs1_sha1 usage HandshakeSignature, \
+    ecdsa_sha1 usage HandshakeSignature, dsa_sha1 usage HandshakeSignature
