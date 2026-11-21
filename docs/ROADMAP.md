@@ -671,6 +671,22 @@ Verificação em 2026-11-21:
   - com `ETL_AGORA=2027-01-06`, saem também os 24 da CLDF;
   - com `ETL_AGORA=2027-01-31`, saem também os 55 da ALRS.
 
+## Grafia única da situação (2026-11-21)
+
+As casas escreviam o mesmo estado de três formas: "Exercício" (Câmara, ALESP, SAPL do piloto), "em exercício" (ALBA, ALEP, ALMG) e "Em exercício".
+Na ALMG, a situação de quem saiu vinha em minúscula ("mandato encerrado", "renúncia").
+
+| Frente | Entrega | Estado |
+|---|---|---|
+| Publish | Situação do perfil com grafia única no índice, no perfil e nos dumps | concluída |
+
+Verificação em 2026-11-21:
+
+- ETL: 454 testes, um novo.
+- Ensaio de `publish` sobre os dados locais e o cache bruto: 1.652 perfis em exercício, todos com "Em exercício". Antes eram 874, 719 e 194 nas três grafias, na publicação de produção.
+
+Limitação: a situação de cada mandato, no bloco de mandatos, segue com a grafia da fonte.
+
 ## Fase 2 (depois da POC)
 
 ### Esfera federal
