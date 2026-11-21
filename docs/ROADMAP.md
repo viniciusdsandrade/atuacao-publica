@@ -708,6 +708,30 @@ Verificação em 2026-11-21:
   - Com `ETL_AGORA=2027-01-07`, Mailza Gomes, Daniel Vilela, Otaviano Pivetta e Lucas Ribeiro saem com o mandato vigente da eleição de 2026. Ricardo Ferraço, Mateus Simões e Hana Ghassan saem com o mandato encerrado em 2027-01-06.
 - Uma primeira versão tirava de exercício, em 2027, o vice eleito governador em 2026: a correção da sucessão mudava o papel principal do mesmo cargo. O ensaio em 2027-01-07 achou o erro.
 
+## Executivo de Minas Gerais (ADR-0075)
+
+Feito em 2026-11-21. Primeiro governo estadual depois de São Paulo.
+
+| Frente | Entrega | Estado |
+|---|---|---|
+| Levantamento | Fontes de agenda, decretos e despesa testadas em MG, RJ, BA, PR, RS, PE, CE, GO, SC e ES | concluída |
+| Adaptador | `executivomg`: agenda do governador (Agência Minas) e decretos numerados (ALMG) | concluída |
+| Vínculo | Dados do governo estadual por UF, ligados depois das contribuições de sucessão | concluída |
+| Despesa de MG | Agregar o empenho por mês e elemento, sem o credor | pendente |
+| Próximos estados | GO (decretos e despesa agregada), ES (agenda em ICS e despesa) | pendente |
+
+Verificação em 2026-11-21:
+
+- ETL: 461 testes, três novos do adaptador. Site: 28 testes unitários e a checagem de tipos.
+- Coleta real: 72 arquivos, 3.530 compromissos e 977 decretos de 2022 a 2026.
+- Ensaio de `publish`: Romeu Zema com 3.058 compromissos e 852 decretos até 2026-03-21; Mateus Simões com 472 e 125 desde 2026-03-22.
+
+Resultado do levantamento, por fonte testada:
+
+- agenda estruturada: MG (JSON) e ES (ICS, hospedado no Google Agenda); RS bloqueada por WAF; CE sem compromissos publicados; demais sem agenda estruturada;
+- decretos: MG e GO em JSON; RS, BA, PE e SC em HTML; ES, RJ, PR e CE sem fonte utilizável;
+- despesa mensal sem favorecido: GO (CKAN, já agregada) e BA (ZIP de 2,4 GB); RS, ES, SC e MG por lançamento, com credor; PE e RJ sem mês; PR e CE bloqueados.
+
 ## Fase 2 (depois da POC)
 
 ### Esfera federal

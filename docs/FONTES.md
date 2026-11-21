@@ -587,6 +587,38 @@ Nenhum servidor bloqueou o cliente.
 - Campos do XML: `Data`, `Ementa`, `IdNorma`, `Numero`, `IdTipo`, `Promulg`, `Situacao`, `URLFicha`.
 - Filtragem no projeto: normas com `Promulg == "E"` (Poder Executivo) a partir de 2022, cobrindo Decretos (`DEC`, IdTipo 3), Leis Ordinárias (`LEI`, IdTipo 9) e Leis Complementares (`LCP`, IdTipo 2).
 
+## Governo do Estado de Minas Gerais (Executivo Estadual)
+
+Poder Executivo do Estado de Minas Gerais (ADR-0075).
+Validação em 2026-11-21, com o User-Agent do projeto.
+Nenhum servidor bloqueou o cliente.
+
+| id | Fonte | Nível | Formato | Autenticação | Status | Validado em |
+|---|---|---|---|---|---|---|
+| `mg-agenda-governador` | Agenda do Governador, API da Agência Minas | T0 | JSON | nenhuma | validado com limitação | 2026-11-21 |
+| `almg-legislacao` | Legislação mineira nos dados abertos da ALMG | T0 | JSON | nenhuma | validado | 2026-11-21 |
+
+### `mg-agenda-governador`: agenda oficial do Governador de Minas Gerais
+
+- Endpoint: `https://www.agenciaminas.mg.gov.br/api/governorSchedule?publish=1&page={n}&limit=100&orderBy=asc&orderByColumn=date&startDate={AAAA-MM-DD}&endDate={AAAA-MM-DD}`.
+- Campos usados: `title`, `body` (HTML com descrição e local), `date`. O campo `author_name` não é usado.
+- O `total` da resposta ignora o filtro de datas: a coleta pede um mês por vez e pagina até vir uma página incompleta.
+- A hora vem com o sufixo Z, mas é a hora local publicada: a posse de 2023-01-01 sai às 09:00.
+- O dia marcado "Sem agenda oficial" não vira compromisso.
+- Existe também `/api/viceGovernorSchedule`, não usada.
+
+### `almg-legislacao`: decretos do Governador
+
+- Endpoint: `https://dadosabertos.almg.gov.br/api/v2/legislacao/mineira/pesquisa/direcionada?tp=100&p={n}&tipo=DEC&ano={AAAA}&formato=json`.
+- Campos usados: `tipo`, `numero`, `ano`, `data` (AAAAMMDD), `origem`, `ementa`.
+- Entram os decretos numerados (`DEC`) de origem `Executivo`, a partir de 2022. O decreto sem número (`DNE`), em geral ato de pessoal, fica de fora.
+- O link de cada decreto é a página da norma no portal da ALMG: `https://www.almg.gov.br/legislacao-mineira/texto/DEC/{numero}/{ano}/`.
+
+### Despesas do Executivo mineiro: não coletadas
+
+- O pacote `despesa` do CKAN `dados.mg.gov.br` traz os arquivos de todos os anos só com o cabeçalho.
+- O pacote `portal_despesa_empenho` publica a despesa por empenho, com o credor e o CPF ou CNPJ. Agregar por mês exige descartar o credor na coleta. Fica para uma etapa seguinte.
+
 ## Assembleia Legislativa do Estado de Minas Gerais (ALMG)
 
 Poder Legislativo do Estado de Minas Gerais (ADR-0015).
