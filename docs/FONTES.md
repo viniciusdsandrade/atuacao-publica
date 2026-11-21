@@ -587,6 +587,25 @@ Nenhum servidor bloqueou o cliente.
 - Campos do XML: `Data`, `Ementa`, `IdNorma`, `Numero`, `IdTipo`, `Promulg`, `Situacao`, `URLFicha`.
 - Filtragem no projeto: normas com `Promulg == "E"` (Poder Executivo) a partir de 2022, cobrindo Decretos (`DEC`, IdTipo 3), Leis Ordinárias (`LEI`, IdTipo 9) e Leis Complementares (`LCP`, IdTipo 2).
 
+## Governo do Estado de Pernambuco (Executivo Estadual)
+
+Poder Executivo do Estado de Pernambuco (ADR-0089).
+Validação em 2026-11-21, com o User-Agent do projeto, numa rede no Brasil.
+
+| id | Fonte | Nível | Formato | Autenticação | Status | Validado em |
+|---|---|---|---|---|---|---|
+| `alepe-legislacao` | Sistema de legislação estadual da Alepe | T0 | HTML | nenhuma | validado com limitação | 2026-11-21 |
+
+### `alepe-legislacao`: decretos do Governador
+
+- Lista: `https://legis.alepe.pe.gov.br/lista.aspx?tiponorma=6&ano={AAAA}`, uma página por ano com todos os decretos do Executivo (cerca de 9 MB e 30 s em 2025, com 2.167 decretos).
+- Cada linha: "Decreto do Executivo n° 60.155", "Publicada no DOE dd/mm/AAAA", a ementa e o link do texto (`texto.aspx?id=...`).
+- A data é a da publicação no Diário Oficial. Quatro decretos de 2025 saem sem publicação na lista e ficam de fora.
+
+### Decretos da Bahia: bloqueados por TLS
+
+- O Legisla Bahia (`www.legislabahia.ba.gov.br`) só negocia TLS 1.2 com troca de chave RSA (`AES256-GCM-SHA384`), sem sigilo futuro. O Java 25 desativa essa troca de chave por padrão, e o projeto não relaxa a configuração de segurança da JVM para uma fonte. Conferido em 2026-11-21.
+
 ## Governo do Estado da Bahia (Executivo Estadual)
 
 Poder Executivo do Estado da Bahia (ADR-0083).
@@ -608,7 +627,7 @@ Não validado: se o portal responde ao runner do GitHub, fora do país.
 ### Agenda e decretos do Governador da BA: não coletados
 
 - Agenda: `ba.gov.br/agenda` é uma aplicação sem a agenda no HTML.
-- Decretos: o Legisla Bahia (`legislabahia.ba.gov.br`) publica os decretos em HTML, com paginação. Não implementado.
+- Decretos: o Legisla Bahia (`legislabahia.ba.gov.br`) publica os decretos em HTML, com paginação, mas só negocia TLS com troca de chave RSA, que o Java desativa por padrão. Não coletados.
 
 ## Governo do Estado do Rio Grande do Sul (Executivo Estadual)
 

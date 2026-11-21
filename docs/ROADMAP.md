@@ -724,7 +724,9 @@ Feito em 2026-11-21. Primeiro governo estadual depois de São Paulo.
 | Rio Grande do Sul | `executivors`: despesa paga por mês e órgão, somada na coleta (ADR-0082) | concluída |
 | Bahia | `executivoba`: despesa paga por mês e órgão, somada na coleta (ADR-0083) | concluída |
 | Despesa do ES | Despesa do Executivo capixaba | não feito: o CKAN publica a despesa por lançamento, com favorecido, em arquivos de até 1,5 GB por ano, sem agregado mensal; a busca filtrada do datastore não soma |
-| Próximos estados | Decretos da BA, de PE e de SC (HTML); os outros 18 governos sem fonte estruturada validada | pendente |
+| Pernambuco | `executivope`: decretos do Executivo pela legislação da Alepe (ADR-0089): 9.576 decretos | concluída |
+| Decretos da BA | Legisla Bahia | não feito: o servidor só negocia TLS com troca de chave RSA, que o Java desativa; o projeto não relaxa a segurança da JVM. Decisão do mantenedor |
+| Próximos estados | Decretos de SC (filtros não validados); os outros 18 governos sem fonte estruturada validada | pendente |
 
 Verificação em 2026-11-21:
 
@@ -758,6 +760,7 @@ Feito em 2026-11-21. Primeira das assembleias com poucos blocos.
 | ALRN | Presença nas sessões deliberativas do plenário (ADR-0084): 242 sessões | concluída |
 | ALMT | Proposições pela pesquisa do portal (ADR-0085): 12.616 proposições, 11.181 autorias nos 24 deputados | concluída |
 | ALEPA | Proposições pelo painel DevExpress, com sessão por cookie no cliente HTTP (ADR-0087): 3.680 proposições, 3.178 autorias nos 41 deputados | concluída |
+| Situação das proposições | ALRN pela tramitação de cada processo; ALMT pelo último andamento (ADR-0088). ALERJ e ALEPA sem situação | concluída na ALRN; na ALMT, a carga inicial se espalha pelas execuções |
 | ALEMS | Proposições, votos e presença | não feito: toda chamada do sistema público exige captcha de prova de trabalho. O projeto não contorna captcha |
 
 Verificação em 2026-11-21:
