@@ -693,16 +693,16 @@ Feito em 2026-11-21.
 
 | Frente | Entrega | Estado |
 |---|---|---|
-| Contribuições | Posse do vice no governo e fim do mandato de vice em AC, ES, GO, MG, MT, PA e PB; data da saída do titular em seis deles | concluída |
+| Contribuições | Posse do vice no governo e fim do mandato de vice em AC, ES, GO, MG, MT, PA e PB; data da saída do titular nos sete | concluída |
 | Allowlist | `almt-noticias`, `pb-auniao-noticias`, `ac-agencia-noticias` e `es-governo-noticias` | concluída |
 | Publish | Mandato de contribuição vigente de outro cargo vira o papel principal; a contribuição substitui o mandato da regra do mesmo período | concluída |
 | AM | Renúncia do governador e do vice, com o presidente da Assembleia como interino | pendente: as fontes não têm snapshot |
-| MT | Data da saída do titular | pendente: o IOMAT (sem snapshot) e a ALMT divergem em um dia |
+| MT | Data da saída do titular: a posse do sucessor, 2026-03-31, pela ALMT; o IOMAT (sem snapshot) diz efeito em 2026-04-01 | concluída |
 
 Verificação em 2026-11-21:
 
 - ETL: 458 testes, quatro novos de contribuição (sucessão, troca do mandato da regra, sucessão encerrada e papel principal).
-- `normalize contrib`: 21 registros manuais e 51 regras de mandato válidos. Cada trecho citado foi conferido no snapshot.
+- `normalize contrib`: 22 registros manuais e 51 regras de mandato válidos. Cada trecho citado foi conferido no snapshot.
 - Ensaio de `publish` sobre os dados locais e o cache bruto, com o índice de produção como publicação anterior (sem as casas ausentes dos dados locais): a trava do ADR-0006 não disparou.
   - Com `ETL_AGORA=2026-11-21`, os sete vices saem como governador em exercício, e 26 governos têm governador em exercício.
   - Com `ETL_AGORA=2027-01-07`, Mailza Gomes, Daniel Vilela, Otaviano Pivetta e Lucas Ribeiro saem com o mandato vigente da eleição de 2026. Ricardo Ferraço, Mateus Simões e Hana Ghassan saem com o mandato encerrado em 2027-01-06.

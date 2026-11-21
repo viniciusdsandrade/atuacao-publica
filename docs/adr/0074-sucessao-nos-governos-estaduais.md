@@ -37,7 +37,7 @@ Os diários oficiais desses estados não têm snapshot, e em vários deles a pos
 | ES | Ricardo Ferraço | 2026-04-02 | Renato Casagrande | 2026-04-02 | notícias do governo do ES |
 | GO | Daniel Vilela | 2026-03-31 | Ronaldo Caiado | 2026-03-31 | portal da Alego |
 | MG | Mateus Simões | 2026-03-22 | Romeu Zema | 2026-03-22 | portal da ALMG |
-| MT | Otaviano Pivetta | 2026-03-31 | Mauro Mendes | não alterado | notícias da ALMT |
+| MT | Otaviano Pivetta | 2026-03-31 | Mauro Mendes | 2026-03-31 | notícias da ALMT |
 | PA | Hana Ghassan | 2026-04-02 | Helder Barbalho | 2026-04-02 | portal da Alepa |
 | PB | Lucas Ribeiro | 2026-04-02 | João Azevêdo | 2026-04-02 | A União, jornal oficial do estado |
 
@@ -46,13 +46,13 @@ Em GO, MT e PB, a notícia diz o dia da semana ou "ontem", e a data vem da data 
 ## Consequências
 
 - Sete perfis de vice passam a governador em exercício, e 26 governos têm governador em exercício no site.
-- Seis titulares ganham a data da fonte no lugar do prazo legal.
+- Os sete titulares ganham a data da fonte no lugar do prazo legal.
 - Em 2027-01-07, quem foi eleito governador em 2026 sai com o mandato vigente da eleição, e os demais, com o mandato encerrado em 2027-01-06.
 
 ## Limitações
 
 - AM: não validado com snapshot. Segundo o Diário Oficial Eletrônico da Aleam (edições extras 2420 a 2422, de 2026-04-04 e 2026-04-05), o governador e o vice renunciaram em 2026-04-04, e o presidente da Assembleia assumiu como governador interino em 2026-04-05. Os PDFs não têm snapshot no Internet Archive. Até haver snapshot, o perfil de Tadeu de Souza segue com o mandato de vice vigente, o que a fonte contradiz.
-- MT: o ato de renúncia publicado no IOMAT (ATO nº 647/2026) diz "com efeitos a partir de 01/04/2026", e a ALMT deu posse ao vice em 2026-03-31. O IOMAT não tem snapshot. O fim do mandato do titular segue no prazo legal de 2026-04-04.
+- MT: o ato de renúncia publicado no IOMAT (ATO nº 647/2026) diz "com efeitos a partir de 01/04/2026", e a ALMT deu posse ao vice em 2026-03-31. O IOMAT não tem snapshot. Como em GO, o mandato do titular termina na posse do sucessor, 2026-03-31, pela fonte com snapshot.
 - A notícia da ALMT diz que o mandato vai até 31 de dezembro de 2026. O projeto usa 2027-01-06, da regra da EC 111/2021 em `contrib/mandatos.yaml`.
 - O governador interino do AM não tem perfil: o projeto não cobre o cargo de presidente de assembleia como chefe do Executivo.
 
