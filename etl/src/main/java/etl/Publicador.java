@@ -195,6 +195,7 @@ public final class Publicador {
         List<Perfil> perfis = new ArrayList<>(Vinculo.perfis(ctx, catalogo));
         Map<String, String> aliases = identificadores(perfis, anterior);
         Contribuicoes.anexar(ctx, catalogo, perfis, aliases, rejeitados);
+        Vinculo.executivosEstaduais(ctx, perfis);
 
         // Monta numa pasta nova e só troca pela publicada se nenhum perfil anterior sumir (ADR-0006).
         Path pasta = ctx.publicado().resolve("politicos");

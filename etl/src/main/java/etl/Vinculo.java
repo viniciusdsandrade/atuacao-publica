@@ -93,9 +93,6 @@ final class Vinculo {
             despesasDoExecutivoFederal(ctx, perfis);
             agendaPresidencial(ctx, perfis);
             atosMunicipais(ctx, perfis);
-            despesasDoExecutivoEstadual(ctx, perfis);
-            agendaEstadual(ctx, perfis);
-            atosEstadual(ctx, perfis);
         }
         emendas(ctx, perfis);
         financiamento(ctx, perfis);
@@ -2675,6 +2672,16 @@ final class Vinculo {
                 }
             }
         }
+    }
+
+    /**
+     * Agenda, atos e despesas do governo estadual, pelos mandatos de governador de cada perfil. Roda depois das
+     * contribuições: a sucessão com fonte T0 muda quem governou em cada período (ADR-0074).
+     */
+    static void executivosEstaduais(Contexto ctx, List<Perfil> perfis) {
+        despesasDoExecutivoEstadual(ctx, perfis);
+        agendaEstadual(ctx, perfis);
+        atosEstadual(ctx, perfis);
     }
 
     /** Fonte da CLI com agenda, atos e despesas do governo de cada UF (ADR-0014). */
