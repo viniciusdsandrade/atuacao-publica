@@ -1377,6 +1377,14 @@ Validação em 2026-11-03 com o User-Agent do projeto.
 - URL base: `https://www.al.mt.gov.br/parlamento/legislatura/21/sessao-legislativa`
 - Relação dos cargos da Mesa Diretora (Presidente, Vice-Presidentes e Secretários) nas 4 sessões legislativas da 20ª Legislatura (2023 a 2026), populando `orgaos_e_frentes` com vínculos determinísticos pelos identificadores e nomes dos parlamentares.
 
+### `almt-proposicoes`: proposições (ADR-0085)
+
+- Pesquisa do portal: `https://www.al.mt.gov.br/proposicao?almt_form_proposicao_search_proposicao%5BtipoPropositura%5D={tipo}&almt_form_proposicao_search_proposicao%5Bano%5D={AAAA}&page={n}`. HTML, dez itens por página, em ordem de número. Validação em 2026-11-21.
+- Tipos usados: 11 (PEC), 2 (PLC), 1 (PL), 3 (PDL) e 4 (PR). O formulário tem também indicação, moção, ofício, requerimento e veto.
+- Cada item: a ementa em `<h3 class="fs-16">`, a linha "{tipo} nº {n}/{ano} {autor} - Protocolo nº ...", o id do documento (`collapse-group-{id}`) e o PDF em `/storage/webdisco/`.
+- Detalhe em `/proposicao/cpdoc/{id}/visualizar` e tramitação em `/proposicao/{id}/tramitacoes`, não coletados.
+- A API oficial (`api.al.mt.gov.br/api/v1/ssl/proposicao/`) responde 401: exige OAuth com credencial da Casa.
+
 ### `almt-portal`: fotos oficiais em alta resolução
 
 - URL base: `https://storage.al.mt.gov.br/`

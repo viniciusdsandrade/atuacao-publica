@@ -722,7 +722,8 @@ Feito em 2026-11-21. Primeiro governo estadual depois de São Paulo.
 | Espírito Santo | `executivoes`: agenda do governador no calendário público do governo (ADR-0077) | concluída |
 | Rio Grande do Sul | `executivors`: despesa paga por mês e órgão, somada na coleta (ADR-0082) | concluída |
 | Bahia | `executivoba`: despesa paga por mês e órgão, somada na coleta (ADR-0083) | concluída |
-| Próximos estados | Despesa do ES (por lançamento, com favorecido, até 1,5 GB por ano); decretos da BA, de PE e de SC (HTML) | pendente |
+| Despesa do ES | Despesa do Executivo capixaba | não feito: o CKAN publica a despesa por lançamento, com favorecido, em arquivos de até 1,5 GB por ano, sem agregado mensal; a busca filtrada do datastore não soma |
+| Próximos estados | Decretos da BA, de PE e de SC (HTML); os outros 18 governos sem fonte estruturada validada | pendente |
 
 Verificação em 2026-11-21:
 
@@ -754,7 +755,9 @@ Feito em 2026-11-21. Primeira das assembleias com poucos blocos.
 | ALRN | Proposições pela API do e-Legis (ADR-0080): 2.525 proposições, 2.259 autorias nos 24 deputados | concluída |
 | ALRN | Votos pelo detalhamento de cada votação (ADR-0081): 4.442 votos; participação só nas votações nominais em plenário | concluída |
 | ALRN | Presença nas sessões deliberativas do plenário (ADR-0084): 242 sessões | concluída |
-| Outras casas | ALMT (HTML, 10 por página); ALEPA (callback com sessão); ALEMS bloqueada por captcha | pendente |
+| ALMT | Proposições pela pesquisa do portal (ADR-0085): 12.616 proposições, 11.181 autorias nos 24 deputados | concluída |
+| ALEPA | Proposições | não feito: a lista é um callback DevExpress que exige o cookie de sessão e o estado da página; a coleta não guarda sessão. Exige mudar o cliente HTTP |
+| ALEMS | Proposições, votos e presença | não feito: toda chamada do sistema público exige captcha de prova de trabalho. O projeto não contorna captcha |
 
 Verificação em 2026-11-21:
 
