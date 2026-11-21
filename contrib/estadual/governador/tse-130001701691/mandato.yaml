@@ -1,0 +1,25 @@
+# Posse do vice-governador no governo de Minas Gerais, com a renúncia do titular (ADR-0074).
+- tipo: mandato
+  data: 2026-03-22
+  cargo: governador
+  inicio: 2026-03-22
+  fim: 2027-01-06
+  situacao: "Governador em exercício desde 2026-03-22, empossado pela Assembleia Legislativa com a renúncia do titular"
+  texto_oficial: "Em Reunião Solene do Plenário, a Assembleia Legislativa de Minas Gerais (ALMG) empossou o novo governador Mateus Simões de Almeida (PSD), neste domingo (22/3/26). Simões assume no lugar de Romeu Zema, que renunciou ao mandato para concorrer a um cargo de nível federal, ainda a definir."
+  fonte_id: almg-portal
+  url_origem: https://www.almg.gov.br/comunicacao/noticias/arquivos/Assembleia-da-posse-a-novo-governador-de-Minas/
+  snapshot_url: https://web.archive.org/web/20260323114853/https://www.almg.gov.br/comunicacao/noticias/arquivos/Assembleia-da-posse-a-novo-governador-de-Minas/
+  capturado_em: 2026-11-21T06:13:33Z
+  contribuidor: viniciusdsandrade
+- tipo: mandato
+  data: 2026-03-22
+  cargo: vice_governador
+  inicio: 2023-01-01
+  fim: 2026-03-22
+  situacao: "Mandato de vice encerrado em 2026-03-22, com a posse no governo"
+  texto_oficial: "Em Reunião Solene do Plenário, a Assembleia Legislativa de Minas Gerais (ALMG) empossou o novo governador Mateus Simões de Almeida (PSD), neste domingo (22/3/26). Simões assume no lugar de Romeu Zema, que renunciou ao mandato para concorrer a um cargo de nível federal, ainda a definir."
+  fonte_id: almg-portal
+  url_origem: https://www.almg.gov.br/comunicacao/noticias/arquivos/Assembleia-da-posse-a-novo-governador-de-Minas/
+  snapshot_url: https://web.archive.org/web/20260323114853/https://www.almg.gov.br/comunicacao/noticias/arquivos/Assembleia-da-posse-a-novo-governador-de-Minas/
+  capturado_em: 2026-11-21T06:13:33Z
+  contribuidor: viniciusdsandrade

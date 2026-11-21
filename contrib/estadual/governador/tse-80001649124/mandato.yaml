@@ -1,0 +1,25 @@
+# Posse do vice-governador no governo do Espírito Santo, com a renúncia do titular (ADR-0074).
+- tipo: mandato
+  data: 2026-04-02
+  cargo: governador
+  inicio: 2026-04-02
+  fim: 2027-01-06
+  situacao: "Governador em exercício desde 2026-04-02, empossado pela Assembleia Legislativa com a renúncia do titular"
+  texto_oficial: "Ricardo de Rezende Ferraço tomou posse nesta quinta-feira, 02 de abril de 2026, no cargo de governador do Estado do Espírito Santo. A cerimônia de posse ocorreu na Assembleia Legislativa (Ales) [...] Ferraço assume a chefia do Executivo Estadual com a renúncia de Renato Casagrande"
+  fonte_id: es-governo-noticias
+  url_origem: https://www.es.gov.br/Noticia/ricardo-ferraco-toma-posse-como-governador-do-espirito-santo
+  snapshot_url: https://web.archive.org/web/20260403045844/https://www.es.gov.br/Noticia/ricardo-ferraco-toma-posse-como-governador-do-espirito-santo
+  capturado_em: 2026-11-21T06:13:33Z
+  contribuidor: viniciusdsandrade
+- tipo: mandato
+  data: 2026-04-02
+  cargo: vice_governador
+  inicio: 2023-01-01
+  fim: 2026-04-02
+  situacao: "Mandato de vice encerrado em 2026-04-02, com a posse no governo"
+  texto_oficial: "Ricardo de Rezende Ferraço tomou posse nesta quinta-feira, 02 de abril de 2026, no cargo de governador do Estado do Espírito Santo. A cerimônia de posse ocorreu na Assembleia Legislativa (Ales) [...] Ferraço assume a chefia do Executivo Estadual com a renúncia de Renato Casagrande"
+  fonte_id: es-governo-noticias
+  url_origem: https://www.es.gov.br/Noticia/ricardo-ferraco-toma-posse-como-governador-do-espirito-santo
+  snapshot_url: https://web.archive.org/web/20260403045844/https://www.es.gov.br/Noticia/ricardo-ferraco-toma-posse-como-governador-do-espirito-santo
+  capturado_em: 2026-11-21T06:13:33Z
+  contribuidor: viniciusdsandrade

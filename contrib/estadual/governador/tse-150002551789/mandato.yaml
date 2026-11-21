@@ -1,0 +1,26 @@
+# Posse do vice-governador no governo da Paraíba, com a renúncia do titular.
+# A notícia é de 2026-04-03 e diz "desde a tarde de ontem": a posse e a renúncia foram em 2026-04-02 (ADR-0074).
+- tipo: mandato
+  data: 2026-04-02
+  cargo: governador
+  inicio: 2026-04-02
+  fim: 2027-01-06
+  situacao: "Governador em exercício desde 2026-04-02, com a renúncia do titular"
+  texto_oficial: "Desde a tarde de ontem, a Paraíba conta com um novo governador. O advogado Lucas Ribeiro, que ocupava o posto de vice-governador do estado, foi conduzido ao posto máximo do Executivo estadual após a renúncia do ex-governador João Azevêdo"
+  fonte_id: pb-auniao-noticias
+  url_origem: https://auniao.pb.gov.br/noticias/caderno_politicas/lucas-ribeiro-assume-governo-da-pb
+  snapshot_url: https://web.archive.org/web/20260406154318/https://auniao.pb.gov.br/noticias/caderno_politicas/lucas-ribeiro-assume-governo-da-pb
+  capturado_em: 2026-11-21T06:13:33Z
+  contribuidor: viniciusdsandrade
+- tipo: mandato
+  data: 2026-04-02
+  cargo: vice_governador
+  inicio: 2023-01-01
+  fim: 2026-04-02
+  situacao: "Mandato de vice encerrado em 2026-04-02, com a posse no governo"
+  texto_oficial: "Desde a tarde de ontem, a Paraíba conta com um novo governador. O advogado Lucas Ribeiro, que ocupava o posto de vice-governador do estado, foi conduzido ao posto máximo do Executivo estadual após a renúncia do ex-governador João Azevêdo"
+  fonte_id: pb-auniao-noticias
+  url_origem: https://auniao.pb.gov.br/noticias/caderno_politicas/lucas-ribeiro-assume-governo-da-pb
+  snapshot_url: https://web.archive.org/web/20260406154318/https://auniao.pb.gov.br/noticias/caderno_politicas/lucas-ribeiro-assume-governo-da-pb
+  capturado_em: 2026-11-21T06:13:33Z
+  contribuidor: viniciusdsandrade

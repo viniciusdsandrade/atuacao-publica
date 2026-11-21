@@ -1,0 +1,13 @@
+# Renúncia ao governo do Pará para concorrer nas eleições de 2026 (ADR-0074).
+- tipo: mandato
+  data: 2026-04-02
+  cargo: governador
+  inicio: 2023-01-01
+  fim: 2026-04-02
+  situacao: "Renunciou ao mandato de governador em 2026-04-02 para concorrer nas eleições de 2026"
+  texto_oficial: "O agora ex-governador Helder Barbalho (MDB) formalizou a renúncia ao cargo de chefe do Executivo estadual ao assinar e encaminhar a mensagem oficial ao Poder Legislativo durante cerimônia realizada nesta quinta-feira, 2 de abril, no Hangar Convenções e Feiras da Amazônia, em Belém. [...] Após a formalização da renúncia e a transmissão de cargo, Hana Ghassan assumiu oficialmente o governo do Pará e apresentou as prioridades da nova fase administrativa."
+  fonte_id: alepa-portal
+  url_origem: https://www.alepa.pa.gov.br/Comunicacao/Noticia/11627/mensagem-de-renuncia-de-helder-e-entregue-ao-legislativo-e-marca-transicao-no-governo-do-para
+  snapshot_url: https://web.archive.org/web/20260614100634/https://alepa.pa.gov.br/Comunicacao/Noticia/11627/mensagem-de-renuncia-de-helder-e-entregue-ao-legislativo-e-marca-transicao-no-governo-do-para
+  capturado_em: 2026-11-21T06:13:33Z
+  contribuidor: viniciusdsandrade

@@ -1,0 +1,26 @@
+# Posse do vice-governador no governo de Goiás, com a saída do titular (ADR-0074).
+# A notícia é de 2026-03-31 e diz "nesta terça-feira, 31": a posse foi em 2026-03-31.
+- tipo: mandato
+  data: 2026-03-31
+  cargo: governador
+  inicio: 2026-03-31
+  fim: 2027-01-06
+  situacao: "Governador em exercício desde 2026-03-31, empossado pela Assembleia Legislativa"
+  texto_oficial: "Agora governador de Goiás, Daniel Vilela (MDB) tomou posse do cargo máximo da política goiana na tarde desta terça-feira, 31. Em sessão solene realizada no Plenário Iris Rezende Machado, do Palácio Maguito Vilela, o emedebista substituiu definitivamente o então governador Ronaldo Caiado (PSD)"
+  fonte_id: alego-portal
+  url_origem: https://portal.al.go.leg.br/noticias/163542/daniel-vilela-toma-posse-como-governador-do-estado-de-goias
+  snapshot_url: https://web.archive.org/web/20260416120218/https://portal.al.go.leg.br/noticias/163542/daniel-vilela-toma-posse-como-governador-do-estado-de-goias
+  capturado_em: 2026-11-21T06:13:33Z
+  contribuidor: viniciusdsandrade
+- tipo: mandato
+  data: 2026-03-31
+  cargo: vice_governador
+  inicio: 2023-01-01
+  fim: 2026-03-31
+  situacao: "Mandato de vice encerrado em 2026-03-31, com a posse no governo"
+  texto_oficial: "Agora governador de Goiás, Daniel Vilela (MDB) tomou posse do cargo máximo da política goiana na tarde desta terça-feira, 31. Em sessão solene realizada no Plenário Iris Rezende Machado, do Palácio Maguito Vilela, o emedebista substituiu definitivamente o então governador Ronaldo Caiado (PSD)"
+  fonte_id: alego-portal
+  url_origem: https://portal.al.go.leg.br/noticias/163542/daniel-vilela-toma-posse-como-governador-do-estado-de-goias
+  snapshot_url: https://web.archive.org/web/20260416120218/https://portal.al.go.leg.br/noticias/163542/daniel-vilela-toma-posse-como-governador-do-estado-de-goias
+  capturado_em: 2026-11-21T06:13:33Z
+  contribuidor: viniciusdsandrade

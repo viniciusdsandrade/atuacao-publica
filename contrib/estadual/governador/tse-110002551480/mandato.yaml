@@ -1,0 +1,26 @@
+# Posse do vice-governador no governo de Mato Grosso (ADR-0074).
+# A notícia é de 2026-04-01 e diz "nesta terça-feira (31)": a posse foi em 2026-03-31.
+- tipo: mandato
+  data: 2026-03-31
+  cargo: governador
+  inicio: 2026-03-31
+  fim: 2027-01-06
+  situacao: "Governador em exercício desde 2026-03-31, empossado pela Assembleia Legislativa"
+  texto_oficial: "A Assembleia Legislativa do Estado de Mato Grosso (ALMT) oficializou, nesta terça-feira (31), a posse de Otaviano Pivetta (Republicanos) no cargo de governador do estado, em sessão solene realizada no Plenário das Deliberações Deputado Renê Barbour."
+  fonte_id: almt-noticias
+  url_origem: https://www.al.mt.gov.br/midia/texto/almt-da-posse-a-otaviano-pivetta-e-consolida-sucessao-no-comando-do-executivo-estadual/visualizar
+  snapshot_url: https://web.archive.org/web/20260416022614/https://www.al.mt.gov.br/midia/texto/almt-da-posse-a-otaviano-pivetta-e-consolida-sucessao-no-comando-do-executivo-estadual/visualizar
+  capturado_em: 2026-11-21T06:13:33Z
+  contribuidor: viniciusdsandrade
+- tipo: mandato
+  data: 2026-03-31
+  cargo: vice_governador
+  inicio: 2023-01-01
+  fim: 2026-03-31
+  situacao: "Mandato de vice encerrado em 2026-03-31, com a posse no governo"
+  texto_oficial: "A Assembleia Legislativa do Estado de Mato Grosso (ALMT) oficializou, nesta terça-feira (31), a posse de Otaviano Pivetta (Republicanos) no cargo de governador do estado, em sessão solene realizada no Plenário das Deliberações Deputado Renê Barbour."
+  fonte_id: almt-noticias
+  url_origem: https://www.al.mt.gov.br/midia/texto/almt-da-posse-a-otaviano-pivetta-e-consolida-sucessao-no-comando-do-executivo-estadual/visualizar
+  snapshot_url: https://web.archive.org/web/20260416022614/https://www.al.mt.gov.br/midia/texto/almt-da-posse-a-otaviano-pivetta-e-consolida-sucessao-no-comando-do-executivo-estadual/visualizar
+  capturado_em: 2026-11-21T06:13:33Z
+  contribuidor: viniciusdsandrade

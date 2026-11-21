@@ -333,6 +333,21 @@
   status: validado
   validado_em: 2026-10-30
 
+- id: ac-agencia-noticias
+  nome: Agência de Notícias do Acre
+  orgao: Governo do Estado do Acre
+  esfera: estadual
+  ente: AC
+  categoria: primeira_parte
+  nivel_confianca: T0
+  url_base: https://agencia.ac.gov.br/
+  formato: HTML
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Notícias oficiais do governo do estado. Usada para a renúncia e a transmissão do cargo de governador, que o DOE não publica (ADR-0074)."
+  status: validado
+  validado_em: 2026-11-21
+
 - id: al-diario-oficial
   nome: Diário Oficial do Estado de Alagoas
   orgao: Imprensa oficial do estado (AL)
@@ -543,6 +558,21 @@
   status: validado
   validado_em: 2026-10-30
 
+- id: es-governo-noticias
+  nome: Governo do Estado do Espírito Santo, notícias oficiais
+  orgao: Governo do Estado do Espírito Santo
+  esfera: estadual
+  ente: ES
+  categoria: primeira_parte
+  nivel_confianca: T0
+  url_base: https://www.es.gov.br/Noticia/
+  formato: HTML
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Notícias oficiais do governo do estado. Usada para a posse do governador (ADR-0074). As notícias da Ales de 2026 não têm snapshot no Internet Archive."
+  status: validado
+  validado_em: 2026-11-21
+
 - id: go-diario-oficial
   nome: Diário Oficial do Estado de Goiás
   orgao: Imprensa oficial do estado (GO)
@@ -737,6 +767,21 @@
   limitacoes: null
   status: validado
   validado_em: 2026-10-30
+
+- id: pb-auniao-noticias
+  nome: A União, jornal oficial do Estado da Paraíba, notícias
+  orgao: Empresa Paraibana de Comunicação (A União)
+  esfera: estadual
+  ente: PB
+  categoria: primeira_parte
+  nivel_confianca: T0
+  url_base: https://auniao.pb.gov.br/noticias/
+  formato: HTML
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Notícias do jornal oficial do estado. Usada para a posse do governador, que o DOE não publica (ADR-0074)."
+  status: validado
+  validado_em: 2026-11-21
 
 - id: pb-transparencia
   nome: Portal da Transparência da Paraíba
@@ -2816,6 +2861,21 @@
   limitacoes: "Fotografias oficiais dos parlamentares hospedadas no storage institucional."
   status: validado
   validado_em: 2026-11-11
+
+- id: almt-noticias
+  nome: Assembleia Legislativa do Estado de Mato Grosso, notícias oficiais
+  orgao: Assembleia Legislativa do Estado de Mato Grosso
+  esfera: estadual
+  ente: MT
+  categoria: primeira_parte
+  nivel_confianca: T0
+  url_base: https://www.al.mt.gov.br/midia/texto/
+  formato: HTML
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Notícias da Secretaria de Comunicação Social da ALMT. Usada para a posse dada pela Assembleia (ADR-0074)."
+  status: validado
+  validado_em: 2026-11-21
 
 - id: alems-deputados
   nome: Assembleia Legislativa do Estado de Mato Grosso do Sul, deputados estaduais
