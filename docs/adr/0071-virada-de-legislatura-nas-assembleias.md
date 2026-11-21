@@ -53,7 +53,7 @@ O ADR-0059 já guarda, para 17 casas, a data em que cada parlamentar apareceu pe
 - Na Câmara e no Senado, a legislatura vem da API e muda sozinha. A trava só age se a API demorar a trazer a legislatura nova.
 - Uma reconstrução do cache do zero depois da posse marca todo mundo como visto depois do fim. Os perfis da casa sumiriam, e a trava do ADR-0006 bloqueia a publicação. A falha é ruidosa de propósito.
 - Na ALESC, a regra que aceita a ficha por despesa na legislatura (`temDespesaNaLegislatura`) olha os anos até o ano corrente e não foi limitada ao fim da legislatura.
-- Na CLDF, o adaptador termina a 9ª legislatura em 2027-01-31, e a posse seguinte é em 2027-01-06. A trava só age em 2027-02-01. Entre as duas datas, os distritais da legislatura encerrada seguem em exercício no site. O mesmo vale um dia para a ALRS, com posse em 2027-01-31.
+- Na CLDF, o adaptador termina a 9ª legislatura em 2027-01-31, e a posse seguinte é em 2027-01-06. A trava só age em 2027-02-01. Entre as duas datas, os distritais da legislatura encerrada seguem em exercício no site. O mesmo vale um dia para a ALRS, com posse em 2027-01-31. Resolvido pelo ADR-0073.
 - Os adaptadores que leem o SAPL filtram pela legislatura da fonte. Não foi conferido se o filtro inclui a legislatura nova.
 
 ## Alternativas consideradas

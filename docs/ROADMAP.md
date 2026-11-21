@@ -625,7 +625,7 @@ Verificação em 2026-11-20:
 Limitações:
 
 - Entre a posse e a atualização de cada adaptador, os deputados estaduais aparecem fora de exercício, e os eleitos, sem registro de exercício (ADR-0070).
-- CLDF: a trava age só em 2027-02-01, e a posse é em 2027-01-06. ALRS: um dia de diferença.
+- CLDF e ALRS: a trava agia só em 2027-02-01, depois da posse. Resolvido pelo ADR-0073.
 - Não validado: se os adaptadores em SAPL incluem a legislatura nova pelo filtro da fonte.
 
 ## Vice-presidente e vice-governador (ADR-0072)
@@ -653,6 +653,23 @@ Limitações:
 
 - O perfil não diz que o vice assumiu o governo. A data da posse no governo só entra por contribuição com fonte T0.
 - O vice não tem agenda, despesas nem atos próprios.
+
+## Posse dos sucessores encerra o mandato (ADR-0073)
+
+Feito em 2026-11-21.
+Na CLDF e na ALRS, o fim da legislatura registrado pelo adaptador é posterior à posse dos sucessores.
+
+| Frente | Entrega | Estado |
+|---|---|---|
+| Publish | A posse dos eleitos numa eleição posterior, pela regra de `contrib/mandatos.yaml`, encerra o mandato da assembleia | concluída |
+
+Verificação em 2026-11-21:
+
+- ETL: 453 testes, dois novos (posse antes do fim da fonte e comparação pela eleição).
+- Ensaio de `publish` sobre os dados locais e o cache bruto:
+  - com `ETL_AGORA=2027-01-05`, só os 24 da ALERR saem de em exercício, pelo ADR-0071;
+  - com `ETL_AGORA=2027-01-06`, saem também os 24 da CLDF;
+  - com `ETL_AGORA=2027-01-31`, saem também os 55 da ALRS.
 
 ## Fase 2 (depois da POC)
 

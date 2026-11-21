@@ -13,7 +13,7 @@ As fontes estão descritas em `docs/FONTES.md`.
   - chefe do Executivo com candidatura a outro cargo na eleição seguinte, no próprio TSE: "Deixou o cargo para concorrer a {cargo}". O mandato termina no prazo de renúncia, seis meses antes do pleito (Constituição, art. 14, § 6º), e o texto avisa que o TSE não informa a data exata (ADR-0033);
   - eleito que ainda não tomou posse: "Eleito em {ano}; posse prevista em {data}";
   - eleito que a casa ainda não registra em exercício depois da data de posse: "Eleito em {ano}; sem registro de exercício".
-  - parlamentar que a casa lista como ativo, com todos os mandatos registrados pela casa já encerrados: "Mandato encerrado em {data}". Na assembleia, a regra espera a posse dos sucessores (ADR-0071);
+  - parlamentar que a casa lista como ativo, com todos os mandatos registrados pela casa já encerrados: "Mandato encerrado em {data}". Na assembleia, a regra espera a posse dos sucessores (ADR-0071). A posse dos eleitos numa eleição posterior encerra o mandato, mesmo com fim posterior na fonte: "Mandato encerrado em {data da posse}" (ADR-0073);
   - vereador do piloto municipal: em exercício é quem a câmara lista como ativo, uma pessoa por cadeira. O titular licenciado segue com o mandato aberto na fonte e sai como "Fora de exercício" (ADR-0065). O afastamento sai pela descrição do tipo que a câmara registra;
   - vereador de Paulínia: em exercício é quem está na página "Vereadores em Exercício" do portal da Câmara (ADR-0066).
 - **Ausência.** Campo sem valor na fonte é `null` no JSON e "sem registro na fonte" na tela.
