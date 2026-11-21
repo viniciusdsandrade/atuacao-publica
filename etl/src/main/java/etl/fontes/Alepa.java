@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -164,6 +165,8 @@ public final class Alepa implements Fonte {
                 }
             }
         }
+        // Proposições pelo painel DevExpress, com sessão (ADR-0087).
+        AlepaProposicoes.coletar(ctx, coleta);
     }
 
     static String urlDaLista(int ano, int mes) {
@@ -408,6 +411,11 @@ public final class Alepa implements Fonte {
         List<Pessoa> pessoas = new ArrayList<>();
         Map<String, Prov> provDaParticipacao = new HashMap<>();
         Map<String, List<Voto>> votosPorDeputado = votosPorDeputado(ctx, deputados, provDaParticipacao);
+        Map<String, String> nomePorId = new LinkedHashMap<>();
+        for (HistoricoDeputados.Entrada e : entradas) {
+            nomePorId.putIfAbsent(e.id(), e.nome());
+        }
+        Map<String, List<Registros.Proposicao>> proposicoes = AlepaProposicoes.porDeputado(ctx, new AutoriaPorNome(nomePorId));
         DateTimeFormatter fmtNasc = DateTimeFormatter.ofPattern("dd.MM.yyyy");
 
         for (HistoricoDeputados.Entrada ent : entradas) {
@@ -485,6 +493,7 @@ public final class Alepa implements Fonte {
             blocosNode.set("votos", Json.SAIDA.valueToTree(votos));
             blocosNode.set("participacao_votacoes", Json.SAIDA.valueToTree(
                     votos.isEmpty() ? List.of() : participacao(votos, provDaParticipacao.get("prov"))));
+            blocosNode.set("proposicoes", Json.SAIDA.valueToTree(proposicoes.getOrDefault(id, List.of())));
             blocosNode.set("fontes", Json.SAIDA.valueToTree(Registros.fontesDosBlocos(blocosNode)));
             Json.gravar(pastaBlocos.resolve(id + ".json"), blocosNode);
         }

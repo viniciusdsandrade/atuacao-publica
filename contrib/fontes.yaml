@@ -468,6 +468,21 @@
   status: validado
   validado_em: 2026-10-30
 
+- id: ba-legisla
+  nome: Legisla Bahia, decretos numerados
+  orgao: Casa Civil do Estado da Bahia
+  esfera: estadual
+  ente: BA
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://www.legislabahia.ba.gov.br/
+  formato: HTML
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Pesquisa por categoria e período, 20 por página, cerca de 12 s por página."
+  status: validado com limitação
+  validado_em: 2026-11-21
+
 - id: ba-despesas
   nome: Dados Abertos Bahia, painel de despesas
   orgao: Secretaria da Fazenda do Estado da Bahia
@@ -2749,6 +2764,21 @@
   limitacoes: "Páginas de perfil parlamentar, biografia sobre e composição das comissões permanentes e representações."
   status: validado
   validado_em: 2026-11-06
+
+- id: alepa-proposicoes
+  nome: Assembleia Legislativa do Estado do Pará, painel de proposições
+  orgao: Assembleia Legislativa do Estado do Pará
+  esfera: estadual
+  ente: PA
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://www.alepa.pa.gov.br/Legislativo/
+  formato: HTML (callback DevExpress)
+  autenticacao: nenhuma
+  limitacoes: "Lista de cartões, dez por página. A página seguinte exige o cookie de sessão criado pelo primeiro callback e o estado devolvido pela página anterior. Sem situação na lista."
+  licenca: null
+  status: validado com limitação
+  validado_em: 2026-11-21
 
 - id: alepa-portal
   nome: Assembleia Legislativa do Estado do Pará, portal institucional e fotos
