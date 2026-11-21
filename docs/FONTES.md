@@ -1632,6 +1632,16 @@ Validação em 2026-11-03 com o User-Agent do projeto.
 - URL base: `https://www.al.rn.leg.br/deputados/mesadiretora`
 - Composição oficial da Mesa Diretora da 63ª Legislatura (Presidente, Vice-Presidentes e Secretários).
 
+### `alrn-elegis`: proposições (ADR-0080)
+
+- API de transparência do e-Legis: `https://api-transparencialegislativa.al.rn.leg.br/elegis-api-transp-legislativa/`. Validação em 2026-11-21, numa rede no Brasil.
+- Lista: `processo?pagina={n}&tamanhoPagina=200&dataInicio=2023-02-01&dataFinal={AAAA-MM-DD}`, do mais novo para o mais velho, páginas a partir de 0. Em 2026-11-21: 15.968 processos.
+- Campos usados: `id`, `propositura.tipo.sigla`, `propositura.numero`, `propositura.ano`, `ementa`, `dataEntrada`, `iniciativa.parlamentar.nomeParlamentar` e `documento.id`.
+- Texto: `documento/{id}/conteudo` (PDF).
+- Os ids do e-Legis (parlamentar e iniciativa) não são os do portal: a ligação é pelo nome.
+- O endpoint `parlamentar/{id}` traz CPF e data de nascimento. Não é usado.
+- Votos por deputado (`processo/ultimas-votacoes`, `processo/{id}/detalhamento-votacao/{reuniao}`) e presença (`reuniao/presenca/{id}`): validados no levantamento, não coletados.
+
 ### `alrn-portal`: fotografias oficiais
 
 - URL base: `https://www.al.rn.leg.br/storage/deputados/`

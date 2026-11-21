@@ -748,7 +748,8 @@ Feito em 2026-11-21. Primeira das assembleias com poucos blocos.
 | CI | Passo `fetch alerj` com 30 min de orçamento | concluída |
 | Votos e presença | Voto por deputado não existe na fonte; presença só por mês | não coletados |
 | ALEMA | Proposições pela API pública do sistema legislativo (ADR-0079): 2.899 proposições, 2.374 autorias em 41 deputados | concluída |
-| Outras casas | ALRN (JSON com proposições, votos e presença), ALMT (HTML, 10 por página), ALEPA (callback com sessão); ALEMS bloqueada por captcha | pendente |
+| ALRN | Proposições pela API do e-Legis (ADR-0080): 2.525 proposições, 2.259 autorias nos 24 deputados | concluída |
+| Outras casas | Votos e presença da ALRN (JSON); ALMT (HTML, 10 por página); ALEPA (callback com sessão); ALEMS bloqueada por captcha | pendente |
 
 Verificação em 2026-11-21:
 
