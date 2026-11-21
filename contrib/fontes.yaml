@@ -468,6 +468,21 @@
   status: validado
   validado_em: 2026-10-30
 
+- id: ba-despesas
+  nome: Dados Abertos Bahia, painel de despesas
+  orgao: Secretaria da Fazenda do Estado da Bahia
+  esfera: estadual
+  ente: BA
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://dados.ba.gov.br/
+  formato: CSV em ZIP (CKAN)
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Um ZIP único, de cerca de 230 MB, com todos os anos desde 2013, já somados por mês, órgão, função e elemento, sem favorecido. A coleta guarda só a soma."
+  status: validado
+  validado_em: 2026-11-21
+
 - id: ce-diario-oficial
   nome: Diário Oficial do Estado do Ceará
   orgao: Imprensa oficial do estado (CE)
@@ -1112,6 +1127,21 @@
   limitacoes: null
   status: validado
   validado_em: 2026-10-30
+
+- id: rs-despesa-do-estado
+  nome: Dados Abertos RS, Despesa do Estado (arquivos mensais)
+  orgao: Secretaria da Fazenda do Estado do Rio Grande do Sul
+  esfera: estadual
+  ente: RS
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://dados.rs.gov.br/
+  formato: CSV em ZIP (CKAN)
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Um ZIP por mês, de 12 a 16 MB, com um lançamento por linha e o favorecido. A coleta guarda só a soma por mês e órgão. Os meses mais recentes chegam incompletos."
+  status: validado com limitação
+  validado_em: 2026-11-21
 
 - id: sc-diario-oficial
   nome: Diário Oficial do Estado de Santa Catarina

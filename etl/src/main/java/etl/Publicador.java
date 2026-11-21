@@ -87,7 +87,7 @@ public final class Publicador {
     private static final Pattern PAPEL_LIDERANCA = Pattern.compile(
             "^(presidente|presidenta|1[ºª]?\\s*vice|2[ºª]?\\s*vice|3[ºª]?\\s*vice|vice-presid|coordenador|relator|ouvidor|procurador|corregedor|secret[aá]ri)",
             Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE);
-    static final List<String> FONTES_CLI = List.of("camara", "senado", "tse", "executivo", "sapl", "tcesp", "cgu", "agenda", "contrib", "alesp", "executivosp", "executivomg", "executivogo", "executivoes", "almg", "alep", "alba", "alerj", "alrs", "alece", "alesc", "alego", "ales", "alepa", "alepe", "cldf", "almt", "alems", "alpb", "aleam", "aleal", "alero", "alepi", "alrn", "aleto", "alese", "alema", "aleac", "alerr", "alap", "cmsp", "caraguatatuba", "paulinia");
+    static final List<String> FONTES_CLI = List.of("camara", "senado", "tse", "executivo", "sapl", "tcesp", "cgu", "agenda", "contrib", "alesp", "executivosp", "executivomg", "executivogo", "executivoes", "executivors", "executivoba", "almg", "alep", "alba", "alerj", "alrs", "alece", "alesc", "alego", "ales", "alepa", "alepe", "cldf", "almt", "alems", "alpb", "aleam", "aleal", "alero", "alepi", "alrn", "aleto", "alese", "alema", "aleac", "alerr", "alap", "cmsp", "caraguatatuba", "paulinia");
 
     /** Perfil em construção, antes da validação. */
     static final class Perfil {
