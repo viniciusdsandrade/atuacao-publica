@@ -11,7 +11,7 @@ on:
       fonte:
         description: Fonte a coletar. As demais seguem do cache de dados brutos.
         type: choice
-        options: [todas, camara, senado, tse, executivo, sapl, tcesp, cgu, agenda, contrib, alesp, executivosp, executivomg, executivogo, executivoes, almg, alep, alba, alerj, alrs, alece, alesc, alego, ales, alepa, alepe, cldf, almt, alems, alpb, aleam, aleal, alero, alepi, alrn, aleto, alese, alema, aleac, alerr, alap, cmsp, caraguatatuba, paulinia]
+        options: [todas, camara, senado, tse, executivo, sapl, tcesp, cgu, agenda, contrib, alesp, executivosp, executivomg, executivogo, executivoes, executivors, executivoba, almg, alep, alba, alerj, alrs, alece, alesc, alego, ales, alepa, alepe, cldf, almt, alems, alpb, aleam, aleal, alero, alepi, alrn, aleto, alese, alema, aleac, alerr, alap, cmsp, caraguatatuba, paulinia]
         default: todas
 
 permissions:
@@ -205,6 +205,24 @@ jobs:
         env:
           ETL_ORCAMENTO_MINUTOS: '7'
         run: java -Xmx2g -jar etl/target/etl.jar fetch executivoes
+      - name: fetch executivors
+        # Poder Executivo do Estado do Rio Grande do Sul: despesa paga por mês e órgão (ADR-0082). Cada arquivo mensal
+        # tem 15 MB; a coleta guarda só a soma, e a carga inicial se espalha por mais de uma execução.
+        if: env.FONTE == 'todas' || env.FONTE == 'executivors'
+        continue-on-error: true
+        timeout-minutes: 30
+        env:
+          ETL_ORCAMENTO_MINUTOS: '25'
+        run: java -Xmx2g -jar etl/target/etl.jar fetch executivors
+      - name: fetch executivoba
+        # Poder Executivo do Estado da Bahia: despesa paga por mês e órgão (ADR-0083). O arquivo único tem 230 MB e renova
+        # uma vez por semana; a coleta guarda só a soma.
+        if: env.FONTE == 'todas' || env.FONTE == 'executivoba'
+        continue-on-error: true
+        timeout-minutes: 20
+        env:
+          ETL_ORCAMENTO_MINUTOS: '15'
+        run: java -Xmx2g -jar etl/target/etl.jar fetch executivoba
       - name: fetch almg
         # Assembleia Legislativa do Estado de Minas Gerais: deputados, comissões e verbas indenizatórias.
         if: (env.FONTE == 'todas' || env.FONTE == 'almg') && !contains(env.SEMENTE, ' almg ')
@@ -364,12 +382,13 @@ jobs:
           ETL_ORCAMENTO_MINUTOS: '15'
         run: java -Xmx2g -jar etl/target/etl.jar fetch alepi
       - name: fetch alrn
-        # Assembleia Legislativa do Estado do Rio Grande do Norte: 24 deputados estaduais, perfis e Mesa Diretora.
+        # Assembleia Legislativa do Estado do Rio Grande do Norte: deputados, perfis, Mesa Diretora, proposições e votos.
+        # O detalhe de cada votação vem uma vez e fica no cache: a carga inicial se espalha por mais de uma execução (ADR-0081).
         if: env.FONTE == 'todas' || env.FONTE == 'alrn'
         continue-on-error: true
-        timeout-minutes: 20
+        timeout-minutes: 30
         env:
-          ETL_ORCAMENTO_MINUTOS: '15'
+          ETL_ORCAMENTO_MINUTOS: '25'
         run: java -Xmx2g -jar etl/target/etl.jar fetch alrn
       - name: fetch aleto
         # Assembleia Legislativa do Estado do Tocantins: 24 deputados estaduais, perfis, proposições e Mesa Diretora via SAPL.
