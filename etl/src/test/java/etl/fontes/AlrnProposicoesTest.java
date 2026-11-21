@@ -3,9 +3,15 @@ package etl.fontes;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.Instant;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
+
+import etl.Coleta;
+import etl.Contexto;
 
 import etl.Json;
 import etl.Registros.Proposicao;
@@ -39,5 +45,22 @@ class AlrnProposicoesTest {
         assertNull(AlrnProposicoes.proposicao(Json.FONTE.readTree("""
                 {"id": 1, "propositura": {"tipo": {"sigla": "REQ"}, "numero": 1, "ano": 2026}}
                 """), PROV));
+    }
+
+    @Test
+    void situacaoDaTramitacaoMaisRecente(@TempDir Path tmp) throws Exception {
+        Contexto ctx = new Contexto(tmp, tmp.resolve("data"), null, null, Instant.parse("2026-11-21T12:00:00Z"), null);
+        Path arquivo = tmp.resolve("data/raw/alrn/tramitacoes/62917.json");
+        Files.createDirectories(arquivo.getParent());
+        String json = """
+                [{"id": 534741, "situacaoProcesso": {"id": 242, "nome": "Matéria aprovada"}},
+                 {"id": 534000, "situacaoProcesso": {"id": 68, "nome": "Aguardando publicação"}}]
+                """;
+        Files.writeString(arquivo, json);
+        Json.gravar(arquivo.resolveSibling("62917.json.meta.json"),
+                new Coleta.Arquivo("x", "raw/alrn/tramitacoes/62917.json", "abc", json.length(), Instant.parse("2026-11-21T12:00:00Z")), true);
+
+        assertEquals("Matéria aprovada", AlrnProposicoes.situacao(ctx, "62917"));
+        assertNull(AlrnProposicoes.situacao(ctx, "1"));
     }
 }

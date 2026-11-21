@@ -50,6 +50,46 @@ final class AlrnProposicoes {
         for (int p = 1; p < paginas && !coleta.orcamentoExaurido(); p++) {
             coleta.obterOpcional(url(ctx, p), caminho(p), "application/json", Politica.SEMANAL_EM_LISTA);
         }
+        // A situação só sai na tramitação de cada processo (ADR-0088). Do mais novo para o mais velho; cada arquivo renova
+        // uma vez por semana, no seu dia de rodízio, e a carga inicial se espalha pelas execuções.
+        for (long id : idsLegislativos(ctx)) {
+            if (coleta.orcamentoExaurido()) {
+                break;
+            }
+            coleta.obterOpcional(API + "processo/" + id + "/tramitacao", caminhoDaTramitacao(id), "application/json", Politica.SEMANAL);
+        }
+    }
+
+    /** Ids dos processos de tipo legislativo das listas em cache, na ordem da lista (do mais novo para o mais velho). */
+    static List<Long> idsLegislativos(Contexto ctx) {
+        List<Long> ids = new ArrayList<>();
+        for (int p = 0; p < MAX_PAGINAS; p++) {
+            Coleta.Arquivo arq = Coleta.metadados(ctx, "alrn", caminho(p));
+            if (arq == null || !Files.exists(Coleta.caminho(ctx, arq))) {
+                break;
+            }
+            for (JsonNode item : Json.ler(Coleta.caminho(ctx, arq)).path("dados")) {
+                if (proposicao(item, null) != null) {
+                    ids.add(item.get("id").asLong());
+                }
+            }
+        }
+        return ids;
+    }
+
+    /** Situação do processo: a da tramitação mais recente, a primeira da lista. Nula sem a tramitação em cache. */
+    static String situacao(Contexto ctx, String idFonte) {
+        Coleta.Arquivo arq = Coleta.metadados(ctx, "alrn", caminhoDaTramitacao(Long.parseLong(idFonte)));
+        if (arq == null || !Files.exists(Coleta.caminho(ctx, arq))) {
+            return null;
+        }
+        JsonNode lista = Json.ler(Coleta.caminho(ctx, arq));
+        JsonNode primeira = lista.isArray() && !lista.isEmpty() ? lista.get(0) : null;
+        return primeira == null ? null : Texto.semEntidades(Json.texto(primeira.path("situacaoProcesso"), "nome"));
+    }
+
+    private static String caminhoDaTramitacao(long id) {
+        return "tramitacoes/" + id + ".json";
     }
 
     static Map<String, List<Proposicao>> porDeputado(Contexto ctx, AutoriaPorNome autoria) {
@@ -78,7 +118,10 @@ final class AlrnProposicoes {
                     semPerfil.add(nome);
                     continue;
                 }
-                porDeputado.computeIfAbsent(id, k -> new ArrayList<>()).add(base);
+                String situacao = situacao(ctx, base.idFonte());
+                porDeputado.computeIfAbsent(id, k -> new ArrayList<>()).add(situacao == null ? base : new Proposicao(base.idFonte(),
+                        base.tipo(), base.numero(), base.ano(), base.identificacao(), base.ementa(), situacao, base.temas(),
+                        base.dataApresentacao(), base.ordemAssinatura(), base.proponente(), base.urlTexto(), base.prov()));
                 autorias++;
             }
         }

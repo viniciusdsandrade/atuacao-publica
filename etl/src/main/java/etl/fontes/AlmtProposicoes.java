@@ -66,6 +66,68 @@ final class AlmtProposicoes {
                 }
             }
         }
+        // O último andamento sai da tramitação de cada proposição (ADR-0088). Do ano mais novo para o mais velho; cada
+        // arquivo renova uma vez por semana, no seu dia de rodízio, e a carga inicial se espalha pelas execuções.
+        List<String> ids = documentos(ctx);
+        java.util.Collections.reverse(ids);
+        for (String id : ids) {
+            if (coleta.orcamentoExaurido()) {
+                break;
+            }
+            coleta.obterOpcional(SITE + "/proposicao/" + id + "/tramitacoes", caminhoDaTramitacao(id), "text/html", Politica.SEMANAL);
+        }
+    }
+
+    /** Ids dos documentos das listas em cache, do ano mais velho para o mais novo. */
+    static List<String> documentos(Contexto ctx) throws Exception {
+        List<String> ids = new ArrayList<>();
+        for (int ano = ANO_INICIAL; ano <= ctx.hoje().getYear(); ano++) {
+            for (Tipo tipo : TIPOS) {
+                for (int p = 1; p <= MAX_PAGINAS; p++) {
+                    Coleta.Arquivo arq = Coleta.metadados(ctx, "almt", caminho(tipo, ano, p));
+                    if (arq == null || !Files.exists(Coleta.caminho(ctx, arq))) {
+                        break;
+                    }
+                    List<Item> itens = itens(Texto.lerArquivo(Coleta.caminho(ctx, arq)));
+                    itens.forEach(i -> ids.add(i.documento()));
+                    if (itens.size() < POR_PAGINA) {
+                        break;
+                    }
+                }
+            }
+        }
+        return ids;
+    }
+
+    private static final Pattern ANDAMENTO = Pattern.compile("(?s)<div class=\"mb-1\">\\s*(\\d{2}/\\d{2}/\\d{4})\\s*-\\s*(.*?)</div>");
+
+    /** Último andamento da tramitação ("Lei nº 12.809/2025 D.O. Estado..."), ou nulo sem a tramitação em cache. */
+    static String ultimoAndamento(String html) {
+        String ultimo = null;
+        Matcher m = ANDAMENTO.matcher(html);
+        while (m.find()) {
+            String texto = Texto.semEntidades(m.group(2).replaceAll("(?s)<[^>]+>", " "));
+            if (texto != null) {
+                ultimo = texto;
+            }
+        }
+        return ultimo;
+    }
+
+    private static String situacao(Contexto ctx, String documento) {
+        Coleta.Arquivo arq = Coleta.metadados(ctx, "almt", caminhoDaTramitacao(documento));
+        if (arq == null || !Files.exists(Coleta.caminho(ctx, arq))) {
+            return null;
+        }
+        try {
+            return ultimoAndamento(Texto.lerArquivo(Coleta.caminho(ctx, arq)));
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    private static String caminhoDaTramitacao(String documento) {
+        return "tramitacoes/" + documento + ".html";
     }
 
     static Map<String, List<Proposicao>> porDeputado(Contexto ctx, AutoriaPorNome autoria) {
@@ -101,7 +163,8 @@ final class AlmtProposicoes {
                             }
                             porDeputado.computeIfAbsent(id, k -> new ArrayList<>()).add(new Proposicao(item.documento(), tipo.sigla(),
                                     item.numero(), item.ano(), tipo.sigla() + " " + item.numero() + "/" + item.ano(),
-                                    item.ementa() == null ? null : Guarda.sanitizar(item.ementa()), null, null, null, i + 1, i == 0,
+                                    item.ementa() == null ? null : Guarda.sanitizar(item.ementa()), situacao(ctx, item.documento()), null,
+                                    null, i + 1, i == 0,
                                     item.pdf() == null ? SITE + "/proposicao/cpdoc/" + item.documento() + "/visualizar" : SITE + item.pdf(),
                                     prov));
                             autorias++;

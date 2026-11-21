@@ -47,4 +47,20 @@ class AlmtProposicoesTest {
         assertEquals("1", autoria.id("Dep. Eduardo Botelho"));
         assertEquals("2", autoria.id("Dep. Dr. Eugênio"));
     }
+
+    @Test
+    void ultimoAndamentoDaTramitacao() {
+        String html = """
+                <turbo-frame><div class="mb-1">
+                    24/02/2025 -
+                    Aguardando Sanção Governamental
+                </div><div class="mb-1">
+                    27/02/2025 -
+                    Lei n&deg; 12.809/2025 D.O. Estado(n&deg; 28940 - 27/02/2025)
+                </div></turbo-frame>
+                """;
+
+        assertEquals("Lei n° 12.809/2025 D.O. Estado(n° 28940 - 27/02/2025)", AlmtProposicoes.ultimoAndamento(html));
+        assertEquals(null, AlmtProposicoes.ultimoAndamento("<div>sem tramitação</div>"));
+    }
 }
