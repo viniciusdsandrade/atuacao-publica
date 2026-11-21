@@ -2982,6 +2982,21 @@
   status: validado
   validado_em: 2026-11-11
 
+- id: almt-proposicoes
+  nome: Assembleia Legislativa do Estado de Mato Grosso, pesquisa de proposições
+  orgao: Assembleia Legislativa do Estado de Mato Grosso
+  esfera: estadual
+  ente: MT
+  categoria: dados
+  nivel_confianca: T0
+  url_base: https://www.al.mt.gov.br/proposicao
+  formato: HTML
+  autenticacao: nenhuma
+  licenca: null
+  limitacoes: "Lista por tipo e ano, dez por página. Autoria pelo nome. Sem data de apresentação e sem situação na lista. A API oficial exige OAuth com credencial da Casa."
+  status: validado com limitação
+  validado_em: 2026-11-21
+
 - id: almt-noticias
   nome: Assembleia Legislativa do Estado de Mato Grosso, notícias oficiais
   orgao: Assembleia Legislativa do Estado de Mato Grosso

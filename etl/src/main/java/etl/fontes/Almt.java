@@ -138,6 +138,8 @@ public final class Almt implements Fonte {
         }
 
         coleta.obterOuVazio(URL_MESA_DIRETORA, "mesa-diretora.html", "text/html", Politica.SEMANAL);
+        // Proposições pela pesquisa do portal (ADR-0085).
+        AlmtProposicoes.coletar(ctx, coleta);
     }
 
     @Override
@@ -164,6 +166,11 @@ public final class Almt implements Fonte {
 
         List<Pessoa> pessoas = new ArrayList<>();
         Map<String, String> nomesCivisPorId = new HashMap<>();
+        Map<String, String> nomePorId = new java.util.LinkedHashMap<>();
+        for (HistoricoDeputados.Entrada ent : entradas) {
+            nomePorId.putIfAbsent(ent.id(), ent.nome());
+        }
+        Map<String, List<Registros.Proposicao>> proposicoes = AlmtProposicoes.porDeputado(ctx, new AutoriaPorNome(nomePorId));
 
         for (HistoricoDeputados.Entrada ent : entradas) {
             String id = ent.id();
@@ -223,7 +230,7 @@ public final class Almt implements Fonte {
             blocosNode.set("mandatos", Json.SAIDA.valueToTree(mandatos));
             blocosNode.set("orgaos_e_frentes", Json.SAIDA.valueToTree(orgaos));
             blocosNode.set("despesas", Json.SAIDA.createArrayNode());
-            blocosNode.set("proposicoes", Json.SAIDA.createArrayNode());
+            blocosNode.set("proposicoes", Json.SAIDA.valueToTree(proposicoes.getOrDefault(id, List.of())));
             blocosNode.set("fontes", Json.SAIDA.valueToTree(Registros.fontesDosBlocos(blocosNode)));
 
             try {
