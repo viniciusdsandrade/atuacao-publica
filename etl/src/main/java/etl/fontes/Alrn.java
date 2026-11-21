@@ -127,8 +127,9 @@ public final class Alrn implements Fonte {
             coleta.obterOuVazio(urlDetalhe, "deputados/" + e.id() + ".html", HTML,
                     e.emExercicio() ? Politica.SEMANAL : Politica.SE_AUSENTE);
         }
-        // Proposições pela API de transparência do e-Legis (ADR-0080).
+        // Proposições e votos pela API de transparência do e-Legis (ADR-0080 e ADR-0081).
         AlrnProposicoes.coletar(ctx, coleta);
+        AlrnVotos.coletar(ctx, coleta);
     }
 
     @Override
@@ -156,7 +157,9 @@ public final class Alrn implements Fonte {
         for (HistoricoDeputados.Entrada ent : entradas) {
             nomePorId.putIfAbsent(ent.id(), ent.nome());
         }
-        Map<String, List<Registros.Proposicao>> proposicoes = AlrnProposicoes.porDeputado(ctx, new AutoriaPorNome(nomePorId));
+        AutoriaPorNome autoria = new AutoriaPorNome(nomePorId);
+        Map<String, List<Registros.Proposicao>> proposicoes = AlrnProposicoes.porDeputado(ctx, autoria);
+        AlrnVotos.Resultado votacoes = AlrnVotos.porDeputado(ctx, autoria);
 
         for (HistoricoDeputados.Entrada ent : entradas) {
             int id = Integer.parseInt(ent.id());
@@ -214,6 +217,8 @@ public final class Alrn implements Fonte {
             blocosNode.set("orgaos_e_frentes", Json.SAIDA.valueToTree(orgaos));
             blocosNode.set("despesas", Json.SAIDA.createArrayNode());
             blocosNode.set("proposicoes", Json.SAIDA.valueToTree(proposicoes.getOrDefault(idStr, List.of())));
+            blocosNode.set("votos", Json.SAIDA.valueToTree(votacoes.votos().getOrDefault(idStr, List.of())));
+            blocosNode.set("participacao_votacoes", Json.SAIDA.valueToTree(votacoes.participacao().getOrDefault(idStr, List.of())));
             blocosNode.set("fontes", Json.SAIDA.valueToTree(Registros.fontesDosBlocos(blocosNode)));
 
             try {
