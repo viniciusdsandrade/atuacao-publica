@@ -232,12 +232,13 @@ jobs:
           ETL_ORCAMENTO_MINUTOS: '30'
         run: java -Xmx2g -jar etl/target/etl.jar fetch alba
       - name: fetch alerj
-        # Assembleia Legislativa do Estado do Rio de Janeiro: deputados e perfis biográficos.
+        # Assembleia Legislativa do Estado do Rio de Janeiro: deputados, perfis biográficos, verba de gabinete e proposições.
+        # A pesquisa de proposições leva até 1 min por resposta (ADR-0078): esgotado o orçamento, o resto segue na execução seguinte.
         if: env.FONTE == 'todas' || env.FONTE == 'alerj'
         continue-on-error: true
-        timeout-minutes: 20
+        timeout-minutes: 35
         env:
-          ETL_ORCAMENTO_MINUTOS: '15'
+          ETL_ORCAMENTO_MINUTOS: '30'
         run: java -Xmx2g -jar etl/target/etl.jar fetch alerj
       - name: fetch alrs
         # Assembleia Legislativa do Estado do Rio Grande do Sul: deputados em exercício e perfis.
