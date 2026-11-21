@@ -26,6 +26,7 @@ import {
   moeda,
   valorLongo,
   notaDoBloco,
+  unidadeDoBloco,
   partidoComNome,
   rotuloCargo,
   rotuloCurtoBloco,
@@ -393,7 +394,7 @@ export class Perfil {
   }
 
   protected unidade(bloco: string): string {
-    return bloco === 'despesas_executivo' ? 'pagamentos' : 'lançamentos';
+    return unidadeDoBloco(bloco, this.perfil()?.esfera, this.perfil()?.ente);
   }
 
   /** Total por ano a partir das somas mensais publicadas. A barra compara só os anos deste perfil. */

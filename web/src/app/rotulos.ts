@@ -296,6 +296,12 @@ const NOTAS_DO_GOVERNO_ESTADUAL: Record<string, Record<string, string>> = {
     despesas_executivo:
       'Despesas orçamentárias do Gabinete do Governador e secretarias da administração direta, somadas por mês a partir do Portal da Transparência do Estado de São Paulo. A fonte não informa quem autorizou cada gasto.',
   },
+  GO: {
+    atos_normativos:
+      'Decretos numerados do Poder Executivo de Goiás, como registrados na pesquisa de legislação da Casa Civil. A fonte não informa quem assinou cada ato.',
+    despesas_executivo:
+      'Valor pago pelos órgãos do Poder Executivo de Goiás, somado por mês e órgão a partir da execução orçamentária nos dados abertos do estado. A fonte já publica cada linha como total do mês, sem favorecido; a contagem é de linhas da fonte, não de pagamentos. A fonte não informa quem autorizou cada gasto.',
+  },
   MG: {
     atos_normativos:
       'Decretos numerados do Poder Executivo de Minas Gerais, como registrados nos dados abertos da Assembleia Legislativa. Decretos sem número ficam fora. A fonte não informa quem assinou cada ato.',
@@ -303,6 +309,17 @@ const NOTAS_DO_GOVERNO_ESTADUAL: Record<string, Record<string, string>> = {
       'Compromissos como publicados na agenda do Governador pela Agência Minas, com a hora publicada. Dia marcado "Sem agenda oficial" fica sem registro.',
   },
 };
+
+/**
+ * O que a contagem das despesas soma. Em Goiás, cada linha da fonte já é um total do mês por órgão, função, elemento e
+ * ação: a contagem é de linhas, não de pagamentos (ADR-0076).
+ */
+export function unidadeDoBloco(bloco: string, esfera?: string | null, ente?: string | null): string {
+  if (bloco !== 'despesas_executivo') {
+    return 'lançamentos';
+  }
+  return esfera === 'estadual' && ente === 'GO' ? 'lançamentos' : 'pagamentos';
+}
 
 function notaDoGovernoEstadual(bloco: string, uf: string | null | undefined): string | null {
   const nota = uf ? NOTAS_DO_GOVERNO_ESTADUAL[uf]?.[bloco] : undefined;
@@ -660,6 +677,7 @@ export const ANCORAS_FONTES: Record<string, string> = {
   alesp: 'doc-assembleia-legislativa-do-estado-de-sao-paulo-alesp',
   executivosp: 'doc-governo-do-estado-de-sao-paulo-executivo-estadual',
   executivomg: 'doc-governo-do-estado-de-minas-gerais-executivo-estadual',
+  executivogo: 'doc-governo-do-estado-de-goias-executivo-estadual',
   almg: 'doc-assembleia-legislativa-do-estado-de-minas-gerais-almg',
   alep: 'doc-assembleia-legislativa-do-estado-do-parana-alep',
   alba: 'doc-fontes-da-bahia-alba-governo-do-estado',
