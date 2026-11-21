@@ -29,6 +29,8 @@ final class Contribuicoes {
         }
         Map<String, Perfil> porId = new HashMap<>();
         perfis.forEach(p -> porId.put(p.id, p));
+        // Mandato vindo de contribuição. O da regra de contrib/mandatos.yaml também traz contribuidor, mas é dado automático.
+        Set<JsonNode> contribuidos = java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<>());
         for (JsonNode registro : Json.ler(arquivo)) {
             String id = registro.get("politico_id").stringValue();
             String tipo = registro.get("tipo").stringValue();
@@ -69,7 +71,7 @@ final class Contribuicoes {
                     String fim = Json.texto(entrada, "fim");
                     JsonNode substituido = null;
                     for (JsonNode m : List.copyOf(perfil.bloco("mandatos"))) {
-                        if (cargo.equals(m.path("cargo").asString()) && !m.has("contribuidor")
+                        if (cargo.equals(m.path("cargo").asString()) && !contribuidos.contains(m)
                                 && sobrepoe(inicio, fim, Json.texto(m, "inicio"), Json.texto(m, "fim"))) {
                             substituido = substituido == null ? m : substituido;
                             perfil.bloco("mandatos").remove(m);
@@ -84,16 +86,22 @@ final class Contribuicoes {
                     r.set("situacao", entrada.get("situacao"));
                     r.set("texto_oficial", entrada.get("texto_oficial"));
                     perfil.bloco("mandatos").add(proveniencia(r, entrada));
+                    contribuidos.add(r);
                     String hoje = ctx.hoje().toString();
                     boolean vigente = (inicio == null || inicio.compareTo(hoje) <= 0) && (fim == null || fim.compareTo(hoje) > 0);
-                    if (cargo.equals(perfil.cargo)) {
+                    // A correção muda o papel principal só se é o mandato vigente ou se substitui o mandato desse papel: a
+                    // sucessão de 2026 não muda o perfil de quem, em 2027, tomou posse do mesmo cargo por eleição.
+                    boolean doPapelPrincipal = substituido != null && (perfil.inicioDoPapel == null
+                            || perfil.inicioDoPapel.toString().equals(Json.texto(substituido, "inicio")));
+                    if (cargo.equals(perfil.cargo) && (vigente || doPapelPrincipal)) {
                         perfil.situacao = Json.texto(entrada, "situacao");
                         perfil.emExercicio = vigente;
-                    } else if (vigente) {
+                    } else if (!cargo.equals(perfil.cargo) && inicio != null && inicio.compareTo(hoje) <= 0) {
                         // Sucessão com fonte T0: o vice que assumiu o governo tem o cargo assumido como papel principal (ADR-0074).
+                        // Encerrado, o mandato assumido disputa o papel principal como fora de exercício, pela data de início.
                         perfil.papel(cargo, Json.texto(r, "esfera"), Json.texto(r, "ente"), Json.texto(r, "uf"), perfil.partido,
-                                Json.texto(entrada, "situacao"), Perfil.EM_EXERCICIO,
-                                inicio == null ? null : java.time.LocalDate.parse(inicio));
+                                vigente ? Json.texto(entrada, "situacao") : "Mandato encerrado em " + fim,
+                                vigente ? Perfil.EM_EXERCICIO : Perfil.FORA_DE_EXERCICIO, java.time.LocalDate.parse(inicio));
                     }
                 }
                 default -> rejeitados.add(new Meta.Rejeitado(origem, "tipo desconhecido: " + tipo));
