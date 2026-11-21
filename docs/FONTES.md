@@ -602,10 +602,6 @@ Validação em 2026-11-21, com o User-Agent do projeto, numa rede no Brasil.
 - Cada linha: "Decreto do Executivo n° 60.155", "Publicada no DOE dd/mm/AAAA", a ementa e o link do texto (`texto.aspx?id=...`).
 - A data é a da publicação no Diário Oficial. Quatro decretos de 2025 saem sem publicação na lista e ficam de fora.
 
-### Decretos da Bahia: bloqueados por TLS
-
-- O Legisla Bahia (`www.legislabahia.ba.gov.br`) só negocia TLS 1.2 com troca de chave RSA (`AES256-GCM-SHA384`), sem sigilo futuro. O Java 25 desativa essa troca de chave por padrão, e o projeto não relaxa a configuração de segurança da JVM para uma fonte. Conferido em 2026-11-21.
-
 ## Governo do Estado da Bahia (Executivo Estadual)
 
 Poder Executivo do Estado da Bahia (ADR-0083).
@@ -624,10 +620,16 @@ Não validado: se o portal responde ao runner do GitHub, fora do país.
 - A soma é feita na coleta (`obterDerivado`): o cache guarda só a soma, não o arquivo.
 - O servidor aceita leitura por faixa de bytes (HTTP 206), usada só na validação.
 
-### Agenda e decretos do Governador da BA: não coletados
+### `ba-legisla`: decretos do Governador (ADR-0090)
+
+- Pesquisa: `https://www.legislabahia.ba.gov.br/documentos?categoria%5B0%5D=2&data%5Bmin%5D={AAAA-MM-DD}&data%5Bmax%5D={AAAA-MM-DD}&page={n}`, categoria 2 (Decretos Numerados), 20 por página, cerca de 12 s por página.
+- Cada linha: "DECRETO Nº 23.570 DE 31 DE MARÇO DE 2025", a ementa e o link do documento (`/documentos/{slug}`).
+- O servidor só negocia TLS 1.2 com troca de chave RSA (`AES256-GCM-SHA384`), sem sigilo futuro, que o Java 25 desativa por padrão. O passo `fetch executivoba` roda com `-Djava.security.properties=etl/tls-legado-ba.security`, que tira só `TLS_RSA_*` da lista de algoritmos desativados, nesse processo.
+
+### Agenda do Governador da BA: não coletada
 
 - Agenda: `ba.gov.br/agenda` é uma aplicação sem a agenda no HTML.
-- Decretos: o Legisla Bahia (`legislabahia.ba.gov.br`) publica os decretos em HTML, com paginação, mas só negocia TLS com troca de chave RSA, que o Java desativa por padrão. Não coletados.
+- Decretos: ver `ba-legisla`, acima.
 
 ## Governo do Estado do Rio Grande do Sul (Executivo Estadual)
 

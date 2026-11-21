@@ -725,7 +725,7 @@ Feito em 2026-11-21. Primeiro governo estadual depois de São Paulo.
 | Bahia | `executivoba`: despesa paga por mês e órgão, somada na coleta (ADR-0083) | concluída |
 | Despesa do ES | Despesa do Executivo capixaba | não feito: o CKAN publica a despesa por lançamento, com favorecido, em arquivos de até 1,5 GB por ano, sem agregado mensal; a busca filtrada do datastore não soma |
 | Pernambuco | `executivope`: decretos do Executivo pela legislação da Alepe (ADR-0089): 9.576 decretos | concluída |
-| Decretos da BA | Legisla Bahia | não feito: o servidor só negocia TLS com troca de chave RSA, que o Java desativa; o projeto não relaxa a segurança da JVM. Decisão do mantenedor |
+| Decretos da BA | Legisla Bahia, com exceção de TLS só no passo da BA, autorizada pelo mantenedor em 2026-11-21 (ADR-0090) | concluída |
 | Próximos estados | Decretos de SC (filtros não validados); os outros 18 governos sem fonte estruturada validada | pendente |
 
 Verificação em 2026-11-21:
