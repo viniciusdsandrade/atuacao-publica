@@ -326,12 +326,13 @@ jobs:
           ETL_ORCAMENTO_MINUTOS: '15'
         run: java -Xmx2g -jar etl/target/etl.jar fetch cldf
       - name: fetch almt
-        # Assembleia Legislativa do Estado de Mato Grosso: 24 deputados estaduais, perfis e Mesa Diretora.
+        # Assembleia Legislativa do Estado de Mato Grosso: deputados, perfis, Mesa Diretora e proposições.
+        # A pesquisa de proposições tem dez itens por página: a carga inicial tem cerca de 1.300 páginas (ADR-0085).
         if: env.FONTE == 'todas' || env.FONTE == 'almt'
         continue-on-error: true
-        timeout-minutes: 20
+        timeout-minutes: 30
         env:
-          ETL_ORCAMENTO_MINUTOS: '15'
+          ETL_ORCAMENTO_MINUTOS: '25'
         run: java -Xmx2g -jar etl/target/etl.jar fetch almt
       - name: fetch alems
         # Assembleia Legislativa do Estado de Mato Grosso do Sul: 24 deputados estaduais, perfis e Mesa Diretora.
