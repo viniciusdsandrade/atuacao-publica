@@ -307,6 +307,8 @@ const NOTAS_DO_GOVERNO_ESTADUAL: Record<string, Record<string, string>> = {
       'Compromissos como publicados no calendário "Agenda do Governador", que o portal do governo do Espírito Santo divulga. A hora é a do fuso declarado pelo calendário. Parte dos eventos é genérica, como "Agendas Internas".',
   },
   BA: {
+    atos_normativos:
+      'Decretos numerados do Poder Executivo da Bahia, como publicados no Legisla Bahia. A fonte não informa quem assinou cada ato.',
     despesas_executivo:
       'Valor pago pelos órgãos do Poder Executivo da Bahia, somado por mês e órgão a partir do painel de despesas do portal de dados abertos. A fonte já publica cada linha como total do mês, sem favorecido; a contagem é de linhas da fonte, não de pagamentos. A fonte não informa quem autorizou cada gasto.',
   },

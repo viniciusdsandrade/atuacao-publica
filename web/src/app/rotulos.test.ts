@@ -159,6 +159,7 @@ test('título e nota dos atos e das despesas do Executivo dependem da esfera', (
   assert.match(notaDoBloco('agenda_oficial', 'estadual', 'ES') ?? '', /Agenda do Governador/);
   assert.match(notaDoBloco('despesas_executivo', 'estadual', 'RS') ?? '', /Despesa do Estado/);
   assert.match(notaDoBloco('despesas_executivo', 'estadual', 'BA') ?? '', /painel de despesas/);
+  assert.match(notaDoBloco('atos_normativos', 'estadual', 'BA') ?? '', /Legisla Bahia/);
   assert.match(notaDoBloco('atos_normativos', 'estadual', 'PE') ?? '', /Assembleia Legislativa/);
   assert.equal(unidadeDoBloco('despesas_executivo', 'estadual', 'BA'), 'lançamentos');
   assert.match(notaDoBloco('atos_normativos', 'estadual', 'ES') ?? '', /ainda não tem fonte validada/);

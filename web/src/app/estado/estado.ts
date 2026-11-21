@@ -25,7 +25,7 @@ const NOMES: Record<string, string> = {
   executivogo: 'Governo do Estado de Goiás (decretos e despesas)',
   executivoes: 'Governo do Estado do Espírito Santo (agenda)',
   executivors: 'Governo do Estado do Rio Grande do Sul (despesas)',
-  executivoba: 'Governo do Estado da Bahia (despesas)',
+  executivoba: 'Governo do Estado da Bahia (despesas e decretos)',
   executivope: 'Governo do Estado de Pernambuco (decretos)',
   almg: 'Assembleia Legislativa do Estado de Minas Gerais (ALMG)',
   alep: 'Assembleia Legislativa do Estado do Paraná (ALEP)',
