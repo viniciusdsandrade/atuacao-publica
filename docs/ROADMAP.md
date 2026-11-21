@@ -737,6 +737,25 @@ Resultado do levantamento, por fonte testada:
 - decretos: MG e GO em JSON; RS, BA, PE e SC em HTML; ES, RJ, PR e CE sem fonte utilizável;
 - despesa mensal sem favorecido: GO (CKAN, já agregada) e BA (ZIP de 2,4 GB); RS, ES, SC e MG por lançamento, com credor; PE e RJ sem mês; PR e CE bloqueados.
 
+## Proposições da ALERJ (ADR-0078)
+
+Feito em 2026-11-21. Primeira das assembleias com poucos blocos.
+
+| Frente | Entrega | Estado |
+|---|---|---|
+| Adaptador | PEC, PLC, PL, PDL e PR da 13ª legislatura, pela pesquisa do sistema de processo legislativo | concluída |
+| Vínculo | Autoria pelo nome, sem acento e sem pontuação, com segunda tentativa sem o tratamento | concluída |
+| CI | Passo `fetch alerj` com 30 min de orçamento | concluída |
+| Votos e presença | Voto por deputado não existe na fonte; presença só por mês | não coletados |
+| Outras casas | ALMT, ALEMS, ALRN e ALEMA (só cargos); ALEPA (sem proposições) | pendente |
+
+Verificação em 2026-11-21:
+
+- Coleta real, da rede do mantenedor: 102 consultas em 2 min, 11.510 proposições (PL 8.533, PR 2.863, PLC 66, PEC 34, PDL 14). Uma lacuna na numeração, o PL 844. Uma hora antes, os dois endereços do servidor recusaram a conexão.
+- 13.162 autorias ligadas a 70 deputados; 66 nomes de autor sem perfil (quem saiu antes do início da coleta, comissões, outros Poderes, nomes parciais).
+- Na amostra de 1.000 PLs de 2023, 1.223 de 1.409 autorias se ligam.
+- Ensaio de `publish`: 67 perfis da ALERJ com o bloco de proposições, sem rejeição nova. ETL com 470 testes, quatro novos.
+
 ## Fase 2 (depois da POC)
 
 ### Esfera federal

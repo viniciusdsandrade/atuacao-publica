@@ -874,6 +874,17 @@ Validação em 2026-11-03 com o User-Agent do projeto.
 - No site em 2026-11-09, 31.062 lançamentos de 2023 a 2026 em 70 deputados em exercício.
 - A conexão oscila. Na validação, 12 tentativas esgotaram o tempo e foram repetidas. Entre provas do Globalping, a Azure (eastus), a AWS em São Paulo e uma rede residencial receberam resposta; a AWS nos EUA e o Google Cloud e a Oracle em São Paulo não.
 
+### `alerj-proposicoes`: proposições (ADR-0078)
+
+- Sistema de processo legislativo da 13ª legislatura, em Lotus Domino: `https://alerjln1.alerj.rj.gov.br/scpro2327.nsf/`. Validação em 2026-11-21.
+- Pesquisa por visão de tipo: `{visão}?SearchView&Query=FIELD%20prop_cod_prop%20CONTAINS%20{prefixo}*&SearchMax=0&SearchOrder=4`. HTML, no máximo 1.000 linhas por consulta.
+- Visões usadas: PEC `e156baa31cae7158832566ec0018d83c`, PLC `34c4e2da9b17c0d3832566ec0018d830`, PL `18c1dd68f96be3e7832566ec0018d833`, PDL `b3156862637ed3b7832566ec0018d82d` e PR `10d6d451b00fd42b832566ec0018d836`.
+- O código da proposição é `AAAATTNNNNN`: ano, tipo e o número, que corre pela legislatura inteira (PL 2849/2023, PL 8525/2026). A consulta começa pelo ano e tipo e, no limite de 1.000 linhas, se divide pelo dígito seguinte.
+- Cada linha traz o código com o link do documento, a ementa (com as comissões de destino depois de `=>`), a data em MM/DD/AAAA e os autores separados por vírgula, na ordem.
+- A autoria vem pelo nome, sem identificador. O ETL liga o nome ao deputado sem acento e sem pontuação e, sem ligação exata, sem o tratamento ("Dr.", "Prof.", "Delegado"), quando só um deputado tem o nome. Na amostra de 1.000 PLs de 2023, 1.223 de 1.409 autorias se ligam. As outras são de quem saiu da Assembleia antes do início da coleta, de comissões e de outros Poderes, ou nomes parciais ("YURI", "POUBEL").
+- Cada resposta leva de 15 s a 1 min, e a conexão oscila entre os dois endereços do servidor. Consulta com `Start=` ou `Count=` recebe resposta vazia: a coleta não usa esses parâmetros.
+- Não encontrado: voto por deputado. A tramitação traz só o total da votação nominal. A presença sai por mês, pelo nome, sem a data de cada sessão (`ordemdia.nsf`), e não é coletada.
+
 ### `rj-transparencia` e `rj-diario-oficial`: Executivo estadual
 
 - Transparência orçamentária: `https://www.transparencia.rj.gov.br/`
